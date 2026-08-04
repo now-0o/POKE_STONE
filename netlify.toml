@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA 라우팅 대응 (react-router 등 클라이언트 라우팅을 쓰게 되면 404 방지)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
