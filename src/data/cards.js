@@ -181,7 +181,7 @@ export const CARDS = [
   P('voltorb', '붐볼', '전기', 2, 2, 2, 'C', { ability: 'explode' }),
   P('mareep', '메리프', '전기', 1, 1, 2, 'C', { ability: 'static' }),
   P('flaaffy', '보송송', '전기', 2, 2, 3, 'C', { stage: 1, evolvesFrom: 'mareep', ability: 'static' }),
-  P('ampharos', '왕자리', '전기', 5, 4, 6, 'E', { stage: 2, evolvesFrom: 'flaaffy', ability: 'aura_electric' }),
+  P('ampharos', '전룡', '전기', 5, 4, 6, 'E', { stage: 2, evolvesFrom: 'flaaffy', ability: 'aura_electric' }),
   P('zapdos', '썬더', '전기', 8, 7, 6, 'L', { ability: 'thunderstrike' }),
   P('raikou', '라이코우', '전기', 7, 7, 6, 'L', { ability: 'rush' }),
 
@@ -307,7 +307,7 @@ export const CARDS = [
   P('haunter', '고우스트', '고스트', 3, 4, 3, 'R', { stage: 1, evolvesFrom: 'gastly', ability: 'levitate' }),
   P('gengar', '팬텀', '고스트', 5, 6, 5, 'E', { stage: 2, evolvesFrom: 'haunter', ability: 'hypnosis' }),
   P('misdreavus', '무우마', '고스트', 2, 2, 3, 'C', { ability: 'levitate' }),
-  P('mimikyu', '미미큐', '고스트', 3, 3, 3, 'R', { ability: 'disguise' }),
+  P('mimikyu', '따라큐', '고스트', 3, 3, 3, 'R', { ability: 'disguise' }),
 
   // ============ 드래곤 (11) ============
   P('dratini', '미뇽', '드래곤', 1, 1, 2, 'C', {}),
