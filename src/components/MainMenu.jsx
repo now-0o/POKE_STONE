@@ -8,8 +8,18 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
   const [confirmReset, setConfirmReset] = useState(false);
   const deckReady = save.deck.length === 30;
 
+  // 전체화면 진입 (전체화면 API는 사용자 클릭 같은 제스처 안에서만 호출 가능).
+  // iOS Safari는 이 API를 사실상 지원하지 않아서 버튼을 눌러도 반응이 없을 수 있음 -
+  // 그 경우엔 "공유 → 홈 화면에 추가"로 앱처럼 설치해서 쓰는 게 대안.
+  function goFullscreen() {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) req.call(el).catch(() => {});
+  }
+
   return (
     <div className="main-menu">
+      <button className="btn-fullscreen" onClick={goFullscreen} title="전체화면">⛶</button>
       <div className="title-block">
         <h1 className="game-title">POKE STONE</h1>
         <p className="game-subtitle">FAN-MADE CARD BATTLE</p>

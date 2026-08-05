@@ -112,37 +112,35 @@ export default function App() {
     onSaveChange();
   }
 
+  let body;
   if (authStatus === 'checking') {
-    return <div className="app"><div className="main-menu"><p style={{ marginTop: 60, opacity: 0.6 }}>불러오는 중...</p></div></div>;
-  }
-  if (authStatus === 'anon') {
-    return <div className="app"><Auth onAuthed={onAuthed} /></div>;
-  }
-
-  const save = saveRef.current;
-
-  return (
-    <div className="app">
-      {adminToast && (
-        <div style={{
-          position: 'fixed', top: 12, right: 12, zIndex: 9999,
-          background: '#1a1030', border: '1px solid #a04ae0', color: '#e8d4ff',
-          padding: '8px 14px', borderRadius: 8, fontSize: 13, boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
-        }}>
-          관리자 모드 활성화 — 자금·전 카드 해금됨
-        </div>
-      )}
-      {screen === 'menu' && (
-        <MainMenu
-          save={save}
-          username={username}
-          onBattle={startBattle}
-          onShop={() => setScreen('shop')}
-          onDeck={() => setScreen('deck')}
-          onSaveChange={onSaveChange}
-          onLogout={onLogout}
-        />
-      )}
+    body = <div className="main-menu"><p style={{ marginTop: 60, opacity: 0.6 }}>불러오는 중...</p></div>;
+  } else if (authStatus === 'anon') {
+    body = <Auth onAuthed={onAuthed} />;
+  } else {
+    const save = saveRef.current;
+    body = (
+      <>
+        {adminToast && (
+          <div style={{
+            position: 'fixed', top: 12, right: 12, zIndex: 9999,
+            background: '#1a1030', border: '1px solid #a04ae0', color: '#e8d4ff',
+            padding: '8px 14px', borderRadius: 8, fontSize: 13, boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
+          }}>
+            관리자 모드 활성화 — 자금·전 카드 해금됨
+          </div>
+        )}
+        {screen === 'menu' && (
+          <MainMenu
+            save={save}
+            username={username}
+            onBattle={startBattle}
+            onShop={() => setScreen('shop')}
+            onDeck={() => setScreen('deck')}
+            onSaveChange={onSaveChange}
+            onLogout={onLogout}
+          />
+        )}
       {screen === 'battle' && trainer && (
         <Battle
           key={trainer.id + Date.now()}
@@ -157,6 +155,18 @@ export default function App() {
       {screen === 'deck' && (
         <DeckEditor save={save} onSaveChange={onSaveChange} onBack={() => setScreen('menu')} />
       )}
+      </>
+    );
+  }
+
+  return (
+    <div className="app">
+      <div className="rotate-prompt">
+        <div className="rotate-prompt-icon">📱</div>
+        <p>포스스톤은 가로 화면에서 즐겨주세요!</p>
+        <p className="rotate-prompt-sub">기기를 옆으로 돌려주세요</p>
+      </div>
+      {body}
     </div>
   );
 }
