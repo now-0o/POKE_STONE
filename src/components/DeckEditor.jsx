@@ -4,7 +4,7 @@ import { persist } from '../state/save.js';
 import { HandCard, Sprite, useInspect } from './Card.jsx';
 import { playSfx } from '../audio.js';
 
-const TYPE_FILTERS = ['전체', '물', '불꽃', '풀', '전기', '얼음', '격투', '독', '땅', '비행', '에스퍼', '벌레', '바위', '고스트', '드래곤', '악', '강철', '페어리', '노말', '기술'];
+const TYPE_FILTERS = ['전체', '물', '불꽃', '풀', '전기', '얼음', '격투', '독', '땅', '비행', '에스퍼', '벌레', '바위', '고스트', '드래곤', '악', '강철', '페어리', '노말', '기술', '도구'];
 
 export default function DeckEditor({ save, onSaveChange, onBack }) {
   const [filter, setFilter] = useState('전체');
