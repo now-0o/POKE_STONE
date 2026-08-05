@@ -158,7 +158,7 @@ export function HandCard({ cardId, game, playable, selected, onClick, onPointerD
       </div>
 
       <div className="card-typeline">
-        <span className="card-typebadge">{card.kind === 'mega' ? '메가스톤' : card.kind === 'spell' ? `기술 · ${card.moveType || '보조'}` : `${card.type} 포켓몬`}</span>
+        <span className="card-typebadge">{card.kind === 'mega' ? '메가스톤' : card.kind === 'item' ? '도구' : card.kind === 'spell' ? `기술 · ${card.moveType || '보조'}` : `${card.type} 포켓몬`}</span>
       </div>
 
       {abilityText && <div className="card-text">{abilityText}</div>}

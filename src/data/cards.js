@@ -12,7 +12,7 @@ export const TYPE_COLORS = {
   노말: '#A8A77A', 불꽃: '#EE8130', 물: '#6390F0', 전기: '#F7D02C', 풀: '#7AC74C',
   얼음: '#96D9D6', 격투: '#C22E28', 독: '#A33EA1', 땅: '#E2BF65', 비행: '#A98FF3',
   에스퍼: '#F95587', 벌레: '#A6B91A', 바위: '#B6A136', 고스트: '#735797', 드래곤: '#6F35FC',
-  악: '#705746', 강철: '#B7B7CE', 페어리: '#D685AD', 기술: '#7a5ea8',
+  악: '#705746', 강철: '#B7B7CE', 페어리: '#D685AD', 기술: '#7a5ea8', 도구: '#4a9b8e',
 };
 
 export const TYPE_CHART = {
@@ -345,7 +345,9 @@ export const CARDS = [
   P('steelix', '강철톤', '강철', 6, 3, 12, 'E', { stage: 1, evolvesFrom: 'onix', ability: 'taunt' }),
   P('scizor', '핫삼', '강철', 5, 8, 5, 'R', { stage: 1, evolvesFrom: 'scyther', ability: 'roughskin' }),
   P('magnezone', '자포코일', '강철', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'magneton', ability: 'sturdy' }),
-  P('corviknight', '아머까오', '강철', 4, 0, 9, 'R', { ability: 'fortress' }),
+  P('rookidee', '파라꼬', '비행', 1, 1, 1, 'C', {}),
+  P('corvisquire', '파크로우', '비행', 3, 3, 6, 'R', { stage: 1, evolvesFrom: 'rookidee' }),
+  P('corviknight', '아머까오', '강철', 4, 0, 7, 'E', { stage: 2, evolvesFrom: 'corvisquire', ability: 'fortress' }),
   P('registeel', '레지스틸', '강철', 7, 3, 12, 'L', { ability: 'taunt' }),
   P('beldum', '메탕', '강철', 1, 1, 1, 'C', {}),
   P('metang', '메탕구', '강철', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'beldum' }),
@@ -458,10 +460,10 @@ export const CARDS = [
   { id: 'pokeball', name: '몬스터볼', kind: 'spell', type: '기술', cost: 1, rarity: 'C', emoji: '⚪', spell: { effect: 'tutor_pokemon' }, text: '내 덱에서 무작위 포켓몬 1장을 손으로 가져온다.' },
 
   // ============ 도구 (4) ============
-  { id: 'everstone', name: '진화의 휘석', kind: 'item', type: '기술', cost: 1, rarity: 'R', emoji: '💎', item: { effect: 'everstone', hpBonus: 2 }, text: '장착: 체력 +2. 이 포켓몬은 더 이상 진화할 수 없다.' },
-  { id: 'lifeorb', name: '생명의 구슬', kind: 'item', type: '기술', cost: 1, rarity: 'R', emoji: '🔴', item: { effect: 'lifeorb', atkBonus: 2 }, text: '장착: 공격력 +2. 내 턴이 끝날 때마다 체력이 1 줄어든다.' },
-  { id: 'focussash', name: '기합의 띠', kind: 'item', type: '기술', cost: 2, rarity: 'R', emoji: '🎗️', item: { effect: 'focussash' }, text: '장착: 옹골참(치명적인 피해를 1회 버팀)을 얻는다.' },
-  { id: 'shellbell', name: '조개껍질방울', kind: 'item', type: '기술', cost: 2, rarity: 'R', emoji: '🐚', item: { effect: 'shellbell' }, text: '장착: 공격으로 피해를 입힐 때마다 체력을 1 회복한다.' },
+  { id: 'everstone', name: '진화의 휘석', kind: 'item', type: '도구', cost: 1, rarity: 'R', emoji: '💎', item: { effect: 'everstone', hpBonus: 2 }, text: '장착: 체력 +2. 이 포켓몬은 더 이상 진화할 수 없다.' },
+  { id: 'lifeorb', name: '생명의 구슬', kind: 'item', type: '도구', cost: 1, rarity: 'R', emoji: '🔴', item: { effect: 'lifeorb', atkBonus: 2 }, text: '장착: 공격력 +2. 내 턴이 끝날 때마다 체력이 1 줄어든다.' },
+  { id: 'focussash', name: '기합의 띠', kind: 'item', type: '도구', cost: 2, rarity: 'R', emoji: '🎗️', item: { effect: 'focussash' }, text: '장착: 옹골참(치명적인 피해를 1회 버팀)을 얻는다.' },
+  { id: 'shellbell', name: '조개껍질방울', kind: 'item', type: '도구', cost: 2, rarity: 'R', emoji: '🐚', item: { effect: 'shellbell' }, text: '장착: 공격으로 피해를 입힐 때마다 체력을 1 회복한다.' },
 
   // ============ 메가스톤 (5) ============
   { id: 'swampertite', name: '대짱이나이트', kind: 'mega', type: '기술', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'swampert', mega: { atk: 2, hp: 2, ability: 'swiftswim' }, text: '대짱이 전용. +2/+2, 특성이 쓱쓱이 된다. 비가 내리고 있다면 즉시 돌진을 얻는다. (게임당 메가진화 1회)' },
@@ -510,6 +512,7 @@ export const DEX = {
   umbreon: 197, sneasel: 215, houndour: 228, houndoom: 229, sableye: 302, pawniard: 624,
   bisharp: 625, kingambit: 983, absol: 359,
   skarmory: 227, steelix: 208, scizor: 212, magnezone: 462, corviknight: 823, registeel: 379,
+  rookidee: 821, corvisquire: 822,
   beldum: 374, metang: 375, metagross: 376,
   clefairy: 35, clefable: 36, marill: 183, azumarill: 184, jigglypuff: 39, wigglytuff: 40,
   togepi: 175, togetic: 176, granbull: 210, sylveon: 700,
