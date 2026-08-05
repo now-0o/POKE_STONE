@@ -4,7 +4,7 @@ import { resetSave } from '../state/save.js';
 import { TrainerSprite } from './Card.jsx';
 import { UI_SPRITES } from '../data/cards.js';
 
-export default function MainMenu({ save, onBattle, onShop, onDeck, onSaveChange }) {
+export default function MainMenu({ save, username, onBattle, onShop, onDeck, onSaveChange, onLogout }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const deckReady = save.deck.length === 30;
 
@@ -63,6 +63,9 @@ export default function MainMenu({ save, onBattle, onShop, onDeck, onSaveChange 
       </div>
 
       <div className="menu-footer">
+        {username && <span style={{ opacity: 0.55, marginRight: 10 }}>{username}님</span>}
+        {onLogout && <button className="btn-ghost small" onClick={onLogout}>로그아웃</button>}
+        {' '}
         {!confirmReset ? (
           <button className="btn-ghost small" onClick={() => setConfirmReset(true)}>세이브 초기화</button>
         ) : (

@@ -1340,3 +1340,20 @@ img.res-icon.small { vertical-align: -2px; }
   gap: 10px;
   justify-content: center;
 }
+
+/* ============================================================
+   v6: 로그인/회원가입 입력창
+   ============================================================ */
+.input-plain {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border, rgba(255,255,255,0.18));
+  color: #fff;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+}
+.input-plain::placeholder { color: rgba(255,255,255,0.4); }
+.input-plain:focus { border-color: rgba(196, 120, 255, 0.7); }
