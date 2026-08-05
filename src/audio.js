@@ -59,24 +59,47 @@ function effectiveBgmVolume() {
   return muted ? 0 : BGM_BASE * volume;
 }
 
-// requestAnimationFrame 기반 부드러운 볼륨 램프
+// requestAnimationFrame 기반 부드러운 볼륨 램프.
+// 안전장치 포함: rAF 루프가 무슨 이유로든 끝까지 못 돌더라도(탭이 백그라운드로
+// 가거나 스로틀링되는 등) duration 이후엔 setTimeout이 목표 볼륨을 무조건
+// 강제로 맞춰버림 - "페이드 도중 0에 멈춰서 안 들리는" 상황 자체를 봉쇄.
 function fade(audio, toVolume, duration, onDone) {
   const fromVolume = audio.volume;
   const start = performance.now();
+  let done = false;
+
+  function finish() {
+    if (done) return;
+    done = true;
+    audio.volume = toVolume;
+    onDone && onDone();
+  }
+
   function step(now) {
+    if (done) return;
     const t = Math.min(1, (now - start) / duration);
     audio.volume = fromVolume + (toVolume - fromVolume) * t;
     if (t < 1) requestAnimationFrame(step);
-    else onDone && onDone();
+    else finish();
   }
+
   requestAnimationFrame(step);
+  setTimeout(finish, duration + 150); // 안전망: rAF가 안 돌아도 결국엔 맞는 값으로 고정됨
 }
 
-// 현재 재생 중이어야 할 트랙이 멈춰있으면(자동재생 차단 등) 재시도.
+// 현재 재생 중이어야 할 트랙이 멈춰있거나(자동재생 차단), 재생 중인데도
+// 볼륨이 잘못된 값(0 근처)에 고정돼 있으면(페이드 애니메이션 실패 등) 바로잡음.
 // 반드시 "진짜 사용자 동작"으로 인정되는 이벤트 핸들러 안에서 호출돼야 효과 있음.
 function resumeBgmIfStuck() {
   const active = bgmElements[currentBgmKey];
-  if (active && active.paused && !muted) active.play().catch(() => {});
+  if (!active) return;
+  if (active.paused && !muted) {
+    active.play().catch(() => {});
+  }
+  const target = effectiveBgmVolume();
+  if (!active.paused && Math.abs(active.volume - target) > 0.02) {
+    active.volume = target;
+  }
 }
 
 if (typeof window !== 'undefined') {
