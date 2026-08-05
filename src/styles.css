@@ -53,6 +53,7 @@ body {
 
 button { font-family: inherit; cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: 0.5; }
+.btn-locked { cursor: not-allowed; opacity: 0.5; } /* disabled 속성 대신 - 클릭은 받되(버저용) 시각적으로만 비활성 */
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 img.card-sprite, img.trainer-sprite, img.pack-ball, img.res-icon {
@@ -157,7 +158,7 @@ img.res-icon.small { vertical-align: -2px; }
   backdrop-filter: blur(6px);
   transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s, background 0.15s;
 }
-.trainer-card:hover:not(:disabled) {
+.trainer-card:hover:not(.btn-locked) {
   border-color: var(--accent);
   background: rgba(245, 197, 66, 0.07);
   transform: translateX(5px);
@@ -1309,7 +1310,7 @@ img.res-icon.small { vertical-align: -2px; }
   background: linear-gradient(160deg, #a04ae0, #6a2f9f);
   border-color: #c478ff;
 }
-.btn-premium:hover:not(:disabled) { background: linear-gradient(160deg, #b45cf5, #7b3ab5); }
+.btn-premium:hover:not(.btn-locked) { background: linear-gradient(160deg, #b45cf5, #7b3ab5); }
 @media (max-width: 620px) { .pack-row { gap: 16px; } }
 
 /* ============================================================
@@ -1445,18 +1446,37 @@ img.res-icon.small { vertical-align: -2px; }
 /* ============================================================
    v8: 음소거 버튼
    ============================================================ */
-.btn-mute {
+.audio-controls {
   position: fixed;
   top: 14px;
   left: 14px;
   z-index: 200;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(0,0,0,0.35);
   border: 1px solid rgba(255,255,255,0.18);
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
+  border-radius: 999px;
+  padding: 5px 12px 5px 5px;
 }
-.btn-mute:hover { background: rgba(0,0,0,0.5); }
+.btn-mute {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-mute:hover { background: rgba(255,255,255,0.18); }
+.volume-slider {
+  width: 70px;
+  height: 4px;
+  cursor: pointer;
+  accent-color: #c478ff;
+}

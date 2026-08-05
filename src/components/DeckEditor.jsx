@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { CARDS, CARD_MAP, MAX_COPIES, TYPE_COLORS, RARITY_NAME } from '../data/cards.js';
 import { persist } from '../state/save.js';
 import { HandCard, Sprite, useInspect } from './Card.jsx';
+import { playSfx } from '../audio.js';
 
 const TYPE_FILTERS = ['전체', '물', '불꽃', '풀', '전기', '얼음', '격투', '독', '땅', '비행', '에스퍼', '벌레', '바위', '고스트', '드래곤', '악', '강철', '페어리', '노말', '기술'];
 
@@ -28,9 +29,10 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     const inDeck = save.deck.filter((id) => id === cardId).length; // 항상 실제 덱 기준
     const owned = save.collection[cardId] || 0;
     const max = Math.min(MAX_COPIES[card.rarity], owned);
-    if (save.deck.length >= 30 || inDeck >= max) return;
+    if (save.deck.length >= 30 || inDeck >= max) { playSfx('buzzer'); return; }
     save.deck = [...save.deck, cardId]; // 새 배열로 교체 -> 메모/리렌더 정상 갱신
     persist(save);
+    playSfx('pickup');
     onSaveChange();
   }
 
@@ -39,6 +41,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     if (idx === -1) return;
     save.deck = [...save.deck.slice(0, idx), ...save.deck.slice(idx + 1)]; // 새 배열로 교체
     persist(save);
+    playSfx('putdown');
     onSaveChange();
   }
 

@@ -96,10 +96,9 @@ export default function PackShop({ save, onSaveChange, onBack }) {
                   <div className="pack-foil-bottom" />
                 </div>
                 <button
-                  className={`btn-primary ${pack.id === 'premium' ? 'btn-premium' : ''}`}
+                  className={`btn-primary ${pack.id === 'premium' ? 'btn-premium' : ''} ${save.money < pack.price ? 'btn-locked' : ''}`}
                   onMouseEnter={() => save.money >= pack.price && playSfx('cursor')}
                   onClick={() => buyPack(pack.id)}
-                  disabled={save.money < pack.price}
                 >
                   {save.money >= pack.price ? '팩 개봉!' : '돈이 부족하다...'}
                 </button>
@@ -151,10 +150,13 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               {result.refundTotal > 0 && <p>중복 환급 합계: +{result.refundTotal}원</p>}
               <button className="btn-primary" onMouseEnter={() => playSfx('cursor')} onClick={() => { playSfx('click'); setResult(null); }}>확인</button>
               <button
-                className="btn-secondary"
+                className={`btn-secondary ${save.money < PACKS[lastPack].price ? 'btn-locked' : ''}`}
                 onMouseEnter={() => save.money >= PACKS[lastPack].price && playSfx('cursor')}
-                onClick={() => { setResult(null); setTimeout(() => buyPack(lastPack), 0); }}
-                disabled={save.money < PACKS[lastPack].price}
+                onClick={() => {
+                  if (save.money < PACKS[lastPack].price) { playSfx('buzzer'); return; }
+                  setResult(null);
+                  setTimeout(() => buyPack(lastPack), 0);
+                }}
               >
                 한 팩 더! ({PACKS[lastPack].price})
               </button>

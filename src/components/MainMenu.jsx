@@ -43,10 +43,9 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
           return (
             <button
               key={t.id}
-              className="trainer-card"
+              className={`trainer-card ${!deckReady ? 'btn-locked' : ''}`}
               onMouseEnter={() => deckReady && playSfx('cursor')}
               onClick={() => { if (deckReady) { playSfx('click'); onBattle(t); } else playSfx('buzzer'); }}
-              disabled={!deckReady}
             >
               <TrainerSprite spriteKey={t.sprite} emoji={t.emoji} size={56} />
               <span className="trainer-info">
