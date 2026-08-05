@@ -140,7 +140,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               );
             })}
           </div>
-          {!allRevealed && <p className="reveal-hint">뒤집고 싶은 카드를 눌러보자! 볼 종류가 힌트다.</p>}
+          {!allRevealed && <p className="reveal-hint">뒤집고 싶은 카드를 눌러보자!</p>}
           {allRevealed && (
             <div className="pack-done">
               {result.refundTotal > 0 && <p>중복 환급 합계: +{result.refundTotal}원</p>}
