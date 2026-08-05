@@ -113,7 +113,10 @@ export function playBgm(key) {
   currentBgmKey = key;
 
   const old = bgmElements[prevKey];
-  if (old) fade(old, 0, FADE_MS, () => old.pause());
+  if (old) fade(old, 0, FADE_MS, () => {
+    old.pause();
+    old.currentTime = 0; // 다음에 이 화면으로 돌아오면 처음부터 다시 시작하도록
+  });
 
   const next = bgmElements[key];
   if (!next) return;
