@@ -3,6 +3,7 @@ import { TRAINERS } from '../data/trainers.js';
 import { resetSave } from '../state/save.js';
 import { TrainerSprite } from './Card.jsx';
 import { UI_SPRITES } from '../data/cards.js';
+import { playSfx } from '../audio.js';
 
 export default function MainMenu({ save, username, onBattle, onShop, onDeck, onSaveChange, onLogout }) {
   const [confirmReset, setConfirmReset] = useState(false);
@@ -19,7 +20,7 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
 
   return (
     <div className="main-menu">
-      <button className="btn-fullscreen" onClick={goFullscreen} title="전체화면">⛶</button>
+      <button className="btn-fullscreen" onMouseEnter={() => playSfx('cursor')} onClick={() => { playSfx('click'); goFullscreen(); }} title="전체화면">⛶</button>
       <div className="title-block">
         <h1 className="game-title">POKE STONE</h1>
         <p className="game-subtitle">FAN-MADE CARD BATTLE</p>
@@ -43,7 +44,8 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
             <button
               key={t.id}
               className="trainer-card"
-              onClick={() => deckReady && onBattle(t)}
+              onMouseEnter={() => deckReady && playSfx('cursor')}
+              onClick={() => { if (deckReady) { playSfx('click'); onBattle(t); } else playSfx('buzzer'); }}
               disabled={!deckReady}
             >
               <TrainerSprite spriteKey={t.sprite} emoji={t.emoji} size={56} />
@@ -62,11 +64,11 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
       {!deckReady && <p className="deck-warning center">덱이 30장이 아니에요. 덱 편집에서 채워주세요!</p>}
 
       <div className="menu-buttons">
-        <button className="btn-secondary with-icon" onClick={onShop}>
+        <button className="btn-secondary with-icon" onMouseEnter={() => playSfx('cursor')} onClick={() => { playSfx('slide'); onShop(); }}>
           <img className="res-icon" src={UI_SPRITES.pokeball} alt="" width={20} height={20} draggable={false} />
           카드팩 상점
         </button>
-        <button className="btn-secondary with-icon" onClick={onDeck}>
+        <button className="btn-secondary with-icon" onMouseEnter={() => playSfx('cursor')} onClick={() => { playSfx('pc'); onDeck(); }}>
           <img className="res-icon" src={UI_SPRITES.map} alt="" width={20} height={20} draggable={false} />
           컬렉션 · 덱
         </button>
@@ -74,17 +76,17 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
 
       <div className="menu-footer">
         {username && <span style={{ opacity: 0.55, marginRight: 10 }}>{username}님</span>}
-        {onLogout && <button className="btn-ghost small" onClick={onLogout}>로그아웃</button>}
+        {onLogout && <button className="btn-ghost small" onClick={() => { playSfx('click'); onLogout(); }}>로그아웃</button>}
         {' '}
         {!confirmReset ? (
-          <button className="btn-ghost small" onClick={() => setConfirmReset(true)}>세이브 초기화</button>
+          <button className="btn-ghost small" onClick={() => { playSfx('click'); setConfirmReset(true); }}>세이브 초기화</button>
         ) : (
           <span>
             정말 초기화할까요?{' '}
-            <button className="btn-ghost small danger" onClick={() => { resetSave(); setConfirmReset(false); onSaveChange(true); }}>
+            <button className="btn-ghost small danger" onClick={() => { playSfx('click'); resetSave(); setConfirmReset(false); onSaveChange(true); }}>
               네, 전부 삭제
             </button>{' '}
-            <button className="btn-ghost small" onClick={() => setConfirmReset(false)}>취소</button>
+            <button className="btn-ghost small" onClick={() => { playSfx('click'); setConfirmReset(false); }}>취소</button>
           </span>
         )}
       </div>

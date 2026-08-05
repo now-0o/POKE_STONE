@@ -60,7 +60,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
       <div className="editor-topbar">
         <div className="screen-header">
-          <button className="btn-ghost" onClick={onBack}>← 돌아가기</button>
+          <button className="btn-ghost" onClick={() => { playSfx('click'); onBack(); }}>← 돌아가기</button>
           <h2>컬렉션 · 덱 편집</h2>
           <div className={`deck-count ${save.deck.length === 30 ? 'ok' : 'warn'}`}>
             덱 {save.deck.length}/30
@@ -72,7 +72,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               key={t}
               className={`filter-btn ${filter === t ? 'active' : ''}`}
               style={t !== '전체' ? { '--type-color': TYPE_COLORS[t] } : {}}
-              onClick={() => setFilter(t)}
+              onMouseEnter={() => playSfx('cursor')}
+              onClick={() => { playSfx('click'); setFilter(t); }}
             >
               {t}
             </button>

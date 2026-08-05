@@ -1441,3 +1441,22 @@ img.res-icon.small { vertical-align: -2px; }
 }
 .btn-fullscreen:hover { background: rgba(255,255,255,0.16); }
 .main-menu { position: relative; }
+
+/* ============================================================
+   v8: 음소거 버튼
+   ============================================================ */
+.btn-mute {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+.btn-mute:hover { background: rgba(0,0,0,0.5); }

@@ -6,6 +6,7 @@ import DeckEditor from './components/DeckEditor.jsx';
 import Auth from './components/Auth.jsx';
 import { loadSave, newSave, persist, addReward, recordWin, LOSE_REWARD, activateAdminMode } from './state/save.js';
 import { getToken, getStoredUsername, clearAuth, fetchSave, pushSave } from './state/api.js';
+import { playBgm, toggleMute, isMuted } from './audio.js';
 
 const ADMIN_CODE = 'stonemaster'; // 숨겨진 관리자 모드 진입 코드 (아무 화면에서나 그냥 타이핑)
 
@@ -24,6 +25,21 @@ export default function App() {
   const [username, setUsername] = useState(getStoredUsername());
 
   const rerender = () => forceRender((n) => n + 1);
+
+  const [muted, setMuted] = useState(isMuted());
+
+  // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집 / 상점 / 배틀
+  useEffect(() => {
+    if (authStatus === 'anon' || authStatus === 'checking') {
+      playBgm('login');
+    } else if (screen === 'shop') {
+      playBgm('shop');
+    } else if (screen === 'battle') {
+      playBgm('battle');
+    } else {
+      playBgm('main'); // menu, deck
+    }
+  }, [authStatus, screen]);
 
   // 앱 첫 로딩: 저장된 토큰이 있으면 유효한지 서버에 확인하고 세이브를 받아온다
   useEffect(() => {
@@ -166,6 +182,9 @@ export default function App() {
         <p>포스스톤은 가로 화면에서 즐겨주세요!</p>
         <p className="rotate-prompt-sub">기기를 옆으로 돌려주세요</p>
       </div>
+      <button className="btn-mute" onClick={() => setMuted(toggleMute())} title={muted ? '음소거 해제' : '음소거'}>
+        {muted ? '🔇' : '🔊'}
+      </button>
       {body}
     </div>
   );

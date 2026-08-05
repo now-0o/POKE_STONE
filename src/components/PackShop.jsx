@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PACKS, RARITY_NAME, BALL_SPRITES, UI_SPRITES, RARITY_BALL } from '../data/cards.js';
 import { openPack } from '../state/save.js';
 import { HandCard, useInspect } from './Card.jsx';
+import { playSfx } from '../audio.js';
 
 // 레어도별 몬스터볼 카드백 (플립 애니메이션과 충돌하지 않게 정적)
 // C: 몬스터볼 / R: 슈퍼볼 / E: 하이퍼볼 / L: 마스터볼
@@ -30,10 +31,11 @@ export default function PackShop({ save, onSaveChange, onBack }) {
 
   function buyPack(packId = lastPack) {
     const pack = PACKS[packId];
-    if (save.money < pack.price) return;
+    if (save.money < pack.price) { playSfx('buzzer'); return; }
     setLastPack(packId);
     const r = openPack(save, packId);
     if (!r) return;
+    playSfx('buy');
     setResult(r);
     setFlipped([]);
     setSettled([]);
@@ -42,6 +44,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
 
   function flipCard(i) {
     if (flipped.includes(i)) return;
+    playSfx('click');
     setFlipped((f) => [...f, i]);
     setTimeout(() => setSettled((st) => [...st, i]), 600); // 플립(0.55s) 종료 후 정착
   }
@@ -68,7 +71,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
         </div>
       )}
       <div className="screen-header">
-        <button className="btn-ghost" onClick={handleBack}>{leaving ? '확인 중...' : '← 돌아가기'}</button>
+        <button className="btn-ghost" onClick={() => { playSfx('click'); handleBack(); }}>{leaving ? '확인 중...' : '← 돌아가기'}</button>
         <h2>카드팩 상점</h2>
         <div className="money-display"><img className="res-icon" src={UI_SPRITES.coin} alt="돈" width={20} height={20} draggable={false} />{save.money}</div>
       </div>
@@ -80,7 +83,8 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               <div key={pack.id} className={`pack-column pack-${pack.id}`}>
                 <div
                   className={`pack-visual ${save.money < pack.price ? 'pack-locked' : ''}`}
-                  onClick={save.money >= pack.price ? () => buyPack(pack.id) : undefined}
+                  onMouseEnter={() => playSfx('cursor')}
+                  onClick={() => buyPack(pack.id)}
                 >
                   <div className="pack-foil-top" />
                   <img className="pack-ball" src={BALL_SPRITES[pack.ball]} alt="" width={72} height={72} draggable={false} />
@@ -93,6 +97,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
                 </div>
                 <button
                   className={`btn-primary ${pack.id === 'premium' ? 'btn-premium' : ''}`}
+                  onMouseEnter={() => save.money >= pack.price && playSfx('cursor')}
                   onClick={() => buyPack(pack.id)}
                   disabled={save.money < pack.price}
                 >
@@ -144,9 +149,10 @@ export default function PackShop({ save, onSaveChange, onBack }) {
           {allRevealed && (
             <div className="pack-done">
               {result.refundTotal > 0 && <p>중복 환급 합계: +{result.refundTotal}원</p>}
-              <button className="btn-primary" onClick={() => setResult(null)}>확인</button>
+              <button className="btn-primary" onMouseEnter={() => playSfx('cursor')} onClick={() => { playSfx('click'); setResult(null); }}>확인</button>
               <button
                 className="btn-secondary"
+                onMouseEnter={() => save.money >= PACKS[lastPack].price && playSfx('cursor')}
                 onClick={() => { setResult(null); setTimeout(() => buyPack(lastPack), 0); }}
                 disabled={save.money < PACKS[lastPack].price}
               >

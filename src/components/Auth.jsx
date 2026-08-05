@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { login, register } from '../state/api.js';
+import { playSfx } from '../audio.js';
 
 export default function Auth({ onAuthed }) {
   const [mode, setMode] = useState('login'); // login | register
@@ -11,6 +12,7 @@ export default function Auth({ onAuthed }) {
   async function submit(e) {
     e.preventDefault();
     if (busy) return;
+    playSfx('click');
     setBusy(true);
     setError('');
     try {
@@ -36,7 +38,7 @@ export default function Auth({ onAuthed }) {
             type="button"
             className={`filter-btn ${mode === 'login' ? 'active' : ''}`}
             style={{ flex: 1 }}
-            onClick={() => { setMode('login'); setError(''); }}
+            onClick={() => { playSfx('click'); setMode('login'); setError(''); }}
           >
             로그인
           </button>
@@ -44,7 +46,7 @@ export default function Auth({ onAuthed }) {
             type="button"
             className={`filter-btn ${mode === 'register' ? 'active' : ''}`}
             style={{ flex: 1 }}
-            onClick={() => { setMode('register'); setError(''); }}
+            onClick={() => { playSfx('click'); setMode('register'); setError(''); }}
           >
             회원가입
           </button>

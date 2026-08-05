@@ -7,6 +7,7 @@ import {
 } from '../engine/engine.js';
 import { aiStep } from '../engine/ai.js';
 import { HandCard, FieldUnit, TrainerSprite } from './Card.jsx';
+import { playSfx } from '../audio.js';
 
 const AI_DELAY = 1100;
 const DRAG_THRESHOLD = 8;
@@ -303,6 +304,13 @@ export default function Battle({ trainer, deck, onFinish }) {
     const card = CARD_MAP[h.cardId];
     const need = spellNeedsTarget(card);
 
+    function attemptPlay(target, fieldIndex) {
+      const ok = playCard(game, 'player', handIdx, target, fieldIndex);
+      playSfx(ok ? 'click' : 'buzzer');
+      rerender();
+      return ok;
+    }
+
     const el = document.elementFromPoint(x, y);
     const drop = el ? el.closest('[data-drop]') : null;
     if (!drop) return;
@@ -311,37 +319,33 @@ export default function Battle({ trainer, deck, onFinish }) {
 
     if (card.kind === 'pokemon' && !card.evolvesFrom) {
       if (zone === 'my-field' || zone === 'unit-player') {
-        playCard(game, 'player', handIdx, null, calcInsertIndex(x));
-        rerender();
+        attemptPlay(null, calcInsertIndex(x));
       }
       return;
     }
     if (card.kind === 'pokemon' && card.evolvesFrom) {
       if (zone === 'unit-player' && uid) {
-        playCard(game, 'player', handIdx, { uid });
-        rerender();
+        attemptPlay({ uid });
       }
       return;
     }
     if (card.kind === 'mega') {
       if (zone === 'unit-player' && uid) {
-        playCard(game, 'player', handIdx, { uid });
-        rerender();
+        attemptPlay({ uid });
       }
       return;
     }
     if (need === 'enemy') {
-      if (zone === 'unit-enemy' && uid) { playCard(game, 'player', handIdx, { uid }); rerender(); }
-      else if (zone === 'enemy-hero') { playCard(game, 'player', handIdx, { uid: 'hero' }); rerender(); }
+      if (zone === 'unit-enemy' && uid) attemptPlay({ uid });
+      else if (zone === 'enemy-hero') attemptPlay({ uid: 'hero' });
       return;
     }
     if (need === 'friendly') {
-      if (zone === 'unit-player' && uid) { playCard(game, 'player', handIdx, { uid }); rerender(); }
+      if (zone === 'unit-player' && uid) attemptPlay({ uid });
       return;
     }
     if (zone === 'my-field' || zone === 'enemy-field' || zone === 'board' || zone === 'unit-player' || zone === 'unit-enemy') {
-      playCard(game, 'player', handIdx, null);
-      rerender();
+      attemptPlay(null);
     }
   }
 
@@ -351,14 +355,16 @@ export default function Battle({ trainer, deck, onFinish }) {
   function onHandClick(idx) {
     if (Date.now() < suppressUntil.current) return;
     if (!myTurn) return;
-    if (!canPlayCard(game, 'player', idx)) return;
+    if (!canPlayCard(game, 'player', idx)) { playSfx('buzzer'); return; }
     const card = CARD_MAP[me.hand[idx].cardId];
     const need = spellNeedsTarget(card);
     if (!need) {
       playCard(game, 'player', idx, null);
+      playSfx('click');
       setSelectedHand(null);
       rerender();
     } else {
+      playSfx('click');
       setSelectedHand(selectedHand === idx ? null : idx);
     }
   }
@@ -402,6 +408,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   function onEndTurn() {
     if (!myTurn) return;
+    playSfx('click');
     setSelectedHand(null);
     setAimUid(null);
     endTurn(game);
