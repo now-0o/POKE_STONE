@@ -1311,3 +1311,32 @@ img.res-icon.small { vertical-align: -2px; }
 }
 .btn-premium:hover:not(:disabled) { background: linear-gradient(160deg, #b45cf5, #7b3ab5); }
 @media (max-width: 620px) { .pack-row { gap: 16px; } }
+
+/* ============================================================
+   v5: 진화 버리고뽑기 버튼 + 아이템/틀깨기 UI
+   ============================================================ */
+.hand-card-wrap { position: relative; display: inline-block; }
+.btn-discard-redraw {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(160deg, #3a3050, #241c38);
+  border: 1px solid rgba(196, 120, 255, 0.55);
+  color: #e8d4ff;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 20;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.btn-discard-redraw:hover { background: linear-gradient(160deg, #4a3d68, #2e2448); }
+
+.target-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}

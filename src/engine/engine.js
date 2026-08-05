@@ -46,6 +46,7 @@ export function createGame(playerDeckIds, trainer) {
     weather: null,
     log: [],
     winner: null,
+    pendingBattlecry: null,
     trainer,
     players: {
       player: makePlayer(playerDeckIds, '나'),
@@ -72,6 +73,7 @@ function makePlayer(deckIds, name, hp = 30) {
     field: [],
     fatigue: 0,
     megaUsed: false,
+    discardUsedThisTurn: false,
   };
 }
 
@@ -100,6 +102,7 @@ function startTurn(game, side) {
   const p = game.players[side];
   p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
   p.mana = p.maxMana;
+  p.discardUsedThisTurn = false;
   p.field.forEach((u) => {
     u.extraUsed = false;
     if (u.resting) {
@@ -126,12 +129,19 @@ export function endTurn(game) {
       log(game, `${u.name}의 재생력! 체력을 회복했다.`);
     }
     if (u.ability === 'healer') {
-      p.field.forEach((f) => {
-        f.hp = Math.min(f.maxHp, f.hp + 1);
-      });
-      log(game, `${u.name}의 치유의마음! 아군 포켓몬이 회복했다.`);
+      const idx = p.field.indexOf(u);
+      const neighbors = [p.field[idx - 1], p.field[idx + 1]].filter((f) => f && f.hp < f.maxHp);
+      neighbors.forEach((f) => { f.hp = Math.min(f.maxHp, f.hp + 1); });
+      if (neighbors.length) log(game, `${u.name}의 치유의마음! 양옆 포켓몬이 회복했다.`);
+    }
+    // 생명의 구슬: 턴 종료 시 반동 피해 1
+    if (u.item === 'lifeorb') {
+      u.hp -= 1;
+      log(game, `${u.name}의 생명의구슬 반동! 체력이 1 줄었다.`);
     }
   });
+
+  cleanupDeaths(game);
 
   // 모래바람: 턴 종료 시 땅 타입이 아닌 모든 포켓몬 피해 1 (부유 포함 피해)
   if (game.weather === 'sand') {
@@ -253,7 +263,7 @@ function applyDamage(game, unit, amount, sourceType = null, typedIgnore = false)
     log(game, `${unit.name}의 멀티스케일! 피해가 절반이 됐다!`);
   }
   if (dmg <= 0) return 0;
-  if (SURVIVE_ABILITIES.includes(unit.ability) && !unit.sturdyUsed && dmg >= unit.hp) {
+  if ((SURVIVE_ABILITIES.includes(unit.ability) || unit.item === 'focussash') && !unit.sturdyUsed && dmg >= unit.hp) {
     unit.hp = 1;
     unit.sturdyUsed = true;
     log(game, `${unit.name}은(는) 옹골참으로 버텼다!`);
@@ -323,6 +333,8 @@ function makeUnit(card, game, side) {
     frozen: 0,
     sturdyUsed: false,
     mega: false,
+    item: null,
+    noEvolve: false,
     side,
   };
 }
@@ -331,6 +343,14 @@ function runBattlecry(game, side, unit) {
   const foe = game.players[other(side)];
   const me = game.players[side];
   switch (unit.ability) {
+    case 'moldbreaker': {
+      const targets = foe.field.filter((u) => (u.ability === 'taunt' || u.ability === 'fortress') && u.hp > 0);
+      if (targets.length) {
+        game.pendingBattlecry = { side, uid: unit.uid, targets: targets.map((t) => t.uid) };
+        log(game, `${unit.name}의 틀깨기! 상대 도발 포켓몬을 선택하세요.`);
+      }
+      break;
+    }
     case 'foresight':
       drawCard(game, side);
       drawCard(game, side);
@@ -542,11 +562,14 @@ export function canPlayCard(game, side, handIdx) {
   if (card.kind === 'pokemon' && !card.evolvesFrom && p.field.length >= MAX_FIELD) return false;
   if (card.kind === 'pokemon' && card.evolvesFrom) {
     // 이번 턴에 나왔거나 진화한 포켓몬은 진화 불가 (메가진화는 예외)
-    return p.field.some((u) => u.cardId === card.evolvesFrom && u.summonedTurn !== game.turnCount);
+    return p.field.some((u) => u.cardId === card.evolvesFrom && !u.noEvolve);
   }
   if (card.kind === 'mega') {
     if (p.megaUsed) return false;
     return p.field.some((u) => u.cardId === card.megaFor && !u.mega);
+  }
+  if (card.kind === 'item') {
+    return p.field.some((u) => !u.item);
   }
   if (card.kind === 'spell') {
     const t = card.spell.target;
@@ -592,8 +615,8 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   // ----- 포켓몬 (진화) -----
   if (card.kind === 'pokemon' && card.evolvesFrom) {
     const base = target
-      ? p.field.find((u) => u.uid === target.uid && u.cardId === card.evolvesFrom && u.summonedTurn !== game.turnCount)
-      : p.field.find((u) => u.cardId === card.evolvesFrom && u.summonedTurn !== game.turnCount);
+      ? p.field.find((u) => u.uid === target.uid && u.cardId === card.evolvesFrom && !u.noEvolve)
+      : p.field.find((u) => u.cardId === card.evolvesFrom && !u.noEvolve);
     if (!base) return false;
     p.mana -= cost;
     p.hand.splice(handIdx, 1);
@@ -608,7 +631,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     base.emoji = card.emoji;
     base.ability = card.ability || null;
     base.stage = card.stage;
-    base.summonedTurn = game.turnCount; // 이번 턴엔 다음 단계로 진화 불가
+    base.summonedTurn = game.turnCount;
     // canAttack 상태는 유지 (진화해도 소환멀미 그대로)
     log(game, `${base.name}(으)로 진화했다!`);
     runBattlecry(game, side, base);
@@ -653,6 +676,28 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
       log(game, `쓱쓱 발동! ${base.name}이(가) 바로 움직일 수 있다!`);
     }
     markPlay(game, side, card, { anim: 'mega', uid: base.uid });
+    return true;
+  }
+
+  // ----- 도구 -----
+  if (card.kind === 'item') {
+    if (!target) return false;
+    const u = p.field.find((x) => x.uid === target.uid);
+    if (!u || u.item) return false;
+    p.mana -= cost;
+    p.hand.splice(handIdx, 1);
+    u.item = card.item.effect;
+    if (card.item.effect === 'everstone') {
+      u.maxHp += card.item.hpBonus;
+      u.hp += card.item.hpBonus;
+      u.noEvolve = true;
+    } else if (card.item.effect === 'lifeorb') {
+      u.atk += card.item.atkBonus;
+    } else if (card.item.effect === 'focussash') {
+      u.sturdyUsed = false;
+    }
+    log(game, `${u.name}에게 ${card.name}을(를) 장착했다!`);
+    markPlay(game, side, card, { anim: 'item', uid: u.uid });
     return true;
   }
 
@@ -793,6 +838,35 @@ export function validAttackTargets(game, side, attackerUid = null) {
   return { units: foe.field, hero: true };
 }
 
+export function resolveMoldbreaker(game, side, targetUid) {
+  const pending = game.pendingBattlecry;
+  if (!pending || pending.side !== side || !pending.targets.includes(targetUid)) return false;
+  const foe = game.players[other(side)];
+  const t = foe.field.find((u) => u.uid === targetUid);
+  game.pendingBattlecry = null;
+  if (!t) return false;
+  t.ability = null;
+  log(game, `도발이 사라졌다!`);
+  applyDamage(game, t, 2, '벌레');
+  cleanupDeaths(game);
+  return true;
+}
+
+// 진화 카드인데 낼 수 없을 때: 버리고 카드 1장 뽑기 (턴당 1회)
+export function discardToDraw(game, side, handIdx) {
+  const p = game.players[side];
+  if (game.turn !== side || game.winner || p.discardUsedThisTurn) return false;
+  const h = p.hand[handIdx];
+  if (!h) return false;
+  const card = CARD_MAP[h.cardId];
+  if (card.kind !== 'pokemon' || !card.evolvesFrom) return false;
+  p.hand.splice(handIdx, 1);
+  p.discardUsedThisTurn = true;
+  log(game, `${card.name}을(를) 버리고 카드를 뽑았다.`);
+  drawCard(game, side);
+  return true;
+}
+
 function spendAttack(game, unit) {
   if (unit.ability === 'skilllink' && !unit.extraUsed) {
     unit.extraUsed = true;
@@ -855,8 +929,12 @@ export function attack(game, side, attackerUid, target) {
   }
 
   if (defUnit.hp <= 0 && atkUnit.hp > 0 && atkUnit.ability === 'moxie') {
-    atkUnit.atk += 2;
-    log(game, `${atkUnit.name}의 자기과신! 공격력이 2 올랐다!`);
+    atkUnit.atk += 1;
+    log(game, `${atkUnit.name}의 자기과신! 공격력이 1 올랐다!`);
+  }
+  if (atkDmg > 0 && atkUnit.hp > 0 && atkUnit.item === 'shellbell') {
+    atkUnit.hp = Math.min(atkUnit.maxHp, atkUnit.hp + 1);
+    log(game, `${atkUnit.name}의 조개껍질방울! 체력을 1 회복했다.`);
   }
   game.animSeq = (game.animSeq || 0) + 1;
   game.lastAction = { seq: game.animSeq, kind: 'attack', side, uid: attackerUid, targetUid: target.uid };
@@ -868,6 +946,7 @@ export function attack(game, side, attackerUid, target) {
 export function spellNeedsTarget(card) {
   if (card.kind === 'pokemon' && card.evolvesFrom) return 'evolve';
   if (card.kind === 'mega') return 'mega';
+  if (card.kind === 'item') return 'friendly';
   if (card.kind !== 'spell') return null;
   const t = card.spell.target;
   if (t === 'enemy-any') return 'enemy';

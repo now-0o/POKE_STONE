@@ -3,6 +3,7 @@ import { CARD_MAP, UI_SPRITES } from '../data/cards.js';
 import {
   createGame, playCard, attack, endTurn, canPlayCard, canAttack,
   validAttackTargets, spellNeedsTarget, WEATHER_NAME,
+  resolveMoldbreaker, discardToDraw,
 } from '../engine/engine.js';
 import { aiStep } from '../engine/ai.js';
 import { HandCard, FieldUnit, TrainerSprite } from './Card.jsx';
@@ -364,6 +365,12 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   function onUnitClick(side, unit) {
     if (Date.now() < suppressUntil.current) return;
+    if (game.pendingBattlecry && game.pendingBattlecry.side === 'player' && side === 'enemy'
+      && game.pendingBattlecry.targets.includes(unit.uid)) {
+      resolveMoldbreaker(game, 'player', unit.uid);
+      rerender();
+      return;
+    }
     if (!myTurn || selectedHand === null) return;
     const card = CARD_MAP[me.hand[selectedHand].cardId];
     const need = spellNeedsTarget(card);
@@ -416,6 +423,9 @@ export default function Battle({ trainer, deck, onFinish }) {
     && activeCard.kind === 'pokemon' && !activeCard.evolvesFrom;
 
   function isEnemyTargetable(u) {
+    if (game.pendingBattlecry && game.pendingBattlecry.side === 'player') {
+      return game.pendingBattlecry.targets.includes(u.uid);
+    }
     if (attackMode) return legalTargets.some((t) => t.uid === u.uid);
     if (spellMode && spellNeed === 'enemy') return true;
     return false;
@@ -627,24 +637,44 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       <div className="hand">
-        {me.hand.map((h, idx) => (
-          <HandCard
-            key={h.uid}
-            cardId={h.cardId}
-            game={game}
-            playable={myTurn && canPlayCard(game, 'player', idx)}
-            selected={selectedHand === idx}
-            dragOrigin={dragIdx === idx}
-            onClick={() => onHandClick(idx)}
-            onPointerDown={(e) => onHandPointerDown(e, idx)}
-          />
-        ))}
+        {me.hand.map((h, idx) => {
+          const c = CARD_MAP[h.cardId];
+          const playableNow = myTurn && canPlayCard(game, 'player', idx);
+          const stuckEvo = myTurn && c.kind === 'pokemon' && c.evolvesFrom && !playableNow && !me.discardUsedThisTurn;
+          return (
+            <div key={h.uid} className="hand-card-wrap">
+              <HandCard
+                cardId={h.cardId}
+                game={game}
+                playable={playableNow}
+                selected={selectedHand === idx}
+                dragOrigin={dragIdx === idx}
+                onClick={() => onHandClick(idx)}
+                onPointerDown={(e) => onHandPointerDown(e, idx)}
+              />
+              {stuckEvo && (
+                <button
+                  className="btn-discard-redraw"
+                  onClick={(e) => { e.stopPropagation(); discardToDraw(game, 'player', idx); rerender(); }}
+                  title="진화 대상이 없다 - 버리고 카드 1장 뽑기 (턴당 1회)"
+                >
+                  버리고 뽑기
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
+      {game.pendingBattlecry && game.pendingBattlecry.side === 'player' && (
+        <div className="target-hint">
+          틀깨기! 도발을 없앨 상대 포켓몬을 선택하세요
+        </div>
+      )}
       {selectedHand !== null && spellNeed && dragIdx === null && (
         <div className="target-hint">
           {spellNeed === 'enemy' && '대상을 선택하세요 (적 포켓몬 또는 상대 트레이너)'}
-          {spellNeed === 'friendly' && '회복할 아군 포켓몬을 선택하세요'}
+          {spellNeed === 'friendly' && (CARD_MAP[me.hand[selectedHand].cardId].kind === 'item' ? '장착할 아군 포켓몬을 선택하세요' : '회복할 아군 포켓몬을 선택하세요')}
           {spellNeed === 'evolve' && '진화시킬 포켓몬을 선택하세요'}
           {spellNeed === 'mega' && '메가진화시킬 포켓몬을 선택하세요'}
           <button className="btn-ghost small" onClick={() => setSelectedHand(null)}>취소</button>

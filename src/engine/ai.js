@@ -9,6 +9,7 @@ import {
   playCard, attack, endTurn, canPlayCard, canAttack,
   validAttackTargets, effectiveAtk, effectiveCost,
   calcTypedDamage, typeMult, spellDamageAmount, spellNeedsTarget, other,
+  resolveMoldbreaker,
 } from './engine.js';
 
 const SIDE = 'enemy';
@@ -61,6 +62,11 @@ function pickSpellTarget(game, card, level) {
   }
 
   if (need === 'friendly') {
+    if (card.kind === 'item') {
+      const candidates = me.field.filter((u) => !u.item).sort((a, b) => (b.atk + b.maxHp) - (a.atk + a.maxHp));
+      if (candidates.length === 0) return null;
+      return { uid: candidates[0].uid };
+    }
     const hurt = me.field
       .filter((u) => u.hp < u.maxHp)
       .sort((a, b) => (b.maxHp - b.hp) - (a.maxHp - a.hp));
@@ -69,7 +75,7 @@ function pickSpellTarget(game, card, level) {
   }
 
   if (need === 'evolve') {
-    const base = me.field.find((u) => u.cardId === card.evolvesFrom && u.summonedTurn !== game.turnCount);
+    const base = me.field.find((u) => u.cardId === card.evolvesFrom && !u.noEvolve);
     return base ? { uid: base.uid } : null;
   }
   if (need === 'mega') {
@@ -223,6 +229,15 @@ export function aiStep(game) {
   if (game.winner || game.turn !== SIDE) return false;
   const level = game.trainer.aiLevel;
   const me = game.players[SIDE];
+
+  // 0) 틀깨기 보류 중이면 즉시 해소 (가장 위협적인 도발 포켓몬부터 제거)
+  if (game.pendingBattlecry && game.pendingBattlecry.side === SIDE) {
+    const targets = game.players.player.field.filter((u) => game.pendingBattlecry.targets.includes(u.uid));
+    const pick = targets.sort((a, b) => (effectiveAtk(b, game) + b.maxHp) - (effectiveAtk(a, game) + a.maxHp))[0];
+    if (pick) resolveMoldbreaker(game, SIDE, pick.uid);
+    else game.pendingBattlecry = null;
+    return true;
+  }
 
   // 1) 카드 사용
   const playable = playableCards(game);
