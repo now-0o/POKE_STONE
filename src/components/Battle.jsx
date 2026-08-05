@@ -25,6 +25,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const [unitFx, setUnitFx] = useState(null); // 진화/메가 이펙트
   const [atkFx, setAtkFx] = useState(null); // 공격 돌진/피격 연출
   const [intro, setIntro] = useState(true);
+  const [confirmSurrender, setConfirmSurrender] = useState(false);
   const aiTimer = useRef(null);
   const logRef = useRef(null);
   const myFieldRef = useRef(null);
@@ -475,6 +476,11 @@ export default function Battle({ trainer, deck, onFinish }) {
         <p className="intro-line">
           "{trainer.introLines[Math.floor(Math.random() * trainer.introLines.length)]}"
         </p>
+        <p className={`intro-coin ${game.firstSide === 'player' ? 'first' : 'second'}`}>
+          {game.firstSide === 'player'
+            ? '🪙 코인토스 결과: 내가 선공!'
+            : `🪙 코인토스 결과: ${trainer.name} 선공 (대신 카드 1장 더 받음)`}
+        </p>
         <button className="btn-primary" onClick={() => setIntro(false)}>배틀 시작!</button>
         <button className="btn-ghost" onClick={() => onFinish(null)}>돌아가기</button>
       </div>
@@ -550,11 +556,13 @@ export default function Battle({ trainer, deck, onFinish }) {
       )}
 
       {/* 상대 영역 */}
-      <div className="hero-bar enemy-bar">
+      <div
+        className={`hero-bar enemy-bar ${(attackMode && heroTargetable) || (spellMode && spellNeed === 'enemy') ? 'targetable' : ''}`}
+        onClick={onHeroClick}
+        data-drop="enemy-hero"
+      >
         <div
-          className={`hero-portrait ${(attackMode && heroTargetable) || (spellMode && spellNeed === 'enemy') ? 'targetable' : ''} ${atkFx && atkFx.side === 'player' && atkFx.targetUid === 'hero' ? 'hit-flash' : ''}`}
-          onClick={onHeroClick}
-          data-drop="enemy-hero"
+          className={`hero-portrait ${atkFx && atkFx.side === 'player' && atkFx.targetUid === 'hero' ? 'hit-flash' : ''}`}
         >
           <TrainerSprite spriteKey={trainer.sprite} emoji={trainer.emoji} size={44} />
           <span className="hero-hp">HP {foe.hp}</span>
@@ -601,6 +609,30 @@ export default function Battle({ trainer, deck, onFinish }) {
         >
           {myTurn ? '턴 종료' : '상대 턴...'}
         </button>
+        {!confirmSurrender ? (
+          <button
+            className="btn-surrender"
+            onClick={() => { playSfx('click'); setConfirmSurrender(true); }}
+          >
+            항복
+          </button>
+        ) : (
+          <div className="surrender-confirm">
+            <span>정말 항복할까요?</span>
+            <button
+              className="btn-ghost small danger"
+              onClick={() => { playSfx('click'); onFinish('enemy'); }}
+            >
+              예, 항복
+            </button>
+            <button
+              className="btn-ghost small"
+              onClick={() => { playSfx('click'); setConfirmSurrender(false); }}
+            >
+              아니오
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 내 필드 */}

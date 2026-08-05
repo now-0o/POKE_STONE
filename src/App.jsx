@@ -4,6 +4,7 @@ import Battle from './components/Battle.jsx';
 import PackShop from './components/PackShop.jsx';
 import DeckEditor from './components/DeckEditor.jsx';
 import Auth from './components/Auth.jsx';
+import PatchNotes from './components/PatchNotes.jsx';
 import { loadSave, newSave, persist, addReward, recordWin, LOSE_REWARD, activateAdminMode } from './state/save.js';
 import { getToken, getStoredUsername, clearAuth, fetchSave, pushSave } from './state/api.js';
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from './audio.js';
@@ -204,6 +205,7 @@ export default function App() {
           title="음량"
         />
       </div>
+      <PatchNotes />
       {body}
     </div>
   );

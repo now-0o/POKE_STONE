@@ -40,8 +40,11 @@ export function other(side) {
 
 // ---------- 게임 생성 ----------
 export function createGame(playerDeckIds, trainer) {
+  const first = Math.random() < 0.5 ? 'player' : 'enemy'; // 코인토스로 선공 결정
+  const second = first === 'player' ? 'enemy' : 'player';
   const game = {
-    turn: 'player',
+    turn: first,
+    firstSide: first, // 인트로 화면 표시용
     turnCount: 1,
     weather: null,
     log: [],
@@ -53,11 +56,11 @@ export function createGame(playerDeckIds, trainer) {
       enemy: makePlayer(trainer.deck, trainer.name, trainer.hp),
     },
   };
-  // 플레이어 선공: 3장 / 후공 AI: 4장 드로우
-  for (let i = 0; i < 3; i++) drawCard(game, 'player', true);
-  for (let i = 0; i < 4; i++) drawCard(game, 'enemy', true);
-  startTurn(game, 'player');
-  log(game, `${trainer.name}와(과)의 배틀 시작!`);
+  // 선공 3장 / 후공 4장 드로우 (후공 보상)
+  for (let i = 0; i < 3; i++) drawCard(game, first, true);
+  for (let i = 0; i < 4; i++) drawCard(game, second, true);
+  startTurn(game, first);
+  log(game, `${trainer.name}와(과)의 배틀 시작! (${first === 'player' ? '내가' : trainer.name + '가'} 선공)`);
   return game;
 }
 
@@ -115,7 +118,8 @@ function startTurn(game, side) {
     u.canAttack = true;
     if (u.frozen > 0) u.frozen -= 1;
   });
-  if (game.turnCount > 1 || side === 'enemy') drawCard(game, side);
+  // 이번 게임의 "선공자"가 첫 턴(turnCount 1)에만 드로우 스킵 (이미 오프닝 핸드를 받았으므로)
+  if (!(side === game.firstSide && game.turnCount === 1)) drawCard(game, side);
 }
 
 export function endTurn(game) {

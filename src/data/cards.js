@@ -118,7 +118,7 @@ const P = (id, name, type, cost, atk, hp, rarity, opts = {}) =>
 
 export const CARDS = [
   // ============ 물 (20) ============
-  P('mudkip', '물짱이', '물', 1, 0, 1, 'C', { ability: 'torrent' }),
+  P('mudkip', '물짱이', '물', 1, 1, 2, 'C', { ability: 'torrent' }),
   P('marshtomp', '늪짱이', '물', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'mudkip', ability: 'torrent' }),
   P('swampert', '대짱이', '물', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'marshtomp', ability: 'muddywater' }),
   P('magikarp', '잉어킹', '물', 1, 0, 2, 'C', { ability: 'swiftswim', flavor: '튀어오르는 것 말고는 아무것도 못 한다.' }),
@@ -133,7 +133,8 @@ export const CARDS = [
   P('seadra', '시드라', '물', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'horsea' }),
   P('staryu', '별가사리', '물', 2, 1, 3, 'C', { ability: 'regenerator' }),
   P('starmie', '아쿠스타', '물', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'staryu', ability: 'regenerator' }),
-  P('mantine', '만타인', '물', 4, 2, 7, 'R', { ability: 'waterabsorb' }),
+  P('mantyke', '타만타', '물', 1, 1, 2, 'C', {}),
+  P('mantine', '만타인', '물', 4, 2, 9, 'R', { stage: 1, evolvesFrom: 'mantyke', ability: 'waterabsorb' }),
   P('barboach', '미꾸리', '물', 1, 1, 2, 'C', {}),
   P('whiscash', '메깅', '물', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'barboach' }),
   P('carvanha', '샤프니아', '물', 2, 3, 1, 'C', { ability: 'roughskin' }),
@@ -141,12 +142,12 @@ export const CARDS = [
   P('suicune', '스이쿤', '물', 7, 6, 9, 'L', { ability: 'purify' }),
 
   // ============ 불꽃 (12) ============
-  P('charmander', '파이리', '불꽃', 1, 0, 1, 'C', { ability: 'blaze' }),
+  P('charmander', '파이리', '불꽃', 1, 1, 2, 'C', { ability: 'blaze' }),
   P('charmeleon', '리자드', '불꽃', 3, 5, 3, 'R', { stage: 1, evolvesFrom: 'charmander', ability: 'blaze' }),
   P('charizard', '리자몽', '불꽃', 5, 9, 6, 'E', { stage: 2, evolvesFrom: 'charmeleon', ability: 'solarpower' }),
   P('flareon', '부스터', '불꽃', 3, 6, 3, 'R', { stage: 1, evolvesFrom: 'eevee', ability: 'guts' }),
-  P('ninetales', '나인테일', '불꽃', 4, 3, 6, 'R', { ability: 'drought' }),
-  P('vulpix', '식스테일', '불꽃', 1, 1, 2, 'C', { ability: 'flashfire' }),
+  P('vulpix', '식스테일', '불꽃', 1, 1, 1, 'C', { ability: 'flashfire' }),
+  P('ninetales', '나인테일', '불꽃', 4, 4, 7, 'R', { stage: 1, evolvesFrom: 'vulpix', ability: 'drought' }),
   P('ponyta', '포니타', '불꽃', 2, 2, 2, 'C', { ability: 'rush' }),
   P('rapidash', '날쌩마', '불꽃', 4, 6, 5, 'R', { stage: 1, evolvesFrom: 'ponyta', ability: 'flashfire' }),
   P('magmar', '마그마', '불꽃', 4, 4, 5, 'R', { ability: 'flashfire' }),
@@ -155,7 +156,7 @@ export const CARDS = [
   P('hooh', '칠색조', '불꽃', 8, 8, 9, 'L', { ability: 'sacredflame' }),
 
   // ============ 풀 (15) ============
-  P('bulbasaur', '이상해씨', '풀', 1, 0, 1, 'C', { ability: 'overgrow' }),
+  P('bulbasaur', '이상해씨', '풀', 1, 1, 2, 'C', { ability: 'overgrow' }),
   P('ivysaur', '이상해풀', '풀', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'bulbasaur', ability: 'overgrow' }),
   P('venusaur', '이상해꽃', '풀', 5, 6, 9, 'E', { stage: 2, evolvesFrom: 'ivysaur', ability: 'aura_grass' }),
   P('chikorita', '치코리타', '풀', 1, 1, 2, 'C', { ability: 'overgrow' }),
@@ -164,7 +165,7 @@ export const CARDS = [
   P('weepinbell', '우츠동', '풀', 2, 2, 4, 'C', { stage: 1, evolvesFrom: 'bellsprout', ability: 'chlorophyll' }),
   P('victreebel', '우츠보트', '풀', 4, 7, 6, 'R', { stage: 2, evolvesFrom: 'weepinbell', ability: 'chlorophyll' }),
   P('tangela', '덩쿠리', '풀', 2, 1, 4, 'C', { ability: 'taunt' }),
-  P('treecko', '나무지기', '풀', 1, 0, 1, 'C', { ability: 'overgrow' }),
+  P('treecko', '나무지기', '풀', 1, 1, 2, 'C', { ability: 'overgrow' }),
   P('grovyle', '나무돌이', '풀', 3, 5, 3, 'R', { stage: 1, evolvesFrom: 'treecko', ability: 'overgrow' }),
   P('sceptile', '나무킹', '풀', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'grovyle', ability: 'moxie' }),
   P('sunkern', '해너츠', '풀', 1, 0, 2, 'C', { ability: 'chlorophyll' }),
@@ -177,8 +178,8 @@ export const CARDS = [
   P('raichu', '라이츄', '전기', 3, 6, 3, 'R', { stage: 1, evolvesFrom: 'pikachu', ability: 'static' }),
   P('magnemite', '코일', '전기', 1, 0, 1, 'C', { ability: 'sturdy' }),
   P('magneton', '레어코일', '전기', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'magnemite', ability: 'sturdy' }),
-  P('electabuzz', '에레브', '전기', 4, 4, 5, 'R', { ability: 'static' }),
-  P('elekid', '에레키드', '전기', 1, 2, 1, 'C', { ability: 'static' }),
+  P('elekid', '에레키드', '전기', 1, 1, 1, 'C', { ability: 'static' }),
+  P('electabuzz', '에레브', '전기', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'elekid', ability: 'static' }),
   P('voltorb', '붐볼', '전기', 2, 2, 3, 'C', { ability: 'explode' }),
   P('mareep', '메리프', '전기', 1, 0, 1, 'C', { ability: 'static' }),
   P('flaaffy', '보송송', '전기', 2, 2, 4, 'C', { stage: 1, evolvesFrom: 'mareep', ability: 'static' }),
@@ -206,7 +207,7 @@ export const CARDS = [
   P('spearow', '깨비참', '비행', 1, 1, 1, 'C', { ability: 'rush' }),
   P('fearow', '깨비드릴조', '비행', 3, 6, 3, 'R', { stage: 1, evolvesFrom: 'spearow', ability: 'keeneye' }),
   P('doduo', '두두', '비행', 2, 3, 2, 'C', {}),
-  P('dodrio', '도도리아', '비행', 4, 7, 4, 'R', { stage: 1, evolvesFrom: 'doduo', ability: 'moxie' }),
+  P('dodrio', '두트리오', '비행', 4, 7, 4, 'R', { stage: 1, evolvesFrom: 'doduo', ability: 'moxie' }),
   P('farfetchd', '파오리', '비행', 2, 3, 2, 'C', { ability: 'keeneye', flavor: '대파는 소중하다.' }),
   P('tauros', '켄타로스', '노말', 4, 6, 3, 'R', { ability: 'rush' }),
 
@@ -249,14 +250,14 @@ export const CARDS = [
   P('regice', '레지아이스', '얼음', 7, 5, 10, 'L', { ability: 'thickfat' }),
 
   // ============ 격투 (13) ============
-  P('machop', '알통몬', '격투', 1, 0, 1, 'C', { ability: 'guts' }),
+  P('machop', '알통몬', '격투', 1, 1, 2, 'C', { ability: 'guts' }),
   P('machoke', '근육몬', '격투', 3, 4, 4, 'R', { stage: 1, evolvesFrom: 'machop', ability: 'guts' }),
   P('machamp', '괴력몬', '격투', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'machoke', ability: 'noguard' }),
   P('mankey', '망키', '격투', 1, 1, 1, 'C', { ability: 'rush' }),
   P('primeape', '성원숭', '격투', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'mankey', ability: 'guts' }),
   P('hitmonlee', '시라소몬', '격투', 4, 6, 3, 'R', { ability: 'rush' }),
   P('hitmonchan', '홍수몬', '격투', 4, 4, 5, 'R', { ability: 'skilllink' }),
-  P('makuhita', '마크탕', '격투', 1, 1, 1, 'C', { ability: 'guts' }),
+  P('makuhita', '마크탕', '격투', 1, 1, 2, 'C', { ability: 'guts' }),
   P('hariyama', '하리뭉', '격투', 4, 4, 7, 'R', { stage: 1, evolvesFrom: 'makuhita', ability: 'guts' }),
   P('meditite', '요가랑', '격투', 1, 1, 2, 'C', {}),
   P('medicham', '요가램', '격투', 3, 5, 5, 'R', { stage: 1, evolvesFrom: 'meditite' }),
@@ -413,17 +414,17 @@ export const CARDS = [
   P('oddish', '뚜벅쵸', '풀', 1, 1, 1, 'C', {}),
   P('gloom', '냄새꼬', '풀', 2, 3, 4, 'C', { stage: 1, evolvesFrom: 'oddish' }),
   P('vileplume', '라플레시아', '풀', 4, 6, 7, 'R', { stage: 2, evolvesFrom: 'gloom', ability: 'sleeppowder' }),
-  P('turtwig', '모부기', '풀', 1, 0, 1, 'C', { ability: 'overgrow' }),
+  P('turtwig', '모부기', '풀', 1, 1, 2, 'C', { ability: 'overgrow' }),
   P('grotle', '수풀부기', '풀', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'turtwig', ability: 'overgrow' }),
   P('torterra', '토대부기', '풀', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'grotle', ability: 'sturdy' }),
   // 불꽃
   P('growlithe', '가디', '불꽃', 1, 2, 1, 'C', {}),
   P('arcanine', '윈디', '불꽃', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'growlithe', ability: 'rush' }),
-  P('chimchar', '불꽃숭이', '불꽃', 1, 0, 1, 'C', { ability: 'blaze' }),
+  P('chimchar', '불꽃숭이', '불꽃', 1, 1, 2, 'C', { ability: 'blaze' }),
   P('monferno', '파이숭이', '불꽃', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'chimchar', ability: 'blaze' }),
   P('infernape', '초염몽', '불꽃', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'monferno', ability: 'moxie' }),
   // 물
-  P('piplup', '팽도리', '물', 1, 0, 1, 'C', { ability: 'torrent' }),
+  P('piplup', '팽도리', '물', 1, 1, 2, 'C', { ability: 'torrent' }),
   P('prinplup', '팽태자', '물', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'piplup', ability: 'torrent' }),
   P('empoleon', '엠페르트', '물', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'prinplup', ability: 'intimidate' }),
   // 드래곤
@@ -480,7 +481,7 @@ const SPRITE_BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sp
 export const DEX = {
   mudkip: 258, marshtomp: 259, swampert: 260, magikarp: 129, gyarados: 130, lapras: 131,
   vaporeon: 134, politoed: 186, kyogre: 382, psyduck: 54, golduck: 55, horsea: 116, seadra: 117,
-  staryu: 120, starmie: 121, mantine: 226, barboach: 339, whiscash: 340, carvanha: 318, sharpedo: 319, suicune: 245,
+  staryu: 120, starmie: 121, mantyke: 458, mantine: 226, barboach: 339, whiscash: 340, carvanha: 318, sharpedo: 319, suicune: 245,
   charmander: 4, charmeleon: 5, charizard: 6, flareon: 136, ninetales: 38, vulpix: 37,
   ponyta: 77, rapidash: 78, magmar: 126, moltres: 146, entei: 244, hooh: 250,
   bulbasaur: 1, ivysaur: 2, venusaur: 3, chikorita: 152, exeggutor: 103, bellsprout: 69,

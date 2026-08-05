@@ -119,7 +119,7 @@ export const TRAINERS = [
       'charmander', 'charmander',
       'charmeleon', 'charmeleon',
       'charizard', 'charizard',
-      'ninetales', 'ninetales',
+      'vulpix', 'ninetales',
       'flareon',
       'eevee',
       'ponyta', 'ponyta',

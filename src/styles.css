@@ -423,11 +423,17 @@ img.res-icon.small { vertical-align: -2px; }
   display: flex;
   align-items: center;
   gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
   padding: 8px 16px;
   backdrop-filter: blur(6px);
+}
+.hero-bar.enemy-bar {
+  padding: 16px 20px; /* 공격 대상 히트박스를 넉넉하게 - 정밀 조준 안 해도 되게 */
+  min-height: 64px;
 }
 .hero-portrait {
   display: flex;
@@ -444,6 +450,12 @@ img.res-icon.small { vertical-align: -2px; }
   border-color: var(--hp-red);
   box-shadow: 0 0 12px var(--hp-red);
   cursor: crosshair;
+  animation: pulse 0.9s infinite alternate;
+}
+.hero-bar.enemy-bar.targetable {
+  cursor: crosshair;
+  border-color: var(--hp-red);
+  box-shadow: 0 0 14px var(--hp-red);
   animation: pulse 0.9s infinite alternate;
 }
 .hero-hp { font-family: var(--display-font); font-size: 14px; color: #ff8a80; }
@@ -656,6 +668,26 @@ img.res-icon.small { vertical-align: -2px; }
 }
 .btn-endturn.disabled { background: #3a4260; box-shadow: none; color: #6a7494; }
 
+.btn-surrender {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn-surrender:hover { background: rgba(255, 100, 100, 0.15); border-color: rgba(255,100,100,0.4); color: #ff8a80; }
+.surrender-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 /* ---------- 손패: 겹치는 카드 ---------- */
 .hand {
   display: flex;
@@ -716,6 +748,16 @@ img.res-icon.small { vertical-align: -2px; }
   filter: drop-shadow(0 2px 0 #6b4d08);
 }
 .intro-line { color: var(--text-dim); font-size: 15px; max-width: 440px; }
+.intro-coin {
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255,255,255,0.05);
+  margin: 4px 0 6px;
+}
+.intro-coin.first { color: #7dd8a0; border-color: rgba(125, 216, 160, 0.5); }
+.intro-coin.second { color: #ffb870; border-color: rgba(255, 184, 112, 0.5); }
 
 .result-overlay {
   position: fixed;
@@ -1448,7 +1490,7 @@ img.res-icon.small { vertical-align: -2px; }
    ============================================================ */
 .audio-controls {
   position: fixed;
-  top: 14px;
+  bottom: 14px;
   left: 14px;
   z-index: 200;
   display: flex;
@@ -1479,4 +1521,76 @@ img.res-icon.small { vertical-align: -2px; }
   height: 4px;
   cursor: pointer;
   accent-color: #c478ff;
+}
+
+/* ============================================================
+   v9: 패치노트 패널
+   ============================================================ */
+.btn-patchnotes {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  z-index: 200;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-patchnotes:hover { background: rgba(0,0,0,0.5); }
+
+.patchnotes-panel {
+  position: fixed;
+  bottom: 56px;
+  right: 14px;
+  z-index: 200;
+  width: min(360px, calc(100vw - 28px));
+  max-height: min(480px, calc(100vh - 90px));
+  background: #10182e;
+  border: 1px solid rgba(196, 120, 255, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.patchnotes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-family: var(--display-font);
+  font-size: 14px;
+  border-bottom: 1px solid var(--panel-border);
+  background: rgba(196, 120, 255, 0.08);
+  flex-shrink: 0;
+}
+.patchnotes-body {
+  overflow-y: auto;
+  padding: 10px 14px 16px;
+}
+.patchnotes-entry { margin-bottom: 16px; }
+.patchnotes-entry:last-child { margin-bottom: 0; }
+.patchnotes-entry-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.patchnotes-version {
+  font-family: var(--display-font);
+  font-size: 13px;
+  color: #c478ff;
+}
+.patchnotes-title { font-size: 13px; font-weight: 600; color: #fff; }
+.patchnotes-date { font-size: 10px; color: var(--text-dim); margin-left: auto; }
+.patchnotes-entry ul { margin: 0; padding-left: 18px; }
+.patchnotes-entry li { font-size: 12px; color: #cfd4e6; line-height: 1.5; margin-bottom: 3px; }
+
+@media (max-width: 620px) {
+  .patchnotes-panel { right: 8px; bottom: 52px; }
+  .btn-patchnotes { right: 8px; }
 }
