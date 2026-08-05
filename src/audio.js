@@ -36,7 +36,12 @@ const SFX_BASE = 0.55;
 const FADE_MS = 650;
 const DEFAULT_VOLUME = 0.5;
 
-let muted = typeof localStorage !== 'undefined' && localStorage.getItem(MUTE_KEY) === '1';
+let muted = (() => {
+  if (typeof localStorage === 'undefined') return true;
+  const raw = localStorage.getItem(MUTE_KEY);
+  if (raw === null) return true; // 첫 방문: 어차피 자동재생 안 될 걸 아니까 처음부터 음소거로 시작 (UI가 실제 상태와 안 어긋나게)
+  return raw === '1';
+})();
 let volume = (() => {
   const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(VOLUME_KEY) : null;
   const n = raw !== null ? parseFloat(raw) : DEFAULT_VOLUME;
