@@ -137,6 +137,17 @@ export function deckIsValid(save) {
   return true;
 }
 
+// 관리자 모드: 숨겨진 치트 시퀀스로만 진입 (일반 UI에는 노출 안 됨)
+export function activateAdminMode(save) {
+  save.money = 999999;
+  CARDS.forEach((c) => {
+    if (c.kind === 'pokemon' || c.kind === 'spell' || c.kind === 'item' || c.kind === 'mega') {
+      save.collection[c.id] = MAX_COPIES[c.rarity] ?? 2;
+    }
+  });
+  persist(save);
+}
+
 export function addReward(save, amount) {
   save.money += amount;
   persist(save);
