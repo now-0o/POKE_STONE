@@ -1,7 +1,11 @@
 // ============================================================
 // 오디오 매니저: BGM(화면별 전환+루프+크로스페이드) + 효과음(중첩 재생 가능)
-// 브라우저 자동재생 정책 때문에, 사용자가 첫 상호작용(클릭/키입력)을 하기 전엔
-// 소리가 안 날 수 있음 - 정상 동작이고, 첫 클릭/키입력 시 자동으로 재개됨.
+//
+// 설계 메모: BGM은 화면 전환마다 새 Audio 객체를 만들지 않고, 4개 트랙을
+// 모듈 로드 시점에 한 번만 만들어서 재사용한다. 브라우저는 "한 번이라도
+// 사용자 제스처와 함께 재생된 적 있는 미디어 엘리먼트"를 이후 재생할 때
+// 자동재생 차단을 덜 엄격하게 적용하는 경향이 있어서, 매번 새 Audio를
+// 만드는 것보다 훨씬 안정적으로 소리가 남.
 // ============================================================
 
 const BGM_FILES = {
@@ -36,8 +40,16 @@ let volume = (() => {
 })();
 
 let currentBgmKey = null;
-let bgmAudio = null; // 현재(새로) 재생 중인 트랙
-const fadeOuts = new Set(); // 페이드아웃 중인 이전 트랙들 (겹쳐서 여러 개 빠질 수 있음)
+
+// 트랙별 Audio 엘리먼트를 미리 하나씩만 만들어서 재사용 (브라우저별 위와 같음)
+const bgmElements = typeof Audio !== 'undefined'
+  ? Object.fromEntries(Object.entries(BGM_FILES).map(([key, src]) => {
+      const a = new Audio(src);
+      a.loop = true;
+      a.volume = 0;
+      return [key, a];
+    }))
+  : {};
 
 function effectiveBgmVolume() {
   return muted ? 0 : BGM_BASE * volume;
@@ -56,53 +68,37 @@ function fade(audio, toVolume, duration, onDone) {
   requestAnimationFrame(step);
 }
 
-function tryResumeBgm() {
-  if (bgmAudio && !muted) bgmAudio.play().catch(() => {});
-}
-
-// 자동재생 차단 대응: 첫 클릭/키입력에서 현재 BGM 재개 시도
+// 상시 자동복구: 클릭/키입력이 있을 때마다 "재생 중이어야 하는데 멈춰있는" 트랙을 재시도.
+// (1회성으로 리스너를 떼지 않음 - 어떤 화면 전환에서 play()가 조용히 막혀도
+//  다음 상호작용에서 알아서 복구됨)
 if (typeof window !== 'undefined') {
-  const unlock = () => {
-    tryResumeBgm();
-    window.removeEventListener('pointerdown', unlock);
-    window.removeEventListener('keydown', unlock);
+  const nudge = () => {
+    const active = bgmElements[currentBgmKey];
+    if (active && active.paused && !muted) active.play().catch(() => {});
   };
-  window.addEventListener('pointerdown', unlock);
-  window.addEventListener('keydown', unlock);
+  window.addEventListener('pointerdown', nudge);
+  window.addEventListener('keydown', nudge);
 }
 
 export function playBgm(key) {
   if (key === currentBgmKey) return;
+  const prevKey = currentBgmKey;
   currentBgmKey = key;
 
-  // 기존 트랙은 페이드아웃 후 정지 (여러 번 빠르게 전환해도 각자 독립적으로 꺼짐)
-  if (bgmAudio) {
-    const old = bgmAudio;
-    fadeOuts.add(old);
-    fade(old, 0, FADE_MS, () => {
-      old.pause();
-      fadeOuts.delete(old);
-    });
-  }
+  const old = bgmElements[prevKey];
+  if (old) fade(old, 0, FADE_MS, () => old.pause());
 
-  const src = BGM_FILES[key];
-  if (!src) {
-    bgmAudio = null;
-    return;
-  }
-  const next = new Audio(src);
-  next.loop = true;
-  next.volume = 0;
-  next.play().catch(() => {}); // 첫 로드 시 차단되면 unlock에서 재시도됨
+  const next = bgmElements[key];
+  if (!next) return;
+  next.play().catch(() => {}); // 막히더라도 위 nudge()가 다음 상호작용에서 재시도함
   fade(next, effectiveBgmVolume(), FADE_MS);
-  bgmAudio = next;
 }
 
 export function playSfx(key) {
   if (muted) return;
   const src = SFX_FILES[key];
   if (!src) return;
-  const a = new Audio(src); // 매번 새 인스턴스 - 같은 효과음 겹쳐 재생 가능
+  const a = new Audio(src); // 효과음은 짧고 겹쳐 재생돼야 하니 매번 새 인스턴스가 맞음
   a.volume = SFX_BASE * volume;
   a.play().catch(() => {});
 }
@@ -110,7 +106,8 @@ export function playSfx(key) {
 export function toggleMute() {
   muted = !muted;
   localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
-  if (bgmAudio) bgmAudio.volume = effectiveBgmVolume();
+  const active = bgmElements[currentBgmKey];
+  if (active) active.volume = effectiveBgmVolume();
   return muted;
 }
 
@@ -122,13 +119,12 @@ export function isMuted() {
 export function setVolume(v) {
   volume = Math.min(1, Math.max(0, v));
   localStorage.setItem(VOLUME_KEY, String(volume));
-  if (bgmAudio) bgmAudio.volume = effectiveBgmVolume();
-  // 0보다 크게 올리면 자동으로 음소거 해제 (직관적인 UX)
   if (muted && volume > 0) {
     muted = false;
     localStorage.setItem(MUTE_KEY, '0');
-    if (bgmAudio) bgmAudio.volume = effectiveBgmVolume();
   }
+  const active = bgmElements[currentBgmKey];
+  if (active) active.volume = effectiveBgmVolume();
 }
 
 export function getVolume() {

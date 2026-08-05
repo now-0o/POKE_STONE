@@ -111,7 +111,9 @@ export default function App() {
     if (saveRef.current) pushSave(saveRef.current).catch((e) => console.warn('세이브 서버 동기화 실패:', e.message));
   }
 
+  const battleKeyRef = useRef(0);
   function startBattle(t) {
+    battleKeyRef.current += 1; // 배틀 시작할 때만 갱신 - 리렌더마다 안 바뀌게
     setTrainer(t);
     setScreen('battle');
   }
@@ -160,7 +162,7 @@ export default function App() {
         )}
       {screen === 'battle' && trainer && (
         <Battle
-          key={trainer.id + Date.now()}
+          key={trainer.id + '-' + battleKeyRef.current}
           trainer={trainer}
           deck={save.deck}
           onFinish={finishBattle}
