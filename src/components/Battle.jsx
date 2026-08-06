@@ -351,6 +351,11 @@ export default function Battle({ trainer, deck, onFinish }) {
       if (zone === 'unit-player' && uid) attemptPlay({ uid });
       return;
     }
+    if (need === 'friendly-or-hero') {
+      if (zone === 'my-hero') { attemptPlay({ uid: 'hero' }); return; }
+      if (zone === 'unit-player' && uid) { attemptPlay({ uid }); return; }
+      return;
+    }
     if (zone === 'my-field' || zone === 'enemy-field' || zone === 'board' || zone === 'unit-player' || zone === 'unit-enemy') {
       attemptPlay(null);
     }
@@ -721,7 +726,11 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       {/* 내 영역 */}
-      <div className="hero-bar my-bar">
+      <div
+          className={`hero-bar my-bar ${spellNeed === 'friendly-or-hero' ? 'targetable' : ''}`}
+          onClick={onMyHeroClick}
+          data-drop="my-hero"
+        >
         <div className={`hero-portrait ${atkFx && atkFx.side === 'enemy' && atkFx.targetUid === 'hero' ? 'hit-flash' : ''}`}>
           <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={44} />
           <span className="hero-hp">HP {me.hp}</span>
@@ -772,6 +781,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         <div className="target-hint">
           {spellNeed === 'enemy' && '대상을 선택하세요 (적 포켓몬 또는 상대 트레이너)'}
           {spellNeed === 'friendly' && (CARD_MAP[me.hand[selectedHand].cardId].kind === 'item' ? '장착할 아군 포켓몬을 선택하세요' : '회복할 아군 포켓몬을 선택하세요')}
+          {spellNeed === 'friendly-or-hero' && '회복 대상을 선택하세요 (포켓몬 또는 내 트레이너)'}
           {spellNeed === 'evolve' && '진화시킬 포켓몬을 선택하세요'}
           {spellNeed === 'mega' && '메가진화시킬 포켓몬을 선택하세요'}
           <button className="btn-ghost small" onClick={() => setSelectedHand(null)}>취소</button>

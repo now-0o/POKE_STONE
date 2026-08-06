@@ -74,6 +74,16 @@ function pickSpellTarget(game, card, level) {
     return { uid: hurt[0].uid };
   }
 
+  if (need === 'friendly-or-hero') {
+    // 트레이너 HP가 절반 이하면 자기한테 사용, 아니면 가장 다친 포켓몬에게
+    if (me.hp <= me.maxHp * 0.5) return { uid: 'hero' };
+    const hurt = me.field
+      .filter((u) => u.hp < u.maxHp)
+      .sort((a, b) => (b.maxHp - b.hp) - (a.maxHp - a.hp));
+    if (hurt.length > 0) return { uid: hurt[0].uid };
+    return { uid: 'hero' }; // 다친 포켓몬도 없으면 자기한테
+  }
+
   if (need === 'evolve') {
     const base = me.field.find((u) => u.cardId === card.evolvesFrom && !u.noEvolve);
     return base ? { uid: base.uid } : null;

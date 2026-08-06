@@ -64,7 +64,7 @@ export function createGame(playerDeckIds, trainer) {
   return game;
 }
 
-function makePlayer(deckIds, name, hp = 30) {
+function makePlayer(deckIds, name, hp = 40) {
   return {
     name,
     hp,
@@ -1013,27 +1013,37 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
     if (s.effect === 'heal') {
       if (!target) return false;
-      const u = p.field.find((x) => x.uid === target.uid);
-      if (!u) return false;
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
-      u.hp = Math.min(u.maxHp, u.hp + s.amount);
-      log(game, `${card.name}! ${u.name}의 체력이 회복됐다.`);
+      if (target.uid === 'hero') {
+        p.hp = Math.min(p.maxHp, p.hp + 4);
+        log(game, `${card.name}! ${p.name}의 체력이 4 회복됐다.`);
+      } else {
+        const u = p.field.find((x) => x.uid === target.uid);
+        if (!u) return false;
+        u.hp = Math.min(u.maxHp, u.hp + s.amount);
+        log(game, `${card.name}! ${u.name}의 체력이 회복됐다.`);
+      }
       markPlay(game, side, card);
-    return true;
+      return true;
     }
 
     if (s.effect === 'fullheal') {
       if (!target) return false;
-      const u = p.field.find((x) => x.uid === target.uid);
-      if (!u) return false;
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
-      u.hp = u.maxHp;
-      u.frozen = 0; u.status = null; u.statusTurns = 0;
-      log(game, `${card.name}! ${u.name}이(가) 완전히 회복됐다!`);
+      if (target.uid === 'hero') {
+        p.hp = Math.min(p.maxHp, p.hp + 8);
+        log(game, `${card.name}! ${p.name}의 체력이 8 회복됐다!`);
+      } else {
+        const u = p.field.find((x) => x.uid === target.uid);
+        if (!u) return false;
+        u.hp = u.maxHp;
+        u.frozen = 0; u.status = null; u.statusTurns = 0;
+        log(game, `${card.name}! ${u.name}이(가) 완전히 회복됐다!`);
+      }
       markPlay(game, side, card);
-    return true;
+      return true;
     }
   }
   return false;
@@ -1174,6 +1184,11 @@ export function spellNeedsTarget(card) {
   if (card.kind !== 'spell') return null;
   const t = card.spell.target;
   if (t === 'enemy-any') return 'enemy';
-  if (t === 'friendly-pokemon') return 'friendly';
+  if (t === 'friendly-pokemon') {
+    // heal/fullheal은 트레이너에게도 사용 가능
+    const e = card.spell.effect;
+    if (e === 'heal' || e === 'fullheal') return 'friendly-or-hero';
+    return 'friendly';
+  }
   return null;
 }
