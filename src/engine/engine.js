@@ -262,7 +262,7 @@ function applyDamage(game, unit, amount, sourceType = null, typedIgnore = false)
     if (dmg < amount) log(game, `${unit.name}이(가) 모래숨기로 공격을 흘렸다!`);
   }
   // 멀티스케일: 체력 가득이면 피해 절반
-  if (unit.ability === 'multiscale' && unit.hp === unit.maxHp && dmg > 1) {
+  if ((unit.ability === 'multiscale' || unit.ability === 'aeroblast') && unit.hp === unit.maxHp && dmg > 1) {
     dmg = Math.ceil(dmg / 2);
     log(game, `${unit.name}의 멀티스케일! 피해가 절반이 됐다!`);
   }
@@ -542,6 +542,162 @@ function runBattlecry(game, side, unit) {
       }
       break;
     }
+    // =================== 레전드 전용기 ===================
+
+    case 'originpulse': // 가이오가: 근원의파동
+      game.weather = 'rain';
+      foe.field.forEach((u) => applyDamage(game, u, 3, '물'));
+      if (foe.field.length) {
+        const alive = foe.field.filter(u => u.hp > 0);
+        if (alive.length) { const t = alive[Math.floor(Math.random()*alive.length)]; t.frozen = 2; }
+      }
+      log(game, `${unit.name}의 근원의파동! 폭우 발동 + 상대 전체 물 피해 3 + 동결!`);
+      cleanupDeaths(game);
+      break;
+
+    case 'icebeamdance': // 스이쿤: 오로라빔
+      foe.field.forEach((u) => applyDamage(game, u, 2, '얼음'));
+      cleanupDeaths(game); {
+        const alive2 = foe.field.filter(u => u.hp > 0);
+        if (alive2.length) { const t = alive2[Math.floor(Math.random()*alive2.length)]; t.frozen = 2; }
+      }
+      log(game, `${unit.name}의 오로라빔! 상대 전체 얼음 피해 2 + 1마리 얼림!`);
+      break;
+
+    case 'skydive': { // 파이어: 하늘에서내리꽂기
+      for (let i = 0; i < 3; i++) {
+        const pool = foe.field.filter(u => u.hp > 0);
+        if (!pool.length) break;
+        const t = pool[Math.floor(Math.random() * pool.length)];
+        applyDamage(game, t, 3, '불꽃');
+      }
+      log(game, `${unit.name}의 불사르기! 불꽃 피해 3을 무작위 3회!`);
+      cleanupDeaths(game);
+      break;
+    }
+
+    case 'burningfall': // 엔테이: 불꽃폭포
+      { const bonus = game.weather === 'sun' ? 2 : 0;
+        foe.field.forEach((u) => applyDamage(game, u, 3 + bonus, '불꽃'));
+        log(game, `${unit.name}의 분화! 적 전체 불꽃 피해 ${3+bonus}${bonus?'(쾌청 보너스!)':''}!`);
+        cleanupDeaths(game); }
+      break;
+
+    case 'thunderwave': { // 썬더: 번개파동
+      foe.field.forEach((u) => applyDamage(game, u, 3, '전기'));
+      cleanupDeaths(game);
+      const aliveTW = foe.field.filter(u => u.hp > 0);
+      if (aliveTW.length) {
+        const t = aliveTW[Math.floor(Math.random()*aliveTW.length)];
+        t.frozen = 1;
+        log(game, `${unit.name}의 천둥차기! 전체 전기 피해 3 + ${t.name} 마비!`);
+      } else log(game, `${unit.name}의 천둥차기! 전체 전기 피해 3!`);
+      break;
+    }
+
+    case 'thunderfang': { // 라이코: 번개이빨
+      const pool = foe.field.filter(u => u.hp > 0);
+      if (pool.length) {
+        const t = pool[Math.floor(Math.random()*pool.length)];
+        applyDamage(game, t, 4, '전기');
+        t.frozen = 1;
+        log(game, `${unit.name}의 와일드볼트! ${t.name}에게 전기 피해 4 + 마비!`);
+        cleanupDeaths(game);
+      }
+      break;
+    }
+
+    case 'precipiceblades': // 그란돈: 절벽의칼날
+      game.weather = 'sun';
+      foe.field.forEach((u) => applyDamage(game, u, 4, '땅'));
+      log(game, `${unit.name}의 단애의칼! 쾌청 발동 + 상대 전체 땅 피해 4!`);
+      cleanupDeaths(game);
+      break;
+
+    case 'frostedgale': // 프리져: 냉동풍
+      foe.field.forEach((u) => { applyDamage(game, u, 2, '얼음'); if (u.hp > 0) u.frozen = 1; });
+      log(game, `${unit.name}의 얼어붙는시선! 상대 전체 얼음 피해 2 + 전부 1턴 얼림!`);
+      cleanupDeaths(game);
+      break;
+
+    case 'icelock': // 레지아이스: 냉동봉인
+      foe.field.forEach((u) => { u.frozen = 1; applyDamage(game, u, 1, '얼음'); });
+      log(game, `${unit.name}의 눈보라! 상대 전체 얼림 + 얼음 피해 1!`);
+      cleanupDeaths(game);
+      break;
+
+    case 'leafstorm': // 세레비: 리프스톰
+      foe.field.forEach((u) => applyDamage(game, u, 2, '풀'));
+      cleanupDeaths(game);
+      me.field.forEach((u) => { u.hp = Math.min(u.maxHp, u.hp + 2); });
+      drawCard(game, side);
+      log(game, `${unit.name}의 리프스톰! 상대 전체 풀 피해 2 + 아군 회복 + 드로우!`);
+      break;
+
+    case 'metronome': { // 뮤: 메트로놈
+      const targets2 = foe.field.filter(u => u.hp > 0);
+      if (targets2.length) {
+        const t = targets2[Math.floor(Math.random()*targets2.length)];
+        unit.atk = t.atk;
+        log(game, `${unit.name}의 변신! ${t.name}의 공격력(${t.atk}) 복사!`);
+      }
+      const poke = me.deck.filter(c => c.kind === 'pokemon');
+      if (poke.length && me.hand.length < 10) {
+        const pick = poke[Math.floor(Math.random()*poke.length)];
+        me.deck.splice(me.deck.indexOf(pick), 1);
+        me.hand.push(pick);
+        log(game, `${pick.name}을(를) 손으로 가져왔다.`);
+      }
+      break;
+    }
+
+    case 'aeroblast': // 루기아: 에어로블라스트
+      foe.field.forEach((u) => applyDamage(game, u, 3, '비행'));
+      log(game, `${unit.name}의 에어로블라스트! 상대 전체 비행 피해 3! 멀티스케일 유지.`);
+      cleanupDeaths(game);
+      break;
+
+    case 'rockblast': { // 레지락: 록블래스트
+      for (let i = 0; i < 4; i++) {
+        const pool = foe.field.filter(u => u.hp > 0);
+        if (!pool.length) break;
+        const t = pool[Math.floor(Math.random()*pool.length)];
+        applyDamage(game, t, 2, '바위');
+      }
+      log(game, `${unit.name}의 스톤에지! 바위 피해 2를 4회!`);
+      cleanupDeaths(game);
+      break;
+    }
+
+    case 'mistball': { // 라티아스: 미스트볼
+      const pool3 = foe.field.filter(u => u.hp > 0);
+      if (pool3.length) {
+        const t = pool3[Math.floor(Math.random()*pool3.length)];
+        applyDamage(game, t, 4, '드래곤');
+        log(game, `${unit.name}의 미스트볼! ${t.name}에게 드래곤 피해 4!`);
+        cleanupDeaths(game);
+      }
+      me.field.filter(u => u.type === '드래곤' && u.uid !== unit.uid).forEach(u => { u.atk += 1; });
+      log(game, `아군 드래곤 포켓몬 공격력 +1!`);
+      break;
+    }
+
+    case 'dragonascent': // 레쿠쟈: 용승천
+      game.weather = null;
+      foe.field.forEach((u) => applyDamage(game, u, 3, '드래곤'));
+      log(game, `${unit.name}의 화룡점정! 날씨 초기화 + 상대 전체 드래곤 피해 3!`);
+      cleanupDeaths(game);
+      break;
+
+    case 'irondefense': // 레지스틸: 철벽
+      { const alive3 = foe.field.filter(u => u.hp > 0);
+        alive3.forEach(u => { if (u.ability !== 'taunt' && u.ability !== 'fortress') u._taunted = true; });
+        unit.ability = 'taunt'; // 도발 효과 활성화
+        unit.hp = Math.min(unit.maxHp + 3, unit.hp + 3);
+        unit.maxHp += 3;
+        log(game, `${unit.name}의 철벽! 도발로 모든 공격을 끌어당기고 체력 +3!`); }
+      break;
+
     default:
       break;
   }

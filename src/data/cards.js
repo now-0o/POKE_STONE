@@ -54,6 +54,21 @@ export const ABILITY_TEXT = {
   airlock: '에어록: 나왔을 때 모든 날씨를 없앤다',
   sandveil: '모래숨기: 모래바람일 때 받는 피해 1 감소',
   // 방어/생존
+  originpulse: '근원의파동(가이오가 전용기): 나올 때 폭우 발동. 상대 전체 물 피해 3 + 무작위 1마리를 얼린다',
+  icebeamdance: '오로라빔(스이쿤 전용기): 나올 때 상대 전체 얼음 피해 2 + 1마리를 2턴 얼린다',
+  skydive: '불사르기(파이어 전용기): 나올 때 불꽃 피해 3을 무작위로 3회 입힌다',
+  burningfall: '분화(엔테이 전용기): 나올 때 적 전체 불꽃 피해 3. 쾌청이면 피해 +2',
+  thunderwave: '천둥차기(썬더 전용기): 나올 때 적 전체 전기 피해 3. 무작위 1마리를 1턴 마비시킨다',
+  thunderfang: '와일드볼트(라이코 전용기): 나올 때 무작위 상대에게 전기 피해 4 + 1턴 마비',
+  precipiceblades: '단애의칼(그란돈 전용기): 나올 때 쾌청 발동. 상대 전체 땅 피해 4',
+  frostedgale: '얼어붙는시선(프리져 전용기): 나올 때 상대 전체 얼음 피해 2 + 전부 1턴 얼린다',
+  icelock: '눈보라(레지아이스 전용기): 나올 때 상대 전체를 1턴 얼리고 얼음 피해 1을 입힌다',
+  leafstorm: '리프스톰(세레비 전용기): 나올 때 상대 전체 풀 피해 2 + 아군 전체 회복 2 + 카드 1장 드로우',
+  aeroblast: '에어로블라스트(루기아 전용기): 나올 때 상대 전체 비행 피해 3. 멀티스케일(풀피 시 피해 절반) 유지',
+  rockblast: '스톤에지(레지락 전용기): 나올 때 상대에게 바위 피해 2를 무작위로 4회 입힌다',
+  mistball: '미스트볼(라티아스 전용기): 나올 때 무작위 상대에게 드래곤 피해 4. 아군 드래곤 포켓몬 공격력 +1',
+  dragonascent: '화룡점정(레쿠쟈 전용기): 나올 때 날씨 초기화. 상대 전체 드래곤 피해 3',
+  irondefense: '철벽(레지스틸 전용기): 나올 때 도발로 모든 공격을 자신에게 유도하고 체력 +3을 얻는다',
   taunt: '도발: 상대는 이 포켓몬을 먼저 공격해야 한다',
   sturdy: '옹골참: 치명적인 피해를 1회 버티고 체력 1이 남는다',
   disguise: '변장: 치명적인 피해를 1회 버티고 체력 1이 남는다',
@@ -80,7 +95,7 @@ export const ABILITY_TEXT = {
   keeneye: '예리한눈: 나왔을 때 카드를 1장 뽑는다',
   teleport: '텔레포트: 나왔을 때 카드를 1장 뽑는다',
   foresight: '예지: 나왔을 때 카드를 2장 뽑는다',
-  ancestor: '만물의시조: 나왔을 때 내 덱에서 무작위 포켓몬 1장을 손으로 가져온다',
+  metronome: '변신(뮤 전용기): 나올 때 무작위 상대 공격력을 복사하고 덱에서 포켓몬 1장을 손으로 가져온다',
   download: '다운로드: 나왔을 때 자신이 +1/+1을 얻는다',
   transform: '변신: 나왔을 때 무작위 상대 포켓몬의 능력치와 타입을 복사한다',
   sleeppowder: '수면가루: 나왔을 때 무작위 상대를 1턴 재운다',
@@ -101,7 +116,7 @@ export const ABILITY_TEXT = {
   eruption: '분화: 나왔을 때 상대 포켓몬 전체에게 불꽃 타입 피해 2',
   muddywater: '탁류: 나왔을 때 상대 포켓몬 전체에게 물 타입 피해 1',
   blizzard: '눈보라: 나왔을 때 상대 전체에게 얼음 타입 피해 1, 무작위 하나를 1턴 얼린다',
-  primordialsea: '근원의바다: 나왔을 때 비를 내리고, 상대 포켓몬 전체에게 물 타입 피해 2',
+  primordialsea: '시작의바다: 나왔을 때 비를 내리고, 상대 포켓몬 전체에게 물 타입 피해 2',
   desolateland: '끝의대지: 나왔을 때 쾌청을 만들고, 상대 포켓몬 전체에게 땅 타입 피해 2',
   freezer: '눈보라: 나왔을 때 무작위 상대를 1턴 얼린다',
   explode: '대폭발: 기절하면 무작위 상대에게 피해 2',
@@ -126,7 +141,7 @@ export const CARDS = [
   P('lapras', '라프라스', '물', 4, 2, 7, 'R', { ability: 'taunt' }),
   P('vaporeon', '샤미드', '물', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'eevee', ability: 'waterabsorb' }),
   P('politoed', '왕구리', '물', 3, 2, 5, 'R', { ability: 'drizzle' }),
-  P('kyogre', '가이오가', '물', 8, 8, 9, 'L', { ability: 'primordialsea' }),
+  P('kyogre', '가이오가', '물', 8, 8, 9, 'L', { ability: 'originpulse' }),
   P('psyduck', '고라파덕', '물', 1, 1, 2, 'C', {}),
   P('golduck', '골덕', '물', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'psyduck', ability: 'swiftswim' }),
   P('horsea', '쏘드라', '물', 1, 1, 1, 'C', {}),
@@ -139,7 +154,7 @@ export const CARDS = [
   P('whiscash', '메깅', '물', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'barboach' }),
   P('carvanha', '샤프니아', '물', 2, 3, 1, 'C', { ability: 'roughskin' }),
   P('sharpedo', '샤크니아', '물', 4, 7, 4, 'R', { stage: 1, evolvesFrom: 'carvanha', ability: 'roughskin' }),
-  P('suicune', '스이쿤', '물', 7, 6, 9, 'L', { ability: 'purify' }),
+  P('suicune', '스이쿤', '물', 7, 6, 9, 'L', { ability: 'icebeamdance' }),
 
   // ============ 불꽃 (12) ============
   P('charmander', '파이리', '불꽃', 1, 1, 2, 'C', { ability: 'blaze' }),
@@ -151,8 +166,8 @@ export const CARDS = [
   P('ponyta', '포니타', '불꽃', 2, 2, 2, 'C', { ability: 'rush' }),
   P('rapidash', '날쌩마', '불꽃', 4, 6, 5, 'R', { stage: 1, evolvesFrom: 'ponyta', ability: 'flashfire' }),
   P('magmar', '마그마', '불꽃', 4, 4, 5, 'R', { ability: 'flashfire' }),
-  P('moltres', '파이어', '불꽃', 8, 9, 8, 'L', { ability: 'flamesiege' }),
-  P('entei', '앤테이', '불꽃', 7, 7, 8, 'L', { ability: 'eruption' }),
+  P('moltres', '파이어', '불꽃', 8, 9, 8, 'L', { ability: 'skydive' }),
+  P('entei', '앤테이', '불꽃', 7, 7, 8, 'L', { ability: 'burningfall' }),
   P('hooh', '칠색조', '불꽃', 8, 8, 9, 'L', { ability: 'sacredflame' }),
 
   // ============ 풀 (15) ============
@@ -184,8 +199,8 @@ export const CARDS = [
   P('mareep', '메리프', '전기', 1, 0, 1, 'C', { ability: 'static' }),
   P('flaaffy', '보송송', '전기', 2, 2, 4, 'C', { stage: 1, evolvesFrom: 'mareep', ability: 'static' }),
   P('ampharos', '전룡', '전기', 5, 6, 9, 'E', { stage: 2, evolvesFrom: 'flaaffy', ability: 'aura_electric' }),
-  P('zapdos', '썬더', '전기', 8, 9, 8, 'L', { ability: 'thunderstrike' }),
-  P('raikou', '라이코우', '전기', 7, 8, 7, 'L', { ability: 'rush' }),
+  P('zapdos', '썬더', '전기', 8, 9, 8, 'L', { ability: 'thunderwave' }),
+  P('raikou', '라이코', '전기', 7, 8, 7, 'L', { ability: 'thunderfang' }),
 
   // ============ 땅 (9) ============
   P('diglett', '디그다', '땅', 1, 1, 1, 'C', { ability: 'rush' }),
@@ -198,7 +213,7 @@ export const CARDS = [
   P('trapinch', '톱치', '땅', 1, 1, 1, 'C', {}),
   P('vibrava', '비브라바', '땅', 3, 4, 4, 'R', { stage: 1, evolvesFrom: 'trapinch', ability: 'levitate' }),
   P('flygon', '플라이곤', '땅', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'vibrava', ability: 'levitate' }),
-  P('groudon', '그란돈', '땅', 8, 8, 9, 'L', { ability: 'desolateland' }),
+  P('groudon', '그란돈', '땅', 8, 8, 9, 'L', { ability: 'precipiceblades' }),
 
   // ============ 비행 (9) ============
   P('pidgey', '구구', '비행', 1, 1, 1, 'C', {}),
@@ -218,7 +233,6 @@ export const CARDS = [
   P('snorlax', '잠만보', '노말', 6, 3, 10, 'E', { ability: 'taunt' }),
   P('chansey', '럭키', '노말', 3, 1, 6, 'R', { ability: 'healer' }),
   P('kangaskhan', '캥카', '노말', 4, 4, 6, 'R', {}),
-  P('ditto', '메타몽', '노말', 2, 1, 1, 'C', { ability: 'transform', flavor: '무엇으로든 변할 수 있다. 진짜로.' }),
   P('slakoth', '게을로', '노말', 1, 0, 1, 'C', { ability: 'truant' }),
   P('vigoroth', '발바로', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'slakoth' }),
   P('slaking', '게을킹', '노말', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'vigoroth', ability: 'truant' }),
@@ -241,13 +255,13 @@ export const CARDS = [
   // ============ 얼음 (9) ============
   P('seel', '쥬쥬', '얼음', 2, 2, 3, 'C', {}),
   P('dewgong', '쥬레곤', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'seel', ability: 'thickfat' }),
-  P('articuno', '프리져', '얼음', 8, 7, 10, 'L', { ability: 'blizzard' }),
+  P('articuno', '프리져', '얼음', 8, 7, 10, 'L', { ability: 'frostedgale' }),
   P('jynx', '루주라', '얼음', 4, 4, 5, 'R', { ability: 'lovelykiss' }),
   P('shellder', '셀러', '얼음', 1, 1, 1, 'C', { ability: 'sturdy' }),
   P('cloyster', '파르셀', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'shellder', ability: 'skilllink' }),
   P('swinub', '꾸꾸리', '얼음', 1, 1, 2, 'C', {}),
   P('piloswine', '메꾸리', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'swinub', ability: 'thickfat' }),
-  P('regice', '레지아이스', '얼음', 7, 5, 10, 'L', { ability: 'thickfat' }),
+  P('regice', '레지아이스', '얼음', 7, 5, 10, 'L', { ability: 'icelock' }),
 
   // ============ 격투 (13) ============
   P('machop', '알통몬', '격투', 1, 1, 2, 'C', { ability: 'guts' }),
@@ -284,7 +298,7 @@ export const CARDS = [
   P('abra', '캐이시', '에스퍼', 1, 0, 1, 'C', { ability: 'teleport' }),
   P('kadabra', '윤겔라', '에스퍼', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'abra' }),
   P('alakazam', '후딘', '에스퍼', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'kadabra', ability: 'foresight' }),
-  P('celebi', '세레비', '에스퍼', 6, 5, 8, 'L', { ability: 'timetravel' }),
+  P('celebi', '세레비', '에스퍼', 6, 5, 8, 'L', { ability: 'leafstorm' }),
   P('mewtwo', '뮤츠', '에스퍼', 9, 10, 9, 'L', { ability: 'psystrike' }),
   P('drowzee', '슬리프', '에스퍼', 1, 1, 2, 'C', {}),
   P('hypno', '슬리퍼', '에스퍼', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'drowzee', ability: 'hypnosis' }),
@@ -294,8 +308,8 @@ export const CARDS = [
   P('natu', '네이티', '에스퍼', 1, 1, 1, 'C', { ability: 'keeneye' }),
   P('xatu', '네이티오', '에스퍼', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'natu', ability: 'keeneye' }),
   P('espeon', '에브이', '에스퍼', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'eevee', ability: 'teleport' }),
-  P('mew', '뮤', '에스퍼', 7, 7, 8, 'L', { ability: 'ancestor' }),
-  P('lugia', '루기아', '에스퍼', 9, 8, 11, 'L', { ability: 'multiscale' }),
+  P('mew', '뮤', '에스퍼', 7, 7, 8, 'L', { ability: 'metronome' }),
+  P('lugia', '루기아', '에스퍼', 9, 8, 11, 'L', { ability: 'aeroblast' }),
 
   // ============ 바위 (10) ============
   P('onix', '롱스톤', '바위', 3, 2, 4, 'C', { ability: 'taunt' }),
@@ -308,7 +322,7 @@ export const CARDS = [
   P('golem', '딱구리', '바위', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'graveler', ability: 'explode' }),
   P('nosepass', '코코파스', '바위', 2, 1, 4, 'C', { ability: 'sturdy' }),
   P('lunatone', '루나톤', '바위', 3, 3, 4, 'R', { ability: 'levitate' }),
-  P('regirock', '레지락', '바위', 7, 6, 9, 'L', { ability: 'sturdy' }),
+  P('regirock', '레지락', '바위', 7, 6, 9, 'L', { ability: 'rockblast' }),
 
   // ============ 고스트 (5) ============
   P('gastly', '고오스', '고스트', 1, 0, 1, 'C', { ability: 'levitate' }),
@@ -327,8 +341,8 @@ export const CARDS = [
   P('bagon', '아공이', '드래곤', 1, 1, 1, 'C', {}),
   P('shelgon', '쉘곤', '드래곤', 3, 2, 6, 'R', { stage: 1, evolvesFrom: 'bagon', ability: 'sturdy' }),
   P('salamence', '보만다', '드래곤', 6, 9, 8, 'E', { stage: 2, evolvesFrom: 'shelgon', ability: 'intimidate' }),
-  P('latias', '라티아스', '드래곤', 7, 6, 9, 'L', { ability: 'aura_dragon' }),
-  P('rayquaza', '레쿠쟈', '드래곤', 10, 11, 10, 'L', { ability: 'airlock' }),
+  P('latias', '라티아스', '드래곤', 7, 6, 9, 'L', { ability: 'mistball' }),
+  P('rayquaza', '레쿠쟈', '드래곤', 10, 11, 10, 'L', { ability: 'dragonascent' }),
 
   // ============ 악 (9) ============
   P('umbreon', '블래키', '악', 3, 2, 7, 'R', { stage: 1, evolvesFrom: 'eevee', ability: 'taunt' }),
@@ -349,7 +363,7 @@ export const CARDS = [
   P('rookidee', '파라꼬', '비행', 1, 1, 1, 'C', {}),
   P('corvisquire', '파크로우', '비행', 3, 3, 6, 'R', { stage: 1, evolvesFrom: 'rookidee' }),
   P('corviknight', '아머까오', '강철', 4, 0, 7, 'E', { stage: 2, evolvesFrom: 'corvisquire', ability: 'fortress' }),
-  P('registeel', '레지스틸', '강철', 7, 3, 12, 'L', { ability: 'taunt' }),
+  P('registeel', '레지스틸', '강철', 7, 3, 12, 'L', { ability: 'irondefense' }),
   P('beldum', '메탕', '강철', 1, 1, 1, 'C', {}),
   P('metang', '메탕구', '강철', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'beldum' }),
   P('metagross', '메타그로스', '강철', 6, 8, 9, 'E', { stage: 2, evolvesFrom: 'metang', ability: 'foresight' }),
@@ -456,9 +470,9 @@ export const CARDS = [
   { id: 'raindance', name: '비바라기', kind: 'spell', type: '기술', cost: 2, rarity: 'C', emoji: '🌧️', spell: { effect: 'weather', weather: 'rain' }, text: '날씨를 비로 바꾼다. (물 포켓몬 공격력 +1, 쓱쓱 발동)' },
   { id: 'sunnyday', name: '쾌청', kind: 'spell', type: '기술', cost: 2, rarity: 'C', emoji: '☀️', spell: { effect: 'weather', weather: 'sun' }, text: '날씨를 쾌청으로 바꾼다. (불꽃 포켓몬 공격력 +1, 엽록소·선파워 발동)' },
   { id: 'sandstorm', name: '모래바람', kind: 'spell', type: '기술', cost: 2, rarity: 'C', emoji: '🏜️', spell: { effect: 'weather', weather: 'sand' }, text: '날씨를 모래바람으로 바꾼다. (매 턴 종료 시 바위/땅/강철이 아닌 포켓몬 전체에게 피해 1)' },
-  { id: 'potion', name: '상처약', kind: 'spell', type: '기술', cost: 1, rarity: 'C', emoji: '🧪', spell: { effect: 'heal', amount: 3, target: 'friendly-pokemon' }, text: '아군 포켓몬 하나의 체력을 3 회복한다.' },
-  { id: 'fullrestore', name: '풀회복', kind: 'spell', type: '기술', cost: 3, rarity: 'R', emoji: '💊', spell: { effect: 'fullheal', target: 'friendly-pokemon' }, text: '아군 포켓몬 하나의 체력을 모두 회복하고 상태이상을 해제한다.' },
-  { id: 'pokeball', name: '몬스터볼', kind: 'spell', type: '기술', cost: 1, rarity: 'C', emoji: '⚪', spell: { effect: 'tutor_pokemon' }, text: '내 덱에서 무작위 포켓몬 1장을 손으로 가져온다.' },
+  { id: 'potion', name: '상처약', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '🧪', spell: { effect: 'heal', amount: 3, target: 'friendly-pokemon' }, text: '아군 포켓몬 하나의 체력을 3 회복한다.' },
+  { id: 'fullrestore', name: '풀회복약', kind: 'spell', type: '도구', cost: 3, rarity: 'R', emoji: '💊', spell: { effect: 'fullheal', target: 'friendly-pokemon' }, text: '아군 포켓몬 하나의 체력을 모두 회복하고 상태이상을 해제한다.' },
+  { id: 'pokeball', name: '몬스터볼', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '⚪', spell: { effect: 'tutor_pokemon' }, text: '내 덱에서 무작위 포켓몬 1장을 손으로 가져온다.' },
 
   // ============ 도구 (4) ============
   { id: 'everstone', name: '진화의 휘석', kind: 'item', type: '도구', cost: 1, rarity: 'R', emoji: '💎', item: { effect: 'everstone', hpBonus: 2 }, text: '장착: 체력 +2. 이 포켓몬은 더 이상 진화할 수 없다.' },
@@ -467,11 +481,11 @@ export const CARDS = [
   { id: 'shellbell', name: '조개껍질방울', kind: 'item', type: '도구', cost: 2, rarity: 'R', emoji: '🐚', item: { effect: 'shellbell' }, text: '장착: 공격으로 피해를 입힐 때마다 체력을 1 회복한다.' },
 
   // ============ 메가스톤 (5) ============
-  { id: 'swampertite', name: '대짱이나이트', kind: 'mega', type: '기술', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'swampert', mega: { atk: 2, hp: 2, ability: 'swiftswim' }, text: '대짱이 전용. +2/+2, 특성이 쓱쓱이 된다. 비가 내리고 있다면 즉시 돌진을 얻는다. (게임당 메가진화 1회)' },
-  { id: 'charizarditey', name: '리자몽나이트Y', kind: 'mega', type: '기술', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'charizard', mega: { atk: 3, hp: 1, ability: 'drought', battlecryWeather: 'sun' }, text: '리자몽 전용. +3/+1, 가뭄 발동 - 날씨가 쾌청이 된다. (게임당 메가진화 1회)' },
-  { id: 'gyaradosite', name: '갸라도스나이트', kind: 'mega', type: '기술', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'gyarados', mega: { atk: 2, hp: 2, ability: 'intimidate', reIntimidate: true }, text: '갸라도스 전용. +2/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)' },
-  { id: 'gengarite', name: '팬텀나이트', kind: 'mega', type: '기술', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'gengar', mega: { atk: 2, hp: 2, ability: 'hypnosis', reBattlecry: true }, text: '팬텀 전용. +2/+2, 최면술이 다시 발동한다 - 무작위 상대를 1턴 재운다. (게임당 메가진화 1회)' },
-  { id: 'salamencite', name: '보만다나이트', kind: 'mega', type: '기술', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'salamence', mega: { atk: 3, hp: 2, ability: 'intimidate', reBattlecry: true }, text: '보만다 전용. +3/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)' },
+  { id: 'swampertite', name: '대짱이나이트', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'swampert', mega: { atk: 2, hp: 2, ability: 'swiftswim' }, text: '대짱이 전용. +2/+2, 특성이 쓱쓱이 된다. 비가 내리고 있다면 즉시 돌진을 얻는다. (게임당 메가진화 1회)' },
+  { id: 'charizarditey', name: '리자몽나이트Y', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'charizard', mega: { atk: 3, hp: 1, ability: 'drought', battlecryWeather: 'sun' }, text: '리자몽 전용. +3/+1, 가뭄 발동 - 날씨가 쾌청이 된다. (게임당 메가진화 1회)' },
+  { id: 'gyaradosite', name: '갸라도스나이트', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'gyarados', mega: { atk: 2, hp: 2, ability: 'intimidate', reIntimidate: true }, text: '갸라도스 전용. +2/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)' },
+  { id: 'gengarite', name: '팬텀나이트', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'gengar', mega: { atk: 2, hp: 2, ability: 'hypnosis', reBattlecry: true }, text: '팬텀 전용. +2/+2, 최면술이 다시 발동한다 - 무작위 상대를 1턴 재운다. (게임당 메가진화 1회)' },
+  { id: 'salamencite', name: '보만다나이트', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'salamence', mega: { atk: 3, hp: 2, ability: 'intimidate', reBattlecry: true }, text: '보만다 전용. +3/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)' },
 ];
 
 export const CARD_MAP = Object.fromEntries(CARDS.map((c) => [c.id, c]));
@@ -494,7 +508,7 @@ export const DEX = {
   pidgey: 16, pidgeotto: 17, pidgeot: 18, spearow: 21, fearow: 22, doduo: 84, dodrio: 85,
   farfetchd: 83, tauros: 128,
   rattata: 19, raticate: 20, eevee: 133, snorlax: 143, chansey: 113, kangaskhan: 115,
-  ditto: 132, slakoth: 287, vigoroth: 288, slaking: 289, miltank: 241, porygon: 137, dunsparce: 206,
+  slakoth: 287, vigoroth: 288, slaking: 289, miltank: 241, porygon: 137, dunsparce: 206,
   caterpie: 10, butterfree: 12, scyther: 123, weedle: 13, kakuna: 14, beedrill: 15,
   heracross: 214, ledyba: 165, ledian: 166,
   seel: 86, dewgong: 87, articuno: 144, jynx: 124, shellder: 90, cloyster: 91,

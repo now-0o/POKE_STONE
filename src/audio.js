@@ -112,6 +112,29 @@ if (typeof window !== 'undefined') {
   window.addEventListener('keydown', resumeBgmIfStuck);
 }
 
+// 울음소리 (레전드 소환 시)
+const CRY_IDS = new Set([
+  'articuno','celebi','entei','groudon','hooh','kyogre','latias',
+  'lugia','mew','mewtwo','moltres','raikou','rayquaza',
+  'regice','regirock','registeel','suicune'
+]);
+// 파일명 매핑 (칠색조 등 예외)
+const CRY_FILE = {
+  hooh: 'hooh', // ho-oh 특수처리
+};
+
+export function playCry(pokemonId) {
+  const file = CRY_FILE[pokemonId] || pokemonId;
+  if (!CRY_IDS.has(pokemonId)) return;
+  const a = new Audio(`/audio/cry/${file}.ogg`);
+  a.volume = 0.85 * getVolume();
+  a.play().catch(() => {});
+}
+
+export function isLegend(pokemonId) {
+  return CRY_IDS.has(pokemonId);
+}
+
 export function playBgm(key) {
   if (key === currentBgmKey) return;
   const prevKey = currentBgmKey;

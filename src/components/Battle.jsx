@@ -7,7 +7,7 @@ import {
 } from '../engine/engine.js';
 import { aiStep } from '../engine/ai.js';
 import { HandCard, FieldUnit, TrainerSprite } from './Card.jsx';
-import { playSfx } from '../audio.js';
+import { playSfx, playCry, isLegend } from '../audio.js';
 
 const AI_DELAY = 1100;
 const DRAG_THRESHOLD = 8;
@@ -23,8 +23,9 @@ export default function Battle({ trainer, deck, onFinish }) {
   const [enemyReveal, setEnemyReveal] = useState(null); // 상대 카드 공개 연출
   const [inspect, setInspect] = useState(null); // 꾹 눌러 카드 크게 보기
   const [unitFx, setUnitFx] = useState(null); // 진화/메가 이펙트
+  const [legendFx, setLegendFx] = useState(null); // 레전드 소환 전용 이펙트
   const [atkFx, setAtkFx] = useState(null); // 공격 돌진/피격 연출
-  const [intro, setIntro] = useState(true);
+  const [intro, setIntro] = useState('vs'); // 'vs' -> 'coin' -> false
   const [confirmSurrender, setConfirmSurrender] = useState(false);
   const aiTimer = useRef(null);
   const logRef = useRef(null);
@@ -50,7 +51,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   // ---- AI 턴 루프 (행동 1개씩) ----
   useEffect(() => {
-    if (intro || game.winner || game.turn !== 'enemy') return;
+    if (intro !== false || game.winner || game.turn !== 'enemy') return;
     aiTimer.current = setTimeout(() => {
       aiStep(game);
       rerender();
@@ -67,6 +68,11 @@ export default function Battle({ trainer, deck, onFinish }) {
       setEnemyReveal({ cardId: la.cardId, key: la.seq });
       clearTimeout(revealTimer.current);
       revealTimer.current = setTimeout(() => setEnemyReveal(null), 1150);
+    }
+    if (la.kind === 'play' && la.cardId && isLegend(la.cardId)) {
+      playCry(la.cardId);
+      setLegendFx({ cardId: la.cardId, side: la.side, key: la.seq });
+      setTimeout(() => setLegendFx(null), 2000);
     }
     if (la.anim === 'evolve' || la.anim === 'mega') {
       setUnitFx({ uid: la.uid, kind: la.anim, key: la.seq });
@@ -459,30 +465,51 @@ export default function Battle({ trainer, deck, onFinish }) {
     );
   }
 
-  if (intro) {
+  // VS 화면 자동 진행: 1.4s → coin 애니, 2.8s → 배틀 시작
+  useEffect(() => {
+    if (intro === 'vs') {
+      const t1 = setTimeout(() => setIntro('coin'), 1400);
+      const t2 = setTimeout(() => setIntro(false), 2800);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [intro]);
+
+  if (intro !== false) {
+    const isPlayer = game.firstSide === 'player';
     return (
-      <div className="battle-intro">
-        <div className="intro-vs">
-          <div className="intro-side">
-            <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={110} />
-            <span>나</span>
+      <div className={`battle-intro intro-phase-${intro}`}>
+        {intro === 'vs' && (
+          <>
+            <div className="intro-vs">
+              <div className="intro-side">
+                <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={110} />
+                <span>나</span>
+              </div>
+              <div className="intro-vs-text">VS</div>
+              <div className="intro-side">
+                <TrainerSprite spriteKey={trainer.sprite} emoji={trainer.emoji} size={110} />
+                <span>{trainer.name}</span>
+              </div>
+            </div>
+            <p className="intro-line">
+              "{trainer.introLines[Math.floor(Math.random() * trainer.introLines.length)]}"
+            </p>
+          </>
+        )}
+        {intro === 'coin' && (
+          <div className="coin-toss-wrap">
+            <div className={`coin-spin ${isPlayer ? 'heads' : 'tails'}`}>🪙</div>
+            <p className={`coin-result ${isPlayer ? 'first' : 'second'}`}>
+              {isPlayer ? '선공!' : '후공...'}
+            </p>
+            <p className="coin-sub">
+              {isPlayer
+                ? '코인 앞면! 내가 먼저 간다.'
+                : `코인 뒷면! ${trainer.name} 선공 — 대신 카드 1장 더 받음`}
+            </p>
           </div>
-          <div className="intro-vs-text">VS</div>
-          <div className="intro-side">
-            <TrainerSprite spriteKey={trainer.sprite} emoji={trainer.emoji} size={110} />
-            <span>{trainer.name}</span>
-          </div>
-        </div>
-        <p className="intro-line">
-          "{trainer.introLines[Math.floor(Math.random() * trainer.introLines.length)]}"
-        </p>
-        <p className={`intro-coin ${game.firstSide === 'player' ? 'first' : 'second'}`}>
-          {game.firstSide === 'player'
-            ? '🪙 코인토스 결과: 내가 선공!'
-            : `🪙 코인토스 결과: ${trainer.name} 선공 (대신 카드 1장 더 받음)`}
-        </p>
-        <button className="btn-primary" onClick={() => setIntro(false)}>배틀 시작!</button>
-        <button className="btn-ghost" onClick={() => onFinish(null)}>돌아가기</button>
+        )}
+        <button className="btn-ghost small" style={{position:'absolute',bottom:16,right:16}} onClick={() => onFinish(null)}>돌아가기</button>
       </div>
     );
   }
@@ -544,6 +571,19 @@ export default function Battle({ trainer, deck, onFinish }) {
         <div className="enemy-reveal" key={enemyReveal.key}>
           <div className="enemy-reveal-label">{foe.name}</div>
           <HandCard cardId={enemyReveal.cardId} playable ghost />
+        </div>
+      )}
+
+      {/* 레전드 소환 전용 이펙트 */}
+      {legendFx && (
+        <div className={`legend-summon-fx legend-${legendFx.cardId} ${legendFx.side === 'player' ? 'from-bottom' : 'from-top'}`} key={legendFx.key}>
+          <div className="legend-rings" />
+          <img
+            className="legend-sprite"
+            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${{kyogre:382,suicune:245,moltres:146,entei:244,hooh:250,zapdos:145,raikou:243,groudon:383,articuno:144,regice:378,celebi:251,mewtwo:150,mew:151,lugia:249,regirock:377,latias:380,rayquaza:384,registeel:379}[legendFx.cardId]}.png`}
+            alt=""
+          />
+          <div className="legend-name">{({'kyogre':'가이오가','suicune':'스이쿤','moltres':'파이어','entei':'앤테이','hooh':'칠색조','zapdos':'썬더','raikou':'라이코','groudon':'그란돈','articuno':'프리져','regice':'레지아이스','celebi':'세레비','mewtwo':'뮤츠','mew':'뮤','lugia':'루기아','regirock':'레지락','latias':'라티아스','rayquaza':'레쿠쟈','registeel':'레지스틸'})[legendFx.cardId]}</div>
         </div>
       )}
 

@@ -1597,3 +1597,188 @@ img.res-icon.small { vertical-align: -2px; }
   .patchnotes-panel { right: 8px; bottom: 52px; }
   .btn-patchnotes { right: 8px; }
 }
+
+/* ============================================================
+   정렬 버튼 행
+   ============================================================ */
+.sort-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px 0 2px;
+}
+.sort-btn {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sort-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.sort-btn.active { background: rgba(196,120,255,0.18); border-color: rgba(196,120,255,0.55); color: #e8d4ff; }
+
+/* ============================================================
+   레전드 소환 전용 이펙트
+   ============================================================ */
+.legend-summon-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: legend-fade 2s ease-in-out forwards;
+}
+@keyframes legend-fade {
+  0%   { opacity: 0; transform: scale(0.7); }
+  15%  { opacity: 1; transform: scale(1.05); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.legend-summon-fx::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--legend-bg, radial-gradient(ellipse at center, rgba(255,200,50,0.25) 0%, transparent 70%));
+}
+.legend-rings {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: legend-ring 0.8s ease-out 0.1s both;
+  background: radial-gradient(circle, transparent 40%, var(--legend-ring, rgba(255,220,80,0.3)) 60%, transparent 75%);
+}
+@keyframes legend-ring {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.legend-sprite {
+  width: min(220px, 40vw);
+  height: min(220px, 40vw);
+  object-fit: contain;
+  filter: drop-shadow(0 0 24px var(--legend-glow, rgba(255,220,80,0.9)));
+  animation: legend-sprite-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  z-index: 1;
+}
+@keyframes legend-sprite-in {
+  0% { transform: translateY(40px) scale(0.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.from-bottom .legend-sprite { animation-name: legend-sprite-up; }
+@keyframes legend-sprite-up {
+  0% { transform: translateY(60px) scale(0.5); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.legend-name {
+  margin-top: 12px;
+  font-family: var(--display-font);
+  font-size: clamp(18px, 4vw, 28px);
+  color: #fff;
+  text-shadow: 0 0 12px var(--legend-glow, rgba(255,220,80,0.9)), 0 2px 4px rgba(0,0,0,0.8);
+  letter-spacing: 0.08em;
+  z-index: 1;
+  animation: legend-name-in 0.4s 0.25s ease-out both;
+}
+@keyframes legend-name-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 타입별 컨셉 색상 */
+.legend-kyogre   { --legend-bg: radial-gradient(ellipse, rgba(30,80,255,0.35) 0%, transparent 70%); --legend-glow: rgba(60,140,255,0.9); --legend-ring: rgba(60,160,255,0.4); }
+.legend-suicune  { --legend-bg: radial-gradient(ellipse, rgba(80,200,255,0.3) 0%, transparent 70%); --legend-glow: rgba(120,220,255,0.9); --legend-ring: rgba(100,200,255,0.4); }
+.legend-moltres  { --legend-bg: radial-gradient(ellipse, rgba(255,100,30,0.35) 0%, transparent 70%); --legend-glow: rgba(255,140,60,0.9); --legend-ring: rgba(255,160,40,0.5); }
+.legend-entei    { --legend-bg: radial-gradient(ellipse, rgba(255,80,20,0.35) 0%, transparent 70%); --legend-glow: rgba(255,100,30,0.9); --legend-ring: rgba(255,120,30,0.5); }
+.legend-hooh     { --legend-bg: radial-gradient(ellipse, rgba(255,180,30,0.35) 0%, transparent 70%); --legend-glow: rgba(255,200,80,0.9); --legend-ring: rgba(255,220,80,0.5); }
+.legend-zapdos   { --legend-bg: radial-gradient(ellipse, rgba(255,220,30,0.35) 0%, transparent 70%); --legend-glow: rgba(255,240,60,0.9); --legend-ring: rgba(255,240,80,0.5); }
+.legend-raikou   { --legend-bg: radial-gradient(ellipse, rgba(220,200,30,0.35) 0%, transparent 70%); --legend-glow: rgba(240,220,50,0.9); --legend-ring: rgba(230,220,60,0.5); }
+.legend-groudon  { --legend-bg: radial-gradient(ellipse, rgba(200,60,20,0.35) 0%, transparent 70%); --legend-glow: rgba(220,80,30,0.9); --legend-ring: rgba(210,90,20,0.5); }
+.legend-articuno { --legend-bg: radial-gradient(ellipse, rgba(140,220,255,0.35) 0%, transparent 70%); --legend-glow: rgba(180,240,255,0.9); --legend-ring: rgba(160,230,255,0.5); }
+.legend-regice   { --legend-bg: radial-gradient(ellipse, rgba(160,230,255,0.3) 0%, transparent 70%); --legend-glow: rgba(200,240,255,0.9); --legend-ring: rgba(180,240,255,0.4); }
+.legend-celebi   { --legend-bg: radial-gradient(ellipse, rgba(80,200,80,0.35) 0%, transparent 70%); --legend-glow: rgba(120,220,100,0.9); --legend-ring: rgba(100,220,100,0.5); }
+.legend-mewtwo   { --legend-bg: radial-gradient(ellipse, rgba(180,80,255,0.35) 0%, transparent 70%); --legend-glow: rgba(200,120,255,0.9); --legend-ring: rgba(196,100,255,0.5); }
+.legend-mew      { --legend-bg: radial-gradient(ellipse, rgba(255,140,200,0.35) 0%, transparent 70%); --legend-glow: rgba(255,160,220,0.9); --legend-ring: rgba(255,160,210,0.5); }
+.legend-lugia    { --legend-bg: radial-gradient(ellipse, rgba(200,220,255,0.35) 0%, transparent 70%); --legend-glow: rgba(220,230,255,0.9); --legend-ring: rgba(210,225,255,0.5); }
+.legend-regirock { --legend-bg: radial-gradient(ellipse, rgba(180,130,80,0.35) 0%, transparent 70%); --legend-glow: rgba(200,160,100,0.9); --legend-ring: rgba(190,150,90,0.5); }
+.legend-latias   { --legend-bg: radial-gradient(ellipse, rgba(255,80,80,0.3) 0%, transparent 70%); --legend-glow: rgba(255,120,120,0.9); --legend-ring: rgba(255,100,100,0.5); }
+.legend-rayquaza { --legend-bg: radial-gradient(ellipse, rgba(30,180,80,0.35) 0%, transparent 70%); --legend-glow: rgba(60,220,120,0.9); --legend-ring: rgba(50,200,100,0.5); }
+.legend-registeel { --legend-bg: radial-gradient(ellipse, rgba(160,170,200,0.35) 0%, transparent 70%); --legend-glow: rgba(200,210,240,0.9); --legend-ring: rgba(190,200,230,0.5); }
+
+/* ============================================================
+   코인토스 인트로 애니메이션
+   ============================================================ */
+.battle-intro {
+  position: relative;
+  min-height: 100dvh;
+}
+
+/* VS 화면 슬라이드인 */
+.intro-phase-vs .intro-vs {
+  animation: intro-vs-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.intro-phase-vs .intro-line {
+  animation: intro-vs-in 0.5s 0.15s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes intro-vs-in {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* coin 페이즈: VS 화면 페이드아웃 → 코인 등장 */
+.intro-phase-coin .intro-vs,
+.intro-phase-coin .intro-line {
+  animation: intro-fade-out 0.25s ease forwards;
+}
+@keyframes intro-fade-out {
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+.coin-toss-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100dvh;
+  animation: coin-wrap-in 0.3s ease both;
+}
+@keyframes coin-wrap-in {
+  0% { opacity: 0; } 100% { opacity: 1; }
+}
+
+.coin-spin {
+  font-size: clamp(64px, 14vw, 100px);
+  animation: coin-flip 0.55s ease-out both;
+  filter: drop-shadow(0 0 18px rgba(255,220,60,0.8));
+}
+@keyframes coin-flip {
+  0%   { transform: rotateY(0deg) scale(0.4); opacity: 0; }
+  40%  { transform: rotateY(720deg) scale(1.15); opacity: 1; }
+  70%  { transform: rotateY(900deg) scale(0.95); }
+  100% { transform: rotateY(900deg) scale(1); }
+}
+
+.coin-result {
+  font-family: var(--display-font);
+  font-size: clamp(28px, 7vw, 48px);
+  margin: 0;
+  animation: coin-result-in 0.4s 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.coin-result.first { color: #ffe566; text-shadow: 0 0 14px rgba(255,220,60,0.8); }
+.coin-result.second { color: #9aa5c9; }
+@keyframes coin-result-in {
+  0% { opacity: 0; transform: scale(1.4); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.coin-sub {
+  font-size: clamp(12px, 2.5vw, 15px);
+  color: var(--text-dim);
+  margin: 0;
+  animation: coin-result-in 0.4s 0.7s ease both;
+}

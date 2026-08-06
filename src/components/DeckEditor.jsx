@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { CARDS, CARD_MAP, MAX_COPIES, TYPE_COLORS, RARITY_NAME } from '../data/cards.js';
+import { CARDS, CARD_MAP, MAX_COPIES, TYPE_COLORS, RARITY_NAME, DEX } from '../data/cards.js';
 import { persist } from '../state/save.js';
 import { HandCard, Sprite, useInspect } from './Card.jsx';
 import { playSfx } from '../audio.js';
@@ -8,6 +8,7 @@ const TYPE_FILTERS = ['전체', '물', '불꽃', '풀', '전기', '얼음', '격
 
 export default function DeckEditor({ save, onSaveChange, onBack }) {
   const [filter, setFilter] = useState('전체');
+  const [sortMode, setSortMode] = useState('cost'); // 'dex' | 'cost' | 'rarity_desc' | 'rarity_asc'
   const { inspect, press, clickSuppressed } = useInspect();
 
   const deckCounts = useMemo(() => {
@@ -20,7 +21,16 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     return CARDS
       .filter((card) => (save.collection[card.id] || 0) > 0)
       .filter((card) => filter === '전체' || card.type === filter)
-      .sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
+      .sort((a, b) => {
+        const RARITY_ORDER = { C: 0, R: 1, E: 2, L: 3 };
+        if (sortMode === 'dex') {
+          const da = DEX[a.id] ?? 99999, db = DEX[b.id] ?? 99999;
+          return da - db || a.name.localeCompare(b.name);
+        }
+        if (sortMode === 'rarity_desc') return (RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]) || (a.cost - b.cost);
+        if (sortMode === 'rarity_asc') return (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || (a.cost - b.cost);
+        return a.cost - b.cost || a.name.localeCompare(b.name); // 'cost' (기본)
+      });
   }, [save.collection, filter]);
 
   function addToDeck(cardId) {
@@ -79,6 +89,24 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               onClick={() => { playSfx('click'); setFilter(t); }}
             >
               {t}
+            </button>
+          ))}
+        </div>
+
+        {/* 정렬 */}
+        <div className="sort-row">
+          {[
+            { key: 'dex', label: '도감번호순' },
+            { key: 'cost', label: '코스트순' },
+            { key: 'rarity_desc', label: '등급 높은순' },
+            { key: 'rarity_asc', label: '등급 낮은순' },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              className={`sort-btn ${sortMode === key ? 'active' : ''}`}
+              onClick={() => { playSfx('click'); setSortMode(key); }}
+            >
+              {label}
             </button>
           ))}
         </div>
