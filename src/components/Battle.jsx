@@ -497,7 +497,26 @@ export default function Battle({ trainer, deck, onFinish }) {
         )}
         {intro === 'coin' && (
           <div className="coin-toss-wrap">
-            <div className={`coin-spin ${isPlayer ? 'heads' : 'tails'}`}>COIN</div>
+            <div className="coin-scene">
+              <div className={`coin-3d ${isPlayer ? 'heads' : 'tails'}`}>
+                <div className="coin-face coin-front">
+                  <span>앞</span>
+                </div>
+                <div className="coin-face coin-back">
+                  <span>뒤</span>
+                </div>
+                <div className="coin-edge">
+                  {Array.from({length: 16}).map((_, i) => (
+                    <div key={i} className="coin-segment" style={{'--seg-i': i}} />
+                  ))}
+                </div>
+              </div>
+              <div className="coin-lines">
+                {Array.from({length: 12}).map((_, i) => (
+                  <div key={i} className="coin-line" style={{'--line-i': i}} />
+                ))}
+              </div>
+            </div>
             <p className={`coin-result ${isPlayer ? 'first' : 'second'}`}>
               {isPlayer ? '선공!' : '후공...'}
             </p>

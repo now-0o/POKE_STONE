@@ -329,10 +329,9 @@ function applyDamage(game, unit, amount, sourceType = null, typedIgnore = false)
   }
   unit.hp -= dmg;
   // 불꽃 타입 피해를 받으면 얼음 상태 해제
-  if (damageType === '불꽃' && unit.status === 'ice') {
+  if (sourceType === '불꽃' && unit.status === 'ice') {
     unit.status = null;
     unit.statusTurns = 0;
-    // 로그는 호출한 쪽에서 알아서 처리 (여기서는 조용히 해제만)
   }
   return dmg;
 }
