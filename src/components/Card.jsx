@@ -210,7 +210,11 @@ export function FieldUnit({ unit, game, canAct, selected, targetable, onClick, o
       {(unit.frozen > 0 || unit.status) && (
         <div className={`status-overlay status-${unit.status || 'ice'}`}>
           <span>
-            {unit.status === 'sleep' ? 'Zzz' : unit.status === 'para' ? '마비' : '얼음'}
+            {unit.status === 'sleep' ? 'Zzz'
+              : unit.status === 'para' ? '마비'
+              : unit.status === 'burn' ? '화상'
+              : unit.status === 'poison' ? '독'
+              : '얼음'}
           </span>
         </div>
       )}

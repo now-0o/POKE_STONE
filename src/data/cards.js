@@ -81,7 +81,10 @@ export const ABILITY_TEXT = {
   regenerator: '재생력: 내 턴 종료 시 이 포켓몬의 체력을 2 회복한다',
   fortress: '바디프레스: 도발. 공격할 수 없지만, 반격 피해는 현재 체력과 같다',
   // 반격
-  static: '정전기: 이 포켓몬을 공격한 상대에게 피해 1',
+  static: '정전기: 접촉 시 피해 1 + 40% 확률로 상대에게 마비 상태이상',
+  poisonpoint: '독침: 공격당할 때 30% 확률로 상대에게 독 상태이상',
+  flamebody: '불꽃몸: 공격당할 때 30% 확률로 상대에게 화상 상태이상',
+  icebody: '냉동몸: 공격당할 때 20% 확률로 상대에게 얼음 상태이상',
   roughskin: '까칠한피부: 이 포켓몬을 공격한 상대에게 피해 2',
   // 공격 패턴
   rush: '돌진: 낸 턴에 바로 공격할 수 있다',
@@ -164,8 +167,8 @@ export const CARDS = [
   P('vulpix', '식스테일', '불꽃', 1, 1, 1, 'C', { ability: 'flashfire' }),
   P('ninetales', '나인테일', '불꽃', 4, 4, 7, 'R', { stage: 1, evolvesFrom: 'vulpix', ability: 'drought' }),
   P('ponyta', '포니타', '불꽃', 2, 2, 2, 'C', { ability: 'rush' }),
-  P('rapidash', '날쌩마', '불꽃', 4, 6, 5, 'R', { stage: 1, evolvesFrom: 'ponyta', ability: 'flashfire' }),
-  P('magmar', '마그마', '불꽃', 4, 4, 5, 'R', { ability: 'flashfire' }),
+  P('rapidash', '날쌩마', '불꽃', 4, 6, 5, 'R', { stage: 1, evolvesFrom: 'ponyta', ability: 'flamebody' }),
+  P('magmar', '마그마', '불꽃', 4, 4, 5, 'R', { ability: 'flamebody' }),
   P('moltres', '파이어', '불꽃', 8, 9, 8, 'L', { ability: 'skydive' }),
   P('entei', '앤테이', '불꽃', 7, 7, 8, 'L', { ability: 'burningfall' }),
   P('hooh', '칠색조', '불꽃', 8, 8, 9, 'L', { ability: 'sacredflame' }),
@@ -257,7 +260,7 @@ export const CARDS = [
   P('dewgong', '쥬레곤', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'seel', ability: 'thickfat' }),
   P('articuno', '프리져', '얼음', 8, 7, 10, 'L', { ability: 'frostedgale' }),
   P('jynx', '루주라', '얼음', 4, 4, 5, 'R', { ability: 'lovelykiss' }),
-  P('shellder', '셀러', '얼음', 1, 1, 1, 'C', { ability: 'sturdy' }),
+  P('shellder', '셀러', '얼음', 1, 1, 1, 'C', { ability: 'icebody' }),
   P('cloyster', '파르셀', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'shellder', ability: 'skilllink' }),
   P('swinub', '꾸꾸리', '얼음', 1, 1, 2, 'C', {}),
   P('piloswine', '메꾸리', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'swinub', ability: 'thickfat' }),
@@ -280,8 +283,8 @@ export const CARDS = [
 
   // ============ 독 (11) ============
   P('grimer', '질퍽이', '독', 2, 2, 3, 'C', {}),
-  P('muk', '질뻐기', '독', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'grimer' }),
-  P('weezing', '또도가스', '독', 3, 3, 4, 'R', { ability: 'levitate' }),
+  P('muk', '질뻐기', '독', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'grimer', ability: 'poisonpoint' }),
+  P('weezing', '또도가스', '독', 3, 3, 4, 'R', { ability: 'poisonpoint' }),
   P('ekans', '아보', '독', 1, 2, 1, 'C', {}),
   P('arbok', '아보크', '독', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'ekans', ability: 'intimidate' }),
   P('nidoranm', '니드런♂', '독', 1, 1, 1, 'C', {}),
@@ -292,7 +295,7 @@ export const CARDS = [
   P('nidoqueen', '니드퀸', '독', 5, 6, 9, 'E', { stage: 2, evolvesFrom: 'nidorina', ability: 'moxie' }),
   P('zubat', '주뱃', '독', 1, 1, 1, 'C', {}),
   P('golbat', '골뱃', '독', 2, 4, 3, 'C', { stage: 1, evolvesFrom: 'zubat' }),
-  P('crobat', '크로뱃', '독', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'golbat', ability: 'skilllink' }),
+  P('crobat', '크로뱃', '독', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'golbat', ability: 'poisonpoint' }),
 
   // ============ 에스퍼 (15) ============
   P('abra', '캐이시', '에스퍼', 1, 0, 1, 'C', { ability: 'teleport' }),
@@ -400,7 +403,7 @@ export const CARDS = [
   P('staravia', '찌르버드', '비행', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'starly' }),
   P('staraptor', '찌르호크', '비행', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'staravia', ability: 'moxie' }),
   // 얼음
-  P('snorunt', '눈꼬마', '얼음', 1, 1, 2, 'C', {}),
+  P('snorunt', '눈꼬마', '얼음', 1, 1, 2, 'C', { ability: 'icebody' }),
   P('glalie', '얼음귀신', '얼음', 3, 4, 6, 'R', { stage: 1, evolvesFrom: 'snorunt' }),
   // 악
   P('zorua', '조로아', '악', 1, 1, 2, 'C', {}),
@@ -432,7 +435,7 @@ export const CARDS = [
   P('grotle', '수풀부기', '풀', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'turtwig', ability: 'overgrow' }),
   P('torterra', '토대부기', '풀', 5, 7, 8, 'E', { stage: 2, evolvesFrom: 'grotle', ability: 'sturdy' }),
   // 불꽃
-  P('growlithe', '가디', '불꽃', 1, 2, 1, 'C', {}),
+  P('growlithe', '가디', '불꽃', 1, 1, 2, 'C', { ability: 'flamebody' }),
   P('arcanine', '윈디', '불꽃', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'growlithe', ability: 'rush' }),
   P('chimchar', '불꽃숭이', '불꽃', 1, 1, 2, 'C', { ability: 'blaze' }),
   P('monferno', '파이숭이', '불꽃', 3, 3, 5, 'R', { stage: 1, evolvesFrom: 'chimchar', ability: 'blaze' }),

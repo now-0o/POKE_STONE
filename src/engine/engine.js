@@ -106,6 +106,11 @@ export function drawCard(game, side, silent = false) {
 export function applyStatus(game, unit, statusType) {
   if (unit.status) return; // 이미 상태이상 있으면 중첩 불가
   if (statusType === 'ice' && game.weather === 'sun') return; // 쾌청 중 얼음 불가
+  // 타입 면역
+  if (statusType === 'burn'   && unit.type === '불꽃') return;
+  if (statusType === 'para'   && unit.type === '전기') return;
+  if (statusType === 'poison' && (unit.type === '독' || unit.type === '강철')) return;
+  if (statusType === 'ice'    && unit.type === '얼음') return;
   unit.status = statusType;
   unit.statusTurns = 0;
 }
@@ -197,6 +202,18 @@ export function endTurn(game) {
       u.hp -= 1;
       log(game, `${u.name}의 생명의구슬 반동! 체력이 1 줄었다.`);
     }
+    // 화상: 턴 종료 시 1 피해
+    if (u.status === 'burn') {
+      u.hp -= 1;
+      log(game, `${u.name}은(는) 화상으로 체력이 1 줄었다!`);
+    }
+    // 독: 턴 종료 시 누적 피해 (1→2→3→...)
+    if (u.status === 'poison') {
+      u.statusTurns += 1;
+      const dmg = u.statusTurns;
+      u.hp -= dmg;
+      log(game, `${u.name}은(는) 독으로 체력이 ${dmg} 줄었다!`);
+    }
   });
 
   cleanupDeaths(game);
@@ -235,6 +252,7 @@ export function effectiveCost(card, game) {
 export function effectiveAtk(unit, game) {
   let atk = unit.atk;
   if (PINCH_ABILITIES.includes(unit.ability) && unit.hp <= Math.ceil(unit.maxHp / 2)) atk += 2;
+  if (unit.status === 'burn') atk = Math.max(0, Math.floor(atk / 2)); // 화상: 공격력 절반
   if (game.weather === 'rain' && unit.type === '물') atk += 1;
   if (game.weather === 'sun' && unit.type === '불꽃') atk += 1;
   if (game.weather === 'sun' && unit.ability === 'solarpower') atk += 2;
@@ -1156,10 +1174,36 @@ export function attack(game, side, attackerUid, target) {
     applyDamage(game, atkUnit, 2, null);
     log(game, `${defUnit.name}의 까칠한피부! ${atkUnit.name}이(가) 피해 2를 받았다!`);
   }
-  // 정전기: 공격당한 쪽이 정전기면 공격자에게 1
+  // 정전기: 공격/공격당할 때 40% 확률로 상대 마비
   if (defUnit.ability === 'static' && atkUnit.hp > 0) {
     applyDamage(game, atkUnit, 1, '전기');
-    log(game, `${defUnit.name}의 정전기! ${atkUnit.name}에게 피해 1!`);
+    if (Math.random() < 0.4) {
+      applyStatus(game, atkUnit, 'para');
+      log(game, `${defUnit.name}의 정전기! ${atkUnit.name}에게 피해 1 + 마비!`);
+    } else {
+      log(game, `${defUnit.name}의 정전기! ${atkUnit.name}에게 피해 1!`);
+    }
+  }
+  if (atkUnit.ability === 'static' && defUnit.hp > 0) {
+    if (Math.random() < 0.4) {
+      applyStatus(game, defUnit, 'para');
+      log(game, `${atkUnit.name}의 정전기! ${defUnit.name}에게 마비!`);
+    }
+  }
+  // 독침(독): 공격당할 때 30% 확률로 독 부여
+  if (defUnit.ability === 'poisonpoint' && atkUnit.hp > 0 && Math.random() < 0.3) {
+    applyStatus(game, atkUnit, 'poison');
+    log(game, `${defUnit.name}의 독침! ${atkUnit.name}에게 독 상태이상!`);
+  }
+  // 불꽃몸(불꽃): 공격당할 때 30% 확률로 화상 부여
+  if (defUnit.ability === 'flamebody' && atkUnit.hp > 0 && Math.random() < 0.3) {
+    applyStatus(game, atkUnit, 'burn');
+    log(game, `${defUnit.name}의 불꽃몸! ${atkUnit.name}에게 화상 상태이상!`);
+  }
+  // 냉동몸(얼음): 공격당할 때 20% 확률로 얼음 상태이상 부여
+  if (defUnit.ability === 'icebody' && atkUnit.hp > 0 && Math.random() < 0.2) {
+    applyStatus(game, atkUnit, 'ice');
+    log(game, `${defUnit.name}의 냉동몸! ${atkUnit.name}에게 얼음 상태이상!`);
   }
 
   if (defUnit.hp <= 0 && atkUnit.hp > 0 && atkUnit.ability === 'moxie') {

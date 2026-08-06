@@ -470,11 +470,11 @@ export default function Battle({ trainer, deck, onFinish }) {
     );
   }
 
-  // VS 화면 자동 진행: 1.4s → coin 애니, 2.8s → 배틀 시작
+  // VS 화면 자동 진행: 1.5s → coin 애니, 3.5s → 배틀 시작
   // 의존성 배열을 빈 배열로 고정해서 마운트 1회만 실행 (매 렌더마다 타이머 리셋되는 버그 방지)
   useEffect(() => {
-    const t1 = setTimeout(() => setIntro('coin'), 1400);
-    const t2 = setTimeout(() => setIntro(false), 2800);
+    const t1 = setTimeout(() => setIntro('coin'), 1500);
+    const t2 = setTimeout(() => setIntro(false), 3500);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -505,10 +505,10 @@ export default function Battle({ trainer, deck, onFinish }) {
             <div className="coin-scene">
               <div className={`coin-3d ${isPlayer ? 'heads' : 'tails'}`}>
                 <div className="coin-face coin-front">
-                  <span>앞</span>
+                  <span>P</span>
                 </div>
                 <div className="coin-face coin-back">
-                  <span>뒤</span>
+                  <span></span>
                 </div>
                 <div className="coin-edge">
                   {Array.from({length: 16}).map((_, i) => (
