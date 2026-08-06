@@ -567,23 +567,82 @@ img.res-icon.small { vertical-align: -2px; }
   box-shadow: 0 2px 4px rgba(0,0,0,0.4);
   white-space: nowrap;
 }
-.frozen-overlay {
+/* 상태이상 공통 */
+.status-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(160, 210, 255, 0.55), rgba(120, 180, 245, 0.35));
   border-radius: 8px;
   z-index: 2;
 }
-.frozen-overlay span {
+.status-overlay span {
   font-family: var(--display-font);
-  font-size: 17px;
-  color: #0e4d8f;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 6px;
   transform: rotate(-12deg);
 }
+
+/* 얼음: 차가운 파랑 */
+.status-ice {
+  background: linear-gradient(160deg, rgba(140,205,255,0.55), rgba(90,160,240,0.35));
+  border: 1px solid rgba(140,210,255,0.6);
+  animation: status-ice-pulse 2s ease-in-out infinite;
+}
+.status-ice span {
+  background: rgba(20,80,160,0.75);
+  color: #b8dfff;
+  text-shadow: 0 0 6px rgba(100,200,255,0.8);
+}
+@keyframes status-ice-pulse {
+  0%,100% { box-shadow: inset 0 0 8px rgba(140,210,255,0.2); }
+  50% { box-shadow: inset 0 0 14px rgba(140,210,255,0.45); }
+}
+
+/* 잠듦: 보라빛 몽롱한 */
+.status-sleep {
+  background: linear-gradient(160deg, rgba(160,100,220,0.45), rgba(100,60,160,0.30));
+  border: 1px solid rgba(180,120,240,0.5);
+  animation: status-sleep-float 3s ease-in-out infinite;
+}
+.status-sleep span {
+  background: rgba(80,30,130,0.75);
+  color: #ddc0ff;
+  text-shadow: 0 0 8px rgba(180,100,255,0.8);
+  font-size: 16px;
+  letter-spacing: 0.12em;
+}
+@keyframes status-sleep-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* 마비: 노란 지지직 */
+.status-para {
+  background: linear-gradient(160deg, rgba(255,220,60,0.45), rgba(200,160,20,0.25));
+  border: 1px solid rgba(255,220,60,0.5);
+  animation: status-para-flash 0.6s steps(2) infinite;
+}
+.status-para span {
+  background: rgba(140,100,0,0.80);
+  color: #fff4b0;
+  text-shadow: 0 0 8px rgba(255,220,60,0.9);
+}
+@keyframes status-para-flash {
+  0%  { opacity: 1; }
+  50% { opacity: 0.65; }
+  100% { opacity: 1; }
+}
+
+/* 유닛 프레임 색상 변화 */
+.field-unit.frozen { filter: none; }  /* 공통 필터 제거 - 개별 overlay로 처리 */
+.field-unit:has(.status-ice)  { border-color: rgba(140,210,255,0.8) !important; }
+.field-unit:has(.status-sleep) { border-color: rgba(180,120,240,0.7) !important; }
+.field-unit:has(.status-para)  { border-color: rgba(255,220,60,0.8) !important; }
 
 .unit-art {
   width: 100%;

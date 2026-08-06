@@ -191,7 +191,7 @@ export function FieldUnit({ unit, game, canAct, selected, targetable, onClick, o
         canAct ? 'can-act' : '',
         selected ? 'selected' : '',
         targetable ? 'targetable' : '',
-        unit.frozen > 0 ? 'frozen' : '',
+        unit.frozen > 0 || unit.status ? 'frozen' : '',
         unit.mega ? 'mega' : '',
         unit.ability === 'taunt' ? 'taunt' : '',
         lunge ? `lunge-${lunge}` : '',
@@ -207,7 +207,13 @@ export function FieldUnit({ unit, game, canAct, selected, targetable, onClick, o
       {fx === 'evolve' && <div className="fx-overlay fx-evo" key={fxKey} />}
       {fx === 'mega' && <div className="fx-overlay fx-mega-burst" key={fxKey} />}
       {unit.ability === 'taunt' && <div className="taunt-badge">도발</div>}
-      {unit.frozen > 0 && <div className="frozen-overlay"><span>ZzZ</span></div>}
+      {(unit.frozen > 0 || unit.status) && (
+        <div className={`status-overlay status-${unit.status || 'ice'}`}>
+          <span>
+            {unit.status === 'sleep' ? 'Zzz' : unit.status === 'para' ? '마비' : '얼음'}
+          </span>
+        </div>
+      )}
       <div className="unit-art">
         <Sprite cardId={unit.cardId} mega={unit.mega} emoji={unit.emoji} size={48} />
       </div>

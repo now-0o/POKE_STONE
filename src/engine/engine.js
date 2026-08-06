@@ -101,6 +101,58 @@ export function drawCard(game, side, silent = false) {
 }
 
 // ---------- 턴 진행 ----------
+// ── 상태이상 헬퍼 ──────────────────────────────────────────
+// 포켓몬에게 상태이상 부여 (쾌청 중 얼음 불가 등 규칙 포함)
+export function applyStatus(game, unit, statusType) {
+  if (unit.status) return; // 이미 상태이상 있으면 중첩 불가
+  if (statusType === 'ice' && game.weather === 'sun') return; // 쾌청 중 얼음 불가
+  unit.status = statusType;
+  unit.statusTurns = 0;
+}
+
+// 턴 시작 시 상태이상 판정
+function resolveStatusAtTurnStart(game, side, u) {
+  if (!u.status) return;
+
+  if (u.status === 'ice') {
+    // 매턴 40% 확률로 풀림
+    if (Math.random() < 0.4) {
+      u.status = null;
+      u.statusTurns = 0;
+      log(game, `${u.name}의 얼음이 녹았다!`);
+    }
+    // 얼음 상태: canAttack은 canAttack() 함수에서 막음
+    return;
+  }
+
+  if (u.status === 'sleep') {
+    u.statusTurns += 1;
+    // 첫 턴(0→1): 행동불능은 canAttack에서 처리
+    // 2턴째: 33%, 3턴째: 50%, 4턴째: 66%, 5턴째~: 100%
+    const wakeChance = [0, 0.33, 0.5, 0.66, 1.0][Math.min(u.statusTurns, 4)];
+    if (wakeChance > 0 && Math.random() < wakeChance) {
+      u.status = null;
+      u.statusTurns = 0;
+      log(game, `${u.name}은(는) 잠에서 깨어났다!`);
+    } else if (u.statusTurns >= 1) {
+      // 1턴 이후는 깨지 못하면 그 턴도 행동불능
+      u.canAttack = false;
+      log(game, `${u.name}은(는) 잠들어 있다...`);
+    }
+    return;
+  }
+
+  if (u.status === 'para') {
+    // 30% 확률로 그 턴 공격 불가
+    if (Math.random() < 0.3) {
+      u.canAttack = false;
+      log(game, `${u.name}은(는) 마비로 움직이지 못했다!`);
+    }
+    return;
+  }
+}
+// ─────────────────────────────────────────────────────────
+
 function startTurn(game, side) {
   const p = game.players[side];
   p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
@@ -113,10 +165,12 @@ function startTurn(game, side) {
       u.resting = false;
       log(game, `${u.name}은(는) 게으름을 피우고 있다...`);
       if (u.frozen > 0) u.frozen -= 1;
+      resolveStatusAtTurnStart(game, side, u);
       return;
     }
     u.canAttack = true;
     if (u.frozen > 0) u.frozen -= 1;
+    resolveStatusAtTurnStart(game, side, u);
   });
   // 이번 게임의 "선공자"가 첫 턴(turnCount 1)에만 드로우 스킵 (이미 오프닝 핸드를 받았으므로)
   if (!(side === game.firstSide && game.turnCount === 1)) drawCard(game, side);
@@ -274,6 +328,12 @@ function applyDamage(game, unit, amount, sourceType = null, typedIgnore = false)
     return dmg;
   }
   unit.hp -= dmg;
+  // 불꽃 타입 피해를 받으면 얼음 상태 해제
+  if (damageType === '불꽃' && unit.status === 'ice') {
+    unit.status = null;
+    unit.statusTurns = 0;
+    // 로그는 호출한 쪽에서 알아서 처리 (여기서는 조용히 해제만)
+  }
   return dmg;
 }
 
@@ -334,7 +394,9 @@ function makeUnit(card, game, side) {
     stage: card.stage || 0,
     canAttack: false,
     summonedTurn: game.turnCount,
-    frozen: 0,
+    frozen: 0,       // DEPRECATED (하위호환 잔류, 신규 코드에서는 status 사용)
+    status: null,      // null | 'ice' | 'sleep' | 'para'
+    statusTurns: 0,    // ice: 남은 얼림 최소턴 / sleep: 잠든 총 턴 수 누적 / para: 미사용
     sturdyUsed: false,
     mega: false,
     item: null,
@@ -375,7 +437,7 @@ function runBattlecry(game, side, unit) {
     case 'purify':
       me.field.forEach((u) => {
         u.hp = Math.min(u.maxHp, u.hp + 2);
-        u.frozen = 0;
+        u.frozen = 0; u.status = null; u.statusTurns = 0;
       });
       log(game, `${unit.name}의 정화! 아군이 회복하고 상태이상이 풀렸다.`);
       break;
@@ -420,7 +482,7 @@ function runBattlecry(game, side, unit) {
       const alive = foe.field.filter((u) => u.hp > 0);
       if (alive.length) {
         const t = alive[Math.floor(Math.random() * alive.length)];
-        t.frozen = 2;
+        applyStatus(game, t, 'ice');
         log(game, `${unit.name}의 눈보라! 적 전체 얼음 피해 1, ${t.name}이(가) 얼어붙었다!`);
       }
       cleanupDeaths(game);
@@ -527,7 +589,7 @@ function runBattlecry(game, side, unit) {
       const targets = foe.field.filter((u) => u.hp > 0);
       if (targets.length) {
         const t = targets[Math.floor(Math.random() * targets.length)];
-        t.frozen = 2; // 다음 자기 턴까지 공격 불가
+        applyStatus(game, t, 'sleep');
         const skillName = { hypnosis: '최면술', sing: '자장가', lovelykiss: '악마의키스', sleeppowder: '수면가루' }[unit.ability];
         log(game, `${unit.name}의 ${skillName}! ${t.name}이(가) 잠들었다!`);
       }
@@ -537,7 +599,7 @@ function runBattlecry(game, side, unit) {
       const targets = foe.field.filter((u) => u.hp > 0);
       if (targets.length) {
         const t = targets[Math.floor(Math.random() * targets.length)];
-        t.frozen = 2;
+        applyStatus(game, t, 'ice');
         log(game, `${unit.name}의 냉동빔! ${t.name}이(가) 얼어붙었다!`);
       }
       break;
@@ -549,7 +611,7 @@ function runBattlecry(game, side, unit) {
       foe.field.forEach((u) => applyDamage(game, u, 3, '물'));
       if (foe.field.length) {
         const alive = foe.field.filter(u => u.hp > 0);
-        if (alive.length) { const t = alive[Math.floor(Math.random()*alive.length)]; t.frozen = 2; }
+        if (alive.length) { const t = alive[Math.floor(Math.random()*alive.length)]; applyStatus(game, t, 'ice'); }
       }
       log(game, `${unit.name}의 근원의파동! 폭우 발동 + 상대 전체 물 피해 3 + 동결!`);
       cleanupDeaths(game);
@@ -559,7 +621,7 @@ function runBattlecry(game, side, unit) {
       foe.field.forEach((u) => applyDamage(game, u, 2, '얼음'));
       cleanupDeaths(game); {
         const alive2 = foe.field.filter(u => u.hp > 0);
-        if (alive2.length) { const t = alive2[Math.floor(Math.random()*alive2.length)]; t.frozen = 2; }
+        if (alive2.length) { const t = alive2[Math.floor(Math.random()*alive2.length)]; applyStatus(game, t, 'ice'); }
       }
       log(game, `${unit.name}의 오로라빔! 상대 전체 얼음 피해 2 + 1마리 얼림!`);
       break;
@@ -589,7 +651,7 @@ function runBattlecry(game, side, unit) {
       const aliveTW = foe.field.filter(u => u.hp > 0);
       if (aliveTW.length) {
         const t = aliveTW[Math.floor(Math.random()*aliveTW.length)];
-        t.frozen = 1;
+        applyStatus(game, t, 'para');
         log(game, `${unit.name}의 천둥차기! 전체 전기 피해 3 + ${t.name} 마비!`);
       } else log(game, `${unit.name}의 천둥차기! 전체 전기 피해 3!`);
       break;
@@ -600,7 +662,7 @@ function runBattlecry(game, side, unit) {
       if (pool.length) {
         const t = pool[Math.floor(Math.random()*pool.length)];
         applyDamage(game, t, 4, '전기');
-        t.frozen = 1;
+        applyStatus(game, t, 'para');
         log(game, `${unit.name}의 와일드볼트! ${t.name}에게 전기 피해 4 + 마비!`);
         cleanupDeaths(game);
       }
@@ -615,13 +677,13 @@ function runBattlecry(game, side, unit) {
       break;
 
     case 'frostedgale': // 프리져: 냉동풍
-      foe.field.forEach((u) => { applyDamage(game, u, 2, '얼음'); if (u.hp > 0) u.frozen = 1; });
-      log(game, `${unit.name}의 얼어붙는시선! 상대 전체 얼음 피해 2 + 전부 1턴 얼림!`);
+      foe.field.forEach((u) => { applyDamage(game, u, 2, '얼음'); if (u.hp > 0) applyStatus(game, u, 'ice'); });
+      log(game, `${unit.name}의 얼어붙는시선! 상대 전체 얼음 피해 2 + 전부 얼음 상태이상!`);
       cleanupDeaths(game);
       break;
 
     case 'icelock': // 레지아이스: 냉동봉인
-      foe.field.forEach((u) => { u.frozen = 1; applyDamage(game, u, 1, '얼음'); });
+      foe.field.forEach((u) => { if(u.hp > 0) applyStatus(game, u, 'ice'); applyDamage(game, u, 1, '얼음'); });
       log(game, `${unit.name}의 눈보라! 상대 전체 얼림 + 얼음 피해 1!`);
       cleanupDeaths(game);
       break;
@@ -941,7 +1003,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
       if (s.effect === 'damage_freeze' && target.uid !== 'hero') {
         const u = foe.field.find((x) => x.uid === target.uid);
         if (u && u.hp > 0) {
-          u.frozen = 2;
+          applyStatus(game, u, 'ice');
           log(game, `${u.name}이(가) 얼어붙었다!`);
         }
       }
@@ -969,7 +1031,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
       u.hp = u.maxHp;
-      u.frozen = 0;
+      u.frozen = 0; u.status = null; u.statusTurns = 0;
       log(game, `${card.name}! ${u.name}이(가) 완전히 회복됐다!`);
       markPlay(game, side, card);
     return true;
@@ -984,7 +1046,10 @@ export function canAttack(game, side, unitUid) {
   const u = p.field.find((x) => x.uid === unitUid);
   if (!u) return false;
   if (u.ability === 'fortress') return false;
-  if (!u.canAttack || u.frozen > 0) return false;
+  if (!u.canAttack) return false;
+  if (u.status === 'ice') return false;
+  if (u.status === 'sleep' && u.statusTurns === 0) return false; // 걸린 첫턴 행동불능
+  if (u.frozen > 0) return false; // 하위호환
   if (effectiveAtk(u, game) <= 0) return false;
   return true;
 }
