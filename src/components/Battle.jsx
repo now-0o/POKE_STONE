@@ -466,13 +466,12 @@ export default function Battle({ trainer, deck, onFinish }) {
   }
 
   // VS 화면 자동 진행: 1.4s → coin 애니, 2.8s → 배틀 시작
+  // 의존성 배열을 빈 배열로 고정해서 마운트 1회만 실행 (매 렌더마다 타이머 리셋되는 버그 방지)
   useEffect(() => {
-    if (intro === 'vs') {
-      const t1 = setTimeout(() => setIntro('coin'), 1400);
-      const t2 = setTimeout(() => setIntro(false), 2800);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }
-  }, [intro]);
+    const t1 = setTimeout(() => setIntro('coin'), 1400);
+    const t2 = setTimeout(() => setIntro(false), 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (intro !== false) {
     const isPlayer = game.firstSide === 'player';
@@ -498,7 +497,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         )}
         {intro === 'coin' && (
           <div className="coin-toss-wrap">
-            <div className={`coin-spin ${isPlayer ? 'heads' : 'tails'}`}>🪙</div>
+            <div className={`coin-spin ${isPlayer ? 'heads' : 'tails'}`}>COIN</div>
             <p className={`coin-result ${isPlayer ? 'first' : 'second'}`}>
               {isPlayer ? '선공!' : '후공...'}
             </p>

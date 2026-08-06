@@ -1752,9 +1752,26 @@ img.res-icon.small { vertical-align: -2px; }
 }
 
 .coin-spin {
-  font-size: clamp(64px, 14vw, 100px);
+  font-size: clamp(28px, 6vw, 42px);
+  font-family: var(--display-font);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  width: clamp(100px, 22vw, 160px);
+  height: clamp(100px, 22vw, 160px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: coin-flip 0.55s ease-out both;
-  filter: drop-shadow(0 0 18px rgba(255,220,60,0.8));
+  box-shadow: 0 0 32px rgba(255,220,60,0.7), 0 0 0 4px rgba(255,220,60,0.3);
+}
+.coin-spin.heads {
+  background: radial-gradient(135deg, #ffe566, #d4a800);
+  color: #7a5c00;
+}
+.coin-spin.tails {
+  background: radial-gradient(135deg, #c0c8d8, #7a8499);
+  color: #3a3f50;
 }
 @keyframes coin-flip {
   0%   { transform: rotateY(0deg) scale(0.4); opacity: 0; }

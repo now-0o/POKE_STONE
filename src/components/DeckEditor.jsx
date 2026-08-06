@@ -31,7 +31,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         if (sortMode === 'rarity_asc') return (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || (a.cost - b.cost);
         return a.cost - b.cost || a.name.localeCompare(b.name); // 'cost' (기본)
       });
-  }, [save.collection, filter]);
+  }, [save.collection, filter, sortMode]);
 
   function addToDeck(cardId) {
     if (clickSuppressed()) return;
