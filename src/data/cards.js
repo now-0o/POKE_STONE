@@ -592,7 +592,7 @@ export const PACKS = {
     name: '포스스톤',
     sub: '기본팩 · 스타디움',
     price: 100,
-    weights: { C: 74, R: 20, E: 5, L: 1 },
+    weights: { C: 82, R: 15, E: 2.5, L: 0.5 },
     guarantee: 'R', // 최소 레어 1장 보장
     ball: 'poke',
   },
@@ -600,8 +600,8 @@ export const PACKS = {
     id: 'premium',
     name: '포스스톤 EX',
     sub: '프리미엄팩 · 챔피언로드',
-    price: 300,
-    weights: { C: 35, R: 40, E: 18, L: 7 },
+    price: 500,
+    weights: { C: 48, R: 38, E: 11, L: 3 },
     guarantee: 'E', // 최소 에픽 1장 보장
     ball: 'master',
   },

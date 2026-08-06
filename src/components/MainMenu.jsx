@@ -40,22 +40,31 @@ export default function MainMenu({ save, username, onBattle, onShop, onDeck, onS
       <div className="trainer-list">
         {TRAINERS.map((t) => {
           const wins = save.wins[t.id] || 0;
+          const locked = t.requires && !(save.wins[t.requires] > 0);
+          const requiredName = locked ? (TRAINERS.find(x => x.id === t.requires)?.name || '') : '';
+          const clickable = deckReady && !locked;
           return (
             <button
               key={t.id}
-              className={`trainer-card ${!deckReady ? 'btn-locked' : ''}`}
-              onMouseEnter={() => deckReady && playSfx('cursor')}
-              onClick={() => { if (deckReady) { playSfx('click'); onBattle(t); } else playSfx('buzzer'); }}
+              className={`trainer-card ${!clickable ? 'btn-locked' : ''}`}
+              onMouseEnter={() => clickable && playSfx('cursor')}
+              onClick={() => { if (clickable) { playSfx('click'); onBattle(t); } else playSfx('buzzer'); }}
             >
-              <TrainerSprite spriteKey={t.sprite} emoji={t.emoji} size={56} />
+              <TrainerSprite spriteKey={t.sprite} emoji={locked ? '🔒' : t.emoji} size={56} />
               <span className="trainer-info">
-                <span className="trainer-name">{t.name}</span>
+                <span className="trainer-name">{locked ? '???' : t.name}</span>
                 <span className="trainer-meta">
-                  <img className="res-icon small" src={UI_SPRITES.coin} alt="" width={14} height={14} draggable={false} />
-                  {t.reward}{wins > 0 && ` · 승리 ${wins}회`}
+                  {locked ? (
+                    <>🔒 {requiredName} 승리 시 해금</>
+                  ) : (
+                    <>
+                      <img className="res-icon small" src={UI_SPRITES.coin} alt="" width={14} height={14} draggable={false} />
+                      {t.reward}{wins > 0 && ` · 승리 ${wins}회`}
+                    </>
+                  )}
                 </span>
               </span>
-              <span className="trainer-go">배틀 ▶</span>
+              <span className="trainer-go">{locked ? '잠김' : '배틀 ▶'}</span>
             </button>
           );
         })}
