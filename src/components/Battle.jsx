@@ -398,7 +398,15 @@ export default function Battle({ trainer, deck, onFinish }) {
       rerender();
       return;
     }
-    if ((need === 'friendly' || need === 'evolve' || need === 'mega') && side === 'player') {
+    if (
+      (
+        need === 'friendly'
+        || need === 'friendly-or-hero'
+        || need === 'evolve'
+        || need === 'mega'
+      )
+      && side === 'player'
+    ) {
       playCard(game, 'player', selectedHand, { uid: unit.uid });
       setSelectedHand(null);
       rerender();
@@ -412,6 +420,20 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (!myTurn || selectedHand === null) return;
     const card = CARD_MAP[me.hand[selectedHand].cardId];
     if (spellNeedsTarget(card) === 'enemy') {
+      playCard(game, 'player', selectedHand, { uid: 'hero' });
+      setSelectedHand(null);
+      rerender();
+    }
+  }
+
+  function onMyHeroClick() {
+    if (Date.now() < suppressUntil.current) return;
+    if (!myTurn || selectedHand === null) return;
+  
+    const card = CARD_MAP[me.hand[selectedHand].cardId];
+    const need = spellNeedsTarget(card);
+  
+    if (need === 'friendly-or-hero') {
       playCard(game, 'player', selectedHand, { uid: 'hero' });
       setSelectedHand(null);
       rerender();
@@ -449,11 +471,22 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (spellMode && spellNeed === 'enemy') return true;
     return false;
   }
+  
   function isFriendlyTargetable(u) {
     if (!spellMode || !activeCard) return false;
-    if (spellNeed === 'friendly') return true;
-    if (spellNeed === 'evolve') return u.cardId === activeCard.evolvesFrom;
-    if (spellNeed === 'mega') return u.cardId === activeCard.megaFor && !u.mega;
+  
+    if (spellNeed === 'friendly' || spellNeed === 'friendly-or-hero') {
+      return true;
+    }
+  
+    if (spellNeed === 'evolve') {
+      return u.cardId === activeCard.evolvesFrom;
+    }
+  
+    if (spellNeed === 'mega') {
+      return u.cardId === activeCard.megaFor && !u.mega;
+    }
+  
     return false;
   }
 
