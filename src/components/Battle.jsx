@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { CARD_MAP, UI_SPRITES } from "../data/cards.js";
+import { CARD_MAP, UI_SPRITES, spriteUrl } from "../data/cards.js";
 import {
   createGame,
   playCard,
@@ -35,6 +35,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const [inspect, setInspect] = useState(null); // 꾹 눌러 카드 크게 보기
   const [unitFx, setUnitFx] = useState(null); // 진화/메가 이펙트
   const [legendFx, setLegendFx] = useState(null); // 레전드 소환 전용 이펙트
+  const [signatureFx, setSignatureFx] = useState(null); // 트레이너 시그니처
   const [atkFx, setAtkFx] = useState(null); // 공격 돌진/피격 연출
   const [intro, setIntro] = useState("vs"); // 'vs' -> 'coin' -> false
   const [confirmSurrender, setConfirmSurrender] = useState(false);
@@ -52,6 +53,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const suppressUntil = useRef(0);
   const fxTimer = useRef(null);
   const atkFxTimer = useRef(null);
+  const signatureFxTimer = useRef(null);
 
   if (!gameRef.current) {
     gameRef.current = createGame(deck, trainer);
@@ -70,33 +72,84 @@ export default function Battle({ trainer, deck, onFinish }) {
     return () => clearTimeout(aiTimer.current);
   });
 
-  // ---- 상대 카드 공개 + 진화/메가 이펙트 ----
+  // ---- 상대 카드 공개 + 소환/진화/공격 이펙트 ----
   useEffect(() => {
     const la = game.lastAction;
+
     if (!la || la.seq === lastSeenSeq.current) return;
+
     lastSeenSeq.current = la.seq;
-    if (la.side === "enemy" && la.kind === "play") {
-      setEnemyReveal({ cardId: la.cardId, key: la.seq });
+
+    const playedCard = la.cardId ? CARD_MAP[la.cardId] : null;
+
+    // ----------------------------------------------------------
+    // 일반 상대 카드 공개
+    // 시그니처는 별도 연출로 보여주므로 여기서는 제외
+    // ----------------------------------------------------------
+    if (la.side === "enemy" && la.kind === "play" && !playedCard?.signature) {
+      setEnemyReveal({
+        cardId: la.cardId,
+        key: la.seq,
+      });
+
       clearTimeout(revealTimer.current);
+
       revealTimer.current = setTimeout(() => setEnemyReveal(null), 1150);
     }
-    if (
-      la.kind === "play" &&
-      la.cardId &&
-      CARD_MAP[la.cardId]?.rarity === "L"
-    ) {
+
+    // ----------------------------------------------------------
+    // 트레이너 전용 시그니처 포켓몬
+    // ----------------------------------------------------------
+    if (la.kind === "play" && playedCard?.signature) {
       playCry(la.cardId);
-      setLegendFx({ cardId: la.cardId, side: la.side, key: la.seq });
+
+      setSignatureFx({
+        cardId: la.cardId,
+        side: la.side,
+        key: la.seq,
+      });
+
+      clearTimeout(signatureFxTimer.current);
+
+      signatureFxTimer.current = setTimeout(() => setSignatureFx(null), 1500);
+    }
+
+    // ----------------------------------------------------------
+    // 기존 레전드 소환
+    // ----------------------------------------------------------
+    if (la.kind === "play" && la.cardId && isLegend(la.cardId)) {
+      playCry(la.cardId);
+
+      setLegendFx({
+        cardId: la.cardId,
+        side: la.side,
+        key: la.seq,
+      });
+
       setTimeout(() => setLegendFx(null), 2000);
     }
+
+    // ----------------------------------------------------------
+    // 진화 / 메가진화
+    // ----------------------------------------------------------
     if (la.anim === "evolve" || la.anim === "mega") {
-      setUnitFx({ uid: la.uid, kind: la.anim, key: la.seq });
+      setUnitFx({
+        uid: la.uid,
+        kind: la.anim,
+        key: la.seq,
+      });
+
       clearTimeout(fxTimer.current);
+
       fxTimer.current = setTimeout(
         () => setUnitFx(null),
         la.anim === "mega" ? 1500 : 950,
       );
     }
+
+    // ----------------------------------------------------------
+    // 공격 연출
+    // ----------------------------------------------------------
     if (la.kind === "attack") {
       setAtkFx({
         uid: la.uid,
@@ -104,7 +157,9 @@ export default function Battle({ trainer, deck, onFinish }) {
         side: la.side,
         key: la.seq,
       });
+
       clearTimeout(atkFxTimer.current);
+
       atkFxTimer.current = setTimeout(() => {
         cleanupDeaths(game);
         setAtkFx(null);
@@ -119,6 +174,7 @@ export default function Battle({ trainer, deck, onFinish }) {
       clearTimeout(inspectTimer.current);
       clearTimeout(fxTimer.current);
       clearTimeout(atkFxTimer.current);
+      clearTimeout(signatureFxTimer.current);
     },
     [],
   );
@@ -812,6 +868,34 @@ export default function Battle({ trainer, deck, onFinish }) {
         <div className="enemy-reveal" key={enemyReveal.key}>
           <div className="enemy-reveal-label">{foe.name}</div>
           <HandCard cardId={enemyReveal.cardId} playable ghost />
+        </div>
+      )}
+
+      {/* 트레이너 시그니처 포켓몬 소환 */}
+      {signatureFx && (
+        <div
+          className={`signature-summon-fx ${
+            signatureFx.side === "player" ? "from-bottom" : "from-top"
+          }`}
+          key={signatureFx.key}
+        >
+          <div className="signature-flash" />
+
+          <div className="signature-ring signature-ring-1" />
+          <div className="signature-ring signature-ring-2" />
+
+          <div className="signature-label">SIGNATURE</div>
+
+          <img
+            className="signature-sprite"
+            src={spriteUrl(signatureFx.cardId)}
+            alt=""
+            draggable={false}
+          />
+
+          <div className="signature-name">
+            {CARD_MAP[signatureFx.cardId]?.name}
+          </div>
         </div>
       )}
 

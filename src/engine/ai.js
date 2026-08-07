@@ -1,31 +1,97 @@
 // ============================================================
 // AI: 트레이너 난이도별 행동 결정
-// 레벨 1: 랜덤 / 2: 그리디 / 3: 시너지·교환 평가 / 4: 킬각+최적화
-// aiStep(game) -> 행동 1개 수행 후 true, 턴 종료 시 false 반환
+// 1 랜덤 / 2 그리디 / 3 시너지 / 4 최적화 / 5 최종보스
 // ============================================================
-
-import { CARD_MAP } from '../data/cards.js';
+import { CARD_MAP } from "../data/cards.js";
 import {
-  playCard, attack, endTurn, canPlayCard, canAttack,
-  validAttackTargets, effectiveAtk, effectiveCost,
-  calcTypedDamage, typeMult, spellDamageAmount, spellNeedsTarget, other,
+  playCard,
+  attack,
+  endTurn,
+  canPlayCard,
+  canAttack,
+  validAttackTargets,
+  effectiveAtk,
+  effectiveCost,
+  calcTypedDamage,
+  typeMult,
+  spellDamageAmount,
+  spellNeedsTarget,
   resolveMoldbreaker,
   resolveMew,
-} from './engine.js';
+  discardToDraw,
+} from "./engine.js";
 
-const SIDE = 'enemy';
+const SIDE = "enemy";
+const RARITY_VALUE = { C: 0, R: 3, E: 7, L: 13 };
 
 function rand(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr?.length ? arr[Math.floor(Math.random() * arr.length)] : null;
 }
 
-// ---------- 행동 수집 ----------
+function unitValue(u, game) {
+  if (!u) return 0;
+
+  let v = effectiveAtk(u, game) * 2 + u.hp + u.maxHp * 0.5;
+
+  v += RARITY_VALUE[u.rarity] || 0;
+  v += (u.stage || 0) * 2;
+
+  if (u.ability === "taunt" || u.ability === "fortress") v += 7;
+  if (u.ability === "moxie" || u.ability === "roughskin") v += 4;
+  if (u.ability === "sturdy" || u.ability === "disguise") v += 3;
+  if (u.mega) v += 7;
+  if (u.item) v += 3;
+
+  return v;
+}
+
+function statusDanger(status) {
+  if (status === "ice") return 12;
+  if (status === "sleep") return 10;
+  if (status === "para") return 7;
+  if (status === "burn") return 7;
+  if (status === "poison") return 6;
+  return 0;
+}
+
+// 옹골참 / 따라큐 탈 / 기합의띠 때문에
+// 표시 피해상 죽어도 실제론 안 죽는 경우 체크
+function protectedFromLethal(u, dmg) {
+  if (!u || dmg < u.hp) return false;
+
+  if (u.ability === "sturdy" && u.maxHp > 1 && u.hp === u.maxHp) {
+    return true;
+  }
+
+  if (u.ability === "disguise" && !u.sturdyUsed) {
+    return true;
+  }
+
+  if (u.item === "focussash" && !u.focusSashUsed && u.hp === u.maxHp) {
+    return true;
+  }
+
+  return false;
+}
+
+function actuallyKills(u, dmg) {
+  return dmg >= u.hp && !protectedFromLethal(u, dmg);
+}
+
 function playableCards(game) {
   const p = game.players[SIDE];
   const list = [];
+
   p.hand.forEach((h, idx) => {
-    if (canPlayCard(game, SIDE, idx)) list.push({ idx, card: CARD_MAP[h.cardId] });
+    if (!canPlayCard(game, SIDE, idx)) return;
+
+    const card = CARD_MAP[h.cardId];
+
+    if (card) {
+      list.push({ idx, card });
+    }
   });
+
   return list;
 }
 
@@ -33,285 +99,848 @@ function readyAttackers(game) {
   return game.players[SIDE].field.filter((u) => canAttack(game, SIDE, u.uid));
 }
 
-// ---------- 기술 카드 타겟 선택 ----------
+function availableFaceDamage(game) {
+  return readyAttackers(game)
+    .filter((u) => validAttackTargets(game, SIDE, u.uid).hero)
+    .reduce((sum, u) => sum + effectiveAtk(u, game), 0);
+}
+
+// 지금 공격 가능한 포켓몬들만으로 상대 본체를 끝낼 수 있는지
+function immediateLethal(game) {
+  const foe = game.players.player;
+
+  const attackers = readyAttackers(game)
+    .filter((u) => validAttackTargets(game, SIDE, u.uid).hero)
+    .sort((a, b) => effectiveAtk(b, game) - effectiveAtk(a, game));
+
+  if (!attackers.length) return null;
+
+  const total = attackers.reduce((sum, u) => sum + effectiveAtk(u, game), 0);
+
+  if (total < foe.hp) return null;
+
+  return {
+    attacker: attackers[0],
+    target: { uid: "hero" },
+  };
+}
+
+// ============================================================
+// 아군 타겟 선택
+// ============================================================
+function pickFriendlyTarget(game, card, level) {
+  const me = game.players[SIDE];
+
+  // ---------- 도구 ----------
+  if (card.kind === "item") {
+    const candidates = me.field.filter((u) => !u.item);
+
+    if (!candidates.length) return null;
+
+    const effect = card.item?.effect;
+
+    candidates.sort((a, b) => {
+      const score = (u) => {
+        let s = unitValue(u, game);
+
+        // 생명의구슬 -> 공격력 높은 포켓몬
+        if (effect === "lifeorb") {
+          s += effectiveAtk(u, game) * 4;
+
+          if (u.hp <= 2) {
+            s -= 20;
+          }
+        }
+
+        // 기합의띠 -> 풀피 + 강한 포켓몬
+        if (effect === "focussash") {
+          if (u.hp === u.maxHp) {
+            s += effectiveAtk(u, game) * 3;
+          } else {
+            s -= 30;
+          }
+
+          // 이미 생존기가 있으면 낭비
+          if (u.ability === "sturdy" || u.ability === "disguise") {
+            s -= 25;
+          }
+        }
+
+        // 조개껍질방울 -> 공격력 높고 체력 깎인 포켓몬
+        if (effect === "shellbell") {
+          s += effectiveAtk(u, game) * 2;
+          s += u.maxHp - u.hp;
+        }
+
+        return s;
+      };
+
+      return score(b) - score(a);
+    });
+
+    return {
+      uid: candidates[0].uid,
+    };
+  }
+
+  const s = card.spell;
+
+  // ---------- 상태이상 치료 ----------
+  if (s?.effect === "cure_status" || s?.effect === "cure_all_status") {
+    let candidates = me.field.filter((u) => u.status !== null);
+
+    if (s.effect === "cure_status") {
+      candidates = candidates.filter((u) => u.status === s.statusType);
+    }
+
+    if (!candidates.length) return null;
+
+    candidates.sort((a, b) => {
+      const av = statusDanger(a.status) + unitValue(a, game) * 0.4;
+
+      const bv = statusDanger(b.status) + unitValue(b, game) * 0.4;
+
+      return bv - av;
+    });
+
+    return {
+      uid: candidates[0].uid,
+    };
+  }
+
+  // ---------- 회복 ----------
+  if (s?.effect === "heal" || s?.effect === "fullheal") {
+    const options = [];
+
+    // 트레이너 본체 회복
+    if (me.hp < me.maxHp) {
+      let score = (me.maxHp - me.hp) * 6;
+
+      if (level >= 4 && me.hp <= 12) {
+        score += 20;
+      }
+
+      if (level >= 5 && me.hp <= 8) {
+        score += 30;
+      }
+
+      options.push({
+        target: { uid: "hero" },
+        score,
+      });
+    }
+
+    // 포켓몬 회복
+    me.field.forEach((u) => {
+      if (u.hp >= u.maxHp && !u.status) {
+        return;
+      }
+
+      let score = (u.maxHp - u.hp) * 6 + unitValue(u, game) * 0.35;
+
+      if (s.effect === "fullheal" && u.status) {
+        score += statusDanger(u.status);
+      }
+
+      options.push({
+        target: { uid: u.uid },
+        score,
+      });
+    });
+
+    if (!options.length) return null;
+
+    options.sort((a, b) => b.score - a.score);
+
+    return options[0].target;
+  }
+
+  // 기타 아군 지정 기술
+  const candidates = [...me.field].sort(
+    (a, b) => unitValue(b, game) - unitValue(a, game),
+  );
+
+  return candidates.length ? { uid: candidates[0].uid } : null;
+}
+
+// ============================================================
+// 카드 타겟 선택
+// ============================================================
 function pickSpellTarget(game, card, level) {
   const foe = game.players.player;
   const me = game.players[SIDE];
+
   const need = spellNeedsTarget(card);
 
-  if (need === 'enemy') {
+  // ---------- 적 대상 ----------
+  if (need === "enemy") {
     const base = spellDamageAmount(card, game);
-    // 킬각: 영웅 마무리 가능하면 얼굴
-    if (foe.hp <= base) return { uid: 'hero' };
+
+    // 본체 킬
+    if (foe.hp <= base) {
+      return { uid: "hero" };
+    }
+
+    // Lv1 랜덤
     if (level <= 1) {
-      const pool = [...foe.field.map((u) => ({ uid: u.uid })), { uid: 'hero' }];
-      return rand(pool);
+      return rand([
+        ...foe.field.map((u) => ({
+          uid: u.uid,
+        })),
+        { uid: "hero" },
+      ]);
     }
-    // 제거 가치가 높은 대상: 죽일 수 있는 것 중 스탯 합 최대
+
+    // 죽일 수 있는 포켓몬 중 가장 가치 높은 대상
     const killable = foe.field
-      .map((u) => ({ u, dmg: calcTypedDamage(base, card.moveType, u.type) }))
-      .filter((x) => x.dmg >= x.u.hp)
-      .sort((a, b) => (b.u.atk + b.u.maxHp) - (a.u.atk + a.u.maxHp));
-    if (killable.length > 0) return { uid: killable[0].u.uid };
-    if (level >= 3 && foe.field.length > 0) {
-      // 못 죽여도 가장 위협적인 대상에 피해
-      const threat = [...foe.field].sort((a, b) => effectiveAtk(b, game) - effectiveAtk(a, game))[0];
+      .map((u) => ({
+        u,
+        dmg: calcTypedDamage(base, card.moveType, u.type),
+      }))
+      .filter((x) => actuallyKills(x.u, x.dmg))
+      .sort((a, b) => unitValue(b.u, game) - unitValue(a.u, game));
+
+    if (killable.length) {
+      return {
+        uid: killable[0].u.uid,
+      };
+    }
+
+    // Lv3 이상이면 가장 위험한 포켓몬 공격
+    if (level >= 3 && foe.field.length) {
+      const threat = [...foe.field].sort(
+        (a, b) => unitValue(b, game) - unitValue(a, game),
+      )[0];
+
       const dmg = calcTypedDamage(base, card.moveType, threat.type);
-      if (dmg > 0) return { uid: threat.uid };
+
+      if (dmg > 0) {
+        return {
+          uid: threat.uid,
+        };
+      }
     }
-    return { uid: 'hero' };
+
+    return {
+      uid: "hero",
+    };
   }
 
-  if (need === 'friendly') {
-    if (card.kind === 'item') {
-      const candidates = me.field.filter((u) => !u.item).sort((a, b) => (b.atk + b.maxHp) - (a.atk + a.maxHp));
-      if (candidates.length === 0) return null;
-      return { uid: candidates[0].uid };
-    }
-    // 치료제: 해당 상태이상 걸린 포켓몬 중 가장 중요한 것
-    if (card.spell?.effect === 'cure_status') {
-      const sick = me.field.filter(u => u.status === card.spell.statusType);
-      if (!sick.length) return null;
-      return { uid: sick.sort((a,b)=>(b.atk+b.maxHp)-(a.atk+a.maxHp))[0].uid };
-    }
-    if (card.spell?.effect === 'cure_all_status') {
-      const sick = me.field.filter(u => u.status !== null);
-      if (!sick.length) return null;
-      return { uid: sick.sort((a,b)=>(b.atk+b.maxHp)-(a.atk+a.maxHp))[0].uid };
-    }
-    const hurt = me.field
-      .filter((u) => u.hp < u.maxHp)
-      .sort((a, b) => (b.maxHp - b.hp) - (a.maxHp - a.hp));
-    if (hurt.length === 0) return null;
-    return { uid: hurt[0].uid };
+  // ---------- 아군 대상 ----------
+  if (need === "friendly" || need === "friendly-or-hero") {
+    return pickFriendlyTarget(game, card, level);
   }
 
-  if (need === 'friendly-or-hero') {
-    // 트레이너 HP가 절반 이하면 자기한테 사용, 아니면 가장 다친 포켓몬에게
-    if (me.hp <= me.maxHp * 0.5) return { uid: 'hero' };
-    const hurt = me.field
-      .filter((u) => u.hp < u.maxHp)
-      .sort((a, b) => (b.maxHp - b.hp) - (a.maxHp - a.hp));
-    if (hurt.length > 0) return { uid: hurt[0].uid };
-    return { uid: 'hero' }; // 다친 포켓몬도 없으면 자기한테
+  // ---------- 진화 ----------
+  if (need === "evolve") {
+    const bases = me.field.filter(
+      (u) => u.cardId === card.evolvesFrom && !u.noEvolve,
+    );
+
+    bases.sort((a, b) => b.hp / b.maxHp - a.hp / a.maxHp);
+
+    return bases.length ? { uid: bases[0].uid } : null;
   }
 
-  if (need === 'evolve') {
-    const base = me.field.find((u) => u.cardId === card.evolvesFrom && !u.noEvolve);
-    return base ? { uid: base.uid } : null;
+  // ---------- 메가진화 ----------
+  if (need === "mega") {
+    const bases = me.field.filter((u) => u.cardId === card.megaFor && !u.mega);
+
+    bases.sort((a, b) => unitValue(b, game) - unitValue(a, game));
+
+    return bases.length ? { uid: bases[0].uid } : null;
   }
-  if (need === 'mega') {
-    const base = me.field.find((u) => u.cardId === card.megaFor && !u.mega);
-    return base ? { uid: base.uid } : null;
-  }
+
   return null;
 }
 
-// ---------- 카드 사용 우선순위 ----------
+// ============================================================
+// 날씨 가치
+// ============================================================
+function weatherScore(player, weather) {
+  return player.field.reduce((score, u) => {
+    if (weather === "rain" && (u.type === "물" || u.ability === "swiftswim")) {
+      score += 2;
+    }
+
+    if (
+      weather === "sun" &&
+      (u.type === "불꽃" ||
+        u.ability === "chlorophyll" ||
+        u.ability === "solarpower")
+    ) {
+      score += 2;
+    }
+
+    if (weather === "sand" && ["바위", "땅", "강철"].includes(u.type)) {
+      score += 2;
+    }
+
+    return score;
+  }, 0);
+}
+
+// ============================================================
+// 카드 사용 가치
+// ============================================================
 function scoreCard(game, card, level) {
   const me = game.players[SIDE];
   const foe = game.players.player;
-  let score = card.cost * 10; // 기본: 비싼 카드부터
-  // 총대장: 아군을 다 잡아먹으니 필드가 넓을수록 자충수
-  if (card.ability === 'supremeoverlord') {
-    const others = me.field.length;
-    if (others >= 3) score -= 60;
-    else if (others === 2) score -= 25;
-    else if (others <= 1) score += 10;
-  }
-  if (card.ability === 'foresight' || card.ability === 'ancestor') score += 8;
 
-  if (card.kind === 'pokemon') {
-    if (card.evolvesFrom) score += 25; // 진화는 가치 높음
-    if (level >= 3) {
-      // 날씨 시너지
-      if (game.weather === 'rain' && (card.type === '물' || card.ability === 'swiftswim')) score += 15;
-      if (game.weather === 'sun' && (card.type === '불꽃' || card.ability === 'chlorophyll')) score += 15;
-      if (card.ability === 'drizzle' && me.hand.some((h) => CARD_MAP[h.cardId].type === '물')) score += 10;
-      if (card.ability === 'drought' && me.hand.some((h) => CARD_MAP[h.cardId].type === '불꽃')) score += 10;
-      if (card.ability === 'taunt' && foe.field.length >= 2) score += 12;
+  let score = effectiveCost(card, game) * 10 + (RARITY_VALUE[card.rarity] || 0);
+
+  // 총대장
+  if (card.ability === "supremeoverlord") {
+    if (me.field.length >= 3) {
+      score -= level >= 5 ? 100 : 60;
+    } else if (me.field.length === 2) {
+      score -= 25;
+    } else {
+      score += 10;
     }
   }
 
-  if (card.kind === 'spell') {
-    const s = card.spell;
-    if (s.effect === 'weather') {
-      if (game.weather === s.weather) return -100; // 이미 그 날씨면 낭비
-      if (level >= 3) {
-        const synergyCount = me.field.filter((u) =>
-          (s.weather === 'rain' && u.type === '물') ||
-          (s.weather === 'sun' && u.type === '불꽃') ||
-          (s.weather === 'sand' && ['바위','땅','강철'].includes(u.type))
-        ).length;
-        score += synergyCount * 8;
-        if (synergyCount === 0 && level >= 3) score -= 30;
+  // ========================================================
+  // 포켓몬
+  // ========================================================
+  if (card.kind === "pokemon") {
+    score += (card.atk || 0) * 1.5 + (card.hp || 0) * 0.5;
+
+    if (card.evolvesFrom) {
+      score += 25;
+    }
+
+    if (level >= 3) {
+      if (
+        game.weather === "rain" &&
+        (card.type === "물" || card.ability === "swiftswim")
+      ) {
+        score += 15;
+      }
+
+      if (
+        game.weather === "sun" &&
+        (card.type === "불꽃" ||
+          card.ability === "chlorophyll" ||
+          card.ability === "solarpower")
+      ) {
+        score += 15;
+      }
+
+      if (
+        game.weather === "sand" &&
+        ["바위", "땅", "강철"].includes(card.type)
+      ) {
+        score += 10;
+      }
+
+      if (card.ability === "taunt" && foe.field.length >= 2) {
+        score += 12;
       }
     }
-    if (s.effect === 'aoe') {
-      const base = spellDamageAmount(card, game);
-      const totalValue = foe.field.reduce((acc, u) => {
-        const dmg = calcTypedDamage(base, card.moveType, u.type);
-        return acc + (dmg >= u.hp ? u.atk + u.maxHp : Math.min(dmg, u.hp));
-      }, 0);
-      score = totalValue * 8 - 10;
-      if (level >= 2 && foe.field.length <= 1) score -= 25;
+
+    if (level >= 5 && card.ability === "intimidate" && foe.field.length >= 2) {
+      score += 10;
     }
-    if ((s.effect === 'damage' || s.effect === 'damage_draw' || s.effect === 'damage_freeze') && level >= 2) {
-      const base = spellDamageAmount(card, game);
-      if (foe.hp <= base) score += 999; // 킬각
-      const killable = foe.field.some((u) => calcTypedDamage(base, card.moveType, u.type) >= u.hp);
-      if (killable) score += 20;
-      else if (level >= 3 && foe.field.length === 0 && foe.hp > base * 3) score -= 15; // 아껴두기
-    }
-    if (s.effect === 'heal' || s.effect === 'fullheal') {
-      const hurt = me.field.filter((u) => u.hp < u.maxHp);
-      if (hurt.length === 0) return -100;
-      const worst = Math.max(...hurt.map((u) => u.maxHp - u.hp));
-      score = worst * 6;
-      if (s.effect === 'fullheal' && worst < 4 && level >= 3) score -= 20;
-    }
-    if (s.effect === 'tutor_pokemon') score += 5;
   }
 
-  if (card.kind === 'mega') {
+  // ========================================================
+  // 도구
+  // ========================================================
+  if (card.kind === "item") {
+    if (!pickFriendlyTarget(game, card, level)) {
+      return -100;
+    }
+
+    if (card.item?.effect === "lifeorb") {
+      score += 20;
+    }
+
+    if (card.item?.effect === "focussash") {
+      score += 18;
+    }
+
+    if (card.item?.effect === "shellbell") {
+      score += 14;
+    }
+  }
+
+  // ========================================================
+  // 기술
+  // ========================================================
+  if (card.kind === "spell") {
+    const s = card.spell;
+
+    // ---------- 날씨 ----------
+    if (s.effect === "weather") {
+      if (game.weather === s.weather) {
+        return -100;
+      }
+
+      if (level >= 3) {
+        const mine = weatherScore(me, s.weather);
+
+        const theirs = weatherScore(foe, s.weather);
+
+        score += mine * 10;
+
+        if (level >= 4) {
+          score -= theirs * 6;
+        }
+
+        if (mine === 0 && theirs >= mine) {
+          score -= 30;
+        }
+      }
+    }
+
+    // ---------- 광역 ----------
+    if (s.effect === "aoe") {
+      const base = spellDamageAmount(card, game);
+
+      const value = foe.field.reduce((sum, u) => {
+        const dmg = calcTypedDamage(base, card.moveType, u.type);
+
+        return (
+          sum +
+          (actuallyKills(u, dmg) ? unitValue(u, game) : Math.min(dmg, u.hp))
+        );
+      }, 0);
+
+      score = value * 7 - 10;
+
+      if (level >= 2 && foe.field.length <= 1) {
+        score -= 25;
+      }
+    }
+
+    // ---------- 단일 피해 ----------
+    if (
+      s.effect === "damage" ||
+      s.effect === "damage_draw" ||
+      s.effect === "damage_freeze"
+    ) {
+      const base = spellDamageAmount(card, game);
+
+      // 기술 자체로 본체 킬
+      if (foe.hp <= base) {
+        score += 999;
+      }
+
+      // 포켓몬 제거 가능
+      if (
+        foe.field.some((u) =>
+          actuallyKills(u, calcTypedDamage(base, card.moveType, u.type)),
+        )
+      ) {
+        score += 25;
+      }
+
+      // Lv5:
+      // 기술 + 현재 직공 데미지로
+      // 이번 턴 킬 가능
+      if (level >= 5 && foe.hp <= base + availableFaceDamage(game)) {
+        score += 500;
+      }
+
+      if (s.effect === "damage_draw") {
+        score += 8;
+      }
+
+      if (s.effect === "damage_freeze") {
+        score += 8;
+      }
+    }
+
+    // ---------- 회복 / 상태치료 ----------
+    if (
+      s.effect === "heal" ||
+      s.effect === "fullheal" ||
+      s.effect === "cure_status" ||
+      s.effect === "cure_all_status"
+    ) {
+      if (!pickFriendlyTarget(game, card, level)) {
+        return -100;
+      }
+
+      if (
+        level >= 5 &&
+        me.hp <= 10 &&
+        (s.effect === "heal" || s.effect === "fullheal")
+      ) {
+        score += 25;
+      }
+    }
+
+    // ---------- 볼 ----------
+    if (s.effect === "tutor_pokemon") {
+      score += 7;
+    }
+
+    if (s.effect === "tutor_pokemon_2") {
+      score += 18;
+    }
+
+    if (s.effect === "tutor_choose_3") {
+      score += 25;
+    }
+  }
+
+  // ========================================================
+  // 메가진화
+  // ========================================================
+  if (card.kind === "mega") {
+    const base = me.field.find((u) => u.cardId === card.megaFor && !u.mega);
+
+    if (!base) {
+      return -100;
+    }
+
     score += 40;
-    if (level >= 4) {
-      // 승호: 필드가 안정적일 때 or 킬각 보조일 때 메가
-      const base = me.field.find((u) => u.cardId === card.megaFor && !u.mega);
-      if (base && !base.canAttack && game.weather !== 'rain') score -= 10;
+
+    if (level >= 4 && base.canAttack) {
+      score += 15;
+    }
+
+    if (level >= 5) {
+      score += unitValue(base, game) * 0.5;
     }
   }
 
   return score;
 }
 
-// ---------- 공격 평가 ----------
+// ============================================================
+// 공격 판단
+// ============================================================
 function chooseAttack(game, level) {
   const attackers = readyAttackers(game);
-  if (attackers.length === 0) return null;
   const foe = game.players.player;
-  const { units, hero } = validAttackTargets(game, SIDE);
 
-  // 킬각 체크 (레벨 2+): 얼굴 총딜이 충분하면 전부 얼굴
-  if (level >= 2 && hero) {
-    const totalFace = attackers.reduce((a, u) => a + effectiveAtk(u, game), 0);
-    if (totalFace >= foe.hp) {
-      return { attacker: attackers[0], target: { uid: 'hero' } };
+  if (!attackers.length) {
+    return null;
+  }
+
+  // Lv2+ 확정 킬
+  if (level >= 2) {
+    const lethal = immediateLethal(game);
+
+    if (lethal) {
+      return lethal;
     }
   }
 
+  // Lv1 랜덤
   if (level === 1) {
     const attacker = rand(attackers);
-    const pool = [...units.map((u) => ({ uid: u.uid }))];
-    if (hero) pool.push({ uid: 'hero' }, { uid: 'hero' }); // 얼굴 약간 선호
-    return { attacker, target: rand(pool) };
+
+    const { units, hero } = validAttackTargets(game, SIDE, attacker.uid);
+
+    const pool = units.map((u) => ({
+      uid: u.uid,
+    }));
+
+    if (hero) {
+      pool.push({ uid: "hero" }, { uid: "hero" });
+    }
+
+    return pool.length
+      ? {
+          attacker,
+          target: rand(pool),
+        }
+      : null;
   }
 
-  // 그리디: 좋은 교환 찾기
   let best = null;
   let bestScore = -Infinity;
+
   attackers.forEach((a) => {
     const myAtk = effectiveAtk(a, game);
+
+    // 공격자마다 No Guard 등으로
+    // 가능한 타겟이 달라질 수 있음
+    const { units, hero } = validAttackTargets(game, SIDE, a.uid);
+
+    // ========================================================
+    // 포켓몬 공격
+    // ========================================================
     units.forEach((d) => {
       const dmg = calcTypedDamage(myAtk, a.type, d.type);
+
       const back = calcTypedDamage(effectiveAtk(d, game), d.type, a.type);
-      const kills = dmg >= d.hp;
-      const dies = back >= a.hp;
-      let score = 0;
-      if (kills) score += (d.atk + d.maxHp) * 3;
-      else score += dmg;
-      if (dies) score -= (a.atk + a.maxHp) * (level >= 3 ? 3 : 2);
-      if (kills && !dies) score += 20; // 완승 교환
-      if (typeMult(a.type, d.type) > 1) score += 5;
+
+      const kills = actuallyKills(d, dmg);
+
+      const dies = actuallyKills(a, back);
+
+      let score = kills ? unitValue(d, game) * 3 : dmg * 2;
+
+      if (dies) {
+        score -= unitValue(a, game) * (level >= 3 ? 2.5 : 1.7);
+      }
+
+      if (kills && !dies) {
+        score += 20;
+      }
+
+      if (typeMult(a.type, d.type) > 1) {
+        score += 6;
+      }
+
+      if (typeMult(a.type, d.type) === 0) {
+        score -= 35;
+      }
+
+      if (d.ability === "taunt" || d.ability === "fortress") {
+        score += 12;
+      }
+
+      // Lv5는 접촉 페널티 고려
+      if (level >= 5) {
+        if (d.ability === "roughskin") {
+          score -= 8;
+        }
+
+        if (d.ability === "static") {
+          score -= 5;
+        }
+
+        if (d.ability === "poisonbarb") {
+          score -= 4;
+        }
+
+        if (d.ability === "flamebody" || d.ability === "icebody") {
+          score -= 5;
+        }
+      }
+
       if (score > bestScore) {
         bestScore = score;
-        best = { attacker: a, target: { uid: d.uid }, score };
+
+        best = {
+          attacker: a,
+          target: {
+            uid: d.uid,
+          },
+          score,
+        };
       }
     });
+
+    // ========================================================
+    // 본체 공격
+    // ========================================================
     if (hero) {
-      // 얼굴 공격 점수
-      let faceScore = myAtk * (level >= 3 ? 1.2 : 2);
-      if (foe.hp < 12) faceScore += 15;
-      if (faceScore > bestScore) {
-        bestScore = faceScore;
-        best = { attacker: a, target: { uid: 'hero' }, score: faceScore };
+      let score = myAtk * (level >= 3 ? 1.35 : 2);
+
+      if (foe.hp <= 15) {
+        score += level >= 5 ? 28 : 15;
+      }
+
+      if (foe.hp <= myAtk) {
+        score += 999;
+      }
+
+      if (level >= 5 && foe.field.length === 0) {
+        score += 12;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+
+        best = {
+          attacker: a,
+          target: {
+            uid: "hero",
+          },
+          score,
+        };
       }
     }
   });
 
-  // 레벨 3+: 명백히 손해인 공격은 보류 (도발 강제 제외)
-  if (best && level >= 3 && best.score < 0 && hero) {
-    return { attacker: best.attacker, target: { uid: 'hero' } };
-  }
   return best;
 }
 
-// ---------- 메인: 행동 1개 수행 ----------
-export function aiStep(game) {
-  if (game.winner || game.turn !== SIDE) return false;
-  const level = game.trainer.aiLevel; // 5 = 최강(레드 전용)
+// ============================================================
+// 막힌 진화카드 버리고 뽑기
+// ============================================================
+function findDiscardCandidate(game, level) {
   const me = game.players[SIDE];
 
-  // 0) 틀깨기 보류 중이면 즉시 해소 (가장 위협적인 도발 포켓몬부터 제거)
-  if (game.pendingBattlecry && game.pendingBattlecry.side === SIDE) {
-    if (game.pendingBattlecry.ability === 'metronome') {
-      // 뮤: 가장 강한 적 공격력 복사
-      const targets = game.players.player.field.filter(u => game.pendingBattlecry.targets.includes(u.uid));
-      const pick = targets.sort((a,b) => effectiveAtk(b,game) - effectiveAtk(a,game))[0];
-      if (pick) resolveMew(game, SIDE, pick.uid);
-      else game.pendingBattlecry = null;
-    } else {
-      const targets = game.players.player.field.filter((u) => game.pendingBattlecry.targets.includes(u.uid));
-      const pick = targets.sort((a, b) => (effectiveAtk(b, game) + b.maxHp) - (effectiveAtk(a, game) + a.maxHp))[0];
-      if (pick) resolveMoldbreaker(game, SIDE, pick.uid);
-      else game.pendingBattlecry = null;
+  if (level < 4 || me.discardUsedThisTurn) {
+    return null;
+  }
+
+  const candidates = me.hand
+    .map((h, idx) => ({
+      idx,
+      card: CARD_MAP[h.cardId],
+    }))
+    .filter(({ card }) => card?.kind === "pokemon" && card.evolvesFrom)
+    .filter(({ idx }) => !canPlayCard(game, SIDE, idx));
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  // Lv4는 손패가 막혔을 때
+  if (level === 4 && me.hand.length < 7) {
+    return null;
+  }
+
+  // Lv5는 조금 더 적극적
+  if (level >= 5 && me.hand.length < 5) {
+    return null;
+  }
+
+  candidates.sort((a, b) => {
+    const aBase = me.deck.includes(a.card.evolvesFrom);
+
+    const bBase = me.deck.includes(b.card.evolvesFrom);
+
+    // 진화 전 카드가 덱에도 없으면
+    // 가장 먼저 버림
+    if (aBase !== bBase) {
+      return aBase ? 1 : -1;
     }
+
+    return (a.card.cost || 0) - (b.card.cost || 0);
+  });
+
+  return candidates[0].idx;
+}
+
+// ============================================================
+// 메인 AI
+// 행동 1개 실행 후 return
+// ============================================================
+export function aiStep(game) {
+  if (game.winner || game.turn !== SIDE) {
+    return false;
+  }
+
+  const level = Math.max(1, game.trainer?.aiLevel || 1);
+
+  // ========================================================
+  // 0. 선택형 등장 효과 처리
+  // ========================================================
+  if (game.pendingBattlecry && game.pendingBattlecry.side === SIDE) {
+    const pending = game.pendingBattlecry;
+
+    const targets = game.players.player.field.filter((u) =>
+      pending.targets.includes(u.uid),
+    );
+
+    // 뮤 변신
+    if (pending.ability === "metronome") {
+      const pick = [...targets].sort(
+        (a, b) => b.atk - a.atk || unitValue(b, game) - unitValue(a, game),
+      )[0];
+
+      if (pick) {
+        resolveMew(game, SIDE, pick.uid);
+      } else {
+        game.pendingBattlecry = null;
+      }
+
+      return true;
+    }
+
+    // 틀깨기
+    const pick = [...targets].sort(
+      (a, b) => unitValue(b, game) - unitValue(a, game),
+    )[0];
+
+    if (pick) {
+      resolveMoldbreaker(game, SIDE, pick.uid);
+    } else {
+      game.pendingBattlecry = null;
+    }
+
     return true;
   }
 
-  // 1) 카드 사용
+  // ========================================================
+  // Lv5
+  // 공격만으로 이길 수 있으면
+  // 카드 안 쓰고 승리부터
+  // ========================================================
+  if (level >= 5) {
+    const lethal = immediateLethal(game);
+
+    if (lethal && attack(game, SIDE, lethal.attacker.uid, lethal.target)) {
+      return true;
+    }
+  }
+
+  // ========================================================
+  // 1. 카드 사용
+  // ========================================================
   const playable = playableCards(game);
-  if (playable.length > 0) {
+
+  if (playable.length) {
+    // Lv1 랜덤
     if (level === 1) {
-      // 랜덤: 가끔 카드 안 내고 넘어가기도 함
       if (Math.random() < 0.85) {
         const pick = rand(playable);
+
         const target = pickSpellTarget(game, pick.card, level);
+
         const need = spellNeedsTarget(pick.card);
-        if (!need || target) {
-          if (playCard(game, SIDE, pick.idx, target)) return true;
+
+        if ((!need || target) && playCard(game, SIDE, pick.idx, target)) {
+          return true;
         }
       }
     } else {
+      // Lv2~5
       const scored = playable
-        .map((pc) => ({ ...pc, score: scoreCard(game, pc.card, level) }))
+        .map((pc) => ({
+          ...pc,
+          score: scoreCard(game, pc.card, level),
+        }))
         .filter((pc) => pc.score > -50)
         .sort((a, b) => b.score - a.score);
-      if (scored.length > 0) {
-        const pick = scored[0];
+
+      // 기존처럼 1~2개만 보지 않고
+      // 가능한 카드가 나올 때까지 시도
+      for (const pick of scored) {
         const target = pickSpellTarget(game, pick.card, level);
+
         const need = spellNeedsTarget(pick.card);
-        if (!need || target) {
-          if (playCard(game, SIDE, pick.idx, target)) return true;
-        } else if (scored.length > 1) {
-          const alt = scored[1];
-          const altTarget = pickSpellTarget(game, alt.card, level);
-          const altNeed = spellNeedsTarget(alt.card);
-          if (!altNeed || altTarget) {
-            if (playCard(game, SIDE, alt.idx, altTarget)) return true;
-          }
+
+        if ((!need || target) && playCard(game, SIDE, pick.idx, target)) {
+          return true;
         }
       }
     }
   }
 
-  // 2) 공격
-  const atkChoice = chooseAttack(game, level);
-  if (atkChoice) {
-    if (attack(game, SIDE, atkChoice.attacker.uid, atkChoice.target)) return true;
+  // ========================================================
+  // 2. Lv4+
+  // 막힌 진화패 버리고 새 카드
+  // ========================================================
+  const discardIdx = findDiscardCandidate(game, level);
+
+  if (discardIdx !== null && discardToDraw(game, SIDE, discardIdx)) {
+    return true;
   }
 
-  // 3) 더 할 게 없으면 턴 종료
+  // ========================================================
+  // 3. 공격
+  // ========================================================
+  const choice = chooseAttack(game, level);
+
+  if (choice && attack(game, SIDE, choice.attacker.uid, choice.target)) {
+    return true;
+  }
+
+  // ========================================================
+  // 4. 턴 종료
+  // ========================================================
   endTurn(game);
+
   return false;
 }

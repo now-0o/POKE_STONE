@@ -11,6 +11,8 @@ const AURA_TYPES = {
   aura_electric: "전기",
   aura_fighting: "격투",
   aura_dragon: "드래곤",
+
+  erika_flowerdance: "풀",
 };
 const SLEEP_BATTLECRIES = ["sleeppowder", "hypnosis", "sing", "lovelykiss"];
 
@@ -42,6 +44,21 @@ export function other(side) {
   return side === "player" ? "enemy" : "player";
 }
 
+function putStartingCard(player, cardId) {
+  if (!cardId) return false;
+
+  const idx = player.deck.lastIndexOf(cardId);
+  if (idx === -1) return false;
+
+  player.deck.splice(idx, 1);
+  player.hand.push({
+    uid: nextUid(),
+    cardId,
+  });
+
+  return true;
+}
+
 // ---------- 게임 생성 ----------
 export function createGame(playerDeckIds, trainer) {
   const first = Math.random() < 0.5 ? "player" : "enemy"; // 코인토스로 선공 결정
@@ -61,8 +78,25 @@ export function createGame(playerDeckIds, trainer) {
     },
   };
   // 선공 3장 / 후공 4장 드로우 (후공 보상)
-  for (let i = 0; i < 3; i++) drawCard(game, first, true);
-  for (let i = 0; i < 4; i++) drawCard(game, second, true);
+  const openingDraws = {
+    [first]: 3,
+    [second]: 4,
+  };
+
+  if (
+    trainer.startingCard &&
+    putStartingCard(game.players.enemy, trainer.startingCard)
+  ) {
+    openingDraws.enemy = Math.max(0, openingDraws.enemy - 1);
+  }
+
+  for (let i = 0; i < openingDraws[first]; i++) {
+    drawCard(game, first, true);
+  }
+
+  for (let i = 0; i < openingDraws[second]; i++) {
+    drawCard(game, second, true);
+  }
   startTurn(game, first);
   log(
     game,
@@ -230,6 +264,16 @@ export function endTurn(game) {
       u.hp -= dmg;
       log(game, `${u.name}은(는) 독으로 체력이 ${dmg} 줄었다!`);
     }
+
+    if (
+      u.ability === "misty_miraclestar" &&
+      game.weather === "rain" &&
+      u.hp < u.maxHp
+    ) {
+      u.hp = Math.min(u.maxHp, u.hp + 1);
+
+      log(game, `${u.name}의 물의파동! 체력을 1 회복했다.`);
+    }
   });
 
   cleanupDeaths(game);
@@ -277,6 +321,9 @@ export function effectiveAtk(unit, game) {
   if (game.weather === "rain" && unit.type === "물") atk += 1;
   if (game.weather === "sun" && unit.type === "불꽃") atk += 1;
   if (game.weather === "sun" && unit.ability === "solarpower") atk += 2;
+  if (game.weather === "rain" && unit.ability === "misty_miraclestar") {
+    atk += 2;
+  }
   if (unit.ability === "fortress") return unit.hp;
   const owner = game.players[unit.side];
   if (owner) {
@@ -325,6 +372,18 @@ function applyDamage(
   sourceType = null,
   typedIgnore = false,
 ) {
+  let dmg = amount;
+  // 웅의 롱스톤 - 스톤에지
+  if (unit.ability === "brock_rockwall") {
+    const before = dmg;
+
+    dmg = Math.max(0, dmg - 2);
+
+    if (dmg < before) {
+      log(game, `${unit.name}의 스톤에지! 받는 피해가 2 줄었다!`);
+    }
+  }
+
   if (amount <= 0) return 0;
   if (!typedIgnore && sourceType === "땅" && unit.ability === "levitate") {
     log(game, `${unit.name}은(는) 부유로 피해를 받지 않았다!`);
@@ -349,7 +408,6 @@ function applyDamage(
     log(game, `${unit.name}의 저수! 물을 흡수해 체력을 회복했다!`);
     return 0;
   }
-  let dmg = amount;
   // 두꺼운지방: 불꽃/얼음 피해 감소
   if (
     !typedIgnore &&
@@ -936,7 +994,94 @@ function runBattlecry(game, side, unit) {
         );
       }
       break;
+    case "surge_overdrive": {
+      const targets = foe.field.filter((u) => u.hp > 0);
 
+      const t = [...targets].sort(
+        (a, b) => effectiveAtk(b, game) - effectiveAtk(a, game),
+      )[0];
+
+      if (t) {
+        applyDamage(game, t, 1, "전기");
+        applyStatus(game, t, "para");
+
+        log(game, `${unit.name}의 스파크! ${t.name}에게 피해 1 + 마비!`);
+      }
+
+      break;
+    }
+
+    case "sabrina_futureblade": {
+      const targets = foe.field.filter((u) => u.hp > 0);
+
+      const t = [...targets].sort(
+        (a, b) => effectiveAtk(b, game) - effectiveAtk(a, game),
+      )[0];
+
+      if (t) {
+        t.atk = Math.max(0, t.atk - 2);
+
+        log(game, `${unit.name}의 사이코커터! ${t.name}의 공격력 -2!`);
+      }
+
+      break;
+    }
+
+    case "erika_flowerdance":
+      game.weather = "sun";
+
+      log(game, `${unit.name}의 그래스필드! 햇살이 강해졌다!`);
+
+      break;
+
+    case "janine_toxicdust": {
+      const targets = foe.field.filter((u) => u.hp > 0);
+
+      const t = [...targets].sort(
+        (a, b) => effectiveAtk(b, game) - effectiveAtk(a, game),
+      )[0];
+
+      if (t) {
+        applyStatus(game, t, "poison");
+        t.atk = Math.max(0, t.atk - 1);
+
+        log(game, `${unit.name}의 독가루! ${t.name}은(는) 독 상태, 공격력 -1!`);
+      }
+
+      break;
+    }
+
+    case "misty_miraclestar":
+      game.weather = "rain";
+
+      log(game, `${unit.name}의 물의파동! 비가 내리기 시작했다!`);
+
+      break;
+
+    case "blaine_eruption":
+      game.weather = "sun";
+
+      foe.field.forEach((u) => applyDamage(game, u, 2, "불꽃"));
+
+      log(game, `${unit.name}의 히트스탬프! 쾌청 + 상대 전체 불꽃 피해 2!`);
+
+      break;
+
+    case "blue_hurricane":
+      unit.canAttack = true;
+
+      log(game, `${unit.name}의 폭풍! 바로 공격할 수 있다!`);
+
+      break;
+
+    case "red_volttackle":
+      unit.atk += 4;
+      unit.hp += 4;
+      unit.maxHp += 4;
+
+      log(game, `${unit.name}의 볼트태클! +4/+4!`);
+
+      break;
     default:
       break;
   }
@@ -1441,7 +1586,11 @@ export function validAttackTargets(game, side, attackerUid = null) {
   const taunts = noguard
     ? []
     : foe.field.filter(
-        (u) => (u.ability === "taunt" || u.ability === "fortress") && u.hp > 0,
+        (u) =>
+          (u.ability === "taunt" ||
+            u.ability === "fortress" ||
+            u.ability === "brock_rockwall") &&
+          u.hp > 0,
       );
   if (taunts.length > 0) return { units: taunts, hero: false };
   return { units: foe.field, hero: true };
@@ -1505,12 +1654,30 @@ export function discardToDraw(game, side, handIdx) {
 }
 
 function spendAttack(game, unit) {
-  if (unit.ability === "skilllink" && !unit.extraUsed) {
+  if (
+    (unit.ability === "skilllink" || unit.ability === "blue_hurricane") &&
+    !unit.extraUsed
+  ) {
     unit.extraUsed = true;
-    log(game, `${unit.name}의 스킬링크! 한 번 더 공격할 수 있다!`);
+
+    if (unit.ability === "blue_hurricane") {
+      log(game, `${unit.name}의 폭풍! 한 번 더 공격할 수 있다!`);
+    } else {
+      log(game, `${unit.name}의 스킬링크! 한 번 더 공격할 수 있다!`);
+    }
   } else {
     unit.canAttack = false;
-    if (unit.ability === "truant") unit.resting = true;
+
+    if (unit.ability === "truant") {
+      unit.resting = true;
+    }
+  }
+
+  // 레드의 피카츄 - 볼트태클 반동
+  if (unit.ability === "red_volttackle") {
+    unit.hp -= 2;
+
+    log(game, `${unit.name}의 볼트태클 반동! 피해 2!`);
   }
 }
 

@@ -118,8 +118,14 @@ if (typeof window !== "undefined") {
   window.addEventListener("keydown", resumeBgmIfStuck);
 }
 
-// 울음소리 (레전드 소환 시)
-const CRY_IDS = new Set([
+// ============================================================
+// 울음소리
+// 레전드 + 트레이너 시그니처 포켓몬
+// ============================================================
+
+// 레전드 포켓몬
+// isLegend() 판정에도 이 목록만 사용한다.
+const LEGEND_CRY_IDS = new Set([
   "articuno",
   "celebi",
   "entei",
@@ -139,21 +145,49 @@ const CRY_IDS = new Set([
   "suicune",
   "zapdos",
 ]);
-// 파일명 매핑 (칠색조 등 예외)
+
+// 트레이너 전용 시그니처 카드 ID -> 실제 포켓몬 울음소리 파일명
+const SIGNATURE_CRY_FILE = {
+  surge_raichu: "raichu",
+  sabrina_gallade: "gallade",
+  erika_bellossom: "bellossom",
+  janine_venomoth: "venomoth",
+  misty_starmie: "starmie",
+  brock_onix: "onix",
+  blaine_camerupt: "camerupt",
+  blue_pidgeot: "pidgeot",
+  red_pikachu: "pikachu",
+};
+
+// 파일명이 카드 ID와 다른 경우만 매핑
 const CRY_FILE = {
-  hooh: "hooh", // ho-oh 특수처리
+  hooh: "hooh",
+
+  ...SIGNATURE_CRY_FILE,
 };
 
 export function playCry(pokemonId) {
+  if (muted || typeof Audio === "undefined") return;
+
+  const isLegendCry = LEGEND_CRY_IDS.has(pokemonId);
+  const isSignatureCry = !!SIGNATURE_CRY_FILE[pokemonId];
+
+  // 레전드도 시그니처도 아니면 울음소리 재생 안 함
+  if (!isLegendCry && !isSignatureCry) return;
+
   const file = CRY_FILE[pokemonId] || pokemonId;
-  if (!CRY_IDS.has(pokemonId)) return;
+
   const a = new Audio(`/audio/cry/${file}.ogg`);
   a.volume = 0.85 * getVolume();
+
   a.play().catch(() => {});
 }
 
+// 중요:
+// 시그니처 포켓몬은 L 등급처럼 만들어놨어도
+// "레전드 소환 연출" 대상으로 판정하면 안 됨.
 export function isLegend(pokemonId) {
-  return CRY_IDS.has(pokemonId);
+  return LEGEND_CRY_IDS.has(pokemonId);
 }
 
 export function playBgm(key) {

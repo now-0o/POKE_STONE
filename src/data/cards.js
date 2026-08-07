@@ -256,6 +256,24 @@ export const ABILITY_TEXT = {
   aura_electric: "라이트: 필드에 있는 동안 다른 아군 전기 포켓몬 공격력 +1",
   aura_fighting: "파동: 필드에 있는 동안 다른 아군 격투 포켓몬 공격력 +1",
   aura_dragon: "용의숨결: 필드에 있는 동안 다른 아군 드래곤 포켓몬 공격력 +1",
+
+  // 트레이너 전용 시그니처
+  surge_overdrive:
+    "스파크: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 전기 피해 1을 주고 마비시킨다.",
+  sabrina_futureblade:
+    "사이코커터: 나왔을 때 공격력이 가장 높은 상대 포켓몬의 공격력 -2.",
+  erika_flowerdance:
+    "그래스필드: 나왔을 때 쾌청. 필드에 있는 동안 다른 아군 풀 포켓몬 공격력 +1.",
+  janine_toxicdust:
+    "독가루: 나왔을 때 공격력이 가장 높은 상대 포켓몬을 독 상태로 만들고 공격력 -1.",
+  misty_miraclestar:
+    "물의파동: 나왔을 때 비. 비가 오는 동안 공격력 +2, 턴 종료 시 체력 1 회복.",
+  brock_rockwall: "스톤에지: 도발. 받는 피해 2 감소.",
+  blaine_eruption:
+    "히트스탬프: 나왔을 때 쾌청. 상대 포켓몬 전체에게 불꽃 피해 2.",
+  blue_hurricane:
+    "폭풍: 소환 즉시 공격 가능. 매 턴 첫 공격 후 한 번 더 공격할 수 있다.",
+  red_volttackle: "볼트태클: 나왔을 때 +4/+4. 공격할 때마다 반동으로 피해 2.",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -1678,12 +1696,86 @@ export const CARDS = [
   },
 ];
 
-export const CARD_MAP = Object.fromEntries(CARDS.map((c) => [c.id, c]));
+// ============================================================
+// 트레이너 전용 시그니처 카드
+// CARDS에는 넣지 않는다.
+// → 팩 / 컬렉션 / 관리자 지급 대상에서 제외
+// ============================================================
+export const TRAINER_CARDS = [
+  P("surge_raichu", "마티스의 라이츄", "전기", 3, 4, 4, "L", {
+    ability: "surge_overdrive",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("sabrina_gallade", "초련의 엘레이드", "에스퍼", 4, 5, 6, "L", {
+    ability: "sabrina_futureblade",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("erika_bellossom", "민화의 아르코", "풀", 4, 4, 7, "L", {
+    ability: "erika_flowerdance",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("janine_venomoth", "도희의 도나리", "독", 4, 5, 6, "L", {
+    ability: "janine_toxicdust",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("misty_starmie", "이슬의 아쿠스타", "물", 4, 5, 7, "L", {
+    ability: "misty_miraclestar",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("brock_onix", "웅이의 롱스톤", "바위", 5, 5, 10, "L", {
+    ability: "brock_rockwall",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("blaine_camerupt", "강연의 폭타", "불꽃", 5, 7, 7, "L", {
+    ability: "blaine_eruption",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("blue_pidgeot", "그린의 피죤투", "비행", 5, 6, 7, "L", {
+    ability: "blue_hurricane",
+    signature: true,
+    trainerOnly: true,
+  }),
+
+  P("red_pikachu", "레드의 피카츄", "전기", 3, 4, 4, "L", {
+    ability: "red_volttackle",
+    signature: true,
+    trainerOnly: true,
+  }),
+];
+
+export const CARD_MAP = Object.fromEntries(
+  [...CARDS, ...TRAINER_CARDS].map((c) => [c.id, c]),
+);
 
 const SPRITE_BASE =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites";
 
 export const DEX = {
+  // 트레이너 전용 시그니처
+  surge_raichu: 26, // 라이츄
+  sabrina_gallade: 475, // 엘레이드
+  erika_bellossom: 182, // 아르코
+  janine_venomoth: 49, // 도나리
+  misty_starmie: 121, // 아쿠스타
+  brock_onix: 95, // 롱스톤
+  blaine_camerupt: 323, // 폭타
+  blue_pidgeot: 18, // 피죤투
+  red_pikachu: 25, // 피카츄
+
   mudkip: 258,
   marshtomp: 259,
   swampert: 260,
