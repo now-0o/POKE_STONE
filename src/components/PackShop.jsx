@@ -1,19 +1,36 @@
-import React, { useState } from 'react';
-import { PACKS, RARITY_NAME, BALL_SPRITES, UI_SPRITES, RARITY_BALL } from '../data/cards.js';
-import { openPack } from '../state/save.js';
-import { HandCard, useInspect } from './Card.jsx';
-import { playSfx, playCry, isLegend } from '../audio.js';
+import React, { useState, useRef } from "react";
+import {
+  PACKS,
+  RARITY_NAME,
+  BALL_SPRITES,
+  UI_SPRITES,
+  RARITY_BALL,
+} from "../data/cards.js";
+import { openPack } from "../state/save.js";
+import { HandCard, useInspect } from "./Card.jsx";
+import { playSfx, playCry } from "../audio.js";
 
 // 레어도별 몬스터볼 카드백 (플립 애니메이션과 충돌하지 않게 정적)
 // C: 몬스터볼 / R: 슈퍼볼 / E: 하이퍼볼 / L: 마스터볼
 function CardBack({ rarity }) {
-  const ball = BALL_SPRITES[RARITY_BALL[rarity] || 'poke'];
+  const ball = BALL_SPRITES[RARITY_BALL[rarity] || "poke"];
   return (
     <div className={`card-back cb-rarity-${rarity}`}>
       <div className="cb-frame">
         <div className="cb-logo">POKE STONE</div>
-        <img className="cb-ball" src={ball} alt="" width={52} height={52} draggable={false} />
-        <div className="cb-dots"><span /><span /><span /></div>
+        <img
+          className="cb-ball"
+          src={ball}
+          alt=""
+          width={52}
+          height={52}
+          draggable={false}
+        />
+        <div className="cb-dots">
+          <span />
+          <span />
+          <span />
+        </div>
       </div>
       <div className="cb-shine" />
     </div>
@@ -22,54 +39,92 @@ function CardBack({ rarity }) {
 
 export default function PackShop({ save, onSaveChange, onBack }) {
   const [result, setResult] = useState(null);
-  const [flipped, setFlipped] = useState([]); // 개별 클릭으로 오픈된 인덱스들
-  const [legendFlash, setLegendFlash] = useState(null); // 레전드 뽑을 때 인덱스
-  const [settled, setSettled] = useState([]); // 플립 애니메이션까지 끝난 인덱스들
-  const [leaving, setLeaving] = useState(false); // 자동 공개 후 퇴장 중
+  const [flipped, setFlipped] = useState([]);
+  const [legendFlash, setLegendFlash] = useState(null);
+  const [settled, setSettled] = useState([]);
+  const [packRound, setPackRound] = useState(0);
+
+  const openedRef = useRef(new Set());
+  const packSeqRef = useRef(0);
+
   const { inspect, press } = useInspect();
 
-  const [lastPack, setLastPack] = useState('basic');
+  const [lastPack, setLastPack] = useState("basic");
 
   function buyPack(packId = lastPack) {
     const pack = PACKS[packId];
-    if (save.money < pack.price) { playSfx('buzzer'); return; }
-    setLastPack(packId);
+
+    if (save.money < pack.price) {
+      playSfx("buzzer");
+      return;
+    }
+
     const r = openPack(save, packId);
     if (!r) return;
-    playSfx('buy');
-    setResult(r);
+
+    // 이전 팩의 비동기 플립 처리를 무효화
+    packSeqRef.current += 1;
+    openedRef.current = new Set();
+
+    setLastPack(packId);
     setFlipped([]);
     setSettled([]);
+    setLegendFlash(null);
+
+    playSfx("buy");
+
+    setResult(r);
+
+    // 카드 DOM도 새 팩마다 새로 생성
+    setPackRound((n) => n + 1);
+
     onSaveChange();
   }
 
   function flipCard(i) {
-    if (flipped.includes(i)) return;
-    const card = result?.cards[i]?.card;
-    if (card?.rarity === 'L') {
+    if (!result) return;
+
+    // 같은 카드 중복 플립 방지
+    if (openedRef.current.has(i)) return;
+    openedRef.current.add(i);
+
+    const seq = packSeqRef.current;
+    const card = result.cards[i]?.card;
+
+    if (card?.rarity === "L") {
       playCry(card.id);
       setLegendFlash(i);
-      setTimeout(() => setLegendFlash(null), 1800);
+
+      setTimeout(() => {
+        if (packSeqRef.current !== seq) return;
+        setLegendFlash(null);
+      }, 1800);
     } else {
-      playSfx('click');
+      playSfx("click");
     }
-    setFlipped((f) => [...f, i]);
-    setTimeout(() => setSettled((st) => [...st, i]), card?.rarity === 'L' ? 900 : 600);
+
+    setFlipped((f) => (f.includes(i) ? f : [...f, i]));
+
+    setTimeout(
+      () => {
+        // 그 사이 새 팩을 열었으면 이전 팩 타이머 무시
+        if (packSeqRef.current !== seq) return;
+
+        setSettled((st) => (st.includes(i) ? st : [...st, i]));
+      },
+      card?.rarity === "L" ? 900 : 600,
+    );
   }
 
-  const allRevealed = result && flipped.length >= result.cards.length;
+  function revealAll() {
+    if (!result) return;
 
-  // 안 뒤집은 카드가 있는 채로 나가면: 전부 자동 공개 -> 잠깐 보여주고 퇴장
-  function handleBack() {
-    if (leaving) return;
-    if (result && !allRevealed) {
-      setLeaving(true);
-      setFlipped(result.cards.map((_, i) => i));
-      setTimeout(onBack, 1600);
-      return;
-    }
-    onBack();
+    result.cards.forEach((_, i) => {
+      flipCard(i);
+    });
   }
+
+  const allRevealed = !!result && settled.length >= result.cards.length;
 
   return (
     <div className="pack-shop">
@@ -79,97 +134,157 @@ export default function PackShop({ save, onSaveChange, onBack }) {
         </div>
       )}
       <div className="screen-header">
-        <button className="btn-ghost" onClick={() => { playSfx('click'); handleBack(); }}>{leaving ? '확인 중...' : '← 돌아가기'}</button>
+        {!result ? (
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              playSfx("click");
+              onBack();
+            }}
+          >
+            ← 돌아가기
+          </button>
+        ) : (
+          <div className="pack-header-spacer" />
+        )}
+
         <h2>카드팩 상점</h2>
-        <div className="money-display"><img className="res-icon" src={UI_SPRITES.coin} alt="돈" width={20} height={20} draggable={false} />{save.money}</div>
+
+        <div className="money-display">
+          <img
+            className="res-icon"
+            src={UI_SPRITES.coin}
+            alt="돈"
+            width={20}
+            height={20}
+            draggable={false}
+          />
+          {save.money}
+        </div>
       </div>
 
       {!result && (
         <div className="pack-buy-area">
           <div className="pack-section-label">기본 팩</div>
           <div className="pack-row">
-            {Object.values(PACKS).filter(p => !p.legendPool).map((pack) => (
-              <div key={pack.id} className={`pack-column pack-${pack.id}`}>
-                <div
-                  className={`pack-visual ${save.money < pack.price ? 'pack-locked' : ''}`}
-                  onMouseEnter={() => playSfx('cursor')}
-                  onClick={() => buyPack(pack.id)}
-                >
-                  <div className="pack-foil-top" />
-                  <img className="pack-ball" src={BALL_SPRITES[pack.ball]} alt="" width={72} height={72} draggable={false} />
-                  <div className="pack-label">{pack.name}</div>
-                  <div className="pack-sublabel">{pack.sub}</div>
-                  <div className="pack-price">
-                    {pack.price} · 5장 · {RARITY_NAME[pack.guarantee]} 이상 1장 보장
+            {Object.values(PACKS)
+              .filter((p) => !p.legendPool)
+              .map((pack) => (
+                <div key={pack.id} className={`pack-column pack-${pack.id}`}>
+                  <div
+                    className={`pack-visual ${save.money < pack.price ? "pack-locked" : ""}`}
+                    onMouseEnter={() => playSfx("cursor")}
+                    onClick={() => buyPack(pack.id)}
+                  >
+                    <div className="pack-foil-top" />
+                    <img
+                      className="pack-ball"
+                      src={BALL_SPRITES[pack.ball]}
+                      alt=""
+                      width={72}
+                      height={72}
+                      draggable={false}
+                    />
+                    <div className="pack-label">{pack.name}</div>
+                    <div className="pack-sublabel">{pack.sub}</div>
+                    <div className="pack-price">
+                      {pack.price} · 5장 · {RARITY_NAME[pack.guarantee]} 이상
+                      1장 보장
+                    </div>
+                    <div className="pack-foil-bottom" />
                   </div>
-                  <div className="pack-foil-bottom" />
+                  <button
+                    className={`btn-primary ${pack.id === "premium" ? "btn-premium" : ""} ${save.money < pack.price ? "btn-locked" : ""}`}
+                    onMouseEnter={() =>
+                      save.money >= pack.price && playSfx("cursor")
+                    }
+                    onClick={() => buyPack(pack.id)}
+                  >
+                    {save.money >= pack.price ? "팩 개봉!" : "돈이 부족하다..."}
+                  </button>
                 </div>
-                <button
-                  className={`btn-primary ${pack.id === 'premium' ? 'btn-premium' : ''} ${save.money < pack.price ? 'btn-locked' : ''}`}
-                  onMouseEnter={() => save.money >= pack.price && playSfx('cursor')}
-                  onClick={() => buyPack(pack.id)}
-                >
-                  {save.money >= pack.price ? '팩 개봉!' : '돈이 부족하다...'}
-                </button>
-              </div>
-            ))}
+              ))}
           </div>
-          <div className="pack-section-label pack-section-legend">✦ 레전드 테마팩 — 레전드 확률 4%, 특정 레전드만 등장</div>
+          <div className="pack-section-label pack-section-legend">
+            ✦ 레전드 테마팩 — 레전드 확률 4%, 특정 레전드만 등장
+          </div>
           <div className="pack-row">
-            {Object.values(PACKS).filter(p => !!p.legendPool).map((pack) => (
-              <div key={pack.id} className={`pack-column pack-${pack.id}`}>
-                <div
-                  className={`pack-visual pack-legend-theme ${save.money < pack.price ? 'pack-locked' : ''}`}
-                  onMouseEnter={() => playSfx('cursor')}
-                  onClick={() => buyPack(pack.id)}
-                >
-                  <div className="pack-foil-top" />
-                  <img className="pack-ball" src={BALL_SPRITES[pack.ball]} alt="" width={72} height={72} draggable={false} />
-                  <div className="pack-label">{pack.name}</div>
-                  <div className="pack-sublabel">{pack.sub}</div>
-                  <div className="pack-price">
-                    {pack.price} · 5장 · {RARITY_NAME[pack.guarantee]} 이상 1장 보장
+            {Object.values(PACKS)
+              .filter((p) => !!p.legendPool)
+              .map((pack) => (
+                <div key={pack.id} className={`pack-column pack-${pack.id}`}>
+                  <div
+                    className={`pack-visual pack-legend-theme ${save.money < pack.price ? "pack-locked" : ""}`}
+                    onMouseEnter={() => playSfx("cursor")}
+                    onClick={() => buyPack(pack.id)}
+                  >
+                    <div className="pack-foil-top" />
+                    <img
+                      className="pack-ball"
+                      src={BALL_SPRITES[pack.ball]}
+                      alt=""
+                      width={72}
+                      height={72}
+                      draggable={false}
+                    />
+                    <div className="pack-label">{pack.name}</div>
+                    <div className="pack-sublabel">{pack.sub}</div>
+                    <div className="pack-price">
+                      {pack.price} · 5장 · {RARITY_NAME[pack.guarantee]} 이상
+                      1장 보장
+                    </div>
+                    <div className="pack-foil-bottom" />
                   </div>
-                  <div className="pack-foil-bottom" />
+                  <button
+                    className={`btn-primary btn-legend-pack ${save.money < pack.price ? "btn-locked" : ""}`}
+                    onMouseEnter={() =>
+                      save.money >= pack.price && playSfx("cursor")
+                    }
+                    onClick={() => buyPack(pack.id)}
+                  >
+                    {save.money >= pack.price ? "팩 개봉!" : "돈이 부족하다..."}
+                  </button>
                 </div>
-                <button
-                  className={`btn-primary btn-legend-pack ${save.money < pack.price ? 'btn-locked' : ''}`}
-                  onMouseEnter={() => save.money >= pack.price && playSfx('cursor')}
-                  onClick={() => buyPack(pack.id)}
-                >
-                  {save.money >= pack.price ? '팩 개봉!' : '돈이 부족하다...'}
-                </button>
-              </div>
-            ))}
+              ))}
           </div>
           <p className="pack-note">
-            같은 카드는 2장(레전드 1장)까지 보관됩니다. 초과분은 자동으로 환급돼요.
+            같은 카드는 2장(레전드 1장)까지 보관됩니다. 초과분은 자동으로
+            환급돼요.
           </p>
         </div>
       )}
 
       {result && (
         <div className="pack-open-area">
-          <div className="pack-cards">
+          <div className="pack-cards" key={packRound}>
             {result.cards.map((r, i) => {
               const front = (
                 <div className="pack-card-wrap">
-                  <HandCard cardId={r.card.id} playable onPointerDown={press({ cardId: r.card.id })} />
+                  <HandCard
+                    cardId={r.card.id}
+                    playable
+                    onPointerDown={press({ cardId: r.card.id })}
+                  />
                   <div className={`rarity-tag rarity-${r.card.rarity}`}>
                     {RARITY_NAME[r.card.rarity]}
-                    {r.refunded > 0 && <span className="refund"> (중복 +{r.refunded}원)</span>}
+                    {r.refunded > 0 && (
+                      <span className="refund"> (중복 +{r.refunded}원)</span>
+                    )}
                   </div>
                 </div>
               );
               // 플립 완료: 3D 래퍼 없이 렌더 -> 틸트/홀로 정상 작동
               if (settled.includes(i)) {
-                return <div key={i} className="flip-card settled">{front}</div>;
+                return (
+                  <div key={i} className="flip-card settled">
+                    {front}
+                  </div>
+                );
               }
-              const isLegendCard = r.card.rarity === 'L';
               return (
                 <div
                   key={i}
-                  className={`flip-card ${flipped.includes(i) ? 'flipped' : ''} ${legendFlash === i ? 'legend-flip' : ''}`}
+                  className={`flip-card ${flipped.includes(i) ? "flipped" : ""} ${legendFlash === i ? "legend-flip" : ""}`}
                   onClick={() => flipCard(i)}
                 >
                   <div className="flip-inner">
@@ -182,18 +297,55 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               );
             })}
           </div>
-          {!allRevealed && <p className="reveal-hint">뒤집고 싶은 카드를 눌러보자!</p>}
+          {!allRevealed && (
+            <div className="reveal-actions">
+              <p className="reveal-hint">뒤집고 싶은 카드를 눌러보자!</p>
+
+              <button
+                className="btn-secondary btn-reveal-all"
+                onMouseEnter={() => playSfx("cursor")}
+                onClick={revealAll}
+              >
+                일괄 개봉
+              </button>
+            </div>
+          )}
           {allRevealed && (
             <div className="pack-done">
-              {result.refundTotal > 0 && <p>중복 환급 합계: +{result.refundTotal}원</p>}
-              <button className="btn-primary" onMouseEnter={() => playSfx('cursor')} onClick={() => { playSfx('click'); setResult(null); }}>확인</button>
+              {result.refundTotal > 0 && (
+                <p>중복 환급 합계: +{result.refundTotal}원</p>
+              )}
               <button
-                className={`btn-secondary ${save.money < PACKS[lastPack].price ? 'btn-locked' : ''}`}
-                onMouseEnter={() => save.money >= PACKS[lastPack].price && playSfx('cursor')}
+                className="btn-primary"
+                onMouseEnter={() => playSfx("cursor")}
                 onClick={() => {
-                  if (save.money < PACKS[lastPack].price) { playSfx('buzzer'); return; }
+                  playSfx("click");
+
+                  packSeqRef.current += 1;
+                  openedRef.current = new Set();
+
+                  setFlipped([]);
+                  setSettled([]);
+                  setLegendFlash(null);
                   setResult(null);
-                  setTimeout(() => buyPack(lastPack), 0);
+                }}
+              >
+                확인
+              </button>
+              <button
+                className={`btn-secondary ${
+                  save.money < PACKS[lastPack].price ? "btn-locked" : ""
+                }`}
+                onMouseEnter={() =>
+                  save.money >= PACKS[lastPack].price && playSfx("cursor")
+                }
+                onClick={() => {
+                  if (save.money < PACKS[lastPack].price) {
+                    playSfx("buzzer");
+                    return;
+                  }
+
+                  buyPack(lastPack);
                 }}
               >
                 한 팩 더! ({PACKS[lastPack].price})

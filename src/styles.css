@@ -3293,29 +3293,29 @@ img.res-icon.small {
 }
 @keyframes legend-card-flip {
   0% {
-    transform: scale(1) rotateY(0deg);
+    transform: scale(1);
     filter: brightness(1);
   }
   35% {
-    transform: scale(1.35) rotateY(90deg);
+    transform: scale(1.35);
     filter: brightness(3) saturate(1.5);
   }
   55% {
-    transform: scale(1.4) rotateY(180deg);
+    transform: scale(1.4);
     filter: brightness(2.5) drop-shadow(0 0 18px gold);
   }
   80% {
-    transform: scale(1.25) rotateY(180deg);
+    transform: scale(1.25);
     filter: brightness(1.8) drop-shadow(0 0 12px gold);
   }
   100% {
-    transform: scale(1) rotateY(180deg);
+    transform: scale(1);
     filter: brightness(1);
   }
 }
 
 /* 레전드 카드 settled 상태: 황금빛 글로우 */
-.flip-card.settled .rarity-tag.rarity-L {
+.flip-card.settled .hand-card.rarity-card-L {
   animation: legend-glow-pulse 2s ease-in-out infinite;
 }
 @keyframes legend-glow-pulse {
@@ -3365,4 +3365,62 @@ img.res-icon.small {
 
 .hyperball-choice-cards .hand-card {
   cursor: pointer;
+}
+
+/* 레전드 테마팩 개봉 버튼 */
+.pack-storm .btn-legend-pack {
+  background: linear-gradient(180deg, #63b4ff, #2878e8 55%, #1850b8) !important;
+  color: #ffffff !important;
+  border: 1px solid #9ad0ff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 14px rgba(40, 120, 240, 0.45);
+}
+
+.pack-earth .btn-legend-pack {
+  background: linear-gradient(180deg, #61d779, #2d9c49 55%, #197332) !important;
+  color: #ffffff !important;
+  border: 1px solid #8ce89d !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 14px rgba(40, 180, 60, 0.4);
+}
+
+.pack-mystic .btn-legend-pack {
+  background: linear-gradient(180deg, #e56bd1, #b33da2 55%, #812675) !important;
+  color: #ffffff !important;
+  border: 1px solid #f19be3 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 14px rgba(240, 80, 180, 0.4);
+}
+
+.btn-legend-pack:not(.btn-locked) {
+  opacity: 1;
+}
+
+.btn-legend-pack:not(.btn-locked):hover {
+  filter: brightness(1.12);
+}
+
+.btn-legend-pack.btn-locked {
+  opacity: 0.32;
+  filter: grayscale(0.7) brightness(0.65);
+}
+
+.reveal-actions {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.reveal-actions .reveal-hint {
+  margin-top: 0;
+}
+
+.btn-reveal-all {
+  min-width: 150px;
+}
+
+.pack-header-spacer {
+  width: 70px;
 }
