@@ -10,6 +10,7 @@ import {
   validAttackTargets, effectiveAtk, effectiveCost,
   calcTypedDamage, typeMult, spellDamageAmount, spellNeedsTarget, other,
   resolveMoldbreaker,
+  resolveMew,
 } from './engine.js';
 
 const SIDE = 'enemy';
@@ -66,6 +67,17 @@ function pickSpellTarget(game, card, level) {
       const candidates = me.field.filter((u) => !u.item).sort((a, b) => (b.atk + b.maxHp) - (a.atk + a.maxHp));
       if (candidates.length === 0) return null;
       return { uid: candidates[0].uid };
+    }
+    // 치료제: 해당 상태이상 걸린 포켓몬 중 가장 중요한 것
+    if (card.spell?.effect === 'cure_status') {
+      const sick = me.field.filter(u => u.status === card.spell.statusType);
+      if (!sick.length) return null;
+      return { uid: sick.sort((a,b)=>(b.atk+b.maxHp)-(a.atk+a.maxHp))[0].uid };
+    }
+    if (card.spell?.effect === 'cure_all_status') {
+      const sick = me.field.filter(u => u.status !== null);
+      if (!sick.length) return null;
+      return { uid: sick.sort((a,b)=>(b.atk+b.maxHp)-(a.atk+a.maxHp))[0].uid };
     }
     const hurt = me.field
       .filter((u) => u.hp < u.maxHp)
@@ -237,15 +249,23 @@ function chooseAttack(game, level) {
 // ---------- 메인: 행동 1개 수행 ----------
 export function aiStep(game) {
   if (game.winner || game.turn !== SIDE) return false;
-  const level = game.trainer.aiLevel;
+  const level = game.trainer.aiLevel; // 5 = 최강(레드 전용)
   const me = game.players[SIDE];
 
   // 0) 틀깨기 보류 중이면 즉시 해소 (가장 위협적인 도발 포켓몬부터 제거)
   if (game.pendingBattlecry && game.pendingBattlecry.side === SIDE) {
-    const targets = game.players.player.field.filter((u) => game.pendingBattlecry.targets.includes(u.uid));
-    const pick = targets.sort((a, b) => (effectiveAtk(b, game) + b.maxHp) - (effectiveAtk(a, game) + a.maxHp))[0];
-    if (pick) resolveMoldbreaker(game, SIDE, pick.uid);
-    else game.pendingBattlecry = null;
+    if (game.pendingBattlecry.ability === 'metronome') {
+      // 뮤: 가장 강한 적 공격력 복사
+      const targets = game.players.player.field.filter(u => game.pendingBattlecry.targets.includes(u.uid));
+      const pick = targets.sort((a,b) => effectiveAtk(b,game) - effectiveAtk(a,game))[0];
+      if (pick) resolveMew(game, SIDE, pick.uid);
+      else game.pendingBattlecry = null;
+    } else {
+      const targets = game.players.player.field.filter((u) => game.pendingBattlecry.targets.includes(u.uid));
+      const pick = targets.sort((a, b) => (effectiveAtk(b, game) + b.maxHp) - (effectiveAtk(a, game) + a.maxHp))[0];
+      if (pick) resolveMoldbreaker(game, SIDE, pick.uid);
+      else game.pendingBattlecry = null;
+    }
     return true;
   }
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PACKS, RARITY_NAME, BALL_SPRITES, UI_SPRITES, RARITY_BALL } from '../data/cards.js';
 import { openPack } from '../state/save.js';
 import { HandCard, useInspect } from './Card.jsx';
-import { playSfx } from '../audio.js';
+import { playSfx, playCry, isLegend } from '../audio.js';
 
 // 레어도별 몬스터볼 카드백 (플립 애니메이션과 충돌하지 않게 정적)
 // C: 몬스터볼 / R: 슈퍼볼 / E: 하이퍼볼 / L: 마스터볼
@@ -23,6 +23,7 @@ function CardBack({ rarity }) {
 export default function PackShop({ save, onSaveChange, onBack }) {
   const [result, setResult] = useState(null);
   const [flipped, setFlipped] = useState([]); // 개별 클릭으로 오픈된 인덱스들
+  const [legendFlash, setLegendFlash] = useState(null); // 레전드 뽑을 때 인덱스
   const [settled, setSettled] = useState([]); // 플립 애니메이션까지 끝난 인덱스들
   const [leaving, setLeaving] = useState(false); // 자동 공개 후 퇴장 중
   const { inspect, press } = useInspect();
@@ -44,9 +45,16 @@ export default function PackShop({ save, onSaveChange, onBack }) {
 
   function flipCard(i) {
     if (flipped.includes(i)) return;
-    playSfx('click');
+    const card = result?.cards[i]?.card;
+    if (card?.rarity === 'L') {
+      playCry(card.id);
+      setLegendFlash(i);
+      setTimeout(() => setLegendFlash(null), 1800);
+    } else {
+      playSfx('click');
+    }
     setFlipped((f) => [...f, i]);
-    setTimeout(() => setSettled((st) => [...st, i]), 600); // 플립(0.55s) 종료 후 정착
+    setTimeout(() => setSettled((st) => [...st, i]), card?.rarity === 'L' ? 900 : 600);
   }
 
   const allRevealed = result && flipped.length >= result.cards.length;
@@ -78,8 +86,9 @@ export default function PackShop({ save, onSaveChange, onBack }) {
 
       {!result && (
         <div className="pack-buy-area">
+          <div className="pack-section-label">기본 팩</div>
           <div className="pack-row">
-            {Object.values(PACKS).map((pack) => (
+            {Object.values(PACKS).filter(p => !p.legendPool).map((pack) => (
               <div key={pack.id} className={`pack-column pack-${pack.id}`}>
                 <div
                   className={`pack-visual ${save.money < pack.price ? 'pack-locked' : ''}`}
@@ -97,6 +106,34 @@ export default function PackShop({ save, onSaveChange, onBack }) {
                 </div>
                 <button
                   className={`btn-primary ${pack.id === 'premium' ? 'btn-premium' : ''} ${save.money < pack.price ? 'btn-locked' : ''}`}
+                  onMouseEnter={() => save.money >= pack.price && playSfx('cursor')}
+                  onClick={() => buyPack(pack.id)}
+                >
+                  {save.money >= pack.price ? '팩 개봉!' : '돈이 부족하다...'}
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="pack-section-label pack-section-legend">✦ 레전드 테마팩 — 레전드 확률 4%, 특정 레전드만 등장</div>
+          <div className="pack-row">
+            {Object.values(PACKS).filter(p => !!p.legendPool).map((pack) => (
+              <div key={pack.id} className={`pack-column pack-${pack.id}`}>
+                <div
+                  className={`pack-visual pack-legend-theme ${save.money < pack.price ? 'pack-locked' : ''}`}
+                  onMouseEnter={() => playSfx('cursor')}
+                  onClick={() => buyPack(pack.id)}
+                >
+                  <div className="pack-foil-top" />
+                  <img className="pack-ball" src={BALL_SPRITES[pack.ball]} alt="" width={72} height={72} draggable={false} />
+                  <div className="pack-label">{pack.name}</div>
+                  <div className="pack-sublabel">{pack.sub}</div>
+                  <div className="pack-price">
+                    {pack.price} · 5장 · {RARITY_NAME[pack.guarantee]} 이상 1장 보장
+                  </div>
+                  <div className="pack-foil-bottom" />
+                </div>
+                <button
+                  className={`btn-primary btn-legend-pack ${save.money < pack.price ? 'btn-locked' : ''}`}
                   onMouseEnter={() => save.money >= pack.price && playSfx('cursor')}
                   onClick={() => buyPack(pack.id)}
                 >
@@ -128,10 +165,11 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               if (settled.includes(i)) {
                 return <div key={i} className="flip-card settled">{front}</div>;
               }
+              const isLegendCard = r.card.rarity === 'L';
               return (
                 <div
                   key={i}
-                  className={`flip-card ${flipped.includes(i) ? 'flipped' : ''}`}
+                  className={`flip-card ${flipped.includes(i) ? 'flipped' : ''} ${legendFlash === i ? 'legend-flip' : ''}`}
                   onClick={() => flipCard(i)}
                 >
                   <div className="flip-inner">

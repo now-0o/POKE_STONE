@@ -1826,8 +1826,8 @@ img.res-icon.small { vertical-align: -2px; }
   transform-style: preserve-3d;
   animation: coin-flip-3d 1s linear forwards;
 }
-.coin-3d.heads { --flips: 900deg; }
-.coin-3d.tails { --flips: 720deg; }
+.coin-3d.heads { --flips: 720deg; }  /* 앞면(P)에 착지 = 선공 */
+.coin-3d.tails { --flips: 900deg; }  /* 뒷면에 착지 = 후공 */
 
 @keyframes coin-flip-3d {
   0%   { transform: rotateY(0) rotateX(0deg) scale(1); }
@@ -1976,3 +1976,53 @@ img.res-icon.small { vertical-align: -2px; }
 
 .field-unit:has(.status-burn)   { border-color: rgba(255,140,50,0.8) !important; }
 .field-unit:has(.status-poison) { border-color: rgba(160,80,200,0.8) !important; }
+
+/* ============================================================
+   레전드 테마팩 섹션
+   ============================================================ */
+.pack-section-label {
+  font-family: var(--display-font);
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  margin: 18px 0 8px;
+  text-align: center;
+}
+.pack-section-legend {
+  color: #e0c060;
+  font-size: 12px;
+}
+.pack-legend-theme {
+  background: linear-gradient(160deg, #1a1030, #2a1840) !important;
+  border: 1px solid rgba(196,120,255,0.5) !important;
+  box-shadow: 0 0 18px rgba(196,120,255,0.2) !important;
+}
+.btn-legend-pack {
+  background: linear-gradient(160deg, #4a2080, #2a1050) !important;
+  border-color: rgba(196,120,255,0.5) !important;
+}
+.btn-legend-pack:hover { background: linear-gradient(160deg, #5a2898, #341460) !important; }
+
+/* ============================================================
+   레전드 카드 뒤집기 전용 애니메이션
+   ============================================================ */
+.flip-card.legend-flip {
+  z-index: 50;
+  animation: legend-card-flip 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes legend-card-flip {
+  0%   { transform: scale(1) rotateY(0deg); filter: brightness(1); }
+  35%  { transform: scale(1.35) rotateY(90deg); filter: brightness(3) saturate(1.5); }
+  55%  { transform: scale(1.4) rotateY(180deg); filter: brightness(2.5) drop-shadow(0 0 18px gold); }
+  80%  { transform: scale(1.25) rotateY(180deg); filter: brightness(1.8) drop-shadow(0 0 12px gold); }
+  100% { transform: scale(1) rotateY(180deg); filter: brightness(1); }
+}
+
+/* 레전드 카드 settled 상태: 황금빛 글로우 */
+.flip-card.settled .rarity-tag.rarity-L {
+  animation: legend-glow-pulse 2s ease-in-out infinite;
+}
+@keyframes legend-glow-pulse {
+  0%,100% { box-shadow: 0 0 6px rgba(255,200,50,0.5); }
+  50%      { box-shadow: 0 0 14px rgba(255,200,50,0.9), 0 0 24px rgba(255,160,20,0.5); }
+}

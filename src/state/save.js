@@ -73,9 +73,12 @@ function rollRarity() {
   return 'C';
 }
 
-function randomCardOfRarity(rarity) {
-  const pool = CARDS.filter((c) => c.rarity === rarity);
-  return pool[Math.floor(Math.random() * pool.length)];
+function randomCardOfRarity(rarity, pool = null) {
+  const cards = pool
+    ? CARDS.filter((c) => c.rarity === rarity && pool.includes(c.id))
+    : CARDS.filter((c) => c.rarity === rarity);
+  if (!cards.length) return CARDS.filter((c) => c.rarity === rarity)[0]; // 풀 비면 전체에서
+  return cards[Math.floor(Math.random() * cards.length)];
 }
 
 // 팩 개봉: { cards: [{card, refunded}], refundTotal }
@@ -106,7 +109,7 @@ export function openPack(save, packId = 'basic') {
   const results = [];
   let refundTotal = 0;
   rarities.forEach((rarity) => {
-    const card = randomCardOfRarity(rarity);
+    const card = randomCardOfRarity(rarity, rarity === 'L' && pack.legendPool ? pack.legendPool : null);
     const owned = save.collection[card.id] || 0;
     const max = MAX_COPIES[card.rarity];
     if (owned >= max) {

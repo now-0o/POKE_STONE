@@ -82,9 +82,12 @@ export const ABILITY_TEXT = {
   fortress: '바디프레스: 도발. 공격할 수 없지만, 반격 피해는 현재 체력과 같다',
   // 반격
   static: '정전기: 접촉 시 피해 1 + 40% 확률로 상대에게 마비 상태이상',
-  poisonpoint: '독침: 공격당할 때 30% 확률로 상대에게 독 상태이상',
+  poisonbarb: '독가시: 공격당할 때 30% 확률로 상대에게 독 상태이상',
+  poisonpoint: '독침: 공격할 때 30% 확률로 상대에게 독 상태이상',
   flamebody: '불꽃몸: 공격당할 때 30% 확률로 상대에게 화상 상태이상',
   icebody: '냉동몸: 공격당할 때 20% 확률로 상대에게 얼음 상태이상',
+  freezedry: '프리즈드라이: 공격할 때 25% 확률로 상대에게 얼음 상태이상',
+  serenegrace: '천진: 상태이상기 발동 확률 2배 (이 포켓몬이 공격할 때 상태이상을 걸 확률 2배)',
   roughskin: '까칠한피부: 이 포켓몬을 공격한 상대에게 피해 2',
   // 공격 패턴
   rush: '돌진: 낸 턴에 바로 공격할 수 있다',
@@ -98,7 +101,7 @@ export const ABILITY_TEXT = {
   keeneye: '예리한눈: 나왔을 때 카드를 1장 뽑는다',
   teleport: '텔레포트: 나왔을 때 카드를 1장 뽑는다',
   foresight: '예지: 나왔을 때 카드를 2장 뽑는다',
-  metronome: '변신(뮤 전용기): 나올 때 무작위 상대 공격력을 복사하고 덱에서 포켓몬 1장을 손으로 가져온다',
+  metronome: '변신(뮤 전용기): 나올 때 상대 포켓몬 1마리를 선택해 그 공격력을 복사하고, 덱에서 포켓몬 1장을 손으로 가져온다',
   download: '다운로드: 나왔을 때 자신이 +1/+1을 얻는다',
   transform: '변신: 나왔을 때 무작위 상대 포켓몬의 능력치와 타입을 복사한다',
   sleeppowder: '수면가루: 나왔을 때 무작위 상대에게 잠듦 상태이상',
@@ -261,7 +264,7 @@ export const CARDS = [
   P('articuno', '프리져', '얼음', 8, 7, 10, 'L', { ability: 'frostedgale' }),
   P('jynx', '루주라', '얼음', 4, 4, 5, 'R', { ability: 'lovelykiss' }),
   P('shellder', '셀러', '얼음', 1, 1, 1, 'C', { ability: 'icebody' }),
-  P('cloyster', '파르셀', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'shellder', ability: 'skilllink' }),
+  P('cloyster', '파르셀', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'shellder', ability: 'freezedry' }),
   P('swinub', '꾸꾸리', '얼음', 1, 1, 2, 'C', {}),
   P('piloswine', '메꾸리', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'swinub', ability: 'thickfat' }),
   P('regice', '레지아이스', '얼음', 7, 5, 10, 'L', { ability: 'icelock' }),
@@ -283,8 +286,8 @@ export const CARDS = [
 
   // ============ 독 (11) ============
   P('grimer', '질퍽이', '독', 2, 2, 3, 'C', {}),
-  P('muk', '질뻐기', '독', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'grimer', ability: 'poisonpoint' }),
-  P('weezing', '또도가스', '독', 3, 3, 4, 'R', { ability: 'poisonpoint' }),
+  P('muk', '질뻐기', '독', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'grimer', ability: 'poisonbarb' }),
+  P('weezing', '또도가스', '독', 3, 3, 4, 'R', { ability: 'poisonbarb' }),
   P('ekans', '아보', '독', 1, 2, 1, 'C', {}),
   P('arbok', '아보크', '독', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'ekans', ability: 'intimidate' }),
   P('nidoranm', '니드런♂', '독', 1, 1, 1, 'C', {}),
@@ -404,11 +407,9 @@ export const CARDS = [
   P('staraptor', '찌르호크', '비행', 5, 8, 7, 'E', { stage: 2, evolvesFrom: 'staravia', ability: 'moxie' }),
   // 얼음
   P('snorunt', '눈꼬마', '얼음', 1, 1, 2, 'C', { ability: 'icebody' }),
-  P('glalie', '얼음귀신', '얼음', 3, 4, 6, 'R', { stage: 1, evolvesFrom: 'snorunt' }),
+  P('glalie', '얼음귀신', '얼음', 3, 4, 6, 'R', { stage: 1, evolvesFrom: 'snorunt', ability: 'freezedry' }),
   // 악
-  P('zorua', '조로아', '악', 1, 1, 2, 'C', {}),
-  P('zoroark', '조로아크', '악', 4, 6, 5, 'R', { stage: 1, evolvesFrom: 'zorua', ability: 'transform' }),
-  P('poochyena', '포챠나', '악', 1, 1, 2, 'C', {}),
+      P('poochyena', '포챠나', '악', 1, 1, 2, 'C', {}),
   P('mightyena', '그라에나', '악', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'poochyena', ability: 'intimidate' }),
   // 강철
   P('bronzor', '동미러', '강철', 1, 1, 2, 'C', {}),
@@ -483,7 +484,75 @@ export const CARDS = [
   { id: 'focussash', name: '기합의 띠', kind: 'item', type: '도구', cost: 2, rarity: 'R', emoji: '🎗️', item: { effect: 'focussash' }, text: '장착: 옹골참(치명적인 피해를 1회 버팀)을 얻는다.' },
   { id: 'shellbell', name: '조개껍질방울', kind: 'item', type: '도구', cost: 2, rarity: 'R', emoji: '🐚', item: { effect: 'shellbell' }, text: '장착: 공격으로 피해를 입힐 때마다 체력을 1 회복한다.' },
 
-  // ============ 메가스톤 (5) ============
+
+  // ============ 4세대 추가 (v1.5) ============
+  // 풀
+  P('budew', '꽃봉오리', '풀', 1, 1, 1, 'C', { ability: 'sleeppowder' }),
+  P('roserade', '로즈레이드', '풀', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'budew', ability: 'poisonpoint' }),
+  P('cherubi', '체리꼬', '풀', 1, 1, 1, 'C', {}),
+  P('cherrim', '체리꽃', '풀', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'cherubi', ability: 'drought' }),
+  P('carnivine', '무쪽이', '풀', 4, 5, 5, 'R', { ability: 'sleeppowder' }),
+  P('leafeon', '리피아', '풀', 4, 6, 5, 'R', { ability: 'rush' }),
+  // 물
+  P('buizel', '브이젤', '물', 1, 2, 1, 'C', { ability: 'rush' }),
+  P('floatzel', '플로젤', '물', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'buizel', ability: 'rush' }),
+  P('gastrodon', '마스킵', '물', 4, 4, 7, 'R', { ability: 'waterabsorb' }),
+  // 전기
+  P('pachirisu', '파치리스', '전기', 2, 2, 4, 'C', { ability: 'static' }),
+  // 얼음
+  P('snover', '눈쓰개', '얼음', 2, 2, 3, 'C', {}),
+  P('abomasnow', '눈설왕', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'snover', ability: 'blizzard' }),
+  P('glaceon', '글레이시아', '얼음', 4, 5, 6, 'R', { ability: 'icebody' }),
+  // 바위
+  P('cranidos', '두개도', '바위', 2, 4, 2, 'C', {}),
+  P('rampardos', '람파도스', '바위', 4, 8, 5, 'R', { stage: 1, evolvesFrom: 'cranidos', ability: 'moldbreaker' }),
+  P('bonsly', '우소하치', '바위', 1, 1, 2, 'C', {}),
+  // 강철
+  P('shieldon', '방패톱스', '강철', 1, 0, 3, 'C', { ability: 'sturdy' }),
+  P('bastiodon', '바리톱스', '강철', 3, 0, 8, 'R', { stage: 1, evolvesFrom: 'shieldon', ability: 'fortress' }),
+  // 벌레
+  P('wormadam', '나몰빼미', '벌레', 3, 3, 6, 'R', { ability: 'levitate' }),
+  P('mothim', '비여니', '벌레', 3, 5, 3, 'R', { ability: 'rush' }),
+  P('combee', '세꿀버리', '벌레', 1, 1, 2, 'C', {}),
+  P('vespiquen', '세꿀왕', '벌레', 4, 3, 8, 'R', { stage: 1, evolvesFrom: 'combee', ability: 'healer' }),
+  // 독
+  P('stunky', '스컹뿌', '독', 1, 2, 2, 'C', { ability: 'poisonpoint' }),
+  P('skuntank', '스컹탱', '독', 3, 5, 5, 'R', { stage: 1, evolvesFrom: 'stunky', ability: 'poisonpoint' }),
+  P('skorupi', '스콜피', '독', 1, 2, 2, 'C', { ability: 'poisonbarb' }),
+  P('drapion', '드래피온', '독', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'skorupi', ability: 'poisonbarb' }),
+  P('croagunk', '삐딱구리', '독', 1, 2, 1, 'C', { ability: 'poisonpoint' }),
+  P('toxicroak', '독침붕', '독', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'croagunk', ability: 'poisonpoint' }),
+  // 고스트
+  P('drifloon', '흔들풍선', '고스트', 1, 1, 2, 'C', { ability: 'levitate' }),
+  P('drifblim', '흔들벨롱', '고스트', 3, 3, 6, 'R', { stage: 1, evolvesFrom: 'drifloon', ability: 'levitate' }),
+  // 노말
+  P('buneary', '이어롤', '노말', 1, 2, 2, 'C', {}),
+  P('lopunny', '이어부기', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'buneary', ability: 'rush' }),
+  P('glameow', '냐오틱', '노말', 1, 2, 2, 'C', {}),
+  P('purugly', '냐옴비', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'glameow', ability: 'intimidate' }),
+  P('ambipom', '겸손코', '노말', 3, 5, 5, 'R', { ability: 'skilllink' }),
+  // 에스퍼
+  P('mimejr', '마임주니어', '에스퍼', 1, 1, 2, 'C', {}),
+  // 격투
+  P('hippopotas', '하마돈', '땅', 1, 1, 2, 'C', {}),
+  P('hippowdon', '하마두가스', '땅', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'hippopotas', ability: 'muddywater' }),
+  // 페어리
+  P('togekiss', '토게키스', '페어리', 5, 5, 7, 'E', { stage: 2, evolvesFrom: 'togetic', ability: 'serenegrace' }),
+  // 악
+  P('weavile', '포푸니라', '악', 4, 7, 4, 'R', { ability: 'rush' }),
+
+
+  // ============ 도구 추가 (v1.5) ============
+  { id: 'superball', name: '슈퍼볼', kind: 'spell', type: '도구', cost: 2, rarity: 'R', emoji: '🔵', spell: { effect: 'tutor_pokemon_2' }, text: '덱에서 무작위 포켓몬 2장을 손으로 가져온다.' },
+  { id: 'hyperball', name: '하이퍼볼', kind: 'spell', type: '도구', cost: 3, rarity: 'R', emoji: '🟡', spell: { effect: 'tutor_choose_3' }, text: '덱에서 포켓몬 3장을 보여준다. 1장을 선택해 손으로 가져오고 나머지 2장은 덱으로 돌려보낸다.' },
+  { id: 'paralyzeheal', name: '마비치료제', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '⚡', spell: { effect: 'cure_status', statusType: 'para', target: 'friendly-pokemon' }, text: '아군 포켓몬의 마비 상태이상을 낫게 한다.' },
+  { id: 'burnheal', name: '화상치료제', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '🔥', spell: { effect: 'cure_status', statusType: 'burn', target: 'friendly-pokemon' }, text: '아군 포켓몬의 화상 상태이상을 낫게 한다.' },
+  { id: 'antidote', name: '해독제', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '🟢', spell: { effect: 'cure_status', statusType: 'poison', target: 'friendly-pokemon' }, text: '아군 포켓몬의 독 상태이상을 낫게 한다.' },
+  { id: 'awakening', name: '잠깨는약', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '🌙', spell: { effect: 'cure_status', statusType: 'sleep', target: 'friendly-pokemon' }, text: '아군 포켓몬의 잠듦 상태이상을 낫게 한다.' },
+  { id: 'iceheal', name: '냉동해제제', kind: 'spell', type: '도구', cost: 1, rarity: 'C', emoji: '❄️', spell: { effect: 'cure_status', statusType: 'ice', target: 'friendly-pokemon' }, text: '아군 포켓몬의 얼음 상태이상을 낫게 한다.' },
+  { id: 'fullheal', name: '만병통치약', kind: 'spell', type: '도구', cost: 2, rarity: 'R', emoji: '💊', spell: { effect: 'cure_all_status', target: 'friendly-pokemon' }, text: '아군 포켓몬의 모든 상태이상을 낫게 한다.' },
+
+    // ============ 메가스톤 (5) ============
   { id: 'swampertite', name: '대짱이나이트', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'swampert', mega: { atk: 2, hp: 2, ability: 'swiftswim' }, text: '대짱이 전용. +2/+2, 특성이 쓱쓱이 된다. 비가 내리고 있다면 즉시 돌진을 얻는다. (게임당 메가진화 1회)' },
   { id: 'charizarditey', name: '리자몽나이트Y', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'charizard', mega: { atk: 3, hp: 1, ability: 'drought', battlecryWeather: 'sun' }, text: '리자몽 전용. +3/+1, 가뭄 발동 - 날씨가 쾌청이 된다. (게임당 메가진화 1회)' },
   { id: 'gyaradosite', name: '갸라도스나이트', kind: 'mega', type: '도구', cost: 2, rarity: 'L', emoji: '🔮', megaFor: 'gyarados', mega: { atk: 2, hp: 2, ability: 'intimidate', reIntimidate: true }, text: '갸라도스 전용. +2/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)' },
@@ -539,7 +608,7 @@ export const DEX = {
   hoothoot: 163, noctowl: 164, wingull: 278, pelipper: 279,
   taillow: 276, swellow: 277, hoppip: 187, skiploom: 188, jumpluff: 189,
   starly: 396, staravia: 397, staraptor: 398, snorunt: 361, glalie: 362,
-  zorua: 570, zoroark: 571, poochyena: 261, mightyena: 262,
+  poochyena: 261, mightyena: 262,
   bronzor: 436, bronzong: 437, numel: 322, camerupt: 323,
   phanpy: 231, donphan: 232, wooper: 194, quagsire: 195,
   sentret: 161, furret: 162, teddiursa: 216, ursaring: 217,
@@ -549,6 +618,13 @@ export const DEX = {
   piplup: 393, prinplup: 394, empoleon: 395,
   gible: 443, gabite: 444, garchomp: 445,
   shinx: 403, luxio: 404, luxray: 405,
+  budew: 406, roserade: 407, cranidos: 408, rampardos: 409, shieldon: 410, bastiodon: 411,
+  wormadam: 413, mothim: 414, combee: 415, vespiquen: 416, pachirisu: 417,
+  buizel: 418, floatzel: 419, cherubi: 420, cherrim: 421, gastrodon: 423, ambipom: 424,
+  drifloon: 425, drifblim: 426, buneary: 427, lopunny: 428, glameow: 431, purugly: 432,
+  stunky: 434, skuntank: 435, bonsly: 438, mimejr: 439, snover: 459, abomasnow: 460, weavile: 461,
+  togekiss: 468, leafeon: 470, glaceon: 471, hippopotas: 449, hippowdon: 450,
+  skorupi: 451, drapion: 452, croagunk: 453, toxicroak: 454, carnivine: 455,
 };
 
 export const MEGA_DEX = { swampert: 10064, charizard: 10035, gyarados: 10041, gengar: 10038, salamence: 10089 };
@@ -556,6 +632,7 @@ export const MEGA_DEX = { swampert: 10064, charizard: 10035, gyarados: 10041, ge
 export const ITEM_SPRITE = {
   pokeball: 'poke-ball', potion: 'potion', fullrestore: 'full-restore',
   everstone: 'everstone', lifeorb: 'life-orb', focussash: 'focus-sash', shellbell: 'shell-bell',
+  ultra: 'ultra-ball',
   swampertite: 'swampertite', charizarditey: 'charizardite-y', gyaradosite: 'gyaradosite',
   gengarite: 'gengarite', salamencite: 'salamencite',
   hydropump: 'tm-water', raindance: 'tm-water', surf: 'hm-water',
@@ -608,7 +685,7 @@ export const PACKS = {
     id: 'basic',
     name: '포스스톤',
     sub: '기본팩 · 스타디움',
-    price: 100,
+    price: 70,
     weights: { C: 82, R: 15, E: 2.5, L: 0.5 },
     guarantee: 'R', // 최소 레어 1장 보장
     ball: 'poke',
@@ -617,10 +694,41 @@ export const PACKS = {
     id: 'premium',
     name: '포스스톤 EX',
     sub: '프리미엄팩 · 챔피언로드',
-    price: 500,
-    weights: { C: 48, R: 38, E: 11, L: 3 },
-    guarantee: 'E', // 최소 에픽 1장 보장
+    price: 350,
+    weights: { C: 48, R: 38, E: 11.5, L: 2.5 },
+    guarantee: 'E',
     ball: 'master',
+  },
+  // ── 레전드 테마팩 (레전드 확률 4%, 레전드는 테마 풀에서만 등장) ──
+  storm: {
+    id: 'storm',
+    name: '포스스톤 STORM',
+    sub: '폭풍팩 · 물·전기·얼음 레전드',
+    price: 550,
+    weights: { C: 55, R: 33, E: 8, L: 4 },
+    guarantee: 'E',
+    ball: 'ultra',
+    legendPool: ['kyogre', 'suicune', 'zapdos', 'raikou', 'articuno', 'regice'],
+  },
+  earth: {
+    id: 'earth',
+    name: '포스스톤 EARTH',
+    sub: '대지팩 · 불꽃·땅·바위·강철 레전드',
+    price: 550,
+    weights: { C: 55, R: 33, E: 8, L: 4 },
+    guarantee: 'E',
+    ball: 'ultra',
+    legendPool: ['moltres', 'entei', 'hooh', 'groudon', 'regirock', 'registeel'],
+  },
+  mystic: {
+    id: 'mystic',
+    name: '포스스톤 MYSTIC',
+    sub: '환상팩 · 에스퍼·드래곤 레전드',
+    price: 550,
+    weights: { C: 55, R: 33, E: 8, L: 4 },
+    guarantee: 'E',
+    ball: 'ultra',
+    legendPool: ['celebi', 'mewtwo', 'mew', 'lugia', 'latias', 'rayquaza'],
   },
 };
 // 하위 호환

@@ -8,6 +8,7 @@ import {
 import { aiStep } from '../engine/ai.js';
 import { HandCard, FieldUnit, TrainerSprite } from './Card.jsx';
 import { playSfx, playCry, isLegend } from '../audio.js';
+import { resolveMew } from '../engine/engine.js';
 
 const AI_DELAY = 1100;
 const DRAG_THRESHOLD = 8;
@@ -385,7 +386,11 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (Date.now() < suppressUntil.current) return;
     if (game.pendingBattlecry && game.pendingBattlecry.side === 'player' && side === 'enemy'
       && game.pendingBattlecry.targets.includes(unit.uid)) {
-      resolveMoldbreaker(game, 'player', unit.uid);
+      if (game.pendingBattlecry.ability === 'metronome') {
+        resolveMew(game, 'player', unit.uid);
+      } else {
+        resolveMoldbreaker(game, 'player', unit.uid);
+      }
       rerender();
       return;
     }
@@ -807,7 +812,9 @@ export default function Battle({ trainer, deck, onFinish }) {
 
       {game.pendingBattlecry && game.pendingBattlecry.side === 'player' && (
         <div className="target-hint">
-          틀깨기! 도발을 없앨 상대 포켓몬을 선택하세요
+          {game.pendingBattlecry?.ability === 'metronome'
+            ? '변신! 공격력을 복사할 상대 포켓몬을 선택하세요'
+            : '틀깨기! 도발을 없앨 상대 포켓몬을 선택하세요'}
         </div>
       )}
       {selectedHand !== null && spellNeed && dragIdx === null && (

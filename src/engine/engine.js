@@ -713,23 +713,29 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 리프스톰! 상대 전체 풀 피해 2 + 아군 회복 + 드로우!`);
       break;
 
-    case 'metronome': { // 뮤: 메트로놈
+    case 'metronome': { // 뮤: 변신 (대상 선택형)
       const targets2 = foe.field.filter(u => u.hp > 0);
       if (targets2.length) {
-        const t = targets2[Math.floor(Math.random()*targets2.length)];
-        unit.atk = t.atk;
-        log(game, `${unit.name}의 변신! ${t.name}의 공격력(${t.atk}) 복사!`);
-      }
-      const poke = me.deck.filter(c => c.kind === 'pokemon');
-      if (poke.length && me.hand.length < 10) {
-        const pick = poke[Math.floor(Math.random()*poke.length)];
-        me.deck.splice(me.deck.indexOf(pick), 1);
-        me.hand.push(pick);
-        log(game, `${pick.name}을(를) 손으로 가져왔다.`);
+        // 플레이어: pendingBattlecry로 선택 대기 / AI: 가장 강한 적 자동 선택
+        game.pendingBattlecry = {
+          side,
+          uid: unit.uid,
+          ability: 'metronome',
+          targets: targets2.map(t => t.uid),
+        };
+        log(game, `${unit.name}의 변신! 복사할 상대를 선택하세요.`);
+        // 드로우는 선택 완료 후 resolveMew에서 처리
+      } else {
+        // 상대 필드가 비어있으면 드로우만
+        const poke = me.deck.filter(c => CARD_MAP[c.cardId]?.kind === 'pokemon');
+        if (poke.length && me.hand.length < 10) {
+          const pick = poke[Math.floor(Math.random()*poke.length)];
+          me.deck.splice(me.deck.indexOf(pick), 1);
+          me.hand.push(pick);
+        }
       }
       break;
     }
-
     case 'aeroblast': // 루기아: 에어로블라스트
       foe.field.forEach((u) => applyDamage(game, u, 3, '비행'));
       log(game, `${unit.name}의 에어로블라스트! 상대 전체 비행 피해 3! 멀티스케일 유지.`);
@@ -809,6 +815,9 @@ export function canPlayCard(game, side, handIdx) {
   }
   if (card.kind === 'item') {
     return p.field.some((u) => !u.item);
+  }
+  if (card.kind === 'spell' && (card.spell?.effect === 'cure_status' || card.spell?.effect === 'cure_all_status')) {
+    return p.field.some(u => u.status !== null);
   }
   if (card.kind === 'spell') {
     const t = card.spell.target;
@@ -974,6 +983,63 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     return true;
     }
 
+    // 슈퍼볼: 포켓몬 2장 무작위 드로우
+    if (s.effect === 'tutor_pokemon_2') {
+      p.mana -= cost;
+      p.hand.splice(handIdx, 1);
+      let drawn = 0;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const idxs = p.deck.map((c,i)=>({c,i})).filter(x=>CARD_MAP[x.c.cardId]?.kind==='pokemon');
+        if (!idxs.length) break;
+        const pick = idxs[Math.floor(Math.random()*idxs.length)];
+        p.deck.splice(pick.i, 1);
+        if (p.hand.length < MAX_HAND) { p.hand.push(pick.c); drawn++; }
+      }
+      log(game, `슈퍼볼! 포켓몬 ${drawn}장을 손에 넣었다!`);
+      markPlay(game, side, card);
+      return true;
+    }
+
+    // 하이퍼볼: 3장 공개 후 1장 선택 (AI는 자동)
+    if (s.effect === 'tutor_choose_3') {
+      const pokeIdxs = p.deck.map((c,i)=>({c,i})).filter(x=>CARD_MAP[x.c.cardId]?.kind==='pokemon');
+      if (!pokeIdxs.length) return false;
+      p.mana -= cost;
+      p.hand.splice(handIdx, 1);
+      // 최대 3장 뽑아 pendingChoose에 저장
+      const picks = [];
+      const tempDeck = [...p.deck];
+      const shuffled = pokeIdxs.sort(()=>Math.random()-0.5).slice(0,3);
+      shuffled.forEach(x=>picks.push(x.c));
+      // 덱에서 임시 제거
+      picks.forEach(c => {
+        const i = p.deck.indexOf(c);
+        if (i>=0) p.deck.splice(i,1);
+      });
+      game.pendingChoose = { side, picks, effect: 'hyperball' };
+      log(game, `하이퍼볼! ${picks.map(c=>CARD_MAP[c.cardId]?.name).join(', ')} 중 선택하세요!`);
+      markPlay(game, side, card);
+      return true;
+    }
+
+    // 상태이상 치료제
+    if (s.effect === 'cure_status' || s.effect === 'cure_all_status') {
+      if (!target) return false;
+      const u = p.field.find(x=>x.uid===target.uid);
+      if (!u) return false;
+      p.mana -= cost;
+      p.hand.splice(handIdx, 1);
+      if (s.effect === 'cure_all_status') {
+        u.status = null; u.statusTurns = 0;
+        log(game, `${card.name}! ${u.name}의 모든 상태이상이 회복됐다!`);
+      } else {
+        if (u.status === s.statusType) { u.status = null; u.statusTurns = 0; }
+        log(game, `${card.name}! ${u.name}의 상태이상이 회복됐다!`);
+      }
+      markPlay(game, side, card);
+      return true;
+    }
+
     if (s.effect === 'aoe') {
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
@@ -1090,6 +1156,29 @@ export function validAttackTargets(game, side, attackerUid = null) {
   return { units: foe.field, hero: true };
 }
 
+export function resolveMew(game, side, targetUid) {
+  const pending = game.pendingBattlecry;
+  if (!pending || pending.side !== side || pending.ability !== 'metronome') return false;
+  const me = game.players[side];
+  const foe = game.players[other(side)];
+  const mew = me.field.find(u => u.uid === pending.uid);
+  const target = foe.field.find(u => u.uid === targetUid);
+  game.pendingBattlecry = null;
+  if (mew && target) {
+    mew.atk = target.atk;
+    log(game, `${mew.name}의 변신! ${target.name}의 공격력(${target.atk}) 복사!`);
+  }
+  // 덱에서 포켓몬 1장 드로우
+  const poke = me.deck.filter(c => CARD_MAP[c.cardId]?.kind === 'pokemon');
+  if (poke.length && me.hand.length < 10) {
+    const pick = poke[Math.floor(Math.random() * poke.length)];
+    me.deck.splice(me.deck.indexOf(pick), 1);
+    me.hand.push(pick);
+    log(game, `${CARD_MAP[pick.cardId]?.name}을(를) 손으로 가져왔다.`);
+  }
+  return true;
+}
+
 export function resolveMoldbreaker(game, side, targetUid) {
   const pending = game.pendingBattlecry;
   if (!pending || pending.side !== side || !pending.targets.includes(targetUid)) return false;
@@ -1174,6 +1263,8 @@ export function attack(game, side, attackerUid, target) {
     applyDamage(game, atkUnit, 2, null);
     log(game, `${defUnit.name}의 까칠한피부! ${atkUnit.name}이(가) 피해 2를 받았다!`);
   }
+  // serenegrace: 공격자에게 있으면 상태이상 확률 2배 (먼저 선언)
+  const atkBonus = atkUnit.ability === 'serenegrace' ? 2 : 1;
   // 정전기: 공격/공격당할 때 40% 확률로 상대 마비
   if (defUnit.ability === 'static' && atkUnit.hp > 0) {
     applyDamage(game, atkUnit, 1, '전기');
@@ -1185,25 +1276,36 @@ export function attack(game, side, attackerUid, target) {
     }
   }
   if (atkUnit.ability === 'static' && defUnit.hp > 0) {
-    if (Math.random() < 0.4) {
+    if (Math.random() < 0.4 * atkBonus) {
       applyStatus(game, defUnit, 'para');
       log(game, `${atkUnit.name}의 정전기! ${defUnit.name}에게 마비!`);
     }
   }
-  // 독침(독): 공격당할 때 30% 확률로 독 부여
-  if (defUnit.ability === 'poisonpoint' && atkUnit.hp > 0 && Math.random() < 0.3) {
+
+  // 독가시: 공격당할 때 30% 독
+  if (defUnit.ability === 'poisonbarb' && atkUnit.hp > 0 && Math.random() < 0.3) {
     applyStatus(game, atkUnit, 'poison');
-    log(game, `${defUnit.name}의 독침! ${atkUnit.name}에게 독 상태이상!`);
+    log(game, `${defUnit.name}의 독가시! ${atkUnit.name}에게 독 상태이상!`);
+  }
+  // 독침: 공격할 때 30% 독
+  if (atkUnit.ability === 'poisonpoint' && defUnit.hp > 0 && Math.random() < 0.3 * atkBonus) {
+    applyStatus(game, defUnit, 'poison');
+    log(game, `${atkUnit.name}의 독침! ${defUnit.name}에게 독 상태이상!`);
   }
   // 불꽃몸(불꽃): 공격당할 때 30% 확률로 화상 부여
   if (defUnit.ability === 'flamebody' && atkUnit.hp > 0 && Math.random() < 0.3) {
     applyStatus(game, atkUnit, 'burn');
     log(game, `${defUnit.name}의 불꽃몸! ${atkUnit.name}에게 화상 상태이상!`);
   }
-  // 냉동몸(얼음): 공격당할 때 20% 확률로 얼음 상태이상 부여
+  // 냉동몸: 공격당할 때 20% 얼음
   if (defUnit.ability === 'icebody' && atkUnit.hp > 0 && Math.random() < 0.2) {
     applyStatus(game, atkUnit, 'ice');
     log(game, `${defUnit.name}의 냉동몸! ${atkUnit.name}에게 얼음 상태이상!`);
+  }
+  // 프리즈드라이: 공격할 때 25% 얼음
+  if (atkUnit.ability === 'freezedry' && defUnit.hp > 0 && Math.random() < 0.25 * atkBonus) {
+    applyStatus(game, defUnit, 'ice');
+    log(game, `${atkUnit.name}의 프리즈드라이! ${defUnit.name}에게 얼음 상태이상!`);
   }
 
   if (defUnit.hp <= 0 && atkUnit.hp > 0 && atkUnit.ability === 'moxie') {
@@ -1229,9 +1331,9 @@ export function spellNeedsTarget(card) {
   const t = card.spell.target;
   if (t === 'enemy-any') return 'enemy';
   if (t === 'friendly-pokemon') {
-    // heal/fullheal은 트레이너에게도 사용 가능
     const e = card.spell.effect;
     if (e === 'heal' || e === 'fullheal') return 'friendly-or-hero';
+    if (e === 'cure_status' || e === 'cure_all_status') return 'friendly';
     return 'friendly';
   }
   return null;
