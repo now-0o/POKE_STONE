@@ -17,7 +17,7 @@ import {
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
-import { playSfx, playCry, isLegend } from "../audio.js";
+import { playSfx, playCry } from "../audio.js";
 import { resolveMew } from "../engine/engine.js";
 
 const AI_DELAY = 1100;
@@ -80,7 +80,11 @@ export default function Battle({ trainer, deck, onFinish }) {
       clearTimeout(revealTimer.current);
       revealTimer.current = setTimeout(() => setEnemyReveal(null), 1150);
     }
-    if (la.kind === "play" && la.cardId && isLegend(la.cardId)) {
+    if (
+      la.kind === "play" &&
+      la.cardId &&
+      CARD_MAP[la.cardId]?.rarity === "L"
+    ) {
       playCry(la.cardId);
       setLegendFx({ cardId: la.cardId, side: la.side, key: la.seq });
       setTimeout(() => setLegendFx(null), 2000);

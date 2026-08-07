@@ -12,38 +12,41 @@
 // ============================================================
 
 const BGM_FILES = {
-  login: '/audio/bgm/login.mp3',
-  main: '/audio/bgm/main.mp3',
-  battle: '/audio/bgm/battle.mp3',
-  shop: '/audio/bgm/shop.mp3',
+  login: "/audio/bgm/login.mp3",
+  main: "/audio/bgm/main.mp3",
+  battle: "/audio/bgm/battle.mp3",
+  shop: "/audio/bgm/shop.mp3",
 };
 
 const SFX_FILES = {
-  buy: '/audio/sfx/buy.ogg',
-  buzzer: '/audio/sfx/buzzer.ogg',
-  click: '/audio/sfx/click.ogg',
-  cursor: '/audio/sfx/cursor.ogg',
-  pc: '/audio/sfx/pc.ogg',
-  slide: '/audio/sfx/slide.ogg',
-  pickup: '/audio/sfx/pickup.ogg',
-  putdown: '/audio/sfx/putdown.ogg',
+  buy: "/audio/sfx/buy.ogg",
+  buzzer: "/audio/sfx/buzzer.ogg",
+  click: "/audio/sfx/click.ogg",
+  cursor: "/audio/sfx/cursor.ogg",
+  pc: "/audio/sfx/pc.ogg",
+  slide: "/audio/sfx/slide.ogg",
+  pickup: "/audio/sfx/pickup.ogg",
+  putdown: "/audio/sfx/putdown.ogg",
 };
 
-const MUTE_KEY = 'pkm_stone_muted';
-const VOLUME_KEY = 'pkm_stone_volume';
+const MUTE_KEY = "pkm_stone_muted";
+const VOLUME_KEY = "pkm_stone_volume";
 const BGM_BASE = 0.38; // 볼륨 1.0(=100%)일 때 기준 음량
 const SFX_BASE = 0.55;
 const FADE_MS = 650;
 const DEFAULT_VOLUME = 0.5;
 
 let muted = (() => {
-  if (typeof localStorage === 'undefined') return true;
+  if (typeof localStorage === "undefined") return true;
   const raw = localStorage.getItem(MUTE_KEY);
   if (raw === null) return true; // 첫 방문: 어차피 자동재생 안 될 걸 아니까 처음부터 음소거로 시작 (UI가 실제 상태와 안 어긋나게)
-  return raw === '1';
+  return raw === "1";
 })();
 let volume = (() => {
-  const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(VOLUME_KEY) : null;
+  const raw =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem(VOLUME_KEY)
+      : null;
   const n = raw !== null ? parseFloat(raw) : DEFAULT_VOLUME;
   return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : DEFAULT_VOLUME;
 })();
@@ -51,14 +54,17 @@ let volume = (() => {
 let currentBgmKey = null;
 
 // 트랙별 Audio 엘리먼트를 미리 하나씩만 만들어서 재사용
-const bgmElements = typeof Audio !== 'undefined'
-  ? Object.fromEntries(Object.entries(BGM_FILES).map(([key, src]) => {
-      const a = new Audio(src);
-      a.loop = true;
-      a.volume = 0;
-      return [key, a];
-    }))
-  : {};
+const bgmElements =
+  typeof Audio !== "undefined"
+    ? Object.fromEntries(
+        Object.entries(BGM_FILES).map(([key, src]) => {
+          const a = new Audio(src);
+          a.loop = true;
+          a.volume = 0;
+          return [key, a];
+        }),
+      )
+    : {};
 
 function effectiveBgmVolume() {
   return muted ? 0 : BGM_BASE * volume;
@@ -107,20 +113,35 @@ function resumeBgmIfStuck() {
   }
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('click', resumeBgmIfStuck);
-  window.addEventListener('keydown', resumeBgmIfStuck);
+if (typeof window !== "undefined") {
+  window.addEventListener("click", resumeBgmIfStuck);
+  window.addEventListener("keydown", resumeBgmIfStuck);
 }
 
 // 울음소리 (레전드 소환 시)
 const CRY_IDS = new Set([
-  'articuno','celebi','entei','groudon','hooh','kyogre','latias',
-  'lugia','mew','mewtwo','moltres','raikou','rayquaza',
-  'regice','regirock','registeel','suicune'
+  "articuno",
+  "celebi",
+  "entei",
+  "groudon",
+  "hooh",
+  "kyogre",
+  "latias",
+  "lugia",
+  "mew",
+  "mewtwo",
+  "moltres",
+  "raikou",
+  "rayquaza",
+  "regice",
+  "regirock",
+  "registeel",
+  "suicune",
+  "zapdos",
 ]);
 // 파일명 매핑 (칠색조 등 예외)
 const CRY_FILE = {
-  hooh: 'hooh', // ho-oh 특수처리
+  hooh: "hooh", // ho-oh 특수처리
 };
 
 export function playCry(pokemonId) {
@@ -141,10 +162,11 @@ export function playBgm(key) {
   currentBgmKey = key;
 
   const old = bgmElements[prevKey];
-  if (old) fade(old, 0, FADE_MS, () => {
-    old.pause();
-    old.currentTime = 0; // 다음에 이 화면으로 돌아오면 처음부터 다시 시작하도록
-  });
+  if (old)
+    fade(old, 0, FADE_MS, () => {
+      old.pause();
+      old.currentTime = 0; // 다음에 이 화면으로 돌아오면 처음부터 다시 시작하도록
+    });
 
   const next = bgmElements[key];
   if (!next) return;
@@ -164,7 +186,7 @@ export function playSfx(key) {
 
 export function toggleMute() {
   muted = !muted;
-  localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+  localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
   const active = bgmElements[currentBgmKey];
   if (active) active.volume = effectiveBgmVolume();
   if (!muted) resumeBgmIfStuck();
@@ -181,7 +203,7 @@ export function setVolume(v) {
   localStorage.setItem(VOLUME_KEY, String(volume));
   if (muted && volume > 0) {
     muted = false;
-    localStorage.setItem(MUTE_KEY, '0');
+    localStorage.setItem(MUTE_KEY, "0");
   }
   const active = bgmElements[currentBgmKey];
   if (active) active.volume = effectiveBgmVolume();
