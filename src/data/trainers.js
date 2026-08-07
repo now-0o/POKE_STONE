@@ -5,7 +5,7 @@
 // 각 덱은 정확히 30장
 // ============================================================
 
-export const TRAINERS = [
+export const KANTO_TRAINERS = [
   {
     id: "youngster",
     name: "반바지 꼬마 오성",
@@ -581,4 +581,720 @@ export const TRAINERS = [
   },
 ];
 
-export const TRAINER_MAP = Object.fromEntries(TRAINERS.map((t) => [t.id, t]));
+// ============================================================
+// 성도지방 체육관 로드
+//
+// 관동보다 보상이 좋은 지역이 아니라,
+// 강한 AI + 강한 덱 + 안정적인 덱 흐름을 가진 고난도 지역.
+//
+// stableDeck / consistencyAssist는 engine에서 다음 단계에 구현.
+// ============================================================
+
+export const JOHTO_TRAINERS = [
+  {
+    id: "johto_falkner",
+    region: "johto",
+    name: "도라지시티 관장 비상",
+    sprite: "falkner",
+    title: "체육관 관장",
+    emoji: "🪽",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.75,
+
+    reward: 80,
+    hp: 48,
+
+    requires: null,
+
+    introLines: [
+      "새 포켓몬의 화려한 날갯짓을 보여주지!",
+      "하늘을 지배하는 건 비행 포켓몬이다!",
+    ],
+
+    winLines: [
+      "바람의 흐름을 읽지 못했군.",
+    ],
+
+    loseLines: [
+      "내 날개가... 꺾이다니!",
+    ],
+
+    signatureCard:
+      "johto_falkner_pidgeotto",
+
+    deck: [
+      "johto_falkner_pidgeotto",
+
+      "pidgey",
+      "pidgey",
+      "pidgeotto",
+      "pidgeotto",
+      "pidgeot",
+
+      "spearow",
+      "spearow",
+      "fearow",
+      "fearow",
+
+      "doduo",
+      "doduo",
+      "dodrio",
+
+      "hoothoot",
+      "hoothoot",
+      "noctowl",
+
+      "taillow",
+      "taillow",
+      "swellow",
+
+      "starly",
+      "staravia",
+      "staraptor",
+
+      "quickattack",
+      "quickattack",
+
+      "pokeball",
+      "pokeball",
+      "superball",
+
+      "potion",
+      "potion",
+      "focussash",
+    ],
+  },
+
+  {
+    id: "johto_bugsy",
+    region: "johto",
+    name: "고동마을 관장 호일",
+    sprite: "bugsy",
+    title: "체육관 관장",
+    emoji: "🐛",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.75,
+
+    reward: 100,
+    hp: 50,
+
+    requires: "johto_falkner",
+
+    introLines: [
+      "벌레 포켓몬이라면 누구에게도 지지 않아!",
+      "내 연구의 성과를 보여줄게!",
+    ],
+
+    winLines: [
+      "벌레 포켓몬의 힘, 이제 알겠지?",
+    ],
+
+    loseLines: [
+      "아직 연구가 부족했나 봐...",
+    ],
+
+    signatureCard:
+      "johto_bugsy_scyther",
+
+    deck: [
+      "johto_bugsy_scyther",
+
+      "caterpie",
+      "caterpie",
+      "butterfree",
+      "butterfree",
+
+      "weedle",
+      "weedle",
+      "kakuna",
+      "kakuna",
+      "beedrill",
+      "beedrill",
+
+      "scyther",
+      "scyther",
+
+      "heracross",
+      "heracross",
+      "pinsir",
+
+      "ledyba",
+      "ledyba",
+      "ledian",
+      "ledian",
+
+      "combee",
+      "combee",
+      "vespiquen",
+
+      "quickattack",
+      "quickattack",
+
+      "pokeball",
+      "superball",
+
+      "potion",
+      "lifeorb",
+      "focussash",
+    ],
+  },
+
+  {
+    id: "johto_whitney",
+    region: "johto",
+    name: "금빛시티 관장 꼭두",
+    sprite: "whitney",
+    title: "체육관 관장",
+    emoji: "🐮",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.78,
+
+    reward: 120,
+    hp: 52,
+
+    requires: "johto_bugsy",
+
+    introLines: [
+      "내 귀여운 포켓몬들이 얼마나 강한지 보여줄게!",
+      "금방 끝날 거야!",
+    ],
+
+    winLines: [
+      "역시 내 포켓몬들이 최고야!",
+    ],
+
+    loseLines: [
+      "으아앙! 졌잖아!",
+    ],
+
+    signatureCard:
+      "johto_whitney_miltank",
+
+    deck: [
+      "johto_whitney_miltank",
+
+      "rattata",
+      "rattata",
+      "raticate",
+      "raticate",
+
+      "eevee",
+      "eevee",
+
+      "tauros",
+      "tauros",
+
+      "chansey",
+      "kangaskhan",
+      "miltank",
+
+      "sentret",
+      "sentret",
+      "furret",
+      "furret",
+
+      "teddiursa",
+      "teddiursa",
+      "ursaring",
+      "ursaring",
+
+      "buneary",
+      "lopunny",
+      "ambipom",
+
+      "quickattack",
+      "quickattack",
+
+      "pokeball",
+      "superball",
+
+      "potion",
+      "fullrestore",
+      "lifeorb",
+    ],
+  },
+
+  {
+    id: "johto_morty",
+    region: "johto",
+    name: "인주시티 관장 유빈",
+    sprite: "morty",
+    title: "체육관 관장",
+    emoji: "👻",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.8,
+
+    reward: 140,
+    hp: 54,
+
+    requires: "johto_whitney",
+
+    introLines: [
+      "보이지 않는 것도 분명 존재하지.",
+      "네가 어디까지 볼 수 있는지 시험해보겠어.",
+    ],
+
+    winLines: [
+      "아직 보이지 않는 것이 많은 모양이군.",
+    ],
+
+    loseLines: [
+      "네가 본 미래가... 더 멀리 있었군.",
+    ],
+
+    signatureCard:
+      "johto_morty_gengar",
+
+    deck: [
+      "johto_morty_gengar",
+
+      "gastly",
+      "gastly",
+      "haunter",
+      "haunter",
+      "gengar",
+
+      "misdreavus",
+      "misdreavus",
+
+      "mimikyu",
+      "mimikyu",
+
+      "duskull",
+      "duskull",
+      "dusclops",
+      "dusclops",
+      "dusknoir",
+
+      "drifloon",
+      "drifloon",
+      "drifblim",
+      "drifblim",
+
+      "sableye",
+      "umbreon",
+
+      "shadowball",
+      "shadowball",
+      "darkpulse",
+      "darkpulse",
+
+      "pokeball",
+      "superball",
+
+      "potion",
+      "fullheal",
+      "gengarite",
+    ],
+  },
+
+  {
+    id: "johto_chuck",
+    region: "johto",
+    name: "진청시티 관장 사도",
+    sprite: "chuck",
+    title: "체육관 관장",
+    emoji: "🥊",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.8,
+
+    reward: 160,
+    hp: 56,
+
+    requires: "johto_morty",
+
+    introLines: [
+      "포켓몬도 트레이너도 단련이 전부다!",
+      "자, 정면승부다!",
+    ],
+
+    winLines: [
+      "수련이 부족하군!",
+    ],
+
+    loseLines: [
+      "좋은 주먹이었다!",
+    ],
+
+    signatureCard:
+      "johto_chuck_poliwrath",
+
+    deck: [
+      "johto_chuck_poliwrath",
+
+      "machop",
+      "machop",
+      "machoke",
+      "machoke",
+      "machamp",
+
+      "mankey",
+      "mankey",
+      "primeape",
+      "primeape",
+
+      "hitmonlee",
+      "hitmonlee",
+      "hitmonchan",
+      "hitmonchan",
+
+      "makuhita",
+      "makuhita",
+      "hariyama",
+      "hariyama",
+
+      "meditite",
+      "meditite",
+      "medicham",
+
+      "riolu",
+      "riolu",
+      "lucario",
+
+      "quickattack",
+      "quickattack",
+
+      "superball",
+      "hyperball",
+
+      "lifeorb",
+      "focussash",
+    ],
+  },
+
+  {
+    id: "johto_jasmine",
+    region: "johto",
+    name: "담청시티 관장 규리",
+    sprite: "jasmine",
+    title: "체육관 관장",
+    emoji: "⚙️",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.82,
+
+    reward: 180,
+    hp: 58,
+
+    requires: "johto_chuck",
+
+    introLines: [
+      "강철 포켓몬은 아주 단단해요.",
+      "쉽게 무너지지는 않을 거예요.",
+    ],
+
+    winLines: [
+      "강철의 힘이 버텨냈군요.",
+    ],
+
+    loseLines: [
+      "강철보다 강한 마음이군요.",
+    ],
+
+    signatureCard:
+      "johto_jasmine_steelix",
+
+    deck: [
+      "johto_jasmine_steelix",
+
+      "beldum",
+      "beldum",
+      "metang",
+      "metang",
+      "metagross",
+
+      "bronzor",
+      "bronzor",
+      "bronzong",
+      "bronzong",
+
+      "shieldon",
+      "shieldon",
+      "bastiodon",
+      "bastiodon",
+
+      "rookidee",
+      "rookidee",
+      "corvisquire",
+      "corviknight",
+
+      "scyther",
+      "scizor",
+
+      "magnemite",
+      "magneton",
+      "magnezone",
+
+      "earthquake",
+      "earthquake",
+
+      "superball",
+      "hyperball",
+
+      "potion",
+      "fullrestore",
+      "focussash",
+    ],
+  },
+
+  {
+    id: "johto_pryce",
+    region: "johto",
+    name: "황토마을 관장 류옹",
+    sprite: "pryce",
+    title: "체육관 관장",
+    emoji: "❄️",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.85,
+
+    reward: 200,
+    hp: 60,
+
+    requires: "johto_jasmine",
+
+    introLines: [
+      "긴 세월을 함께한 포켓몬의 힘을 보여주마.",
+      "차가운 얼음은 쉽게 녹지 않는다.",
+    ],
+
+    winLines: [
+      "경험의 차이를 느꼈겠지.",
+    ],
+
+    loseLines: [
+      "훌륭하구나. 젊은 힘도 무시할 수 없군.",
+    ],
+
+    signatureCard:
+      "johto_pryce_mamoswine",
+
+    deck: [
+      "johto_pryce_mamoswine",
+
+      "swinub",
+      "swinub",
+      "piloswine",
+      "piloswine",
+
+      "seel",
+      "seel",
+      "dewgong",
+      "dewgong",
+
+      "shellder",
+      "shellder",
+      "cloyster",
+      "cloyster",
+
+      "snorunt",
+      "snorunt",
+      "glalie",
+      "glalie",
+
+      "snover",
+      "snover",
+      "abomasnow",
+      "abomasnow",
+
+      "eevee",
+      "eevee",
+      "glaceon",
+      "glaceon",
+
+      "icebeam",
+      "icebeam",
+
+      "superball",
+      "hyperball",
+      "iceheal",
+    ],
+  },
+
+  {
+    id: "johto_clair",
+    region: "johto",
+    name: "검은먹시티 관장 이향",
+    sprite: "clair",
+    title: "체육관 관장",
+    emoji: "🐉",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.88,
+
+    reward: 250,
+    hp: 62,
+
+    requires: "johto_pryce",
+
+    introLines: [
+      "드래곤 포켓몬을 상대할 각오는 되어 있겠지?",
+      "여기까지 온 실력이 진짜인지 확인해주겠어.",
+    ],
+
+    winLines: [
+      "역시 아직 나를 넘기엔 부족해.",
+    ],
+
+    loseLines: [
+      "내가... 졌다고?",
+    ],
+
+    signatureCard:
+      "johto_clair_kingdra",
+
+    deck: [
+      "johto_clair_kingdra",
+
+      "dratini",
+      "dratini",
+      "dragonair",
+      "dragonair",
+      "dragonite",
+
+      "swablu",
+      "swablu",
+      "altaria",
+      "altaria",
+
+      "bagon",
+      "bagon",
+      "shelgon",
+      "shelgon",
+      "salamence",
+
+      "gible",
+      "gible",
+      "gabite",
+      "gabite",
+      "garchomp",
+
+      "horsea",
+      "horsea",
+      "seadra",
+      "seadra",
+      "kingdra",
+
+      "hydropump",
+      "earthquake",
+
+      "superball",
+      "hyperball",
+      "focussash",
+    ],
+  },
+
+  {
+    id: "johto_lance",
+    region: "johto",
+    name: "챔피언 목호",
+    sprite: "lance",
+    title: "챔피언",
+    emoji: "🐲",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.9,
+
+    reward: 300,
+    hp: 65,
+
+    requires: "johto_clair",
+
+    introLines: [
+      "여기까지 올라온 것을 환영한다.",
+      "최강의 드래곤 포켓몬들과 상대해보도록 하지.",
+    ],
+
+    winLines: [
+      "강함만으로 챔피언을 넘을 수는 없다.",
+    ],
+
+    loseLines: [
+      "훌륭하다. 네가 새로운 강자군.",
+    ],
+
+    signatureCards: [
+      "johto_lance_dragonite_thunder",
+      "johto_lance_dragonite_extremespeed",
+      "johto_lance_dragonite_outrage",
+    ],
+
+    deck: [
+      "johto_lance_dragonite_thunder",
+      "johto_lance_dragonite_extremespeed",
+      "johto_lance_dragonite_outrage",
+
+      "dratini",
+      "dratini",
+      "dratini",
+
+      "dragonair",
+      "dragonair",
+      "dragonite",
+
+      "bagon",
+      "bagon",
+      "shelgon",
+      "shelgon",
+      "salamence",
+
+      "gible",
+      "gible",
+      "gabite",
+      "gabite",
+      "garchomp",
+
+      "swablu",
+      "swablu",
+      "altaria",
+
+      "latias",
+
+      "earthquake",
+      "hydropump",
+      "flamethrower",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "focussash",
+    ],
+  },
+];
+
+// ============================================================
+// 지역별 트레이너
+// ============================================================
+
+export const TRAINERS_BY_REGION = {
+  kanto: KANTO_TRAINERS,
+  johto: JOHTO_TRAINERS,
+};
+
+// 기존 TRAINERS를 사용하는 코드 하위호환
+export const TRAINERS = [
+  ...KANTO_TRAINERS,
+  ...JOHTO_TRAINERS,
+];
+
+export const TRAINER_MAP =
+  Object.fromEntries(
+    TRAINERS.map((t) => [
+      t.id,
+      t,
+    ]),
+  );

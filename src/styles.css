@@ -204,6 +204,177 @@ img.res-icon.small {
   align-items: center;
 }
 
+/* ============================================================
+   지방 선택
+   ============================================================ */
+
+   .region-title {
+    margin: 4px 0 14px;
+    font-family: var(--display-font);
+    font-size: 15px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  
+  .region-select {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  
+    width: min(760px, 100%);
+    margin: 0 auto 24px;
+  }
+  
+  .region-card {
+    min-height: 132px;
+  
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  
+    padding: 20px 22px;
+  
+    border:
+      1px solid var(--panel-border);
+  
+    border-radius: 18px;
+  
+    background:
+      linear-gradient(
+        145deg,
+        rgba(40, 52, 85, 0.92),
+        rgba(20, 27, 48, 0.96)
+      );
+  
+    color: var(--text);
+    text-align: left;
+  
+    cursor: pointer;
+  
+    transition:
+      transform 0.15s,
+      border-color 0.15s,
+      box-shadow 0.15s,
+      filter 0.15s;
+  }
+  
+  .region-card:hover:not(.region-locked) {
+    transform: translateY(-4px);
+  
+    border-color: var(--accent);
+  
+    box-shadow:
+      0 10px 26px
+        rgba(0, 0, 0, 0.42);
+  }
+  
+  .region-card.region-johto {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(72, 60, 28, 0.94),
+        rgba(28, 30, 44, 0.97)
+      );
+  }
+  
+  .region-card.region-locked {
+    opacity: 0.48;
+    filter: grayscale(0.65);
+    cursor: not-allowed;
+  }
+  
+  .region-symbol {
+    font-size: 42px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  
+  .region-info {
+    flex: 1;
+  
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .region-name {
+    font-family: var(--display-font);
+    font-size: 21px;
+  }
+  
+  .region-sub {
+    margin-top: 2px;
+  
+    font-family: var(--display-font);
+    font-size: 11px;
+  
+    letter-spacing: 2px;
+  
+    color: var(--text-dim);
+  }
+  
+  .region-desc {
+    margin-top: 9px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  
+  .region-lock-text {
+    margin-top: 6px;
+  
+    font-size: 11px;
+  
+    color: #c5c7d2;
+  }
+  
+  .region-go {
+    flex-shrink: 0;
+  
+    font-family: var(--display-font);
+    font-size: 13px;
+  
+    color: var(--accent);
+  }
+  
+  .trainer-region-header {
+    width: min(760px, 100%);
+  
+    margin:
+      0 auto 14px;
+  
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    color: var(--text);
+  }
+  
+  .trainer-region-header strong {
+    font-family: var(--display-font);
+    font-size: 18px;
+  }
+  
+  .trainer-region-sub {
+    margin-left: 5px;
+  
+    font-family: var(--display-font);
+  
+    color: var(--text-dim);
+  
+    font-size: 10px;
+  
+    letter-spacing: 1.5px;
+  }
+  
+  @media (max-width: 640px) {
+    .region-select {
+      grid-template-columns: 1fr;
+    }
+  
+    .region-card {
+      min-height: 110px;
+    }
+  }
+
 .trainer-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

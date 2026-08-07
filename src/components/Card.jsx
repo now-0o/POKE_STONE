@@ -147,10 +147,24 @@ export function HandCard({
   const card = CARD_MAP[cardId];
   const cost = game ? effectiveCost(card, game) : card.cost;
   const discounted = cost < card.cost;
-  const shownAbility = unit ? unit.ability : card.ability;
-  const abilityText = shownAbility
-    ? ABILITY_TEXT[shownAbility]
-    : card.text || "";
+  const shownAbility =
+  unit ? unit.ability : card.ability;
+  const shownSecondaryAbility =
+    unit
+      ? unit.secondaryAbility
+      : card.secondaryAbility;
+  const abilityTexts = [
+    shownAbility
+      ? ABILITY_TEXT[shownAbility]
+      : "",
+    shownSecondaryAbility
+      ? ABILITY_TEXT[shownSecondaryAbility]
+      : "",
+  ].filter(Boolean);
+  const abilityText =
+    abilityTexts.length > 0
+      ? abilityTexts.join("\n")
+      : card.text || "";
   const shownName = unit ? unit.name : card.name;
   const shownAtk = unit ? unit.atk : card.atk;
   const shownHp = unit ? unit.hp : card.hp;
@@ -249,7 +263,23 @@ export function FieldUnit({
   const atk = effectiveAtk(unit, game);
   const buffed = atk > unit.atk;
   const hurt = unit.hp < unit.maxHp;
-  const abilityText = unit.ability ? ABILITY_TEXT[unit.ability] : "";
+
+  const hasTaunt =
+  unit.ability === "taunt" ||
+  unit.ability === "fortress" ||
+  unit.ability === "brock_rockwall" ||
+  unit.ability === "jasmine_autotomize";
+  
+  const abilityText = [
+    unit.ability
+      ? ABILITY_TEXT[unit.ability]
+      : "",
+    unit.secondaryAbility
+      ? ABILITY_TEXT[unit.secondaryAbility]
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return (
     <div className="unit-pop">
@@ -261,7 +291,9 @@ export function FieldUnit({
           targetable ? "targetable" : "",
           unit.frozen > 0 || unit.status ? "frozen" : "",
           unit.mega ? "mega" : "",
-          unit.ability === "taunt" ? "taunt" : "",
+          hasTaunt
+          ? "taunt"
+          : "",
           lunge ? `lunge-${lunge}` : "",
           hit ? "hit-flash" : "",
         ].join(" ")}
@@ -276,7 +308,7 @@ export function FieldUnit({
         {fx === "mega" && (
           <div className="fx-overlay fx-mega-burst" key={fxKey} />
         )}
-        {unit.ability === "taunt" && <div className="taunt-badge">도발</div>}
+        {hasTaunt && <div className="taunt-badge">도발</div>}
         {(unit.frozen > 0 || unit.status) && (
           <div className={`status-overlay status-${unit.status || "ice"}`}>
             <span>

@@ -78,6 +78,210 @@ function actuallyKills(u, dmg) {
   return dmg >= u.hp && !protectedFromLethal(u, dmg);
 }
 
+// ============================================================
+// 성도 AI 전용 계산
+// ============================================================
+
+function hasAbility(unit, ability) {
+  return (
+    unit?.ability === ability ||
+    unit?.secondaryAbility === ability
+  );
+}
+
+function isJohtoAI(game) {
+  return !!game.trainer?.stableDeck;
+}
+
+function typedDamageAgainstUnit(
+  base,
+  attackType,
+  defender,
+) {
+  let mult =
+    typeMult(
+      attackType,
+      defender.type,
+    );
+
+  // 이향의 킹드라 - 용의파동
+  // 약점 추가 피해 무효
+  if (
+    hasAbility(
+      defender,
+      "clair_dragonpulse",
+    ) &&
+    mult > 1
+  ) {
+    mult = 1;
+  }
+
+  if (mult === 0) {
+    return 0;
+  }
+
+  if (mult > 1) {
+    return Math.ceil(
+      base * mult,
+    );
+  }
+
+  if (mult < 1) {
+    return Math.max(
+      0,
+      Math.floor(
+        base * mult,
+      ),
+    );
+  }
+
+  return base;
+}
+
+function johtoAttackDamage(
+  attacker,
+  defender,
+  game,
+) {
+  let base =
+    effectiveAtk(
+      attacker,
+      game,
+    );
+
+  // 목호 - 역린
+  // 실제 공격 직전에 공격력 +2
+  if (
+    hasAbility(
+      attacker,
+      "lance_outrage",
+    )
+  ) {
+    base += 2;
+  }
+
+  let dmg =
+    typedDamageAgainstUnit(
+      base,
+      attacker.type,
+      defender,
+    );
+
+  // 대박찬스 기존 처리
+  if (
+    attacker.ability ===
+    "bigchance"
+  ) {
+    dmg =
+      Math.ceil(
+        dmg * 1.5,
+      );
+  }
+
+  // 꼭두 - 구르기
+  if (
+    dmg > 0 &&
+    hasAbility(
+      attacker,
+      "whitney_rollout",
+    )
+  ) {
+    dmg +=
+      attacker._rolloutStacks ||
+      0;
+  }
+
+  // 류옹 - 얼음뭉치
+  if (
+    dmg > 0 &&
+    hasAbility(
+      attacker,
+      "pryce_iceshard",
+    ) &&
+    defender.status === "ice"
+  ) {
+    dmg += 2;
+  }
+
+  return dmg;
+}
+
+function johtoCounterDamage(
+  attacker,
+  defender,
+  game,
+) {
+  // 목호 - 신속
+  // 소환된 턴 첫 공격은
+  // 일반 전투 반격을 받지 않음
+  if (
+    hasAbility(
+      attacker,
+      "lance_extremespeed",
+    ) &&
+    attacker.summonedTurn ===
+      game.turnCount &&
+    !attacker._extremeSpeedGuardUsed
+  ) {
+    return 0;
+  }
+
+  return typedDamageAgainstUnit(
+    effectiveAtk(
+      defender,
+      game,
+    ),
+    defender.type,
+    attacker,
+  );
+}
+
+function johtoFaceDamage(
+  attacker,
+  game,
+) {
+  let dmg =
+    effectiveAtk(
+      attacker,
+      game,
+    );
+
+  // 역린
+  if (
+    hasAbility(
+      attacker,
+      "lance_outrage",
+    )
+  ) {
+    dmg += 2;
+  }
+
+  // 구르기
+  if (
+    hasAbility(
+      attacker,
+      "whitney_rollout",
+    )
+  ) {
+    dmg +=
+      attacker._rolloutStacks ||
+      0;
+  }
+
+  // 이향 킹드라는 공격 후
+  // 상대 트레이너에게 추가 피해 1
+  if (
+    hasAbility(
+      attacker,
+      "clair_dragonpulse",
+    )
+  ) {
+    dmg += 1;
+  }
+
+  return dmg;
+}
+
 function playableCards(game) {
   const p = game.players[SIDE];
   const list = [];
@@ -101,27 +305,84 @@ function readyAttackers(game) {
 
 function availableFaceDamage(game) {
   return readyAttackers(game)
-    .filter((u) => validAttackTargets(game, SIDE, u.uid).hero)
-    .reduce((sum, u) => sum + effectiveAtk(u, game), 0);
+    .filter(
+      (u) =>
+        validAttackTargets(
+          game,
+          SIDE,
+          u.uid,
+        ).hero,
+    )
+    .reduce(
+      (sum, u) =>
+        sum +
+        (
+          isJohtoAI(game)
+            ? johtoFaceDamage(
+                u,
+                game,
+              )
+            : effectiveAtk(
+                u,
+                game,
+              )
+        ),
+      0,
+    );
 }
 
 // 지금 공격 가능한 포켓몬들만으로 상대 본체를 끝낼 수 있는지
 function immediateLethal(game) {
-  const foe = game.players.player;
+  const foe =
+    game.players.player;
 
-  const attackers = readyAttackers(game)
-    .filter((u) => validAttackTargets(game, SIDE, u.uid).hero)
-    .sort((a, b) => effectiveAtk(b, game) - effectiveAtk(a, game));
+  const damageOf = (u) =>
+    isJohtoAI(game)
+      ? johtoFaceDamage(
+          u,
+          game,
+        )
+      : effectiveAtk(
+          u,
+          game,
+        );
 
-  if (!attackers.length) return null;
+  const attackers =
+    readyAttackers(game)
+      .filter(
+        (u) =>
+          validAttackTargets(
+            game,
+            SIDE,
+            u.uid,
+          ).hero,
+      )
+      .sort(
+        (a, b) =>
+          damageOf(b) -
+          damageOf(a),
+      );
 
-  const total = attackers.reduce((sum, u) => sum + effectiveAtk(u, game), 0);
+  if (!attackers.length) {
+    return null;
+  }
 
-  if (total < foe.hp) return null;
+  const total =
+    attackers.reduce(
+      (sum, u) =>
+        sum + damageOf(u),
+      0,
+    );
+
+  if (total < foe.hp) {
+    return null;
+  }
 
   return {
     attacker: attackers[0],
-    target: { uid: "hero" },
+    target: {
+      uid: "hero",
+    },
   };
 }
 
@@ -442,6 +703,118 @@ function scoreCard(game, card, level) {
     if (level >= 5 && card.ability === "intimidate" && foe.field.length >= 2) {
       score += 10;
     }
+
+    // 성도 AI 전용
+    if (isJohtoAI(game)) {
+      // 시그니처 자체 가치
+      if (card.signature) {
+        score += 12;
+      }
+
+      // 필드가 비었으면
+      // 기본 포켓몬 전개를 우선
+      if (
+        me.field.length === 0 &&
+        !card.evolvesFrom
+      ) {
+        score += 18;
+      }
+
+      // 손에 바로 다음 진화체가 있으면
+      // 해당 기본체를 먼저 내는 것을 선호
+      if (
+        !card.evolvesFrom
+      ) {
+        const hasEvolution =
+          me.hand.some((h) => {
+            const next =
+              CARD_MAP[h.cardId];
+
+            return (
+              next?.kind ===
+                "pokemon" &&
+              next.evolvesFrom ===
+                card.id
+            );
+          });
+
+        if (hasEvolution) {
+          score += 22;
+        }
+      }
+
+      switch (card.ability) {
+        case "falkner_roost":
+          score += 10;
+          break;
+
+        case "bugsy_furycutter":
+          score += 12;
+          break;
+
+        case "whitney_rollout":
+          score += 14;
+          break;
+
+        case "morty_curse":
+          if (
+            foe.field.length > 0
+          ) {
+            score += 18;
+          }
+          break;
+
+        case "chuck_dynamicpunch":
+          if (
+            foe.field.length > 0
+          ) {
+            score += 12;
+          }
+          break;
+
+        case "jasmine_autotomize":
+          if (
+            foe.field.length >= 2
+          ) {
+            score += 16;
+          }
+          break;
+
+        case "blizzard":
+          // 류옹의 맘모꾸리만
+          if (
+            card.secondaryAbility ===
+            "pryce_iceshard"
+          ) {
+            score +=
+              foe.field.length * 7;
+          }
+          break;
+
+        case "clair_dragonpulse":
+          score += 14;
+          break;
+
+        case "lance_thunder":
+          if (
+            foe.field.length > 0
+          ) {
+            score += 20;
+          }
+          break;
+
+        case "lance_extremespeed":
+          score += 24;
+          break;
+
+        case "lance_outrage":
+          score += 16;
+          break;
+
+        default:
+          break;
+      }
+    }
   }
 
   // ========================================================
@@ -666,9 +1039,34 @@ function chooseAttack(game, level) {
     // 포켓몬 공격
     // ========================================================
     units.forEach((d) => {
-      const dmg = calcTypedDamage(myAtk, a.type, d.type);
+      const dmg =
+        isJohtoAI(game)
+          ? johtoAttackDamage(
+              a,
+              d,
+              game,
+            )
+          : calcTypedDamage(
+              myAtk,
+              a.type,
+              d.type,
+            );
 
-      const back = calcTypedDamage(effectiveAtk(d, game), d.type, a.type);
+      const back =
+        isJohtoAI(game)
+          ? johtoCounterDamage(
+              a,
+              d,
+              game,
+            )
+          : calcTypedDamage(
+              effectiveAtk(
+                d,
+                game,
+              ),
+              d.type,
+              a.type,
+            );
 
       const kills = actuallyKills(d, dmg);
 
@@ -715,6 +1113,73 @@ function chooseAttack(game, level) {
         }
       }
 
+      if (isJohtoAI(game)) {
+        // 류옹 - 얼음뭉치
+        // 얼어 있는 적을 적극적으로 노림
+        if (
+          hasAbility(
+            a,
+            "pryce_iceshard",
+          ) &&
+          d.status === "ice"
+        ) {
+          score += 18;
+        }
+      
+        // 꼭두 - 구르기
+        // 이미 중첩됐다면 공격 흐름 유지
+        if (
+          hasAbility(
+            a,
+            "whitney_rollout",
+          ) &&
+          (a._rolloutStacks || 0) > 0
+        ) {
+          score +=
+            Math.min(
+              15,
+              (a._rolloutStacks ||
+                0) * 5,
+            );
+        }
+      
+        // 이향 - 공격하면
+        // 상대 트레이너도 1 피해
+        if (
+          hasAbility(
+            a,
+            "clair_dragonpulse",
+          )
+        ) {
+          score += 5;
+        }
+      
+        // 목호 - 신속 첫 공격
+        // 무반격이라는 큰 이득
+        if (
+          hasAbility(
+            a,
+            "lance_extremespeed",
+          ) &&
+          back === 0 &&
+          a.summonedTurn ===
+            game.turnCount
+        ) {
+          score += 24;
+        }
+      
+        // 목호 - 역린
+        // 공격할수록 성장
+        if (
+          hasAbility(
+            a,
+            "lance_outrage",
+          )
+        ) {
+          score += 6;
+        }
+      }
+
       if (score > bestScore) {
         bestScore = score;
 
@@ -732,13 +1197,31 @@ function chooseAttack(game, level) {
     // 본체 공격
     // ========================================================
     if (hero) {
-      let score = myAtk * (level >= 3 ? 1.35 : 2);
-
+      const faceDamage =
+        isJohtoAI(game)
+          ? johtoFaceDamage(
+              a,
+              game,
+            )
+          : myAtk;
+    
+      let score =
+        faceDamage *
+        (level >= 3
+          ? 1.35
+          : 2);
+    
       if (foe.hp <= 15) {
-        score += level >= 5 ? 28 : 15;
+        score +=
+          level >= 5
+            ? 28
+            : 15;
       }
-
-      if (foe.hp <= myAtk) {
+    
+      if (
+        foe.hp <=
+        faceDamage
+      ) {
         score += 999;
       }
 

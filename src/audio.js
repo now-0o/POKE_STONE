@@ -148,6 +148,9 @@ const LEGEND_CRY_IDS = new Set([
 
 // 트레이너 전용 시그니처 카드 ID -> 실제 포켓몬 울음소리 파일명
 const SIGNATURE_CRY_FILE = {
+  // =========================
+  // 관동
+  // =========================
   surge_raichu: "raichu",
   sabrina_gallade: "gallade",
   erika_bellossom: "bellossom",
@@ -157,6 +160,43 @@ const SIGNATURE_CRY_FILE = {
   blaine_camerupt: "camerupt",
   blue_pidgeot: "pidgeot",
   red_pikachu: "pikachu",
+
+  // =========================
+  // 성도
+  // =========================
+  johto_falkner_pidgeotto:
+    "pidgeotto",
+
+  johto_bugsy_scyther:
+    "scyther",
+
+  johto_whitney_miltank:
+    "miltank",
+
+  johto_morty_gengar:
+    "gengar",
+
+  johto_chuck_poliwrath:
+    "poliwrath",
+
+  johto_jasmine_steelix:
+    "steelix",
+
+  johto_pryce_mamoswine:
+    "mamoswine",
+
+  johto_clair_kingdra:
+    "kingdra",
+
+  // 목호 - 세 카드 모두 같은 망나뇽 울음소리
+  johto_lance_dragonite_thunder:
+    "dragonite",
+
+  johto_lance_dragonite_extremespeed:
+    "dragonite",
+
+  johto_lance_dragonite_outrage:
+    "dragonite",
 };
 
 // 파일명이 카드 ID와 다른 경우만 매핑

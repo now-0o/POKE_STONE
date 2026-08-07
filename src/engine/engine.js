@@ -44,6 +44,48 @@ export function other(side) {
   return side === "player" ? "enemy" : "player";
 }
 
+function hasAbility(unit, ability) {
+  return (
+    unit?.ability === ability ||
+    unit?.secondaryAbility === ability
+  );
+}
+
+function typeMultAgainstUnit(attackType, unit) {
+  const mult = typeMult(attackType, unit.type);
+
+  // 이향의 킹드라 - 용의파동
+  // 약점 공격도 1배로 받는다.
+  if (
+    hasAbility(unit, "clair_dragonpulse") &&
+    mult > 1
+  ) {
+    return 1;
+  }
+
+  return mult;
+}
+
+function calcTypedDamageAgainstUnit(
+  base,
+  attackType,
+  unit,
+) {
+  const mult =
+    typeMultAgainstUnit(attackType, unit);
+
+  if (mult === 0) return 0;
+  if (mult > 1)
+    return Math.ceil(base * mult);
+  if (mult < 1)
+    return Math.max(
+      0,
+      Math.floor(base * mult),
+    );
+
+  return base;
+}
+
 function putStartingCard(player, cardId) {
   if (!cardId) return false;
 
@@ -57,6 +99,375 @@ function putStartingCard(player, cardId) {
   });
 
   return true;
+}
+
+// ============================================================
+// 성도지방 - 안정적인 덱 보정
+// ============================================================
+
+function moveDeckCardToTop(player, index) {
+  if (
+    index < 0 ||
+    index >= player.deck.length
+  ) {
+    return false;
+  }
+
+  const [cardId] =
+    player.deck.splice(index, 1);
+
+  // drawCard()가 pop()으로 뽑으므로
+  // 배열 마지막이 덱 맨 위
+  player.deck.push(cardId);
+
+  return true;
+}
+
+function randomIndexFrom(
+  deck,
+  predicate,
+) {
+  const candidates = [];
+
+  deck.forEach((cardId, index) => {
+    const card = CARD_MAP[cardId];
+
+    if (
+      card &&
+      predicate(card, cardId)
+    ) {
+      candidates.push(index);
+    }
+  });
+
+  if (!candidates.length) {
+    return -1;
+  }
+
+  return candidates[
+    Math.floor(
+      Math.random() *
+        candidates.length,
+    )
+  ];
+}
+
+function prepareStableOpening(
+  player,
+  drawCount,
+) {
+  if (
+    !player ||
+    drawCount <= 0
+  ) {
+    return;
+  }
+
+  // ------------------------------------------
+  // 1. 첫 손패에 1코스트 이하 기본 포켓몬
+  //    최소 1장 확보
+  // ------------------------------------------
+
+  const basicIndex =
+    randomIndexFrom(
+      player.deck,
+      (card) =>
+        card.kind === "pokemon" &&
+        !card.evolvesFrom &&
+        card.cost <= 1,
+    );
+
+  if (basicIndex !== -1) {
+    moveDeckCardToTop(
+      player,
+      basicIndex,
+    );
+  }
+
+  if (drawCount <= 1) {
+    return;
+  }
+
+  // ------------------------------------------
+  // 2. 추가로 초반에 쓸 수 있는 카드 1장
+  //
+  // 진화체 / 메가스톤 / 도구는 제외.
+  // 기본 포켓몬 또는 바로 쓸 수 있는 기술만.
+  // ------------------------------------------
+
+  const stablePool =
+  basicIndex !== -1
+    ? player.deck.slice(0, -1)
+    : player.deck;
+
+  const stableIndex =
+    randomIndexFrom(
+      stablePool,
+      (card) => {
+        if (card.cost > 2) {
+          return false;
+        }
+
+        if (
+          card.kind === "pokemon"
+        ) {
+          return !card.evolvesFrom;
+        }
+
+        if (
+          card.kind === "spell"
+        ) {
+          return (
+            card.spell?.target !==
+            "friendly-pokemon"
+          );
+        }
+
+        return false;
+      },
+    );
+
+  if (stableIndex !== -1) {
+    moveDeckCardToTop(
+      player,
+      stableIndex,
+    );
+  }
+}
+
+function canStableDrawCard(
+  game,
+  side,
+  cardId,
+) {
+  const p = game.players[side];
+  const card = CARD_MAP[cardId];
+
+  if (!card) return false;
+
+  if (
+    effectiveCost(card, game) >
+    p.mana
+  ) {
+    return false;
+  }
+
+  // 기본 포켓몬
+  if (
+    card.kind === "pokemon" &&
+    !card.evolvesFrom
+  ) {
+    return (
+      p.field.length < MAX_FIELD
+    );
+  }
+
+  // 진화
+  if (
+    card.kind === "pokemon" &&
+    card.evolvesFrom
+  ) {
+    return p.field.some(
+      (u) =>
+        u.cardId ===
+          card.evolvesFrom &&
+        !u.noEvolve,
+    );
+  }
+
+  // 메가진화
+  if (card.kind === "mega") {
+    if (p.megaUsed) return false;
+
+    return p.field.some(
+      (u) =>
+        u.cardId ===
+          card.megaFor &&
+        !u.mega,
+    );
+  }
+
+  // 도구
+  if (card.kind === "item") {
+    return p.field.some(
+      (u) => !u.item,
+    );
+  }
+
+  // 기술
+  if (card.kind === "spell") {
+    if (
+      card.spell?.effect ===
+        "cure_status" ||
+      card.spell?.effect ===
+        "cure_all_status"
+    ) {
+      return p.field.some(
+        (u) =>
+          u.status !== null,
+      );
+    }
+
+    if (
+      card.spell?.target ===
+      "friendly-pokemon"
+    ) {
+      return (
+        p.field.length > 0
+      );
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+function drawStableCard(
+  game,
+  side,
+  silent = false,
+) {
+  const p = game.players[side];
+
+  if (!p.deck.length) {
+    return drawCard(
+      game,
+      side,
+      silent,
+    );
+  }
+
+  if (
+    p.hand.length >= MAX_HAND
+  ) {
+    return drawCard(
+      game,
+      side,
+      silent,
+    );
+  }
+
+  const trainer = game.trainer;
+
+  // 성도 stableDeck이 아니거나
+  // 직전 턴이 벽돌이 아니면 일반 드로우
+  if (
+    side !== "enemy" ||
+    !trainer?.stableDeck ||
+    (p._brickTurns || 0) <= 0
+  ) {
+    return drawCard(
+      game,
+      side,
+      silent,
+    );
+  }
+
+  const baseChance =
+    Math.max(
+      0,
+      Math.min(
+        1,
+        trainer.consistencyAssist ??
+          0.75,
+      ),
+    );
+
+  // 연속으로 벽돌이 나면
+  // 보정 확률이 자연스럽게 상승
+  //
+  // 0.75 기준
+  // 1회 벽돌 = 75%
+  // 2회 벽돌 = 93.75%
+  // 3회 벽돌 = 98.4%
+  const streak =
+    Math.max(
+      1,
+      p._brickTurns || 1,
+    );
+
+  const assistChance =
+    1 -
+    Math.pow(
+      1 - baseChance,
+      streak,
+    );
+
+  if (
+    Math.random() >=
+    assistChance
+  ) {
+    return drawCard(
+      game,
+      side,
+      silent,
+    );
+  }
+
+  const candidates = [];
+
+  p.deck.forEach(
+    (cardId, index) => {
+      if (
+        canStableDrawCard(
+          game,
+          side,
+          cardId,
+        )
+      ) {
+        candidates.push(index);
+      }
+    },
+  );
+
+  // 현재 쓸 수 있는 카드가
+  // 덱에도 없다면 정상 드로우
+  if (!candidates.length) {
+    return drawCard(
+      game,
+      side,
+      silent,
+    );
+  }
+
+  const index =
+    candidates[
+      Math.floor(
+        Math.random() *
+          candidates.length,
+      )
+    ];
+
+  const [cardId] =
+    p.deck.splice(index, 1);
+
+  p.hand.push({
+    uid: nextUid(),
+    cardId,
+  });
+
+  if (!silent) {
+    log(
+      game,
+      `${p.name}이(가) 카드를 뽑았다.`,
+    );
+  }
+
+  return cardId;
+}
+
+function markProductiveAction(
+  game,
+  side,
+) {
+  const p = game.players[side];
+
+  if (!p) return;
+
+  p._productiveActionsThisTurn =
+    (p._productiveActionsThisTurn ||
+      0) + 1;
 }
 
 // ---------- 게임 생성 ----------
@@ -90,6 +501,15 @@ export function createGame(playerDeckIds, trainer) {
     openingDraws.enemy = Math.max(0, openingDraws.enemy - 1);
   }
 
+  // 성도 stableDeck:
+  // 첫 손패 최소 안정성 보장
+  if (trainer.stableDeck) {
+    prepareStableOpening(
+      game.players.enemy,
+      openingDraws.enemy,
+    );
+  }
+
   for (let i = 0; i < openingDraws[first]; i++) {
     drawCard(game, first, true);
   }
@@ -118,6 +538,8 @@ function makePlayer(deckIds, name, hp = 40) {
     fatigue: 0,
     megaUsed: false,
     discardUsedThisTurn: false,
+    _productiveActionsThisTurn: 0,
+    _brickTurns: 0,
   };
 }
 
@@ -222,13 +644,89 @@ function startTurn(game, side) {
     if (u.frozen > 0) u.frozen -= 1;
     resolveStatusAtTurnStart(game, side, u);
   });
-  // 이번 게임의 "선공자"가 첫 턴(turnCount 1)에만 드로우 스킵 (이미 오프닝 핸드를 받았으므로)
-  if (!(side === game.firstSide && game.turnCount === 1)) drawCard(game, side);
+  // 새 턴 행동 카운터 초기화
+  p._productiveActionsThisTurn = 0;
+
+  // 첫 턴 선공자만 드로우 스킵
+  if (
+    !(
+      side === game.firstSide &&
+      game.turnCount === 1
+    )
+  ) {
+    if (
+      side === "enemy" &&
+      game.trainer?.stableDeck
+    ) {
+      drawStableCard(
+        game,
+        side,
+      );
+    } else {
+      drawCard(
+        game,
+        side,
+      );
+    }
+  }
 }
 
 export function endTurn(game) {
   const side = game.turn;
   const p = game.players[side];
+
+  // ============================================================
+  // 성도 stableDeck - 실제 벽돌 턴 판정
+  // ============================================================
+
+  if (
+    side === "enemy" &&
+    game.trainer?.stableDeck
+  ) {
+    const didSomething =
+      (p._productiveActionsThisTurn ||
+        0) > 0;
+
+    // 지금도 낼 카드가 남아있었는지
+    const hasPlayableCard =
+      p.hand.some(
+        (_, index) =>
+          canPlayCard(
+            game,
+            side,
+            index,
+          ),
+      );
+
+    // 공격 가능한 포켓몬이
+    // 남아있었는지
+    const hasReadyAttacker =
+      p.field.some(
+        (u) =>
+          canAttack(
+            game,
+            side,
+            u.uid,
+          ),
+      );
+
+    // 실제로:
+    //
+    // 카드도 못 냈고
+    // 공격도 못 했고
+    // 사용 가능한 선택지도 없었던 경우만
+    // "벽돌 턴" 인정
+    if (
+      !didSomething &&
+      !hasPlayableCard &&
+      !hasReadyAttacker
+    ) {
+      p._brickTurns =
+        (p._brickTurns || 0) + 1;
+    } else {
+      p._brickTurns = 0;
+    }
+  }
 
   // 럭키 치유의마음: 턴 종료 시 아군 전체 1 회복
   p.field.forEach((u) => {
@@ -264,7 +762,24 @@ export function endTurn(game) {
       u.hp -= dmg;
       log(game, `${u.name}은(는) 독으로 체력이 ${dmg} 줄었다!`);
     }
+    // 유빈의 팬텀 - 저주
+    if (
+      u._mortyCurse &&
+      u.hp > 0
+    ) {
+      applyDamage(
+        game,
+        u,
+        1,
+        null,
+        true,
+      );
 
+      log(
+        game,
+        `${u.name}은(는) 저주로 피해 1!`,
+      );
+    }
     if (
       u.ability === "misty_miraclestar" &&
       game.weather === "rain" &&
@@ -405,12 +920,54 @@ function applyDamage(
     const diff = unit.hp - hpBefore;
 
     if (diff < 0) {
+      const actualDamage =
+        Math.abs(diff);
+    
       recordImpact(game, {
         type: "damage",
         side: unit.side,
         targetUid: unit.uid,
-        amount: Math.abs(diff),
+        amount: actualDamage,
       });
+    
+      // 꼭두의 밀탱크 - 구르기
+      // 피해를 받으면 누적 초기화
+      if (
+        hasAbility(
+          unit,
+          "whitney_rollout",
+        ) &&
+        (unit._rolloutStacks || 0) > 0
+      ) {
+        unit._rolloutStacks = 0;
+    
+        log(
+          game,
+          `${unit.name}의 구르기 연속이 끊겼다!`,
+        );
+      }
+    
+      // 규리의 강철톤 - 바디퍼지
+      // 피해를 받을 때마다 공격력 +1
+      // 최대 +3
+      if (
+        hasAbility(
+          unit,
+          "jasmine_autotomize",
+        ) &&
+        unit.hp > 0 &&
+        (unit._autotomizeStacks || 0) < 3
+      ) {
+        unit._autotomizeStacks =
+          (unit._autotomizeStacks || 0) + 1;
+    
+        unit.atk += 1;
+    
+        log(
+          game,
+          `${unit.name}의 바디퍼지! 공격력 +1!`,
+        );
+      }
     } else if (diff > 0) {
       recordImpact(game, {
         type: "heal",
@@ -617,6 +1174,8 @@ function makeUnit(card, game, side) {
     rarity: card.rarity,
     emoji: card.emoji,
     ability: card.ability || null,
+    secondaryAbility:
+    card.secondaryAbility || null,
     stage: card.stage || 0,
     canAttack: false,
     summonedTurn: game.turnCount,
@@ -1169,6 +1728,83 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 볼트태클! +4/+4!`);
 
       break;
+
+    case "morty_curse": {
+      const targets =
+        foe.field.filter(
+          (u) => u.hp > 0,
+        );
+    
+      const t = [...targets].sort(
+        (a, b) =>
+          effectiveAtk(b, game) -
+          effectiveAtk(a, game),
+      )[0];
+    
+      if (t) {
+        t._mortyCurse = true;
+    
+        log(
+          game,
+          `${unit.name}의 저주! ${t.name}에게 저주를 걸었다!`,
+        );
+      }
+    
+      break;
+    }
+    
+    case "lance_thunder": {
+      const targets =
+        foe.field.filter(
+          (u) => u.hp > 0,
+        );
+    
+      const t = [...targets].sort(
+        (a, b) =>
+          effectiveAtk(b, game) -
+          effectiveAtk(a, game),
+      )[0];
+    
+      if (t) {
+        applyDamage(
+          game,
+          t,
+          2,
+          "전기",
+        );
+    
+        if (t.hp > 0) {
+          applyStatus(
+            game,
+            t,
+            "para",
+          );
+        }
+    
+        log(
+          game,
+          `${unit.name}의 번개! ${t.name}에게 전기 피해 2 + 마비!`,
+        );
+      }
+    
+      break;
+    }
+    
+    case "lance_extremespeed": {
+      // 소환된 턴 즉시 공격 가능
+      unit.canAttack = true;
+    
+      // 첫 공격의 반격 방지용
+      unit._extremeSpeedGuardUsed = false;
+    
+      log(
+        game,
+        `${unit.name}의 신속! 소환된 턴에도 바로 공격할 수 있다!`,
+      );
+    
+      break;
+    }
+      
     default:
       break;
   }
@@ -1225,6 +1861,11 @@ export function canPlayCard(game, side, handIdx) {
 
 // 카드 사용 이벤트 기록 (UI 연출용)
 function markPlay(game, side, card, extra = null) {
+  markProductiveAction(
+    game,
+    side,
+  );
+
   game.animSeq = (game.animSeq || 0) + 1;
 
   const impacts = takeImpacts(game);
@@ -1298,6 +1939,7 @@ export function playCard(
     base.rarity = card.rarity;
     base.emoji = card.emoji;
     base.ability = card.ability || null;
+    base.secondaryAbility = card.secondaryAbility || null;
     base.stage = card.stage;
     base.summonedTurn = game.turnCount;
     // canAttack 상태는 유지 (진화해도 소환멀미 그대로)
@@ -1544,8 +2186,18 @@ export function playCard(
       const base = spellDamageAmount(card, game);
       log(game, `${card.name}! 적 전체 공격!`);
       foe.field.forEach((u) => {
-        const dmg = calcTypedDamage(base, card.moveType, u.type);
-        const mult = typeMult(card.moveType, u.type);
+        const dmg =
+          calcTypedDamageAgainstUnit(
+            base,
+            card.moveType,
+            u,
+          );
+
+        const mult =
+          typeMultAgainstUnit(
+            card.moveType,
+            u,
+          );
         const dealt = applyDamage(game, u, dmg, card.moveType);
         let note = "";
         if (mult > 1) note = " 효과가 굉장했다!";
@@ -1584,8 +2236,18 @@ export function playCard(
       } else {
         const u = foe.field.find((x) => x.uid === target.uid);
         if (u) {
-          const dmg = calcTypedDamage(base, card.moveType, u.type);
-          const mult = typeMult(card.moveType, u.type);
+          const dmg =
+            calcTypedDamageAgainstUnit(
+              base,
+              card.moveType,
+              u,
+            );
+
+          const mult =
+            typeMultAgainstUnit(
+              card.moveType,
+              u,
+            );
           const dealt = applyDamage(game, u, dmg, card.moveType);
           let note = "";
           if (mult > 1) note = " 효과가 굉장했다!";
@@ -1766,9 +2428,12 @@ export function validAttackTargets(game, side, attackerUid = null) {
     ? []
     : foe.field.filter(
         (u) =>
-          (u.ability === "taunt" ||
+          (
+            u.ability === "taunt" ||
             u.ability === "fortress" ||
-            u.ability === "brock_rockwall") &&
+            u.ability === "brock_rockwall" ||
+            u.ability === "jasmine_autotomize"
+          ) &&
           u.hp > 0,
       );
   if (taunts.length > 0) return { units: taunts, hero: false };
@@ -1832,6 +2497,189 @@ export function discardToDraw(game, side, handIdx) {
   return true;
 }
 
+function prepareJohtoAttack(
+  game,
+  unit,
+) {
+  const result = {
+    bonusDamage: 0,
+    extremeGuard: false,
+  };
+
+  // 꼭두의 밀탱크 - 구르기
+  if (
+    hasAbility(
+      unit,
+      "whitney_rollout",
+    )
+  ) {
+    result.bonusDamage =
+      unit._rolloutStacks || 0;
+
+    // 이번 공격이 끝나면
+    // 다음 공격은 +1 강해진다.
+    unit._rolloutStacks =
+      (unit._rolloutStacks || 0) + 1;
+
+    if (result.bonusDamage > 0) {
+      log(
+        game,
+        `${unit.name}의 구르기! 추가 피해 +${result.bonusDamage}!`,
+      );
+    }
+  }
+
+  // 목호의 망나뇽 - 역린
+  if (
+    hasAbility(
+      unit,
+      "lance_outrage",
+    )
+  ) {
+    unit.atk += 2;
+
+    log(
+      game,
+      `${unit.name}의 역린! 공격력 +2!`,
+    );
+  }
+
+  // 목호의 망나뇽 - 신속
+  if (
+    hasAbility(
+      unit,
+      "lance_extremespeed",
+    ) &&
+    unit.summonedTurn ===
+      game.turnCount &&
+    !unit._extremeSpeedGuardUsed
+  ) {
+    result.extremeGuard = true;
+
+    // 첫 공격에 바로 소모
+    unit._extremeSpeedGuardUsed = true;
+  }
+
+  return result;
+}
+
+function finishJohtoAttack(
+  game,
+  unit,
+  foe,
+) {
+  if (!unit || unit.hp <= 0) {
+    return;
+  }
+
+  // 비상의 피죤 - 날개쉬기
+  if (
+    hasAbility(
+      unit,
+      "falkner_roost",
+    )
+  ) {
+    if (
+      unit.hp >= unit.maxHp
+    ) {
+      unit.atk += 1;
+
+      log(
+        game,
+        `${unit.name}의 날개쉬기! 체력이 가득 차 있어 공격력 +1!`,
+      );
+    } else {
+      const before = unit.hp;
+
+      unit.hp = Math.min(
+        unit.maxHp,
+        unit.hp + 1,
+      );
+
+      const healed =
+        unit.hp - before;
+
+      if (healed > 0) {
+        recordImpact(game, {
+          type: "heal",
+          side: unit.side,
+          targetUid: unit.uid,
+          amount: healed,
+        });
+      }
+
+      log(
+        game,
+        `${unit.name}의 날개쉬기! 체력 ${healed} 회복!`,
+      );
+    }
+  }
+
+  // 호일의 스라크 - 연속자르기
+  if (
+    hasAbility(
+      unit,
+      "bugsy_furycutter",
+    ) &&
+    (unit._furyCutterStacks || 0) < 3
+  ) {
+    unit._furyCutterStacks =
+      (unit._furyCutterStacks || 0) + 1;
+
+    unit.atk += 1;
+
+    log(
+      game,
+      `${unit.name}의 연속자르기! 공격력 +1!`,
+    );
+  }
+
+  // 이향의 킹드라 - 용의파동
+  if (
+    hasAbility(
+      unit,
+      "clair_dragonpulse",
+    ) &&
+    foe.hp > 0
+  ) {
+    foe.hp -= 1;
+
+    recordImpact(game, {
+      type: "damage",
+      side: other(unit.side),
+      targetUid: "hero",
+      amount: 1,
+    });
+
+    log(
+      game,
+      `${unit.name}의 용의파동! 상대 트레이너에게 피해 1!`,
+    );
+  }
+
+  // 목호의 망나뇽 - 역린 반동
+  if (
+    hasAbility(
+      unit,
+      "lance_outrage",
+    ) &&
+    unit.hp > 0
+  ) {
+    applyDamage(
+      game,
+      unit,
+      1,
+      null,
+      true,
+    );
+
+    log(
+      game,
+      `${unit.name}의 역린 반동! 피해 1!`,
+    );
+  }
+}
+
 function spendAttack(game, unit) {
   if (
     (unit.ability === "skilllink" || unit.ability === "blue_hurricane") &&
@@ -1880,52 +2728,220 @@ export function attack(game, side, attackerUid, target) {
 
   if (target.uid === "hero") {
     if (!hero) return false;
-    const dmg = effectiveAtk(atkUnit, game);
+    
+      const johto =
+        prepareJohtoAttack(
+          game,
+          atkUnit,
+        );
+    
+      const dmg =
+        effectiveAtk(
+          atkUnit,
+          game,
+        ) +
+        johto.bonusDamage;
+    
+      // 실제 영웅 HP 감소
+      foe.hp -= dmg;
+    
+      recordImpact(game, {
+        type: "damage",
+        side: other(side),
+        targetUid: "hero",
+        amount: dmg,
+      });
+    
+      spendAttack(
+        game,
+        atkUnit,
+      );
+    
+      finishJohtoAttack(
+        game,
+        atkUnit,
+        foe,
+      );
 
-    foe.hp -= dmg;
+      markProductiveAction(
+        game,
+        side,
+      );
+    
+      log(
+        game,
+        `${atkUnit.name}이(가) ${foe.name}을(를) 직접 공격! 피해 ${dmg}!`,
+      );
+    
+      game.animSeq =
+        (game.animSeq || 0) + 1;
+    
+      game.lastAction = {
+        seq: game.animSeq,
+        kind: "attack",
+        side,
+        uid: attackerUid,
+        targetUid: "hero",
+        impacts: takeImpacts(game),
+      };
+    
+      checkWinner(game);
+    
+      return true;
+    }
 
-    recordImpact(game, {
-      type: "damage",
-      side: other(side),
-      targetUid: "hero",
-      amount: dmg,
-    });
-    spendAttack(game, atkUnit);
-    log(
+    const defUnit = units.find((u) => u.uid === target.uid);
+    if (!defUnit) return false;
+
+    const johto =
+    prepareJohtoAttack(
       game,
-      `${atkUnit.name}이(가) ${foe.name}을(를) 직접 공격! 피해 ${dmg}!`,
+      atkUnit,
     );
-    game.animSeq = (game.animSeq || 0) + 1;
-    game.lastAction = {
-      seq: game.animSeq,
-      kind: "attack",
-      side,
-      uid: attackerUid,
-      targetUid: "hero",
-      impacts: takeImpacts(game),
-    };
-    checkWinner(game);
-    return true;
+
+  const atkDmgBase =
+    effectiveAtk(
+      atkUnit,
+      game,
+    );
+
+  const defDmgBase =
+    effectiveAtk(
+      defUnit,
+      game,
+    );
+
+  const bigChanceMult =
+    atkUnit.ability ===
+    "bigchance"
+      ? 1.5
+      : 1;
+
+  // 이향의 용의파동까지 반영한
+  // 실제 상성 계산
+  let atkDmg = Math.ceil(
+    calcTypedDamageAgainstUnit(
+      atkDmgBase,
+      atkUnit.type,
+      defUnit,
+    ) * bigChanceMult,
+  );
+
+  // 구르기 누적
+  if (atkDmg > 0) {
+    atkDmg +=
+      johto.bonusDamage;
   }
 
-  const defUnit = units.find((u) => u.uid === target.uid);
-  if (!defUnit) return false;
+  // 류옹의 맘모꾸리 - 얼음뭉치
+  if (
+    atkDmg > 0 &&
+    hasAbility(
+      atkUnit,
+      "pryce_iceshard",
+    ) &&
+    defUnit.status === "ice"
+  ) {
+    atkDmg += 2;
 
-  const atkDmgBase = effectiveAtk(atkUnit, game);
-  const defDmgBase = effectiveAtk(defUnit, game);
-  // 대운(bigchance): 공격 시 피해 1.5배 (소수점 올림)
-  const bigChanceMult = atkUnit.ability === "bigchance" ? 1.5 : 1;
-  const atkDmg = Math.ceil(
-    calcTypedDamage(atkDmgBase, atkUnit.type, defUnit.type) * bigChanceMult,
-  );
-  const defDmg = calcTypedDamage(defDmgBase, defUnit.type, atkUnit.type);
+    log(
+      game,
+      `${atkUnit.name}의 얼음뭉치! 얼어 있는 ${defUnit.name}에게 추가 피해 2!`,
+    );
+  }
+
+  let defDmg =
+    calcTypedDamageAgainstUnit(
+      defDmgBase,
+      defUnit.type,
+      atkUnit,
+    );
+
+  // 목호 망나뇽 신속
+  // 첫 공격에서는 일반 전투 반격만 무효
+  if (
+    johto.extremeGuard
+  ) {
+    defDmg = 0;
+
+    log(
+      game,
+      `${atkUnit.name}의 신속! 첫 공격의 반격 피해를 받지 않는다!`,
+    );
+  }
   if (atkUnit.ability === "bigchance" && atkDmgBase > 0)
     log(game, `${atkUnit.name}의 대운! 피해가 1.5배!`);
 
-  const mult = typeMult(atkUnit.type, defUnit.type);
-  applyDamage(game, defUnit, atkDmg, atkUnit.type);
-  applyDamage(game, atkUnit, defDmg, defUnit.type);
-  spendAttack(game, atkUnit);
+  const mult =
+  typeMultAgainstUnit(
+    atkUnit.type,
+    defUnit,
+  );
+  const defenderHpBefore =
+  defUnit.hp;
+
+  applyDamage(
+    game,
+    defUnit,
+    atkDmg,
+    atkUnit.type,
+  );
+
+  const damageDealt =
+    Math.max(
+      0,
+      defenderHpBefore -
+        defUnit.hp,
+    );
+
+  // 신속이면 일반 반격 생략
+  if (
+    !johto.extremeGuard
+  ) {
+    applyDamage(
+      game,
+      atkUnit,
+      defDmg,
+      defUnit.type,
+    );
+  }
+
+  // 사도의 강챙이 - 폭발펀치
+  if (
+    hasAbility(
+      atkUnit,
+      "chuck_dynamicpunch",
+    ) &&
+    damageDealt > 0 &&
+    defUnit.hp > 0
+  ) {
+    defUnit.atk =
+      Math.max(
+        0,
+        defUnit.atk - 1,
+      );
+
+    log(
+      game,
+      `${atkUnit.name}의 폭발펀치! ${defUnit.name}의 공격력 -1!`,
+    );
+  }
+
+  spendAttack(
+    game,
+    atkUnit,
+  );
+
+  finishJohtoAttack(
+    game,
+    atkUnit,
+    foe,
+  );
+
+  markProductiveAction(
+    game,
+    side,
+  );
 
   let note = "";
   if (mult > 1) note = " 효과가 굉장했다!";

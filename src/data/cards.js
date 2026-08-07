@@ -156,34 +156,34 @@ export const ABILITY_TEXT = {
   sandveil: "모래숨기: 모래바람일 때 받는 피해 1 감소",
   // 방어/생존
   originpulse:
-    "근원의파동(가이오가 전용기): 나올 때 폭우 발동. 상대 전체 물 피해 3 + 무작위 1마리를 얼린다",
+    "근원의파동: 나올 때 폭우 발동. 상대 전체 물 피해 3 + 무작위 1마리를 얼린다",
   icebeamdance:
-    "오로라빔(스이쿤 전용기): 나올 때 상대 전체 얼음 피해 2 + 1마리에게 얼음 상태이상",
-  skydive: "불사르기(파이어 전용기): 나올 때 불꽃 피해 3을 무작위로 3회 입힌다",
+    "오로라빔: 나올 때 상대 전체 얼음 피해 2 + 1마리에게 얼음 상태이상",
+  skydive: "불사르기: 나올 때 불꽃 피해 3을 무작위로 3회 입힌다",
   burningfall:
-    "분화(엔테이 전용기): 나올 때 적 전체 불꽃 피해 3. 쾌청이면 피해 +2",
+    "분화: 나올 때 적 전체 불꽃 피해 3. 쾌청이면 피해 +2",
   thunderwave:
-    "천둥차기(썬더 전용기): 나올 때 적 전체 전기 피해 3. 무작위 1마리에게 마비 상태이상",
+    "천둥차기: 나올 때 적 전체 전기 피해 3. 무작위 1마리에게 마비 상태이상",
   thunderfang:
-    "와일드볼트(라이코 전용기): 나올 때 무작위 상대에게 전기 피해 4 + 마비 상태이상",
+    "와일드볼트: 나올 때 무작위 상대에게 전기 피해 4 + 마비 상태이상",
   precipiceblades:
-    "단애의칼(그란돈 전용기): 나올 때 쾌청 발동. 상대 전체 땅 피해 4",
+    "단애의칼: 나올 때 쾌청 발동. 상대 전체 땅 피해 4",
   frostedgale:
-    "얼어붙는시선(프리져 전용기): 나올 때 상대 전체 얼음 피해 2 + 전부 얼음 상태이상",
+    "얼어붙는시선: 나올 때 상대 전체 얼음 피해 2 + 전부 얼음 상태이상",
   icelock:
-    "눈보라(레지아이스 전용기): 나올 때 상대 전체에게 얼음 상태이상 + 얼음 피해 1",
+    "눈보라: 나올 때 상대 전체에게 얼음 상태이상 + 얼음 피해 1",
   leafstorm:
-    "리프스톰(세레비 전용기): 나올 때 상대 전체 풀 피해 2 + 아군 전체 회복 2 + 카드 1장 드로우",
+    "리프스톰: 나올 때 상대 전체 풀 피해 2 + 아군 전체 회복 2 + 카드 1장 드로우",
   aeroblast:
-    "에어로블라스트(루기아 전용기): 나올 때 상대 전체 비행 피해 3. 멀티스케일(풀피 시 피해 절반) 유지",
+    "에어로블라스트: 나올 때 상대 전체 비행 피해 3. 멀티스케일(풀피 시 피해 절반) 유지",
   rockblast:
-    "스톤에지(레지락 전용기): 나올 때 상대에게 바위 피해 2를 무작위로 4회 입힌다",
+    "스톤에지: 나올 때 상대에게 바위 피해 2를 무작위로 4회 입힌다",
   mistball:
-    "미스트볼(라티아스 전용기): 나올 때 무작위 상대에게 드래곤 피해 4. 아군 드래곤 포켓몬 공격력 +1",
+    "미스트볼: 나올 때 무작위 상대에게 드래곤 피해 4. 아군 드래곤 포켓몬 공격력 +1",
   dragonascent:
-    "화룡점정(레쿠쟈 전용기): 나올 때 날씨 초기화. 상대 전체 드래곤 피해 3",
+    "화룡점정: 나올 때 날씨 초기화. 상대 전체 드래곤 피해 3",
   irondefense:
-    "철벽(레지스틸 전용기): 나올 때 도발로 모든 공격을 자신에게 유도하고 체력 +3을 얻는다",
+    "철벽: 나올 때 도발로 모든 공격을 자신에게 유도하고 체력 +3을 얻는다",
   taunt: "도발: 상대는 이 포켓몬을 먼저 공격해야 한다",
   sturdy: "옹골참: 체력이 가득 찼을 때 치명적인 피해를 버티고 체력 1이 남는다",
   disguise: "탈: 몸을 덮는 탈로 1번 공격을 막고 1의 피해를 입는다.",
@@ -220,7 +220,7 @@ export const ABILITY_TEXT = {
   teleport: "텔레포트: 나왔을 때 카드를 1장 뽑는다",
   foresight: "예지: 나왔을 때 카드를 2장 뽑는다",
   metronome:
-    "변신(뮤 전용기): 나올 때 상대 포켓몬 1마리를 선택해 그 공격력을 복사하고, 덱에서 포켓몬 1장을 손으로 가져온다",
+    "변신: 나올 때 상대 포켓몬 1마리를 선택해 그 공격력을 복사하고, 덱에서 포켓몬 1장을 손으로 가져온다",
   download: "다운로드: 나왔을 때 자신이 +1/+1을 얻는다",
   transform: "변신: 나왔을 때 무작위 상대 포켓몬의 능력치와 타입을 복사한다",
   sleeppowder: "수면가루: 나왔을 때 무작위 상대에게 잠듦 상태이상",
@@ -257,7 +257,9 @@ export const ABILITY_TEXT = {
   aura_fighting: "파동: 필드에 있는 동안 다른 아군 격투 포켓몬 공격력 +1",
   aura_dragon: "용의숨결: 필드에 있는 동안 다른 아군 드래곤 포켓몬 공격력 +1",
 
-  // 트레이너 전용 시그니처
+  // ============================================================
+  // 관동 트레이너 시그니처
+  // ============================================================
   surge_overdrive:
     "스파크: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 전기 피해 1을 주고 마비시킨다.",
   sabrina_futureblade:
@@ -274,6 +276,32 @@ export const ABILITY_TEXT = {
   blue_hurricane:
     "폭풍: 소환 즉시 공격 가능. 매 턴 첫 공격 후 한 번 더 공격할 수 있다.",
   red_volttackle: "볼트태클: 나왔을 때 +4/+4. 공격할 때마다 반동으로 피해 2.",
+
+  // ============================================================
+  // 성도 트레이너 시그니처
+  // ============================================================
+  falkner_roost:
+  "날개쉬기: 공격 후 체력 1 회복. 체력이 가득 차 있으면 대신 공격력 +1.",
+  bugsy_furycutter:
+  "연속자르기: 공격할 때마다 공격력 +1. 최대 +3.",
+  whitney_rollout:
+  "구르기: 공격할 때마다 다음 공격의 피해 +1. 피해를 받으면 중첩이 초기화된다.",
+  morty_curse:
+  "저주: 나왔을 때 공격력이 가장 높은 상대 포켓몬을 저주한다. 저주받은 포켓몬은 턴 종료마다 피해 1.",
+  chuck_dynamicpunch:
+  "폭발펀치: 공격으로 피해를 준 상대 포켓몬의 공격력 -1.",
+  jasmine_autotomize:
+  "바디퍼지: 도발. 피해를 받을 때마다 공격력 +1. 최대 +3.",
+  pryce_iceshard:
+  "얼음뭉치: 얼어 있는 포켓몬을 공격하면 피해 +2.",
+  clair_dragonpulse:
+  "용의파동: 상성으로 받는 추가 피해를 받지 않는다. 공격할 때마다 상대 트레이너에게 피해 1.",
+  lance_thunder:
+  "번개: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 전기 피해 2를 주고 마비시킨다.",
+  lance_extremespeed:
+  "신속: 소환된 턴에도 즉시 공격할 수 있다. 소환된 턴 첫 공격은 상대의 전투 반격 피해를 받지 않는다.",
+  lance_outrage:
+  "역린: 공격할 때 공격력 +2. 공격 후 자신이 피해 1을 받는다.",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -1697,7 +1725,7 @@ export const CARDS = [
 ];
 
 // ============================================================
-// 트레이너 전용 시그니처 카드
+// 관동 트레이너 전용 시그니처 카드
 // CARDS에는 넣지 않는다.
 // → 팩 / 컬렉션 / 관리자 지급 대상에서 제외
 // ============================================================
@@ -1755,6 +1783,182 @@ export const TRAINER_CARDS = [
     signature: true,
     trainerOnly: true,
   }),
+
+  // ============================================================
+  // 성도지방 시그니처
+  // ============================================================
+
+  P(
+    "johto_falkner_pidgeotto",
+    "비상의 피죤",
+    "비행",
+    3,
+    4,
+    5,
+    "L",
+    {
+      ability: "falkner_roost",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_bugsy_scyther",
+    "호일의 스라크",
+    "벌레",
+    4,
+    5,
+    5,
+    "L",
+    {
+      ability: "bugsy_furycutter",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_whitney_miltank",
+    "꼭두의 밀탱크",
+    "노말",
+    4,
+    4,
+    8,
+    "L",
+    {
+      ability: "whitney_rollout",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_morty_gengar",
+    "유빈의 팬텀",
+    "고스트",
+    5,
+    6,
+    6,
+    "L",
+    {
+      ability: "morty_curse",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_chuck_poliwrath",
+    "사도의 강챙이",
+    "격투",
+    5,
+    6,
+    8,
+    "L",
+    {
+      ability: "chuck_dynamicpunch",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_jasmine_steelix",
+    "규리의 강철톤",
+    "강철",
+    5,
+    5,
+    10,
+    "L",
+    {
+      ability: "jasmine_autotomize",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  // 눈보라 + 얼음뭉치 두 특성
+  P(
+    "johto_pryce_mamoswine",
+    "류옹의 맘모꾸리",
+    "얼음",
+    5,
+    6,
+    8,
+    "L",
+    {
+      ability: "blizzard",
+      secondaryAbility: "pryce_iceshard",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_clair_kingdra",
+    "이향의 킹드라",
+    "드래곤",
+    5,
+    7,
+    8,
+    "L",
+    {
+      ability: "clair_dragonpulse",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  // ============================================================
+  // 목호 - 망나뇽 3마리
+  // 단일 시그니처보다 개별 성능은 낮게
+  // ============================================================
+
+  P(
+    "johto_lance_dragonite_thunder",
+    "목호의 망나뇽 · 번개",
+    "드래곤",
+    5,
+    5,
+    6,
+    "L",
+    {
+      ability: "lance_thunder",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_lance_dragonite_extremespeed",
+    "목호의 망나뇽 · 신속",
+    "드래곤",
+    5,
+    5,
+    6,
+    "L",
+    {
+      ability: "lance_extremespeed",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "johto_lance_dragonite_outrage",
+    "목호의 망나뇽 · 역린",
+    "드래곤",
+    5,
+    5,
+    6,
+    "L",
+    {
+      ability: "lance_outrage",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
 ];
 
 export const CARD_MAP = Object.fromEntries(
@@ -1775,6 +1979,20 @@ export const DEX = {
   blaine_camerupt: 323, // 폭타
   blue_pidgeot: 18, // 피죤투
   red_pikachu: 25, // 피카츄
+
+  // 성도 시그니처
+  johto_falkner_pidgeotto: 17, // 피죤
+  johto_bugsy_scyther: 123, // 스라크
+  johto_whitney_miltank: 241, // 밀탱크
+  johto_morty_gengar: 94, // 팬텀
+  johto_chuck_poliwrath: 62, // 강챙이
+  johto_jasmine_steelix: 208, // 강철톤
+  johto_pryce_mamoswine: 473, // 맘모꾸리
+  johto_clair_kingdra: 230, // 킹드라
+
+  johto_lance_dragonite_thunder: 149,
+  johto_lance_dragonite_extremespeed: 149,
+  johto_lance_dragonite_outrage: 149,
 
   mudkip: 258,
   marshtomp: 259,
