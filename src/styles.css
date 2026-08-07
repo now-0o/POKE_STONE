@@ -1992,16 +1992,39 @@ img.res-icon.small { vertical-align: -2px; }
   color: #e0c060;
   font-size: 12px;
 }
-.pack-legend-theme {
-  background: linear-gradient(160deg, #1a1030, #2a1840) !important;
-  border: 1px solid rgba(196,120,255,0.5) !important;
-  box-shadow: 0 0 18px rgba(196,120,255,0.2) !important;
+/* 팩 테마 컬러: STORM=파랑, EARTH=초록, MYSTIC=분홍 */
+.pack-storm .pack-visual {
+  background: linear-gradient(160deg, #0a1828, #0c2848) !important;
+  border: 1px solid rgba(60,160,255,0.6) !important;
+  box-shadow: 0 0 18px rgba(40,120,240,0.25) !important;
 }
-.btn-legend-pack {
-  background: linear-gradient(160deg, #4a2080, #2a1050) !important;
-  border-color: rgba(196,120,255,0.5) !important;
+.pack-storm .btn-primary {
+  background: linear-gradient(160deg, #0a3080, #062060) !important;
+  border-color: rgba(60,160,255,0.5) !important;
 }
-.btn-legend-pack:hover { background: linear-gradient(160deg, #5a2898, #341460) !important; }
+.pack-storm .btn-primary:hover:not(.btn-locked) { background: linear-gradient(160deg, #1040a0, #0a3080) !important; }
+
+.pack-earth .pack-visual {
+  background: linear-gradient(160deg, #0a1e10, #0e2e14) !important;
+  border: 1px solid rgba(60,200,80,0.6) !important;
+  box-shadow: 0 0 18px rgba(40,180,60,0.25) !important;
+}
+.pack-earth .btn-primary {
+  background: linear-gradient(160deg, #0a5020, #063014) !important;
+  border-color: rgba(60,200,80,0.5) !important;
+}
+.pack-earth .btn-primary:hover:not(.btn-locked) { background: linear-gradient(160deg, #106030, #0a4020) !important; }
+
+.pack-mystic .pack-visual {
+  background: linear-gradient(160deg, #280a28, #3a1038) !important;
+  border: 1px solid rgba(255,120,200,0.6) !important;
+  box-shadow: 0 0 18px rgba(240,80,180,0.25) !important;
+}
+.pack-mystic .btn-primary {
+  background: linear-gradient(160deg, #701060, #4a0840) !important;
+  border-color: rgba(255,120,200,0.5) !important;
+}
+.pack-mystic .btn-primary:hover:not(.btn-locked) { background: linear-gradient(160deg, #8a1878, #601050) !important; }
 
 /* ============================================================
    레전드 카드 뒤집기 전용 애니메이션

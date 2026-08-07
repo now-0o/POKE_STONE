@@ -1244,8 +1244,11 @@ export function attack(game, side, attackerUid, target) {
 
   const atkDmgBase = effectiveAtk(atkUnit, game);
   const defDmgBase = effectiveAtk(defUnit, game);
-  const atkDmg = calcTypedDamage(atkDmgBase, atkUnit.type, defUnit.type);
+  // 대운(bigchance): 공격 시 피해 1.5배 (소수점 올림)
+  const bigChanceMult = atkUnit.ability === 'bigchance' ? 1.5 : 1;
+  const atkDmg = Math.ceil(calcTypedDamage(atkDmgBase, atkUnit.type, defUnit.type) * bigChanceMult);
   const defDmg = calcTypedDamage(defDmgBase, defUnit.type, atkUnit.type);
+  if (atkUnit.ability === 'bigchance' && atkDmgBase > 0) log(game, `${atkUnit.name}의 대운! 피해가 1.5배!`);
 
   const mult = typeMult(atkUnit.type, defUnit.type);
   applyDamage(game, defUnit, atkDmg, atkUnit.type);

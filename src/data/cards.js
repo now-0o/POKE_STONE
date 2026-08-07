@@ -88,6 +88,7 @@ export const ABILITY_TEXT = {
   icebody: '냉동몸: 공격당할 때 20% 확률로 상대에게 얼음 상태이상',
   freezedry: '프리즈드라이: 공격할 때 25% 확률로 상대에게 얼음 상태이상',
   serenegrace: '천진: 상태이상기 발동 확률 2배 (이 포켓몬이 공격할 때 상태이상을 걸 확률 2배)',
+  bigchance: '대운: 이 포켓몬이 공격할 때 피해를 1.5배로 입힌다',
   roughskin: '까칠한피부: 이 포켓몬을 공격한 상대에게 피해 2',
   // 공격 패턴
   rush: '돌진: 낸 턴에 바로 공격할 수 있다',
@@ -352,7 +353,6 @@ export const CARDS = [
 
   // ============ 악 (9) ============
   P('umbreon', '블래키', '악', 3, 2, 7, 'R', { stage: 1, evolvesFrom: 'eevee', ability: 'taunt' }),
-  P('sneasel', '포푸니', '악', 2, 4, 1, 'C', { ability: 'rush' }),
   P('houndour', '델빌', '악', 1, 2, 1, 'C', {}),
   P('houndoom', '헬가', '악', 4, 6, 5, 'R', { stage: 1, evolvesFrom: 'houndour', ability: 'flashfire' }),
   P('sableye', '깜까미', '악', 2, 2, 3, 'C', { ability: 'keeneye' }),
@@ -487,59 +487,61 @@ export const CARDS = [
 
   // ============ 4세대 추가 (v1.5) ============
   // 풀
-  P('budew', '꽃봉오리', '풀', 1, 1, 1, 'C', { ability: 'sleeppowder' }),
+  P('budew', '꼬몽울', '풀', 1, 1, 1, 'C', { ability: 'sleeppowder' }),
   P('roserade', '로즈레이드', '풀', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'budew', ability: 'poisonpoint' }),
-  P('cherubi', '체리꼬', '풀', 1, 1, 1, 'C', {}),
-  P('cherrim', '체리꽃', '풀', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'cherubi', ability: 'drought' }),
+  P('cherubi', '체리버', '풀', 1, 1, 1, 'C', {}),
+  P('cherrim', '체리꼬', '풀', 3, 4, 5, 'R', { stage: 1, evolvesFrom: 'cherubi', ability: 'drought' }),
   P('carnivine', '무쪽이', '풀', 4, 5, 5, 'R', { ability: 'sleeppowder' }),
   P('leafeon', '리피아', '풀', 4, 6, 5, 'R', { ability: 'rush' }),
   // 물
   P('buizel', '브이젤', '물', 1, 2, 1, 'C', { ability: 'rush' }),
   P('floatzel', '플로젤', '물', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'buizel', ability: 'rush' }),
-  P('gastrodon', '마스킵', '물', 4, 4, 7, 'R', { ability: 'waterabsorb' }),
+  P('gastrodon', '트리토돈', '물', 4, 4, 7, 'R', { ability: 'waterabsorb' }),
   // 전기
   P('pachirisu', '파치리스', '전기', 2, 2, 4, 'C', { ability: 'static' }),
   // 얼음
   P('snover', '눈쓰개', '얼음', 2, 2, 3, 'C', {}),
   P('abomasnow', '눈설왕', '얼음', 4, 5, 6, 'R', { stage: 1, evolvesFrom: 'snover', ability: 'blizzard' }),
-  P('glaceon', '글레이시아', '얼음', 4, 5, 6, 'R', { ability: 'icebody' }),
+  P('glaceon', '글레이시아', '얼음', 4, 5, 6, 'R', { ability: 'freezedry' }),
   // 바위
-  P('cranidos', '두개도', '바위', 2, 4, 2, 'C', {}),
-  P('rampardos', '람파도스', '바위', 4, 8, 5, 'R', { stage: 1, evolvesFrom: 'cranidos', ability: 'moldbreaker' }),
+  P('cranidos', '두개도스', '바위', 2, 4, 2, 'C', {}),
+  P('rampardos', '램펄드', '바위', 4, 8, 5, 'R', { stage: 1, evolvesFrom: 'cranidos', ability: 'moldbreaker' }),
   P('bonsly', '우소하치', '바위', 1, 1, 2, 'C', {}),
   // 강철
   P('shieldon', '방패톱스', '강철', 1, 0, 3, 'C', { ability: 'sturdy' }),
   P('bastiodon', '바리톱스', '강철', 3, 0, 8, 'R', { stage: 1, evolvesFrom: 'shieldon', ability: 'fortress' }),
   // 벌레
-  P('wormadam', '나몰빼미', '벌레', 3, 3, 6, 'R', { ability: 'levitate' }),
-  P('mothim', '비여니', '벌레', 3, 5, 3, 'R', { ability: 'rush' }),
+  P('burmy', '도롱충이', '벌레', 1, 1, 2, 'C', {}),
+  P('wormadam', '나메일', '벌레', 3, 3, 6, 'R', { stage: 1, evolvesFrom: 'burmy', ability: 'levitate' }),
+  P('mothim', '나모스', '벌레', 3, 5, 3, 'R', { stage: 1, evolvesFrom: 'burmy', ability: 'rush' }),
   P('combee', '세꿀버리', '벌레', 1, 1, 2, 'C', {}),
-  P('vespiquen', '세꿀왕', '벌레', 4, 3, 8, 'R', { stage: 1, evolvesFrom: 'combee', ability: 'healer' }),
+  P('vespiquen', '비퀸', '벌레', 4, 3, 8, 'R', { stage: 1, evolvesFrom: 'combee', ability: 'healer' }),
   // 독
-  P('stunky', '스컹뿌', '독', 1, 2, 2, 'C', { ability: 'poisonpoint' }),
-  P('skuntank', '스컹탱', '독', 3, 5, 5, 'R', { stage: 1, evolvesFrom: 'stunky', ability: 'poisonpoint' }),
+  P('stunky', '스컹뿡', '독', 1, 2, 2, 'C', { ability: 'poisonpoint' }),
+  P('skuntank', '스컹탱크', '독', 3, 5, 5, 'R', { stage: 1, evolvesFrom: 'stunky', ability: 'poisonpoint' }),
   P('skorupi', '스콜피', '독', 1, 2, 2, 'C', { ability: 'poisonbarb' }),
   P('drapion', '드래피온', '독', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'skorupi', ability: 'poisonbarb' }),
   P('croagunk', '삐딱구리', '독', 1, 2, 1, 'C', { ability: 'poisonpoint' }),
-  P('toxicroak', '독침붕', '독', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'croagunk', ability: 'poisonpoint' }),
+  P('toxicroak', '독개굴', '독', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'croagunk', ability: 'poisonpoint' }),
   // 고스트
-  P('drifloon', '흔들풍선', '고스트', 1, 1, 2, 'C', { ability: 'levitate' }),
-  P('drifblim', '흔들벨롱', '고스트', 3, 3, 6, 'R', { stage: 1, evolvesFrom: 'drifloon', ability: 'levitate' }),
+  P('drifloon', '흔들풍손', '고스트', 1, 1, 2, 'C', { ability: 'levitate' }),
+  P('drifblim', '둥실라이드', '고스트', 3, 3, 6, 'R', { stage: 1, evolvesFrom: 'drifloon', ability: 'levitate' }),
   // 노말
   P('buneary', '이어롤', '노말', 1, 2, 2, 'C', {}),
-  P('lopunny', '이어부기', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'buneary', ability: 'rush' }),
-  P('glameow', '냐오틱', '노말', 1, 2, 2, 'C', {}),
-  P('purugly', '냐옴비', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'glameow', ability: 'intimidate' }),
-  P('ambipom', '겸손코', '노말', 3, 5, 5, 'R', { ability: 'skilllink' }),
+  P('lopunny', '이어롭', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'buneary', ability: 'rush' }),
+  P('glameow', '냐옹마', '노말', 1, 2, 2, 'C', {}),
+  P('purugly', '몬냥이', '노말', 3, 5, 4, 'R', { stage: 1, evolvesFrom: 'glameow', ability: 'intimidate' }),
+  P('ambipom', '에이팜', '노말', 3, 5, 5, 'R', { ability: 'skilllink' }),
   // 에스퍼
-  P('mimejr', '마임주니어', '에스퍼', 1, 1, 2, 'C', {}),
+  P('mimejr', '흉내내', '에스퍼', 1, 1, 2, 'C', {}),
   // 격투
-  P('hippopotas', '하마돈', '땅', 1, 1, 2, 'C', {}),
-  P('hippowdon', '하마두가스', '땅', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'hippopotas', ability: 'muddywater' }),
+  P('hippopotas', '히포포타스', '땅', 1, 1, 2, 'C', {}),
+  P('hippowdon', '하마돈', '땅', 4, 5, 7, 'R', { stage: 1, evolvesFrom: 'hippopotas', ability: 'taunt' }),
   // 페어리
-  P('togekiss', '토게키스', '페어리', 5, 5, 7, 'E', { stage: 2, evolvesFrom: 'togetic', ability: 'serenegrace' }),
+  P('togekiss', '토게키스', '페어리', 5, 5, 7, 'E', { stage: 2, evolvesFrom: 'togetic', ability: 'bigchance' }),
   // 악
-  P('weavile', '포푸니라', '악', 4, 7, 4, 'R', { ability: 'rush' }),
+  P('sneasel', '포푸니', '악', 2, 3, 2, 'C', { ability: 'rush' }),
+  P('weavile', '포푸니라', '악', 4, 7, 4, 'R', { stage: 1, evolvesFrom: 'sneasel' }),
 
 
   // ============ 도구 추가 (v1.5) ============
@@ -622,7 +624,7 @@ export const DEX = {
   wormadam: 413, mothim: 414, combee: 415, vespiquen: 416, pachirisu: 417,
   buizel: 418, floatzel: 419, cherubi: 420, cherrim: 421, gastrodon: 423, ambipom: 424,
   drifloon: 425, drifblim: 426, buneary: 427, lopunny: 428, glameow: 431, purugly: 432,
-  stunky: 434, skuntank: 435, bonsly: 438, mimejr: 439, snover: 459, abomasnow: 460, weavile: 461,
+  sneasel: 215, burmy: 412, stunky: 434, skuntank: 435, bonsly: 438, mimejr: 439, snover: 459, abomasnow: 460, weavile: 461,
   togekiss: 468, leafeon: 470, glaceon: 471, hippopotas: 449, hippowdon: 450,
   skorupi: 451, drapion: 452, croagunk: 453, toxicroak: 454, carnivine: 455,
 };
@@ -633,6 +635,8 @@ export const ITEM_SPRITE = {
   pokeball: 'poke-ball', potion: 'potion', fullrestore: 'full-restore',
   everstone: 'everstone', lifeorb: 'life-orb', focussash: 'focus-sash', shellbell: 'shell-bell',
   ultra: 'ultra-ball',
+  antidote: 'antidote', paralyzeheal: 'paralyze-heal', burnheal: 'burn-heal',
+  iceheal: 'ice-heal', awakening: 'awakening', fullheal: 'full-heal',
   swampertite: 'swampertite', charizarditey: 'charizardite-y', gyaradosite: 'gyaradosite',
   gengarite: 'gengarite', salamencite: 'salamencite',
   hydropump: 'tm-water', raindance: 'tm-water', surf: 'hm-water',
@@ -652,6 +656,9 @@ export const UI_SPRITES = {
 export const BALL_SPRITES = {
   master: `${SPRITE_BASE}/items/master-ball.png`,
   ultra: `${SPRITE_BASE}/items/ultra-ball.png`,
+  dive: `${SPRITE_BASE}/items/dive-ball.png`,
+  nest: `${SPRITE_BASE}/items/nest-ball.png`,
+  premier: `${SPRITE_BASE}/items/premier-ball.png`,
   great: `${SPRITE_BASE}/items/great-ball.png`,
   poke: `${SPRITE_BASE}/items/poke-ball.png`,
 };
@@ -707,7 +714,7 @@ export const PACKS = {
     price: 550,
     weights: { C: 55, R: 33, E: 8, L: 4 },
     guarantee: 'E',
-    ball: 'ultra',
+    ball: 'dive',
     legendPool: ['kyogre', 'suicune', 'zapdos', 'raikou', 'articuno', 'regice'],
   },
   earth: {
@@ -717,7 +724,7 @@ export const PACKS = {
     price: 550,
     weights: { C: 55, R: 33, E: 8, L: 4 },
     guarantee: 'E',
-    ball: 'ultra',
+    ball: 'nest',
     legendPool: ['moltres', 'entei', 'hooh', 'groudon', 'regirock', 'registeel'],
   },
   mystic: {
@@ -727,7 +734,7 @@ export const PACKS = {
     price: 550,
     weights: { C: 55, R: 33, E: 8, L: 4 },
     guarantee: 'E',
-    ball: 'ultra',
+    ball: 'premier',
     legendPool: ['celebi', 'mewtwo', 'mew', 'lugia', 'latias', 'rayquaza'],
   },
 };
