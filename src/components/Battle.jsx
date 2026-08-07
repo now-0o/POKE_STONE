@@ -17,7 +17,7 @@ import {
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
-import { playSfx, playCry } from "../audio.js";
+import { playSfx, playCry, isLegend } from "../audio.js";
 import { resolveMew } from "../engine/engine.js";
 
 const AI_DELAY = 1100;
