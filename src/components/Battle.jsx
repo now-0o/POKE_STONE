@@ -37,6 +37,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const [legendFx, setLegendFx] = useState(null); // 레전드 소환 전용 이펙트
   const [signatureFx, setSignatureFx] = useState(null); // 트레이너 시그니처
   const [atkFx, setAtkFx] = useState(null); // 공격 돌진/피격 연출
+  const [impactFx, setImpactFx] = useState([]); // 공격 타격감 추가
   const [intro, setIntro] = useState("vs"); // 'vs' -> 'coin' -> false
   const [confirmSurrender, setConfirmSurrender] = useState(false);
   const aiTimer = useRef(null);
@@ -54,6 +55,10 @@ export default function Battle({ trainer, deck, onFinish }) {
   const fxTimer = useRef(null);
   const atkFxTimer = useRef(null);
   const signatureFxTimer = useRef(null);
+  const battleRef = useRef(null);
+  const battleRectsRef = useRef(new Map());
+  const impactDelayTimer = useRef(null);
+  const impactClearTimer = useRef(null);
 
   if (!gameRef.current) {
     gameRef.current = createGame(deck, trainer);
@@ -62,11 +67,379 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   const rerender = useCallback(() => forceRender((n) => n + 1), []);
 
+  // ============================================================
+  // 전투 연출 헬퍼
+  // ============================================================
+
+  // 현재 필드에 존재하는 포켓몬/트레이너 좌표 저장.
+  // 사라진 포켓몬의 좌표는 일부러 삭제하지 않는다.
+  // → 기술로 즉사해도 죽기 직전 위치에 피격 연출 가능.
+  function refreshBattleRects() {
+    if (typeof document === "undefined") return;
+
+    document.querySelectorAll("[data-uid]").forEach((el) => {
+      const uid = el.dataset.uid;
+      if (!uid) return;
+
+      const rect = el.getBoundingClientRect();
+
+      battleRectsRef.current.set(uid, {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    });
+
+    const enemyHero = document.querySelector(
+      '[data-drop="enemy-hero"] .hero-portrait',
+    );
+
+    if (enemyHero) {
+      const rect = enemyHero.getBoundingClientRect();
+
+      battleRectsRef.current.set("hero-enemy", {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    }
+
+    const playerHero = document.querySelector(
+      '[data-drop="my-hero"] .hero-portrait',
+    );
+
+    if (playerHero) {
+      const rect = playerHero.getBoundingClientRect();
+
+      battleRectsRef.current.set("hero-player", {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    }
+  }
+
+  function impactRectKey(impact) {
+    if (impact.targetUid === "hero") {
+      return `hero-${impact.side}`;
+    }
+
+    return impact.targetUid;
+  }
+
+  function getImpactElement(impact) {
+    if (typeof document === "undefined") return null;
+
+    if (impact.targetUid === "hero") {
+      return document.querySelector(
+        impact.side === "enemy"
+          ? '[data-drop="enemy-hero"] .hero-portrait'
+          : '[data-drop="my-hero"] .hero-portrait',
+      );
+    }
+
+    const unitEl = document.querySelector(`[data-uid="${impact.targetUid}"]`);
+
+    if (!unitEl) return null;
+
+    return unitEl.closest(".unit-pop") || unitEl;
+  }
+
+  // 실제 데미지에 따른 강도
+  function impactLevel(amount) {
+    if (amount >= 9) return "massive";
+    if (amount >= 6) return "heavy";
+    if (amount >= 3) return "medium";
+
+    return "light";
+  }
+
+  // 피해가 강할수록 화면 흔들림 증가
+  function shakeBattle(amount) {
+    const el = battleRef.current;
+
+    if (!el || amount < 3) return;
+
+    let power = 2;
+    let duration = 160;
+
+    if (amount >= 9) {
+      power = 9;
+      duration = 330;
+    } else if (amount >= 6) {
+      power = 6;
+      duration = 260;
+    } else if (amount >= 3) {
+      power = 3;
+      duration = 190;
+    }
+
+    el.animate(
+      [
+        {
+          transform: "translate(0, 0)",
+        },
+        {
+          transform: `translate(${-power}px, ${power * 0.35}px)`,
+        },
+        {
+          transform: `translate(${power}px, ${-power * 0.45}px)`,
+        },
+        {
+          transform: `translate(${-power * 0.7}px, ${-power * 0.25}px)`,
+        },
+        {
+          transform: `translate(${power * 0.6}px, ${power * 0.35}px)`,
+        },
+        {
+          transform: "translate(0, 0)",
+        },
+      ],
+      {
+        duration,
+        easing: "ease-out",
+      },
+    );
+  }
+
+  // 대상 자체 피격/회복 애니메이션
+  function animateImpactTarget(impact) {
+    const el = getImpactElement(impact);
+
+    // 이미 죽어서 DOM에서 사라졌다면
+    // 아래 overlay 연출만 보여준다.
+    if (!el) return;
+
+    if (impact.type === "damage") {
+      const power =
+        impact.amount >= 9
+          ? 8
+          : impact.amount >= 6
+            ? 6
+            : impact.amount >= 3
+              ? 4
+              : 2;
+
+      el.animate(
+        [
+          {
+            transform: "translate(0, 0) scale(1)",
+            filter: "brightness(1)",
+          },
+          {
+            transform: `translate(${-power}px, 0) scale(0.96)`,
+            filter:
+              "brightness(2.4) saturate(1.7) drop-shadow(0 0 10px rgba(255,70,60,.95))",
+          },
+          {
+            transform: `translate(${power}px, 0) scale(1.03)`,
+            filter:
+              "brightness(1.7) saturate(1.4) drop-shadow(0 0 7px rgba(255,70,60,.8))",
+          },
+          {
+            transform: `translate(${-power * 0.45}px, 0) scale(.99)`,
+            filter: "brightness(1.25)",
+          },
+          {
+            transform: "translate(0, 0) scale(1)",
+            filter: "brightness(1)",
+          },
+        ],
+        {
+          duration: impact.amount >= 6 ? 390 : 300,
+          easing: "ease-out",
+        },
+      );
+
+      return;
+    }
+
+    if (impact.type === "heal") {
+      el.animate(
+        [
+          {
+            transform: "scale(1)",
+            filter: "brightness(1)",
+          },
+          {
+            transform: "scale(1.09)",
+            filter:
+              "brightness(1.75) drop-shadow(0 0 12px rgba(100,255,150,.95))",
+          },
+          {
+            transform: "scale(1)",
+            filter: "brightness(1)",
+          },
+        ],
+        {
+          duration: 470,
+          easing: "ease-out",
+        },
+      );
+
+      return;
+    }
+
+    // 도구 장착 / 상태 회복
+    el.animate(
+      [
+        {
+          transform: "scale(1)",
+          filter: "brightness(1)",
+        },
+        {
+          transform: "scale(1.07)",
+          filter:
+            impact.type === "cleanse"
+              ? "brightness(1.7) drop-shadow(0 0 10px rgba(120,210,255,.95))"
+              : "brightness(1.7) drop-shadow(0 0 10px rgba(245,197,66,.95))",
+        },
+        {
+          transform: "scale(1)",
+          filter: "brightness(1)",
+        },
+      ],
+      {
+        duration: 420,
+        easing: "ease-out",
+      },
+    );
+  }
+
+  // impact 배열을 화면용 데이터로 변환
+  function showImpacts(impacts, actionKey) {
+    if (!impacts?.length) return;
+
+    const rendered = impacts
+      .map((impact, index) => {
+        const rect = battleRectsRef.current.get(impactRectKey(impact));
+
+        if (!rect) return null;
+
+        return {
+          ...impact,
+          x: rect.x,
+          y: rect.y,
+          level: impactLevel(impact.amount || 0),
+          key: `${actionKey}-${index}`,
+        };
+      })
+      .filter(Boolean);
+
+    setImpactFx(rendered);
+
+    impacts.forEach((impact) => {
+      animateImpactTarget(impact);
+    });
+
+    const maxDamage = impacts
+      .filter((impact) => impact.type === "damage")
+      .reduce((max, impact) => Math.max(max, impact.amount || 0), 0);
+
+    shakeBattle(maxDamage);
+
+    clearTimeout(impactClearTimer.current);
+
+    impactClearTimer.current = setTimeout(() => {
+      setImpactFx([]);
+    }, 720);
+  }
+
+  // 공격 포켓몬이 실제 대상 위치까지 돌진
+  function animateAttackLunge(action) {
+    if (typeof document === "undefined") return;
+
+    const attackerEl = document.querySelector(`[data-uid="${action.uid}"]`);
+
+    if (!attackerEl) return;
+
+    const attackerRect = battleRectsRef.current.get(action.uid);
+
+    const targetSide = action.side === "player" ? "enemy" : "player";
+
+    const targetKey =
+      action.targetUid === "hero" ? `hero-${targetSide}` : action.targetUid;
+
+    const targetRect = battleRectsRef.current.get(targetKey);
+
+    if (!attackerRect || !targetRect) return;
+
+    let dx = targetRect.x - attackerRect.x;
+
+    let dy = targetRect.y - attackerRect.y;
+
+    const distance = Math.hypot(dx, dy);
+
+    // 상대 카드 정중앙까지 완전히 겹치지 않고
+    // 약 34px 앞에서 충돌하도록.
+    if (distance > 0) {
+      const stopDistance = 34;
+
+      const ratio = Math.max(0, (distance - stopDistance) / distance);
+
+      dx *= ratio;
+      dy *= ratio;
+    }
+
+    attackerEl.animate(
+      [
+        {
+          transform: "translate(0px, 0px) scale(1)",
+          offset: 0,
+        },
+
+        // 살짝 뒤로 당겨 준비
+        {
+          transform: `translate(${-dx * 0.06}px, ${-dy * 0.06}px) scale(.96)`,
+          offset: 0.18,
+        },
+
+        // 타깃까지 돌진
+        {
+          transform: `translate(${dx}px, ${dy}px) scale(1.08)`,
+          offset: 0.58,
+        },
+
+        // 충돌 지점 잠깐 유지
+        {
+          transform: `translate(${dx}px, ${dy}px) scale(1.04)`,
+          offset: 0.68,
+        },
+
+        // 원위치
+        {
+          transform: "translate(0px, 0px) scale(1)",
+          offset: 1,
+        },
+      ],
+      {
+        duration: 620,
+        easing: "cubic-bezier(.22,.75,.3,1)",
+      },
+    );
+  }
+
+  useEffect(() => {
+    refreshBattleRects();
+  });
+
   // ---- AI 턴 루프 (행동 1개씩) ----
   useEffect(() => {
     if (intro !== false || game.winner || game.turn !== "enemy") return;
     aiTimer.current = setTimeout(() => {
+      refreshBattleRects();
+
       aiStep(game);
+
       rerender();
     }, AI_DELAY);
     return () => clearTimeout(aiTimer.current);
@@ -158,13 +531,32 @@ export default function Battle({ trainer, deck, onFinish }) {
         key: la.seq,
       });
 
+      // 1. 실제 타깃까지 돌진
+      animateAttackLunge(la);
+
+      // 2. 충돌 시점에 피격 효과 발생
+      clearTimeout(impactDelayTimer.current);
+
+      impactDelayTimer.current = setTimeout(() => {
+        showImpacts(la.impacts || [], la.seq);
+      }, 360);
+
+      // 3. 공격 애니메이션 끝난 뒤 사망 처리
       clearTimeout(atkFxTimer.current);
 
       atkFxTimer.current = setTimeout(() => {
         cleanupDeaths(game);
+
         setAtkFx(null);
+
         rerender();
-      }, 520);
+      }, 650);
+    }
+
+    // 일반 공격이 아닌
+    // 기술 / 전투의 함성 / 도구 / 회복 효과
+    if (la.kind === "play" && la.impacts?.length) {
+      showImpacts(la.impacts, la.seq);
     }
   });
 
@@ -175,6 +567,8 @@ export default function Battle({ trainer, deck, onFinish }) {
       clearTimeout(fxTimer.current);
       clearTimeout(atkFxTimer.current);
       clearTimeout(signatureFxTimer.current);
+      clearTimeout(impactDelayTimer.current);
+      clearTimeout(impactClearTimer.current);
     },
     [],
   );
@@ -795,10 +1189,51 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   return (
     <div
+      ref={battleRef}
       className={`battle ${attackMode ? "aiming" : ""}`}
       onContextMenu={(e) => e.preventDefault()}
     >
       {resultOverlay}
+
+      {/* 전투 피격 / 회복 / 버프 연출 */}
+      <div className="combat-impact-layer">
+        {impactFx.map((fx) => (
+          <div
+            key={fx.key}
+            className={[
+              "combat-impact",
+              `impact-${fx.type}`,
+              `impact-${fx.level}`,
+            ].join(" ")}
+            style={{
+              left: `${fx.x}px`,
+              top: `${fx.y}px`,
+            }}
+          >
+            <div className="combat-impact-wave" />
+
+            {fx.type === "damage" && (
+              <div className="combat-impact-number damage-number">
+                -{fx.amount}
+              </div>
+            )}
+
+            {fx.type === "heal" && fx.amount > 0 && (
+              <div className="combat-impact-number heal-number">
+                +{fx.amount}
+              </div>
+            )}
+
+            {fx.type === "buff" && (
+              <div className="combat-impact-label">POWER UP</div>
+            )}
+
+            {fx.type === "cleanse" && (
+              <div className="combat-impact-label cleanse-label">CURE</div>
+            )}
+          </div>
+        ))}
+      </div>
 
       {game.pendingChoose?.side === "player" &&
         game.pendingChoose.effect === "hyperball" && (
@@ -957,9 +1392,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         onClick={onHeroClick}
         data-drop="enemy-hero"
       >
-        <div
-          className={`hero-portrait ${atkFx && atkFx.side === "player" && atkFx.targetUid === "hero" ? "hit-flash" : ""}`}
-        >
+        <div className="hero-portrait">
           <TrainerSprite
             spriteKey={trainer.sprite}
             emoji={trainer.emoji}
@@ -988,12 +1421,6 @@ export default function Battle({ trainer, deck, onFinish }) {
             dropZone="unit-enemy"
             fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
             fxKey={unitFx ? unitFx.key : 0}
-            lunge={
-              atkFx && atkFx.side === "enemy" && atkFx.uid === u.uid
-                ? "down"
-                : null
-            }
-            hit={atkFx && atkFx.side === "player" && atkFx.targetUid === u.uid}
           />
         ))}
         {foe.field.length === 0 && (
@@ -1074,12 +1501,6 @@ export default function Battle({ trainer, deck, onFinish }) {
             dropZone="unit-player"
             fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
             fxKey={unitFx ? unitFx.key : 0}
-            lunge={
-              atkFx && atkFx.side === "player" && atkFx.uid === u.uid
-                ? "up"
-                : null
-            }
-            hit={atkFx && atkFx.side === "enemy" && atkFx.targetUid === u.uid}
           />
         ))}
         {me.field.length === 0 && !draggingBasicPokemon && (
@@ -1093,9 +1514,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         onClick={onMyHeroClick}
         data-drop="my-hero"
       >
-        <div
-          className={`hero-portrait ${atkFx && atkFx.side === "enemy" && atkFx.targetUid === "hero" ? "hit-flash" : ""}`}
-        >
+        <div className="hero-portrait">
           <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={44} />
           <span className="hero-hp">HP {me.hp}</span>
         </div>

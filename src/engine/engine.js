@@ -363,8 +363,35 @@ export function spellDamageAmount(card, game) {
   return Math.max(0, amount);
 }
 
+// ============================================================
+// 전투 연출용 Impact 수집
+// ============================================================
+
+function beginImpactCapture(game) {
+  game._impactBuffer = [];
+  game._collectImpacts = true;
+}
+
+function recordImpact(game, impact) {
+  if (!game._collectImpacts) return;
+
+  if (!game._impactBuffer) {
+    game._impactBuffer = [];
+  }
+
+  game._impactBuffer.push(impact);
+}
+
+function takeImpacts(game) {
+  const impacts = game._impactBuffer || [];
+
+  game._impactBuffer = [];
+  game._collectImpacts = false;
+
+  return impacts;
+}
+
 // ---------- 피해 처리 ----------
-// source: 공격 유닛 또는 null(기술/환경), typedIgnore: 상성/부유 무시(모래바람 등)
 function applyDamage(
   game,
   unit,
@@ -372,7 +399,32 @@ function applyDamage(
   sourceType = null,
   typedIgnore = false,
 ) {
+  const hpBefore = unit.hp;
+
+  function finishImpact(result) {
+    const diff = unit.hp - hpBefore;
+
+    if (diff < 0) {
+      recordImpact(game, {
+        type: "damage",
+        side: unit.side,
+        targetUid: unit.uid,
+        amount: Math.abs(diff),
+      });
+    } else if (diff > 0) {
+      recordImpact(game, {
+        type: "heal",
+        side: unit.side,
+        targetUid: unit.uid,
+        amount: diff,
+      });
+    }
+
+    return result;
+  }
+
   let dmg = amount;
+
   // 웅의 롱스톤 - 스톤에지
   if (unit.ability === "brock_rockwall") {
     const before = dmg;
@@ -384,65 +436,94 @@ function applyDamage(
     }
   }
 
-  if (amount <= 0) return 0;
+  if (amount <= 0) {
+    return finishImpact(0);
+  }
+
+  // 부유
   if (!typedIgnore && sourceType === "땅" && unit.ability === "levitate") {
     log(game, `${unit.name}은(는) 부유로 피해를 받지 않았다!`);
-    return 0;
+
+    return finishImpact(0);
   }
-  // 타오르는불꽃: 불꽃 무효
+
+  // 타오르는불꽃
   if (!typedIgnore && sourceType === "불꽃" && unit.ability === "flashfire") {
     log(game, `${unit.name}의 타오르는불꽃! 불꽃 피해를 받지 않는다!`);
-    return 0;
+
+    return finishImpact(0);
   }
-  // 축전: 전기 타입 공격은 피해 대신 회복
+
+  // 축전
   if (!typedIgnore && sourceType === "전기" && unit.ability === "voltabsorb") {
     const heal = Math.min(2, unit.maxHp - unit.hp);
+
     unit.hp += heal;
+
     log(game, `${unit.name}의 축전! 전기를 흡수해 체력을 회복했다!`);
-    return 0;
+
+    return finishImpact(0);
   }
-  // 저수: 물 타입 공격은 피해 대신 회복
+
+  // 저수
   if (!typedIgnore && sourceType === "물" && unit.ability === "waterabsorb") {
     const heal = Math.min(2, unit.maxHp - unit.hp);
+
     unit.hp += heal;
+
     log(game, `${unit.name}의 저수! 물을 흡수해 체력을 회복했다!`);
-    return 0;
+
+    return finishImpact(0);
   }
-  // 두꺼운지방: 불꽃/얼음 피해 감소
+
+  // 두꺼운지방
   if (
     !typedIgnore &&
     (sourceType === "불꽃" || sourceType === "얼음") &&
     unit.ability === "thickfat"
   ) {
     dmg = Math.max(0, dmg - 1);
-    if (dmg < amount) log(game, `${unit.name}의 두꺼운지방으로 피해가 줄었다!`);
+
+    if (dmg < amount) {
+      log(game, `${unit.name}의 두꺼운지방으로 피해가 줄었다!`);
+    }
   }
-  // 모래숨기: 모래바람일 때 피해 감소
+
+  // 모래숨기
   if (!typedIgnore && game.weather === "sand" && unit.ability === "sandveil") {
     dmg = Math.max(0, dmg - 1);
-    if (dmg < amount) log(game, `${unit.name}이(가) 모래숨기로 공격을 흘렸다!`);
+
+    if (dmg < amount) {
+      log(game, `${unit.name}이(가) 모래숨기로 공격을 흘렸다!`);
+    }
   }
-  // 멀티스케일: 체력 가득이면 피해 절반
+
+  // 멀티스케일
   if (
     (unit.ability === "multiscale" || unit.ability === "aeroblast") &&
     unit.hp === unit.maxHp &&
     dmg > 1
   ) {
     dmg = Math.ceil(dmg / 2);
+
     log(game, `${unit.name}의 멀티스케일! 피해가 절반이 됐다!`);
   }
-  if (dmg <= 0) return 0;
 
-  // 따라큐 탈: 첫 공격 피해를 막고 피해 1만 받음
+  if (dmg <= 0) {
+    return finishImpact(0);
+  }
+
+  // 따라큐 탈
   if (unit.ability === "disguise" && !unit.sturdyUsed) {
     unit.hp -= 1;
     unit.sturdyUsed = true;
+
     log(game, `${unit.name}의 탈! 공격을 막고 피해를 1만 받았다!`);
-    return 1;
+
+    return finishImpact(1);
   }
 
-  // 옹골참: 풀피일 때 치명적인 피해를 체력 1로 버팀
-  // 다시 풀피가 되면 다시 발동 가능
+  // 옹골참
   if (
     unit.ability === "sturdy" &&
     unit.maxHp > 1 &&
@@ -450,11 +531,13 @@ function applyDamage(
     dmg >= unit.hp
   ) {
     unit.hp = 1;
+
     log(game, `${unit.name}의 옹골참! 체력 1을 남기고 버텼다!`);
-    return dmg;
+
+    return finishImpact(dmg);
   }
 
-  // 기합의띠: 풀피일 때 치명적인 피해를 1회만 버팀
+  // 기합의띠
   if (
     unit.item === "focussash" &&
     !unit.focusSashUsed &&
@@ -463,17 +546,21 @@ function applyDamage(
   ) {
     unit.hp = 1;
     unit.focusSashUsed = true;
+
     log(game, `${unit.name}은(는) 기합의띠로 체력 1을 남기고 버텼다!`);
-    return dmg;
+
+    return finishImpact(dmg);
   }
 
   unit.hp -= dmg;
-  // 불꽃 타입 피해를 받으면 얼음 상태 해제
+
+  // 불꽃 피해를 받으면 얼음 해제
   if (sourceType === "불꽃" && unit.status === "ice") {
     unit.status = null;
     unit.statusTurns = 0;
   }
-  return dmg;
+
+  return finishImpact(dmg);
 }
 
 export function cleanupDeaths(game) {
@@ -1139,11 +1226,17 @@ export function canPlayCard(game, side, handIdx) {
 // 카드 사용 이벤트 기록 (UI 연출용)
 function markPlay(game, side, card, extra = null) {
   game.animSeq = (game.animSeq || 0) + 1;
+
+  const impacts = takeImpacts(game);
+
   game.lastAction = {
     seq: game.animSeq,
     kind: "play",
     side,
     cardId: card.id,
+
+    ...(impacts.length > 0 ? { impacts } : {}),
+
     ...(extra || {}),
   };
 }
@@ -1161,6 +1254,8 @@ export function playCard(
   const h = p.hand[handIdx];
   const card = CARD_MAP[h.cardId];
   const cost = effectiveCost(card, game);
+
+  beginImpactCapture(game);
 
   // ----- 포켓몬 (기본) -----
   if (card.kind === "pokemon" && !card.evolvesFrom) {
@@ -1274,6 +1369,12 @@ export function playCard(
       u.focusSashUsed = false;
     }
     log(game, `${u.name}에게 ${card.name}을(를) 장착했다!`);
+    recordImpact(game, {
+      type: "buff",
+      side,
+      targetUid: u.uid,
+      amount: 0,
+    });
     markPlay(game, side, card, { anim: "item", uid: u.uid });
     return true;
   }
@@ -1291,6 +1392,12 @@ export function playCard(
         game,
         `${p.name}이(가) ${card.name}을(를) 사용했다! ${WEATHER_NAME[s.weather]}!`,
       );
+      recordImpact(game, {
+        type: "cleanse",
+        side,
+        targetUid: u.uid,
+        amount: 0,
+      });
       markPlay(game, side, card);
       return true;
     }
@@ -1465,6 +1572,14 @@ export function playCard(
       const base = spellDamageAmount(card, game);
       if (target.uid === "hero") {
         foe.hp -= base;
+
+        recordImpact(game, {
+          type: "damage",
+          side: other(side),
+          targetUid: "hero",
+          amount: base,
+        });
+
         log(game, `${card.name}! ${foe.name}에게 피해 ${base}!`);
       } else {
         const u = foe.field.find((x) => x.uid === target.uid);
@@ -1494,37 +1609,101 @@ export function playCard(
 
     if (s.effect === "heal") {
       if (!target) return false;
+
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
+
       if (target.uid === "hero") {
+        const before = p.hp;
+
         p.hp = Math.min(p.maxHp, p.hp + 4);
-        log(game, `${card.name}! ${p.name}의 체력이 4 회복됐다.`);
+
+        const healed = p.hp - before;
+
+        log(game, `${card.name}! ${p.name}의 체력이 ${healed} 회복됐다.`);
+
+        if (healed > 0) {
+          recordImpact(game, {
+            type: "heal",
+            side,
+            targetUid: "hero",
+            amount: healed,
+          });
+        }
       } else {
         const u = p.field.find((x) => x.uid === target.uid);
+
         if (!u) return false;
+
+        const before = u.hp;
+
         u.hp = Math.min(u.maxHp, u.hp + s.amount);
-        log(game, `${card.name}! ${u.name}의 체력이 회복됐다.`);
+
+        const healed = u.hp - before;
+
+        log(game, `${card.name}! ${u.name}의 체력이 ${healed} 회복됐다.`);
+
+        if (healed > 0) {
+          recordImpact(game, {
+            type: "heal",
+            side,
+            targetUid: u.uid,
+            amount: healed,
+          });
+        }
       }
+
       markPlay(game, side, card);
       return true;
     }
 
     if (s.effect === "fullheal") {
       if (!target) return false;
+
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
+
       if (target.uid === "hero") {
+        const before = p.hp;
+
         p.hp = Math.min(p.maxHp, p.hp + 8);
-        log(game, `${card.name}! ${p.name}의 체력이 8 회복됐다!`);
+
+        const healed = p.hp - before;
+
+        log(game, `${card.name}! ${p.name}의 체력이 ${healed} 회복됐다!`);
+
+        if (healed > 0) {
+          recordImpact(game, {
+            type: "heal",
+            side,
+            targetUid: "hero",
+            amount: healed,
+          });
+        }
       } else {
         const u = p.field.find((x) => x.uid === target.uid);
+
         if (!u) return false;
+
+        const before = u.hp;
+
         u.hp = u.maxHp;
         u.frozen = 0;
         u.status = null;
         u.statusTurns = 0;
+
+        const healed = u.hp - before;
+
         log(game, `${card.name}! ${u.name}이(가) 완전히 회복됐다!`);
+
+        recordImpact(game, {
+          type: healed > 0 ? "heal" : "cleanse",
+          side,
+          targetUid: u.uid,
+          amount: healed,
+        });
       }
+
       markPlay(game, side, card);
       return true;
     }
@@ -1677,6 +1856,13 @@ function spendAttack(game, unit) {
   if (unit.ability === "red_volttackle") {
     unit.hp -= 2;
 
+    recordImpact(game, {
+      type: "damage",
+      side: unit.side,
+      targetUid: unit.uid,
+      amount: 2,
+    });
+
     log(game, `${unit.name}의 볼트태클 반동! 피해 2!`);
   }
 }
@@ -1688,12 +1874,22 @@ export function attack(game, side, attackerUid, target) {
   const atkUnit = p.field.find((u) => u.uid === attackerUid);
   if (!atkUnit || !canAttack(game, side, attackerUid)) return false;
 
+  beginImpactCapture(game);
+
   const { units, hero } = validAttackTargets(game, side, attackerUid);
 
   if (target.uid === "hero") {
     if (!hero) return false;
     const dmg = effectiveAtk(atkUnit, game);
+
     foe.hp -= dmg;
+
+    recordImpact(game, {
+      type: "damage",
+      side: other(side),
+      targetUid: "hero",
+      amount: dmg,
+    });
     spendAttack(game, atkUnit);
     log(
       game,
@@ -1706,6 +1902,7 @@ export function attack(game, side, attackerUid, target) {
       side,
       uid: attackerUid,
       targetUid: "hero",
+      impacts: takeImpacts(game),
     };
     checkWinner(game);
     return true;
@@ -1816,17 +2013,34 @@ export function attack(game, side, attackerUid, target) {
     log(game, `${atkUnit.name}의 자기과신! 공격력이 1 올랐다!`);
   }
   if (atkDmg > 0 && atkUnit.hp > 0 && atkUnit.item === "shellbell") {
+    const before = atkUnit.hp;
+
     atkUnit.hp = Math.min(atkUnit.maxHp, atkUnit.hp + 1);
-    log(game, `${atkUnit.name}의 조개껍질방울! 체력을 1 회복했다.`);
+
+    const healed = atkUnit.hp - before;
+
+    if (healed > 0) {
+      recordImpact(game, {
+        type: "heal",
+        side: atkUnit.side,
+        targetUid: atkUnit.uid,
+        amount: healed,
+      });
+    }
+
+    log(game, `${atkUnit.name}의 조개껍질방울! 체력을 ${healed} 회복했다.`);
   }
   game.animSeq = (game.animSeq || 0) + 1;
+
   game.lastAction = {
     seq: game.animSeq,
     kind: "attack",
     side,
     uid: attackerUid,
     targetUid: target.uid,
+    impacts: takeImpacts(game),
   };
+
   return true;
 }
 

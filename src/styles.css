@@ -2116,17 +2116,6 @@ img.res-icon.small {
   filter: none;
 } /* 보기 전용 고스트는 밝게 */
 
-/* ============================================================
-   v3.4: 공격 돌진/피격 연출
-   ============================================================ */
-.field-unit.lunge-up {
-  animation: lunge-up 0.46s cubic-bezier(0.3, 0.7, 0.4, 1);
-  z-index: 7;
-}
-.field-unit.lunge-down {
-  animation: lunge-down 0.46s cubic-bezier(0.3, 0.7, 0.4, 1);
-  z-index: 7;
-}
 @keyframes lunge-up {
   0% {
     transform: translateY(0);
@@ -2155,10 +2144,7 @@ img.res-icon.small {
     transform: translateY(0);
   }
 }
-.field-unit.hit-flash,
-.hero-portrait.hit-flash {
-  animation: hit-flash 0.4s ease-out 0.2s;
-}
+
 @keyframes hit-flash {
   0% {
     filter: none;
@@ -3737,5 +3723,300 @@ img.res-icon.small {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   전투 Impact 시스템
+   실제 타격 / 기술 피해 / 회복 / 버프
+   ============================================================ */
+
+.combat-impact-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 420;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.combat-impact {
+  position: absolute;
+
+  width: 0;
+  height: 0;
+
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   공통 충격파
+   ------------------------------------------------------------ */
+
+.combat-impact-wave {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 50px;
+  height: 50px;
+
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%) scale(0.2);
+
+  opacity: 0;
+
+  animation: combat-impact-wave 0.46s ease-out forwards;
+}
+
+.impact-damage .combat-impact-wave {
+  border: 3px solid rgba(255, 100, 80, 0.95);
+
+  box-shadow:
+    0 0 14px rgba(255, 70, 50, 0.9),
+    inset 0 0 12px rgba(255, 100, 70, 0.55);
+}
+
+.impact-heal .combat-impact-wave {
+  border: 3px solid rgba(100, 255, 150, 0.95);
+
+  box-shadow: 0 0 15px rgba(80, 255, 140, 0.9);
+}
+
+.impact-buff .combat-impact-wave {
+  border: 3px solid rgba(245, 197, 66, 0.95);
+
+  box-shadow: 0 0 15px rgba(245, 197, 66, 0.9);
+}
+
+.impact-cleanse .combat-impact-wave {
+  border: 3px solid rgba(110, 215, 255, 0.95);
+
+  box-shadow: 0 0 15px rgba(90, 200, 255, 0.9);
+}
+
+/* 데미지가 클수록 원형 파동 크기도 증가 */
+
+.impact-light .combat-impact-wave {
+  --impact-scale: 1.15;
+}
+
+.impact-medium .combat-impact-wave {
+  --impact-scale: 1.55;
+}
+
+.impact-heavy .combat-impact-wave {
+  --impact-scale: 2.05;
+}
+
+.impact-massive .combat-impact-wave {
+  --impact-scale: 2.7;
+}
+
+@keyframes combat-impact-wave {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.15);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform: translate(-50%, -50%) scale(var(--impact-scale, 1.4));
+  }
+}
+
+/* ------------------------------------------------------------
+   숫자
+   ------------------------------------------------------------ */
+
+.combat-impact-number {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  min-width: 42px;
+
+  text-align: center;
+
+  transform: translate(-50%, -50%);
+
+  font-family: var(--display-font);
+
+  font-weight: 1000;
+
+  line-height: 1;
+
+  white-space: nowrap;
+
+  text-shadow:
+    0 3px 2px rgba(0, 0, 0, 0.85),
+    0 0 6px rgba(0, 0, 0, 0.9);
+
+  animation: combat-number-pop 0.7s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+}
+
+.damage-number {
+  color: #fff4f0;
+
+  -webkit-text-stroke: 1.5px #c92c24;
+}
+
+.heal-number {
+  color: #caffd8;
+
+  -webkit-text-stroke: 1px #178b45;
+}
+
+.impact-light .damage-number {
+  font-size: 23px;
+}
+
+.impact-medium .damage-number {
+  font-size: 28px;
+}
+
+.impact-heavy .damage-number {
+  font-size: 34px;
+}
+
+.impact-massive .damage-number {
+  font-size: 42px;
+}
+
+.heal-number {
+  font-size: 26px;
+}
+
+@keyframes combat-number-pop {
+  0% {
+    opacity: 0;
+
+    transform: translate(-50%, -15%) scale(0.35);
+  }
+
+  20% {
+    opacity: 1;
+
+    transform: translate(-50%, -65%) scale(1.25);
+  }
+
+  55% {
+    opacity: 1;
+
+    transform: translate(-50%, -100%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+
+    transform: translate(-50%, -155%) scale(0.92);
+  }
+}
+
+/* ------------------------------------------------------------
+   버프 / 치료
+   ------------------------------------------------------------ */
+
+.combat-impact-label {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  transform: translate(-50%, -50%);
+
+  font-family: var(--display-font);
+
+  font-size: 12px;
+  font-weight: 900;
+
+  white-space: nowrap;
+
+  color: #ffe680;
+
+  text-shadow:
+    0 0 8px rgba(245, 197, 66, 0.95),
+    0 2px 3px rgba(0, 0, 0, 0.85);
+
+  animation: combat-label-rise 0.65s ease-out forwards;
+}
+
+.cleanse-label {
+  color: #bcecff;
+
+  text-shadow:
+    0 0 8px rgba(80, 200, 255, 0.95),
+    0 2px 3px rgba(0, 0, 0, 0.85);
+}
+
+@keyframes combat-label-rise {
+  0% {
+    opacity: 0;
+
+    transform: translate(-50%, -30%) scale(0.7);
+  }
+
+  25% {
+    opacity: 1;
+
+    transform: translate(-50%, -75%) scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+
+    transform: translate(-50%, -145%) scale(1);
+  }
+}
+
+/* 강한 일격은 충돌 순간 약한 섬광 추가 */
+
+.impact-heavy::before,
+.impact-massive::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 90px;
+  height: 90px;
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 190, 120, 0.45) 28%,
+    transparent 68%
+  );
+
+  animation: combat-impact-flash 0.25s ease-out forwards;
+}
+
+.impact-massive::before {
+  width: 130px;
+  height: 130px;
+}
+
+@keyframes combat-impact-flash {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45);
   }
 }
