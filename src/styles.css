@@ -283,12 +283,6 @@ img.res-icon.small {
     cursor: not-allowed;
   }
   
-  .region-symbol {
-    font-size: 42px;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-  
   .region-info {
     flex: 1;
   

@@ -48,7 +48,8 @@ export default function MainMenu({
 
   // 레드 격파 후 성도 해금
   const johtoUnlocked =
-    (save.wins?.champion || 0) > 0;
+  save.adminMode ||
+  (save.wins?.champion || 0) > 0;
 
   function goFullscreen() {
     const el =
@@ -78,13 +79,16 @@ export default function MainMenu({
   }
 
   function trainerUnlocked(t) {
+    if (save.adminMode) {
+      return true;
+    }
+  
     if (!t.requires) {
       return true;
     }
-
+  
     return (
-      (save.wins?.[t.requires] || 0) >
-      0
+      (save.wins?.[t.requires] || 0) > 0
     );
   }
 
@@ -168,9 +172,6 @@ export default function MainMenu({
                 selectRegion("kanto")
               }
             >
-              <span className="region-symbol">
-                🔴
-              </span>
 
               <span className="region-info">
                 <span className="region-name">
@@ -206,9 +207,6 @@ export default function MainMenu({
                 selectRegion("johto")
               }
             >
-              <span className="region-symbol">
-                🟡
-              </span>
 
               <span className="region-info">
                 <span className="region-name">
