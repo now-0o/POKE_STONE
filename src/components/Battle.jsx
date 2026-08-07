@@ -138,7 +138,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   function getImpactElement(impact) {
     if (typeof document === "undefined") return null;
-
+  
     if (impact.targetUid === "hero") {
       return document.querySelector(
         impact.side === "enemy"
@@ -146,12 +146,35 @@ export default function Battle({ trainer, deck, onFinish }) {
           : '[data-drop="my-hero"] .hero-portrait',
       );
     }
+  
+    return document.querySelector(
+      `[data-uid="${impact.targetUid}"]`,
+    );
+  }
 
-    const unitEl = document.querySelector(`[data-uid="${impact.targetUid}"]`);
-
-    if (!unitEl) return null;
-
-    return unitEl.closest(".unit-pop") || unitEl;
+  function getImpactRect(impact) {
+    const el = getImpactElement(impact);
+  
+    // 살아있는 대상은 현재 실제 화면 위치를 사용
+    // → 공격자가 상대 앞까지 돌진해 있으면 그 위치가 잡힘
+    if (el) {
+      const rect = el.getBoundingClientRect();
+  
+      return {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      };
+    }
+  
+    // 기술 등으로 이미 죽어서 DOM에서 사라진 경우
+    // 직전에 저장해둔 좌표 사용
+    return battleRectsRef.current.get(
+      impactRectKey(impact),
+    );
   }
 
   // 실제 데미지에 따른 강도
@@ -228,38 +251,69 @@ export default function Battle({ trainer, deck, onFinish }) {
             : impact.amount >= 3
               ? 4
               : 2;
-
+    
+      // 포켓몬은 바깥 래퍼를 흔들어서
+      // 안쪽 field-unit의 돌진 transform과 충돌하지 않게 한다.
+      const shakeEl =
+        impact.targetUid === "hero"
+          ? el
+          : el.closest(".unit-pop") || el;
+    
+      shakeEl.animate(
+        [
+          {
+            transform: "translateX(0)",
+          },
+          {
+            transform: `translateX(${-power}px)`,
+          },
+          {
+            transform: `translateX(${power}px)`,
+          },
+          {
+            transform: `translateX(${-power * 0.45}px)`,
+          },
+          {
+            transform: "translateX(0)",
+          },
+        ],
+        {
+          duration:
+            impact.amount >= 6
+              ? 390
+              : 300,
+          easing: "ease-out",
+        },
+      );
+    
+      // 붉은 피격광은 실제로 움직이고 있는 field-unit에 적용
+      // → 돌진한 위치를 그대로 따라감
       el.animate(
         [
           {
-            transform: "translate(0, 0) scale(1)",
             filter: "brightness(1)",
           },
           {
-            transform: `translate(${-power}px, 0) scale(0.96)`,
             filter:
               "brightness(2.4) saturate(1.7) drop-shadow(0 0 10px rgba(255,70,60,.95))",
           },
           {
-            transform: `translate(${power}px, 0) scale(1.03)`,
             filter:
               "brightness(1.7) saturate(1.4) drop-shadow(0 0 7px rgba(255,70,60,.8))",
           },
           {
-            transform: `translate(${-power * 0.45}px, 0) scale(.99)`,
-            filter: "brightness(1.25)",
-          },
-          {
-            transform: "translate(0, 0) scale(1)",
             filter: "brightness(1)",
           },
         ],
         {
-          duration: impact.amount >= 6 ? 390 : 300,
+          duration:
+            impact.amount >= 6
+              ? 390
+              : 300,
           easing: "ease-out",
         },
       );
-
+    
       return;
     }
 
@@ -321,7 +375,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
     const rendered = impacts
       .map((impact, index) => {
-        const rect = battleRectsRef.current.get(impactRectKey(impact));
+        const rect = getImpactRect(impact);
 
         if (!rect) return null;
 
@@ -361,76 +415,245 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   // 공격 포켓몬이 실제 대상 위치까지 돌진
   function animateAttackLunge(action) {
-    if (typeof document === "undefined") return;
-
-    const attackerEl = document.querySelector(`[data-uid="${action.uid}"]`);
-
-    if (!attackerEl) return;
-
-    const attackerRect = battleRectsRef.current.get(action.uid);
-
-    const targetSide = action.side === "player" ? "enemy" : "player";
-
+    if (typeof document === "undefined") {
+      return {
+        impactDelay: 360,
+        totalDuration: 650,
+      };
+    }
+  
+    const attackerEl = document.querySelector(
+      `[data-uid="${action.uid}"]`,
+    );
+  
+    if (!attackerEl) {
+      return {
+        impactDelay: 360,
+        totalDuration: 650,
+      };
+    }
+  
+    const attackerRect =
+      battleRectsRef.current.get(action.uid);
+  
+    const targetSide =
+      action.side === "player"
+        ? "enemy"
+        : "player";
+  
     const targetKey =
-      action.targetUid === "hero" ? `hero-${targetSide}` : action.targetUid;
-
-    const targetRect = battleRectsRef.current.get(targetKey);
-
-    if (!attackerRect || !targetRect) return;
-
-    let dx = targetRect.x - attackerRect.x;
-
-    let dy = targetRect.y - attackerRect.y;
-
-    const distance = Math.hypot(dx, dy);
-
-    // 상대 카드 정중앙까지 완전히 겹치지 않고
-    // 약 34px 앞에서 충돌하도록.
+      action.targetUid === "hero"
+        ? `hero-${targetSide}`
+        : action.targetUid;
+  
+    const targetRect =
+      battleRectsRef.current.get(targetKey);
+  
+    if (!attackerRect || !targetRect) {
+      return {
+        impactDelay: 360,
+        totalDuration: 650,
+      };
+    }
+  
+    // ------------------------------------------------------------
+    // 이번 공격으로 "공격 대상"에게 실제 들어간 피해만 찾는다.
+    // 반격 피해 / 까칠한피부 / 반동 피해는 제외.
+    // ------------------------------------------------------------
+    const targetImpact =
+      action.impacts?.find(
+        (impact) =>
+          impact.type === "damage" &&
+          impact.targetUid === action.targetUid &&
+          impact.side === targetSide,
+      );
+  
+    const damage =
+      targetImpact?.amount || 0;
+  
+    // ------------------------------------------------------------
+    // 피해량에 따라 공격 모션 강도 결정
+    // ------------------------------------------------------------
+    let windup = 0.05;
+    let windupScale = 0.97;
+  
+    let attackScale = 1.06;
+  
+    let totalDuration = 560;
+  
+    let windupEnd = 0.18;
+    let hitPoint = 0.6;
+    let holdPoint = 0.68;
+  
+    let stopDistance = 38;
+  
+    if (damage >= 9) {
+      // 대형 공격
+      windup = 0.18;
+      windupScale = 0.88;
+  
+      attackScale = 1.17;
+  
+      totalDuration = 880;
+  
+      windupEnd = 0.32;
+      hitPoint = 0.65;
+      holdPoint = 0.74;
+  
+      stopDistance = 20;
+    } else if (damage >= 6) {
+      // 강한 공격
+      windup = 0.13;
+      windupScale = 0.91;
+  
+      attackScale = 1.13;
+  
+      totalDuration = 780;
+  
+      windupEnd = 0.28;
+      hitPoint = 0.64;
+      holdPoint = 0.73;
+  
+      stopDistance = 24;
+    } else if (damage >= 3) {
+      // 중간 공격
+      windup = 0.09;
+      windupScale = 0.94;
+  
+      attackScale = 1.1;
+  
+      totalDuration = 680;
+  
+      windupEnd = 0.23;
+      hitPoint = 0.62;
+      holdPoint = 0.71;
+  
+      stopDistance = 30;
+    }
+  
+    let dx =
+      targetRect.x -
+      attackerRect.x;
+  
+    let dy =
+      targetRect.y -
+      attackerRect.y;
+  
+    const distance =
+      Math.hypot(dx, dy);
+  
     if (distance > 0) {
-      const stopDistance = 34;
-
-      const ratio = Math.max(0, (distance - stopDistance) / distance);
-
+      const ratio = Math.max(
+        0,
+        (distance - stopDistance) /
+          distance,
+      );
+  
       dx *= ratio;
       dy *= ratio;
     }
-
+  
+    // 뒤로 빠지는 거리.
+    // 상대 방향의 정확한 반대 방향으로 이동한다.
+    const backX = -dx * windup;
+    const backY = -dy * windup;
+  
+    // 강공격일수록 충돌 직후 아주 약하게 더 밀고 들어감.
+    const smashBoost =
+      damage >= 9
+        ? 1.035
+        : damage >= 6
+          ? 1.02
+          : 1;
+  
     attackerEl.animate(
       [
-        {
-          transform: "translate(0px, 0px) scale(1)",
-          offset: 0,
-        },
-
-        // 살짝 뒤로 당겨 준비
-        {
-          transform: `translate(${-dx * 0.06}px, ${-dy * 0.06}px) scale(.96)`,
-          offset: 0.18,
-        },
-
-        // 타깃까지 돌진
-        {
-          transform: `translate(${dx}px, ${dy}px) scale(1.08)`,
-          offset: 0.58,
-        },
-
-        // 충돌 지점 잠깐 유지
-        {
-          transform: `translate(${dx}px, ${dy}px) scale(1.04)`,
-          offset: 0.68,
-        },
-
         // 원위치
         {
-          transform: "translate(0px, 0px) scale(1)",
+          transform:
+            "translate(0px, 0px) scale(1)",
+          offset: 0,
+        },
+  
+        // --------------------------------------------------------
+        // 준비동작
+        // 공격이 강할수록 훨씬 뒤로 당긴다.
+        // --------------------------------------------------------
+        {
+          transform: `
+            translate(${backX}px, ${backY}px)
+            scale(${windupScale})
+          `,
+          offset: windupEnd,
+        },
+  
+        // --------------------------------------------------------
+        // 박치기
+        // 뒤로 모은 뒤 빠르게 전진
+        // --------------------------------------------------------
+        {
+          transform: `
+            translate(${dx}px, ${dy}px)
+            scale(${attackScale})
+          `,
+          offset: hitPoint,
+        },
+  
+        // --------------------------------------------------------
+        // 충돌 후 살짝 더 밀고 들어가는 프레임
+        // 강공격 특유의 무게감
+        // --------------------------------------------------------
+        {
+          transform: `
+            translate(
+              ${dx * smashBoost}px,
+              ${dy * smashBoost}px
+            )
+            scale(${attackScale * 0.98})
+          `,
+          offset: holdPoint,
+        },
+  
+        // --------------------------------------------------------
+        // 약간 튕겨나오기
+        // --------------------------------------------------------
+        {
+          transform: `
+            translate(
+              ${dx * 0.82}px,
+              ${dy * 0.82}px
+            )
+            scale(0.98)
+          `,
+          offset: 0.82,
+        },
+  
+        // 원위치
+        {
+          transform:
+            "translate(0px, 0px) scale(1)",
           offset: 1,
         },
       ],
       {
-        duration: 620,
-        easing: "cubic-bezier(.22,.75,.3,1)",
+        duration: totalDuration,
+  
+        // 처음엔 묵직하고
+        // 돌진 순간 확 빨라지는 느낌
+        easing:
+          "cubic-bezier(.18,.72,.22,1)",
       },
     );
+  
+    return {
+      impactDelay:
+        Math.round(
+          totalDuration *
+            hitPoint,
+        ),
+  
+      totalDuration,
+    };
   }
 
   useEffect(() => {
@@ -536,26 +759,36 @@ export default function Battle({ trainer, deck, onFinish }) {
         key: la.seq,
       });
 
-      // 1. 실제 타깃까지 돌진
-      animateAttackLunge(la);
+      const attackTiming =
+        animateAttackLunge(la);
 
-      // 2. 충돌 시점에 피격 효과 발생
-      clearTimeout(impactDelayTimer.current);
+      // 충돌하는 정확한 순간에
+      // 피격 / 숫자 / 화면 흔들림 발생
+      clearTimeout(
+        impactDelayTimer.current,
+      );
 
-      impactDelayTimer.current = setTimeout(() => {
-        showImpacts(la.impacts || [], la.seq);
-      }, 360);
+      impactDelayTimer.current =
+        setTimeout(() => {
+          showImpacts(
+            la.impacts || [],
+            la.seq,
+          );
+        }, attackTiming.impactDelay);
 
-      // 3. 공격 애니메이션 끝난 뒤 사망 처리
-      clearTimeout(atkFxTimer.current);
+      // 공격자가 원위치로 돌아온 뒤 종료
+      clearTimeout(
+        atkFxTimer.current,
+      );
 
-      atkFxTimer.current = setTimeout(() => {
-        cleanupDeaths(game);
+      atkFxTimer.current =
+        setTimeout(() => {
+          cleanupDeaths(game);
 
-        setAtkFx(null);
+          setAtkFx(null);
 
-        rerender();
-      }, 650);
+          rerender();
+        }, attackTiming.totalDuration + 40);
     }
 
     // 일반 공격이 아닌
