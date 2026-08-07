@@ -185,8 +185,8 @@ export const ABILITY_TEXT = {
   irondefense:
     "철벽(레지스틸 전용기): 나올 때 도발로 모든 공격을 자신에게 유도하고 체력 +3을 얻는다",
   taunt: "도발: 상대는 이 포켓몬을 먼저 공격해야 한다",
-  sturdy: "옹골참: 치명적인 피해를 1회 버티고 체력 1이 남는다",
-  disguise: "변장: 치명적인 피해를 1회 버티고 체력 1이 남는다",
+  sturdy: "옹골참: 체력이 가득 찼을 때 치명적인 피해를 버티고 체력 1이 남는다",
+  disguise: "탈: 몸을 덮는 탈로 1번 공격을 막고 1의 피해를 입는다.",
   levitate: "부유: 땅 타입의 기술을 받지 않는다",
   thickfat: "두꺼운지방: 불꽃/얼음 타입에게 받는 피해 1 감소",
   waterabsorb: "저수: 물 타입 공격을 받으면 피해 대신 체력을 2 회복한다",
@@ -424,7 +424,7 @@ export const CARDS = [
     evolvesFrom: "pikachu",
     ability: "static",
   }),
-  P("magnemite", "코일", "전기", 1, 0, 1, "C", { ability: "sturdy" }),
+  P("magnemite", "코일", "전기", 1, 0, 2, "C", { ability: "sturdy" }),
   P("magneton", "레어코일", "전기", 3, 3, 5, "R", {
     stage: 1,
     evolvesFrom: "magnemite",
@@ -728,7 +728,7 @@ export const CARDS = [
     evolvesFrom: "pupitar",
     ability: "sandstream",
   }),
-  P("geodude", "꼬마돌", "바위", 1, 0, 1, "C", { ability: "sturdy" }),
+  P("geodude", "꼬마돌", "바위", 1, 0, 2, "C", { ability: "sturdy" }),
   P("graveler", "데구리", "바위", 3, 3, 5, "R", {
     stage: 1,
     evolvesFrom: "geodude",
@@ -1590,7 +1590,7 @@ export const CARDS = [
   },
   {
     id: "iceheal",
-    name: "냉동해제제",
+    name: "얼음상태치료제",
     kind: "spell",
     type: "도구",
     cost: 1,
@@ -2008,7 +2008,7 @@ export const ITEM_SPRITE = {
   hyperball: "ultra-ball",
   potion: "potion",
   fullrestore: "full-restore",
-  everstone: "everstone",
+  everstone: "eviolite",
   lifeorb: "life-orb",
   focussash: "focus-sash",
   shellbell: "shell-bell",
@@ -2067,12 +2067,17 @@ export function trainerSpriteUrl(key) {
   return `https://play.pokemonshowdown.com/sprites/trainers/${key}.png`;
 }
 
-export function spriteUrl(cardId, mega = false) {
+export function spriteUrl(cardId, mega = false, busted = false) {
+  if (cardId === "mimikyu" && busted) return `${SPRITE_BASE}/pokemon/10143.png`;
+
   if (mega && MEGA_DEX[cardId])
     return `${SPRITE_BASE}/pokemon/${MEGA_DEX[cardId]}.png`;
+
   if (DEX[cardId]) return `${SPRITE_BASE}/pokemon/${DEX[cardId]}.png`;
+
   if (ITEM_SPRITE[cardId])
     return `${SPRITE_BASE}/items/${ITEM_SPRITE[cardId]}.png`;
+
   return null;
 }
 

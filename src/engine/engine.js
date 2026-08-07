@@ -13,7 +13,6 @@ const AURA_TYPES = {
   aura_dragon: "드래곤",
 };
 const SLEEP_BATTLECRIES = ["sleeppowder", "hypnosis", "sing", "lovelykiss"];
-const SURVIVE_ABILITIES = ["sturdy", "disguise"];
 
 let uidCounter = 1;
 const nextUid = () => `u${uidCounter++}`;
@@ -375,16 +374,41 @@ function applyDamage(
     log(game, `${unit.name}의 멀티스케일! 피해가 절반이 됐다!`);
   }
   if (dmg <= 0) return 0;
+
+  // 따라큐 탈: 첫 공격 피해를 막고 피해 1만 받음
+  if (unit.ability === "disguise" && !unit.sturdyUsed) {
+    unit.hp -= 1;
+    unit.sturdyUsed = true;
+    log(game, `${unit.name}의 탈! 공격을 막고 피해를 1만 받았다!`);
+    return 1;
+  }
+
+  // 옹골참: 풀피일 때 치명적인 피해를 체력 1로 버팀
+  // 다시 풀피가 되면 다시 발동 가능
   if (
-    (SURVIVE_ABILITIES.includes(unit.ability) || unit.item === "focussash") &&
-    !unit.sturdyUsed &&
+    unit.ability === "sturdy" &&
+    unit.maxHp > 1 &&
+    unit.hp === unit.maxHp &&
     dmg >= unit.hp
   ) {
     unit.hp = 1;
-    unit.sturdyUsed = true;
-    log(game, `${unit.name}은(는) 옹골참으로 버텼다!`);
+    log(game, `${unit.name}의 옹골참! 체력 1을 남기고 버텼다!`);
     return dmg;
   }
+
+  // 기합의띠: 풀피일 때 치명적인 피해를 1회만 버팀
+  if (
+    unit.item === "focussash" &&
+    !unit.focusSashUsed &&
+    unit.hp === unit.maxHp &&
+    dmg >= unit.hp
+  ) {
+    unit.hp = 1;
+    unit.focusSashUsed = true;
+    log(game, `${unit.name}은(는) 기합의띠로 체력 1을 남기고 버텼다!`);
+    return dmg;
+  }
+
   unit.hp -= dmg;
   // 불꽃 타입 피해를 받으면 얼음 상태 해제
   if (sourceType === "불꽃" && unit.status === "ice") {
@@ -394,7 +418,7 @@ function applyDamage(
   return dmg;
 }
 
-function cleanupDeaths(game) {
+export function cleanupDeaths(game) {
   // 대폭발 연쇄를 위해 시체가 없어질 때까지 반복 (최대 20회 안전장치)
   for (let pass = 0; pass < 20; pass++) {
     let anyDead = false;
@@ -454,7 +478,8 @@ function makeUnit(card, game, side) {
     frozen: 0, // DEPRECATED (하위호환 잔류, 신규 코드에서는 status 사용)
     status: null, // null | 'ice' | 'sleep' | 'para'
     statusTurns: 0, // ice: 남은 얼림 최소턴 / sleep: 잠든 총 턴 수 누적 / para: 미사용
-    sturdyUsed: false,
+    sturdyUsed: false, // 따라큐 탈 발동 여부
+    focusSashUsed: false, // 기합의띠 발동 여부
     mega: false,
     item: null,
     noEvolve: false,
@@ -1101,7 +1126,7 @@ export function playCard(
     } else if (card.item.effect === "lifeorb") {
       u.atk += card.item.atkBonus;
     } else if (card.item.effect === "focussash") {
-      u.sturdyUsed = false;
+      u.focusSashUsed = false;
     }
     log(game, `${u.name}에게 ${card.name}을(를) 장착했다!`);
     markPlay(game, side, card, { anim: "item", uid: u.uid });
@@ -1635,7 +1660,6 @@ export function attack(game, side, attackerUid, target) {
     uid: attackerUid,
     targetUid: target.uid,
   };
-  cleanupDeaths(game);
   return true;
 }
 

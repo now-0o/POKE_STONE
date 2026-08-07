@@ -13,6 +13,7 @@ import {
   resolveMoldbreaker,
   discardToDraw,
   resolveHyperball,
+  cleanupDeaths,
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
@@ -100,7 +101,11 @@ export default function Battle({ trainer, deck, onFinish }) {
         key: la.seq,
       });
       clearTimeout(atkFxTimer.current);
-      atkFxTimer.current = setTimeout(() => setAtkFx(null), 520);
+      atkFxTimer.current = setTimeout(() => {
+        cleanupDeaths(game);
+        setAtkFx(null);
+        rerender();
+      }, 520);
     }
   });
 
@@ -120,7 +125,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   const me = game.players.player;
   const foe = game.players.enemy;
-  const myTurn = game.turn === "player" && !game.winner;
+  const myTurn = game.turn === "player" && !game.winner && !atkFx;
 
   // ============================================================
   // 꾹 눌러 카드 크게 보기 (움직이면 취소)
