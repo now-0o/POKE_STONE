@@ -325,10 +325,15 @@ export default function Battle({ trainer, deck, onFinish }) {
 
         if (!rect) return null;
 
+        const battleRect =
+        battleRef.current?.getBoundingClientRect();
+
+        if (!battleRect) return null;
+
         return {
           ...impact,
-          x: rect.x,
-          y: rect.y,
+          x: rect.x - battleRect.left,
+          y: rect.y - battleRect.top,
           level: impactLevel(impact.amount || 0),
           key: `${actionKey}-${index}`,
         };

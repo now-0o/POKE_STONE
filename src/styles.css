@@ -631,6 +631,7 @@ img.res-icon.small {
    배틀 (TCG Pocket 테이블)
    ============================================================ */
 .battle {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3732,11 +3733,11 @@ img.res-icon.small {
    ============================================================ */
 
 .combat-impact-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 420;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .combat-impact {
