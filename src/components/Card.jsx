@@ -198,6 +198,7 @@ export function HandCard({
           mega={unit ? unit.mega : false}
           emoji={card.emoji}
           size={56}
+          busted={unit?.cardId === "mimikyu" && unit.sturdyUsed}
         />
       </div>
 
