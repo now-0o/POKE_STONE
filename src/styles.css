@@ -5533,3 +5533,28 @@ img.card-sprite {
     height: 18%;
   }
 }
+
+@media (min-width: 901px) and (pointer: fine) {
+
+  /* 진화 불가 카드 - 버리고 뽑기 버튼을 카드 위로 */
+  .battle-board .btn-discard-redraw {
+    top: -34px;
+    bottom: auto;
+
+    left: 50%;
+
+    transform:
+      translateX(-50%)
+      rotate(calc(var(--fan-angle, 0deg) * -1));
+
+    z-index: 60;
+
+    padding: 5px 10px;
+
+    font-size: 11px;
+
+    box-shadow:
+      0 3px 8px
+      rgba(0, 0, 0, 0.55);
+  }
+}
