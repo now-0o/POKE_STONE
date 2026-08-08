@@ -1763,7 +1763,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         <ManaPips mana={me.mana} maxMana={me.maxMana} />
       </div>
 
-      <div className="hand">
+      <div className="hand" style={{ "--hc": me.hand.length }}>
         {me.hand.map((h, idx) => {
           const c = CARD_MAP[h.cardId];
           const playableNow = myTurn && canPlayCard(game, "player", idx);

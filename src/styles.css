@@ -817,36 +817,65 @@ img.res-icon.small {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 96vh;
+  gap: clamp(3px, calc(0.0179 * 100dvmin - 5.5714px), 8px);
+  min-height: 100dvh;
+  box-sizing: border-box;
+  /* .app의 여백을 되찾아 모바일에서 화면을 꽉 채운다 (v8 유동 스케일링) */
+  margin: -12px;
+  width: calc(100% + 24px);
+  padding: clamp(4px, calc(0.0286 * 100dvmin - 9.7143px), 12px)
+    clamp(6px, calc(0.0357 * 100dvmin - 11.1429px), 16px);
+}
+/* 필드는 남는 세로 공간을 나눠 갖고, 나머지는 내용 크기만큼만 차지 */
+.battle > .field {
+  flex: 1 1 0;
+}
+.battle > .hero-bar,
+.battle > .mid-bar,
+.battle > .hand {
+  flex-shrink: 0;
 }
 
 .hero-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: clamp(5px, calc(0.0321 * 100dvmin - 10.4286px), 14px);
   width: 100%;
   box-sizing: border-box;
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  padding: 8px 16px;
+  padding: clamp(2px, calc(0.0214 * 100dvmin - 8.2857px), 8px)
+    clamp(8px, calc(0.0286 * 100dvmin - 5.7143px), 16px);
   backdrop-filter: blur(6px);
 }
 .hero-bar.enemy-bar {
-  padding: 16px 20px; /* 공격 대상 히트박스를 넉넉하게 - 정밀 조준 안 해도 되게 */
-  min-height: 64px;
+  /* 공격 대상 히트박스를 넉넉하게 - 정밀 조준 안 해도 되게 */
+  padding: clamp(2px, calc(0.0214 * 100dvmin - 8.2857px), 8px)
+    clamp(10px, calc(0.0357 * 100dvmin - 7.1429px), 20px);
+  min-height: unset;
 }
 .hero-portrait {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  padding: 5px 12px;
-  min-width: 80px;
-  gap: 2px;
+  border-radius: 999px;
+  height: clamp(28px, calc(0.1 * 100dvmin - 20px), 56px);
+  padding: clamp(1px, calc(0.0143 * 100dvmin - 5.8571px), 5px)
+    clamp(4px, calc(0.0286 * 100dvmin - 9.7143px), 12px);
+  min-width: clamp(48px, calc(0.1143 * 100dvmin - 6.8571px), 80px);
+  gap: clamp(3px, calc(0.0107 * 100dvmin - 2.1429px), 6px);
+  box-sizing: border-box;
+}
+.hero-portrait .trainer-sprite {
+  width: clamp(22px, calc(0.0786 * 100dvmin - 15.7143px), 44px);
+  height: clamp(22px, calc(0.0786 * 100dvmin - 15.7143px), 44px);
+}
+.hero-portrait .trainer-emoji {
+  font-size: clamp(16px, calc(0.055 * 100dvmin - 11px), 30px);
 }
 .hero-portrait.targetable {
   border-color: var(--hp-red);
@@ -862,20 +891,28 @@ img.res-icon.small {
 }
 .hero-hp {
   font-family: var(--display-font);
-  font-size: 14px;
+  font-size: clamp(8px, calc(0.0214 * 100dvmin - 2.2857px), 14px);
   color: #ff8a80;
+  white-space: nowrap;
 }
 .hero-info {
   flex: 1;
+  min-width: 0;
 }
 .hero-name {
   font-family: var(--display-font);
-  font-size: 16px;
+  font-size: clamp(10px, calc(0.0214 * 100dvmin - 0.2857px), 16px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hero-sub {
-  font-size: 12px;
+  font-size: clamp(7px, calc(0.0179 * 100dvmin - 1.5714px), 12px);
   color: var(--text-dim);
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 에너지 크리스탈 */
@@ -888,8 +925,8 @@ img.res-icon.small {
   justify-content: flex-end;
 }
 .mana-pip {
-  width: 13px;
-  height: 13px;
+  width: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
+  height: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
   border-radius: 50%;
   display: inline-block;
 }
@@ -912,16 +949,16 @@ img.res-icon.small {
   font-family: var(--display-font);
   margin-left: 6px;
   color: var(--energy-blue);
-  font-size: 13px;
+  font-size: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
 }
 
 /* 필드: 라이트 테이블 존 */
 .field {
   display: flex;
-  gap: 10px;
+  gap: clamp(4px, calc(0.0214 * 100dvmin - 6.2857px), 10px);
   justify-content: center;
   align-items: center;
-  min-height: 126px;
+  min-height: clamp(60px, calc(0.2357 * 100dvmin - 53.1429px), 126px);
   background:
     radial-gradient(
       ellipse 75% 100% at 50% 50%,
@@ -931,10 +968,12 @@ img.res-icon.small {
     var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 18px;
-  padding: 12px 10px;
-  flex-wrap: wrap;
+  padding: clamp(2px, calc(0.0357 * 100dvmin - 15.1429px), 12px)
+    clamp(4px, calc(0.0214 * 100dvmin - 6.2857px), 10px);
+  flex-wrap: nowrap;
   position: relative;
   backdrop-filter: blur(4px);
+  overflow: hidden;
 }
 .enemy-field {
   border-bottom-left-radius: 6px;
@@ -953,8 +992,9 @@ img.res-icon.small {
 /* ---- 필드 유닛 ---- */
 .field-unit {
   position: relative;
-  width: 98px;
-  height: 112px;
+  width: clamp(52px, calc(0.1643 * 100dvmin - 26.8571px), 98px);
+  height: clamp(48px, calc(0.2286 * 100dvmin - 61.7143px), 112px);
+  flex-shrink: 0;
   background:
     linear-gradient(
       160deg,
@@ -968,8 +1008,10 @@ img.res-icon.small {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 5px 4px 13px;
-  gap: 3px;
+  padding: clamp(2px, calc(0.0107 * 100dvmin - 3.1429px), 5px)
+    clamp(2px, calc(0.0071 * 100dvmin - 1.4286px), 4px)
+    clamp(7px, calc(0.0214 * 100dvmin - 3.2857px), 13px);
+  gap: clamp(1px, calc(0.0071 * 100dvmin - 2.4286px), 3px);
   transition:
     transform 0.12s,
     box-shadow 0.12s;
@@ -1151,7 +1193,7 @@ img.res-icon.small {
 
 .unit-art {
   width: 100%;
-  height: 58px;
+  height: clamp(21px, calc(0.1321 * 100dvmin - 42.4286px), 58px);
   border: 1.5px solid rgba(90, 75, 30, 0.35);
   border-radius: 6px;
   background:
@@ -1168,23 +1210,27 @@ img.res-icon.small {
 }
 .unit-name {
   font-family: var(--display-font);
-  font-size: 10.5px;
+  font-size: clamp(6.5px, calc(0.0143 * 100dvmin - 0.3571px), 10.5px);
   text-align: center;
   line-height: 1.15;
   padding: 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .unit-orb {
   position: absolute;
-  bottom: -10px;
-  width: 27px;
-  height: 27px;
+  bottom: clamp(-10px, calc(-0.0143 * 100dvmin + 0.8571px), -6px);
+  width: clamp(19px, calc(0.0286 * 100dvmin + 5.2857px), 27px);
+  height: clamp(19px, calc(0.0286 * 100dvmin + 5.2857px), 27px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--display-font);
-  font-size: 14px;
+  font-size: clamp(9px, calc(0.0179 * 100dvmin + 0.4286px), 14px);
   color: #fff;
   border: 2px solid rgba(0, 0, 0, 0.35);
   box-shadow:
@@ -1222,15 +1268,16 @@ img.res-icon.small {
 .mid-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: clamp(4px, calc(0.0286 * 100dvmin - 9.7143px), 12px);
 }
 .weather-indicator {
   font-family: var(--display-font);
-  font-size: 13px;
+  font-size: clamp(7px, calc(0.0214 * 100dvmin - 3.2857px), 13px);
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 999px;
-  padding: 9px 16px;
+  padding: clamp(3px, calc(0.0214 * 100dvmin - 7.2857px), 9px)
+    clamp(6px, calc(0.0357 * 100dvmin - 11.1429px), 16px);
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -1238,8 +1285,8 @@ img.res-icon.small {
   backdrop-filter: blur(6px);
 }
 .weather-dot {
-  width: 10px;
-  height: 10px;
+  width: clamp(6px, calc(0.0143 * 100dvmin - 0.8571px), 10px);
+  height: clamp(6px, calc(0.0143 * 100dvmin - 0.8571px), 10px);
   border-radius: 50%;
   background: #4d5a7d;
 }
@@ -1270,14 +1317,15 @@ img.res-icon.small {
 
 .battle-log {
   flex: 1;
-  height: 70px;
+  height: clamp(28px, calc(0.15 * 100dvmin - 44px), 70px);
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--panel-border);
   border-radius: 12px;
-  padding: 7px 12px;
-  font-size: 12px;
-  line-height: 1.55;
+  padding: clamp(2px, calc(0.0179 * 100dvmin - 6.5714px), 7px)
+    clamp(5px, calc(0.025 * 100dvmin - 7px), 12px);
+  font-size: clamp(7px, calc(0.0179 * 100dvmin - 1.5714px), 12px);
+  line-height: 1.4;
   color: #aebad4;
 }
 
@@ -1291,9 +1339,10 @@ img.res-icon.small {
   color: #3a2c05;
   border: none;
   border-radius: 999px;
-  padding: 13px 24px;
+  padding: clamp(4px, calc(0.0321 * 100dvmin - 11.4286px), 13px)
+    clamp(7px, calc(0.0607 * 100dvmin - 22.1429px), 24px);
   font-family: var(--display-font);
-  font-size: 15px;
+  font-size: clamp(8px, calc(0.025 * 100dvmin - 4px), 15px);
   white-space: nowrap;
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.6),
@@ -1311,8 +1360,9 @@ img.res-icon.small {
   border: 1px solid var(--panel-border);
   color: var(--text-dim);
   border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 12px;
+  padding: clamp(3px, calc(0.0179 * 100dvmin - 5.5714px), 8px)
+    clamp(6px, calc(0.0286 * 100dvmin - 7.7143px), 14px);
+  font-size: clamp(7px, calc(0.0179 * 100dvmin - 1.5714px), 12px);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -1334,7 +1384,10 @@ img.res-icon.small {
 .hand {
   display: flex;
   justify-content: center;
-  padding: 16px 4px 10px;
+  align-items: flex-start;
+  padding: clamp(3px, calc(0.0464 * 100dvmin - 19.2857px), 16px) 4px
+    clamp(2px, calc(0.0286 * 100dvmin - 11.7143px), 10px);
+  min-height: clamp(91px, calc(0.4393 * 100dvmin - 119.8571px), 214px);
   flex-wrap: wrap;
 }
 .hand .hand-card:not(:first-child) {
@@ -1346,6 +1399,18 @@ img.res-icon.small {
 }
 .hand .hand-card:not(:first-child):hover {
   margin-left: 2px;
+}
+/* 실제 겹침은 래퍼(.hand-card-wrap) 기준 - 화면 크기 + 손패 장수에 따라
+   하스스톤처럼 카드가 많을수록 더 촘촘하게 겹친다 */
+.hand-card-wrap:not(:first-child) {
+  margin-left: calc(
+    clamp(-19px, calc(0.0321 * 100dvmin - 34.4286px), -10px) -
+      max(0px, calc((var(--hc, 3) - 5) * 4px))
+  );
+}
+.hand-card-wrap:hover,
+.hand-card-wrap:has(.selected) {
+  z-index: 9;
 }
 
 .target-hint {
@@ -4245,32 +4310,6 @@ img.res-icon.small {
   }
 }
 
-/* ============================================================
-   PC 배틀 화면 높이 최적화
-   ============================================================ */
-@media (min-width: 761px) and (min-height: 760px) {
-  .battle {
-    height: calc(100dvh - 24px);
-    min-height: 0;
-  }
-
-  .battle > .field {
-    flex: 1 1 0;
-    min-height: 126px;
-  }
-
-  .battle > .hero-bar,
-  .battle > .mid-bar,
-  .battle > .hand {
-    flex-shrink: 0;
-  }
-
-  .hand {
-    min-height: 205px;
-    align-items: flex-start;
-  }
-}
-
 @media (orientation: landscape)
   and (pointer: coarse)
   and (max-height: 520px) {
@@ -4541,243 +4580,64 @@ img.res-icon.small {
   }
 }
 
-@media (orientation: landscape)
-  and (pointer: coarse)
-  and (max-height: 520px) {
-
-  .battle {
-    width: 100%;
-
-    height: calc(100dvh - 12px);
-    min-height: 0;
-
-    display: grid;
-
-    grid-template-rows:
-      34px
-      minmax(48px, 1fr)
-      32px
-      minmax(48px, 1fr)
-      34px
-      92px;
-
-    gap: 3px;
-
-    overflow: hidden;
-  }
-
-  /* 상대/내 트레이너 */
-
-  .battle > .hero-bar,
-  .battle > .hero-bar.enemy-bar {
-    height: 34px;
-    min-height: 0;
-
-    padding: 2px 7px;
-
-    gap: 5px;
-  }
-
-  .battle .hero-portrait {
-    min-width: 48px;
-
-    height: 28px;
-
-    padding: 1px 4px;
-
-    flex-direction: row;
-
-    gap: 2px;
-  }
-
-  .battle
-  .hero-portrait
-  .trainer-sprite {
-    width: 22px !important;
-    height: 22px !important;
-  }
-
-  .battle .hero-name {
-    font-size: 10px;
-  }
-
-  .battle .hero-hp {
-    font-size: 8px;
-  }
-
-  .battle .hero-sub {
-    margin-top: 0;
-    font-size: 7px;
-  }
-
-  .battle .mana-display {
-    gap: 2px;
-  }
-
-  .battle .mana-pip {
-    width: 8px;
-    height: 8px;
-  }
-
-  .battle .mana-num {
-    margin-left: 3px;
-    font-size: 8px;
-  }
-
-  /* 필드 */
-
-  .battle > .field {
-    height: 100%;
-    min-height: 0;
-
-    padding: 2px 4px;
-
-    gap: 4px;
-
-    flex-wrap: nowrap;
-
-    overflow: hidden;
-  }
-
-  .battle .field-unit {
-    width: 52px;
-    height: 48px;
-
-    padding: 2px 2px 7px;
-
-    gap: 1px;
-  }
-
-  .battle .unit-art {
-    height: 21px;
-  }
-
-  .battle .unit-name {
-    font-size: 6.5px;
-  }
-
-  .battle .unit-orb {
-    width: 19px;
-    height: 19px;
-
-    bottom: -6px;
-
-    font-size: 9px;
-  }
-
-  /* 중앙 */
-
-  .battle > .mid-bar {
-    min-height: 0;
-
-    flex-wrap: nowrap;
-
-    gap: 4px;
-  }
-
-  .battle .weather-indicator {
-    padding: 3px 6px;
-
-    font-size: 7px;
-  }
-
-  .battle .weather-dot {
-    width: 6px;
-    height: 6px;
-  }
-
-  .battle .battle-log {
-    order: initial;
-
-    width: auto;
-    height: 28px;
-
-    padding: 2px 5px;
-
-    font-size: 7px;
-    line-height: 1.2;
-
-    overflow: hidden;
-  }
-
-  .battle .btn-endturn {
-    padding: 4px 7px;
-
-    font-size: 8px;
-  }
-
-  .battle .btn-surrender {
-    padding: 3px 6px;
-
-    font-size: 7px;
-  }
-
-  /* 손패 */
-
-  .battle > .hand {
-    height: 92px;
-    min-height: 0;
-
-    padding: 2px 4px;
-
-    flex-wrap: nowrap;
-
-    align-items: flex-start;
-    justify-content: center;
-
-    overflow: visible;
-  }
-
-  .battle .hand-card-wrap {
-    flex: 0 0 auto;
-  }
-
-  .battle
-  .hand-card-wrap:not(:first-child) {
-    margin-left: -19px;
-  }
-
-  .battle .hand-card {
-    width: 64px;
-
-    height: 86px;
-    min-height: 86px;
-
-    padding: 3px 4px 4px;
-
-    border-width: 3px;
-  }
-
-  .battle .hand-card .card-art {
-    height: 26px;
-    min-height: 26px;
-    flex: 0 0 26px;
-  }
-
-  .battle .hand-card .card-stageline {
-    height: 7px;
-    min-height: 7px;
-
-    padding: 0 2px;
-
-    font-size: 5.5px;
-    line-height: 6px;
-  }
-
-  .battle .hcard-orb {
-    width: 20px;
-    height: 20px;
-
-    bottom: -5px;
-
-    font-size: 10px;
-  }
-
-  .battle .hcard-orb.orb-atk {
-    left: -6px;
-  }
-
-  .battle .hcard-orb.orb-hp {
-    right: -6px;
-  }
+/* ============================================================
+   v8: 하스스톤식 유동(fluid) 배틀 레이아웃
+   - 기존의 몇 개 안 되는 스냅 브레이크포인트 대신, 화면의 짧은 쪽
+     (dvmin)에 비례해 모든 배틀 요소 크기가 연속적으로 스케일된다.
+   - 브레이크포인트 사이 "구멍"에 해당하는 화면 크기(예: 가로 모드
+     태블릿, 애매한 높이의 폰)에서도 카드가 깨지거나 텍스트가
+     잘리지 않는다.
+   - .hand-card / .card-* 는 컬렉션·카드팩 화면과 공유하는 클래스라
+     반드시 .battle로 스코프해 다른 화면에 영향이 없게 한다.
+   ============================================================ */
+.battle .hand-card {
+  width: clamp(64px, calc(0.25 * 100dvmin - 56px), 134px);
+  height: clamp(86px, calc(0.3643 * 100dvmin - 88.8571px), 188px);
+  min-height: clamp(86px, calc(0.3643 * 100dvmin - 88.8571px), 188px);
+  padding: clamp(3px, calc(0.0143 * 100dvmin - 3.8571px), 7px)
+    clamp(4px, calc(0.0143 * 100dvmin - 2.8571px), 8px)
+    clamp(4px, calc(0.0071 * 100dvmin + 0.5714px), 6px);
+  border-width: clamp(3px, calc(0.0036 * 100dvmin + 1.2857px), 4px);
+}
+.battle .hand-card .card-art {
+  height: clamp(26px, calc(0.1429 * 100dvmin - 42.5714px), 66px);
+  min-height: clamp(26px, calc(0.1429 * 100dvmin - 42.5714px), 66px);
+  flex: 0 0 clamp(26px, calc(0.1429 * 100dvmin - 42.5714px), 66px);
+}
+.battle .hand-card .card-name {
+  font-size: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
+}
+.battle .hand-card .card-typebadge {
+  font-size: clamp(6.5px, calc(0.0089 * 100dvmin + 2.2143px), 9px);
+  padding: 2px clamp(5px, calc(0.0143 * 100dvmin - 1.8571px), 9px);
+}
+.battle .hand-card .card-text {
+  font-size: clamp(6.5px, calc(0.0089 * 100dvmin + 2.2143px), 9px);
+  padding: clamp(2px, calc(0.0036 * 100dvmin + 0.2857px), 3px)
+    clamp(3px, calc(0.0071 * 100dvmin - 0.4286px), 5px);
+  -webkit-line-clamp: 3;
+}
+.battle .hand-card .card-cost {
+  width: clamp(25px, calc(0.0321 * 100dvmin + 9.5714px), 34px);
+  height: clamp(25px, calc(0.0321 * 100dvmin + 9.5714px), 34px);
+  font-size: clamp(12px, calc(0.0214 * 100dvmin + 1.7143px), 18px);
+}
+.battle .hand-card .card-stageline {
+  height: clamp(7px, calc(0.025 * 100dvmin - 5px), 14px);
+  min-height: clamp(7px, calc(0.025 * 100dvmin - 5px), 14px);
+  font-size: clamp(5.5px, calc(0.0107 * 100dvmin + 0.3571px), 8.5px);
+  line-height: clamp(7px, calc(0.025 * 100dvmin - 5px), 14px);
+  padding: 0 clamp(2px, calc(0.0107 * 100dvmin - 3.1429px), 5px);
+}
+.battle .hcard-orb {
+  width: clamp(20px, calc(0.0393 * 100dvmin + 1.1429px), 31px);
+  height: clamp(20px, calc(0.0393 * 100dvmin + 1.1429px), 31px);
+  bottom: clamp(-11px, calc(-0.0214 * 100dvmin + 5.2857px), -5px);
+  font-size: clamp(10px, calc(0.0214 * 100dvmin - 0.2857px), 16px);
+}
+.battle .hcard-orb.orb-atk {
+  left: clamp(-10px, calc(-0.0143 * 100dvmin + 0.8571px), -6px);
+}
+.battle .hcard-orb.orb-hp {
+  right: clamp(-10px, calc(-0.0143 * 100dvmin + 0.8571px), -6px);
 }
