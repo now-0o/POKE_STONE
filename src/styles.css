@@ -625,36 +625,26 @@ img.res-icon.small {
 }
 
 .card-stageline {
-  position: absolute;
+  height: 14px;
+  min-height: 14px;
 
-  top: 34px;
-  left: 10px;
+  font-size: 8.5px;
+  line-height: 12px;
 
-  z-index: 3;
-
-  max-width: calc(100% - 20px);
-
-  font-size: 8px;
-  line-height: 1.2;
-
-  color: #5c5140;
-
+  color: #6b6252;
   background:
-    rgba(255, 255, 255, 0.82);
+    rgba(255, 255, 255, 0.6);
 
-  border:
-    1px solid
-    rgba(90, 75, 30, 0.18);
+  border-radius: 3px;
+  padding: 1px 5px;
 
-  border-radius: 999px;
+  align-self: flex-start;
 
-  padding: 2px 6px;
+  max-width: 100%;
 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  pointer-events: none;
 }
 
 .card-art {
@@ -4285,6 +4275,14 @@ img.res-icon.small {
   and (pointer: coarse)
   and (max-height: 520px) {
 
+  .hand-card .card-stageline {
+    height: 9px;
+    min-height: 9px;
+    padding: 0 3px;
+    font-size: 6px;
+    line-height: 8px;
+  }
+
   .deck-editor .editor-layout {
     flex-direction: row;
     align-items: stretch;
@@ -4322,16 +4320,43 @@ img.res-icon.small {
     padding: 8px;
   }
 
-  .deck-editor .collection-grid {
+ .deck-editor .collection-grid {
     display: grid;
-
     grid-template-columns:
-      repeat(
-        auto-fill,
-        minmax(82px, 1fr)
-      );
-
+      repeat(4, minmax(0, 1fr));
     gap: 8px;
+  }
+
+  .deck-editor .collection-item {
+    min-width: 0;
+  }
+
+  .deck-editor
+  .collection-item
+  .hand-card {
+    width: 96px;
+    height: 135px;
+    min-height: 135px;
+
+    margin: 0 auto;
+  }
+
+  .deck-editor
+  .collection-item
+  .card-art {
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+  }
+
+  @media (orientation: landscape)
+    and (pointer: coarse)
+    and (max-width: 640px) {
+
+    .deck-editor .collection-grid {
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    }
   }
 
   .deck-editor .collection-item {
@@ -4410,7 +4435,8 @@ img.res-icon.small {
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
 
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
   }
 
   .pack-column {
@@ -4437,5 +4463,321 @@ img.res-icon.small {
   .pack-section-label {
     margin: 6px 14px 0;
     text-align: left;
+  }
+}
+
+@media (pointer: coarse) {
+  .volume-slider {
+    display: none;
+  }
+
+  .audio-controls {
+    gap: 0;
+    padding: 5px;
+  }
+}
+
+@media (orientation: landscape)
+  and (pointer: coarse)
+  and (max-height: 520px) {
+
+  .pack-cards {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .pack-cards .flip-card {
+    width: 78px;
+    min-width: 78px;
+
+    height: 128px;
+    min-height: 128px;
+
+    flex: 0 0 78px;
+  }
+
+  .pack-cards .flip-inner {
+    width: 78px;
+
+    height: 128px;
+    min-height: 128px;
+  }
+
+  .pack-cards .flip-face {
+    width: 78px;
+    height: 128px;
+  }
+
+  .pack-cards .card-back,
+  .pack-cards .hand-card {
+    width: 78px;
+
+    height: 110px;
+    min-height: 110px;
+  }
+
+  .pack-cards .pack-card-wrap {
+    width: 78px;
+  }
+
+  .pack-cards .rarity-tag {
+    margin-top: 4px;
+    font-size: 8px;
+  }
+
+  .pack-cards .cb-frame {
+    inset: 4px;
+    gap: 5px;
+  }
+
+  .pack-cards .cb-logo {
+    font-size: 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .pack-cards .cb-ball {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (orientation: landscape)
+  and (pointer: coarse)
+  and (max-height: 520px) {
+
+  .battle {
+    width: 100%;
+
+    height: calc(100dvh - 12px);
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-rows:
+      34px
+      minmax(48px, 1fr)
+      32px
+      minmax(48px, 1fr)
+      34px
+      92px;
+
+    gap: 3px;
+
+    overflow: hidden;
+  }
+
+  /* 상대/내 트레이너 */
+
+  .battle > .hero-bar,
+  .battle > .hero-bar.enemy-bar {
+    height: 34px;
+    min-height: 0;
+
+    padding: 2px 7px;
+
+    gap: 5px;
+  }
+
+  .battle .hero-portrait {
+    min-width: 48px;
+
+    height: 28px;
+
+    padding: 1px 4px;
+
+    flex-direction: row;
+
+    gap: 2px;
+  }
+
+  .battle
+  .hero-portrait
+  .trainer-sprite {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .battle .hero-name {
+    font-size: 10px;
+  }
+
+  .battle .hero-hp {
+    font-size: 8px;
+  }
+
+  .battle .hero-sub {
+    margin-top: 0;
+    font-size: 7px;
+  }
+
+  .battle .mana-display {
+    gap: 2px;
+  }
+
+  .battle .mana-pip {
+    width: 8px;
+    height: 8px;
+  }
+
+  .battle .mana-num {
+    margin-left: 3px;
+    font-size: 8px;
+  }
+
+  /* 필드 */
+
+  .battle > .field {
+    height: 100%;
+    min-height: 0;
+
+    padding: 2px 4px;
+
+    gap: 4px;
+
+    flex-wrap: nowrap;
+
+    overflow: hidden;
+  }
+
+  .battle .field-unit {
+    width: 52px;
+    height: 48px;
+
+    padding: 2px 2px 7px;
+
+    gap: 1px;
+  }
+
+  .battle .unit-art {
+    height: 21px;
+  }
+
+  .battle .unit-name {
+    font-size: 6.5px;
+  }
+
+  .battle .unit-orb {
+    width: 19px;
+    height: 19px;
+
+    bottom: -6px;
+
+    font-size: 9px;
+  }
+
+  /* 중앙 */
+
+  .battle > .mid-bar {
+    min-height: 0;
+
+    flex-wrap: nowrap;
+
+    gap: 4px;
+  }
+
+  .battle .weather-indicator {
+    padding: 3px 6px;
+
+    font-size: 7px;
+  }
+
+  .battle .weather-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .battle .battle-log {
+    order: initial;
+
+    width: auto;
+    height: 28px;
+
+    padding: 2px 5px;
+
+    font-size: 7px;
+    line-height: 1.2;
+
+    overflow: hidden;
+  }
+
+  .battle .btn-endturn {
+    padding: 4px 7px;
+
+    font-size: 8px;
+  }
+
+  .battle .btn-surrender {
+    padding: 3px 6px;
+
+    font-size: 7px;
+  }
+
+  /* 손패 */
+
+  .battle > .hand {
+    height: 92px;
+    min-height: 0;
+
+    padding: 2px 4px;
+
+    flex-wrap: nowrap;
+
+    align-items: flex-start;
+    justify-content: center;
+
+    overflow: visible;
+  }
+
+  .battle .hand-card-wrap {
+    flex: 0 0 auto;
+  }
+
+  .battle
+  .hand-card-wrap:not(:first-child) {
+    margin-left: -19px;
+  }
+
+  .battle .hand-card {
+    width: 64px;
+
+    height: 86px;
+    min-height: 86px;
+
+    padding: 3px 4px 4px;
+
+    border-width: 3px;
+  }
+
+  .battle .hand-card .card-art {
+    height: 26px;
+    min-height: 26px;
+    flex: 0 0 26px;
+  }
+
+  .battle .hand-card .card-stageline {
+    height: 7px;
+    min-height: 7px;
+
+    padding: 0 2px;
+
+    font-size: 5.5px;
+    line-height: 6px;
+  }
+
+  .battle .hcard-orb {
+    width: 20px;
+    height: 20px;
+
+    bottom: -5px;
+
+    font-size: 10px;
+  }
+
+  .battle .hcard-orb.orb-atk {
+    left: -6px;
+  }
+
+  .battle .hcard-orb.orb-hp {
+    right: -6px;
   }
 }

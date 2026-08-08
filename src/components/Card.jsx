@@ -199,10 +199,13 @@ export function HandCard({
         <span className="card-name">{shownName}</span>
       </div>
 
-      {isPokemon && card.evolvesFrom && (
+      {isPokemon && (
         <div className="card-stageline">
-          {STAGE_LABEL[card.stage] || "진화"} ·{" "}
-          {CARD_MAP[card.evolvesFrom]?.name}에서
+          {card.evolvesFrom
+            ? `${STAGE_LABEL[card.stage] || "진화"} · ${
+                CARD_MAP[card.evolvesFrom]?.name
+              }에서`
+            : "이전 진화 없음"}
         </div>
       )}
 
