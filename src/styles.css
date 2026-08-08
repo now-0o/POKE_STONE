@@ -5231,3 +5231,140 @@ img.card-sprite {
 
   object-fit: contain;
 }
+
+/* ============================================================
+   PC BATTLE LAYOUT TUNING
+   모바일은 건드리지 않음
+   ============================================================ */
+@media (min-width: 901px) and (pointer: fine) {
+
+  /* ------------------------------------------------------------
+     1. PC에서는 화면 최하단까지 배틀판 사용
+     기존 max 900px 제한 제거
+     ------------------------------------------------------------ */
+  .battle-board {
+    height: calc(100dvh - 24px);
+    min-height: 680px;
+
+    /* PC 필드 포켓몬을 좀 더 크게 */
+    --unit-w:
+      clamp(104px, 10.5vmin, 126px);
+
+    --unit-h:
+      clamp(118px, 12.3vmin, 148px);
+  }
+
+
+  /* ------------------------------------------------------------
+     2. 중앙 UI는 뷰포트 중앙이 아니라
+        상대 필드 / 내 필드 사이
+     
+     현재:
+       상대 필드 = 10% ~ 44%
+       내 필드   = 46% ~ 80%
+     
+     따라서 실제 중앙 경계 = 45%
+     ------------------------------------------------------------ */
+  .battle-board > .mid-bar {
+    top: 45%;
+  }
+
+
+  /* ------------------------------------------------------------
+     3. 손패를 화면 최하단까지 내림
+     ------------------------------------------------------------ */
+  .battle-board > .hand {
+    bottom: 0;
+
+    height: 18%;
+
+    align-items: flex-end;
+  }
+
+
+  /* 내 트레이너는 손패 바로 위쪽으로 */
+  .battle-board .my-hero-cluster {
+    bottom: 22%;
+  }
+
+
+  /* ------------------------------------------------------------
+     4. 넓어진 PC 필드에 맞춰 포켓몬 확대
+     ------------------------------------------------------------ */
+  .battle-board > .field {
+    gap:
+      clamp(12px, 1.6vw, 24px);
+  }
+
+  .battle-board .field-unit {
+    width: var(--unit-w);
+    height: var(--unit-h);
+
+    padding:
+      6px
+      6px
+      15px;
+  }
+
+  .battle-board .unit-art {
+    height:
+      clamp(62px, 6.6vmin, 78px);
+  }
+
+  .battle-board .unit-name {
+    font-size:
+      clamp(11px, 1.1vmin, 13px);
+  }
+
+  .battle-board .unit-orb {
+    width:
+      clamp(29px, 3vmin, 33px);
+
+    height:
+      clamp(29px, 3vmin, 33px);
+
+    font-size:
+      clamp(14px, 1.5vmin, 17px);
+
+    bottom: -11px;
+  }
+
+  /* ------------------------------------------------------------
+   배틀 시작 인트로 PC 중앙 정렬
+   VS / 코인토스 동일한 기준 사용
+   ------------------------------------------------------------ */
+
+  .battle-intro {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+
+    padding: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+  }
+
+  /* VS 화면 */
+  .intro-phase-vs {
+    justify-content: center;
+  }
+
+  /* 코인토스 화면 */
+  .intro-phase-coin {
+    justify-content: center;
+  }
+
+  .coin-toss-wrap {
+    min-height: 0;
+    height: auto;
+
+    margin: 0;
+
+    justify-content: center;
+  }
+}

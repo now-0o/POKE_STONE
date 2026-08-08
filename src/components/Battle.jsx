@@ -1371,13 +1371,6 @@ export default function Battle({ trainer, deck, onFinish }) {
             </p>
           </div>
         )}
-        <button
-          className="btn-ghost small"
-          style={{ position: "absolute", bottom: 16, right: 16 }}
-          onClick={() => onFinish(null)}
-        >
-          돌아가기
-        </button>
       </div>
     );
   }
