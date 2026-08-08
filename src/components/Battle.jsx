@@ -1627,26 +1627,46 @@ export default function Battle({ trainer, deck, onFinish }) {
       )}
 
       {/* 상대 영역 */}
-      <div
-        className={`hero-bar enemy-bar ${(attackMode && heroTargetable) || (spellMode && spellNeed === "enemy") ? "targetable" : ""}`}
-        onClick={onHeroClick}
-        data-drop="enemy-hero"
-      >
-        <div className="hero-portrait">
-          <TrainerSprite
-            spriteKey={trainer.sprite}
-            emoji={trainer.emoji}
-            size={44}
-          />
-          <span className="hero-hp">HP {foe.hp}</span>
-        </div>
-        <div className="hero-info">
-          <div className="hero-name">{foe.name}</div>
-          <div className="hero-sub">
-            손패 {foe.hand.length}장 · 덱 {foe.deck.length}장
+      <div className="hero-cluster enemy-hero-cluster">
+        <div
+          className={`hero-bar enemy-bar ${
+            (attackMode && heroTargetable) ||
+            (spellMode && spellNeed === "enemy")
+              ? "targetable"
+              : ""
+          }`}
+          onClick={onHeroClick}
+          data-drop="enemy-hero"
+        >
+          <div className="hero-portrait">
+            <TrainerSprite
+              spriteKey={trainer.sprite}
+              emoji={trainer.emoji}
+              size={44}
+            />
+            <span className="hero-hp">
+              HP {foe.hp}
+            </span>
+          </div>
+
+          <div className="hero-info">
+            <div className="hero-name">
+              {foe.name}
+            </div>
+
+            <div className="hero-sub">
+              손패 {foe.hand.length}장 · 덱{" "}
+              {foe.deck.length}장
+            </div>
           </div>
         </div>
-        <ManaPips mana={foe.mana} maxMana={foe.maxMana} />
+
+        <div className="hero-mana">
+          <ManaPips
+            mana={foe.mana}
+            maxMana={foe.maxMana}
+          />
+        </div>
       </div>
 
       <div className="field enemy-field" data-drop="enemy-field">
@@ -1669,56 +1689,84 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       {/* 중앙: 날씨 + 로그 */}
-      <div className="mid-bar" data-drop="board">
-        <div className={`weather-indicator ${game.weather || "none"}`}>
-          <span className="weather-dot" />
-          {game.weather ? WEATHER_NAME[game.weather] : "날씨 없음"}
-        </div>
-        <div className="battle-log" ref={logRef}>
-          {game.log.slice(-8).map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
-        <button
-          className={`btn-endturn ${myTurn ? "" : "disabled"}`}
-          onClick={onEndTurn}
-          disabled={!myTurn}
+      <div
+        className="mid-bar"
+        data-drop="board"
+      >
+        <div
+          className={`weather-indicator ${
+            game.weather || "none"
+          }`}
         >
-          {myTurn ? "턴 종료" : "상대 턴..."}
-        </button>
-        {!confirmSurrender ? (
+          <span className="weather-dot" />
+
+          {game.weather
+            ? WEATHER_NAME[game.weather]
+            : "날씨 없음"}
+        </div>
+
+        <div
+          className="battle-log"
+          ref={logRef}
+        >
+          {game.log.slice(-8).map(
+            (line, i) => (
+              <div key={i}>
+                {line}
+              </div>
+            ),
+          )}
+        </div>
+
+        <div className="battle-actions">
           <button
-            className="btn-surrender"
-            onClick={() => {
-              playSfx("click");
-              setConfirmSurrender(true);
-            }}
+            className={`btn-endturn ${
+              myTurn ? "" : "disabled"
+            }`}
+            onClick={onEndTurn}
+            disabled={!myTurn}
           >
-            항복
+            {myTurn
+              ? "턴 종료"
+              : "상대 턴..."}
           </button>
-        ) : (
-          <div className="surrender-confirm">
-            <span>정말 항복할까요?</span>
+
+          {!confirmSurrender ? (
             <button
-              className="btn-ghost small danger"
+              className="btn-surrender"
               onClick={() => {
                 playSfx("click");
-                onFinish("enemy");
+                setConfirmSurrender(true);
               }}
             >
-              예, 항복
+              항복
             </button>
-            <button
-              className="btn-ghost small"
-              onClick={() => {
-                playSfx("click");
-                setConfirmSurrender(false);
-              }}
-            >
-              아니오
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="surrender-confirm">
+              <span>정말 항복할까요?</span>
+
+              <button
+                className="btn-ghost small danger"
+                onClick={() => {
+                  playSfx("click");
+                  onFinish("enemy");
+                }}
+              >
+                예, 항복
+              </button>
+
+              <button
+                className="btn-ghost small"
+                onClick={() => {
+                  playSfx("click");
+                  setConfirmSurrender(false);
+                }}
+              >
+                아니오
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 내 필드 */}
@@ -1749,20 +1797,45 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       {/* 내 영역 */}
-      <div
-        className={`hero-bar my-bar ${spellNeed === "friendly-or-hero" ? "targetable" : ""}`}
-        onClick={onMyHeroClick}
-        data-drop="my-hero"
-      >
-        <div className="hero-portrait">
-          <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={44} />
-          <span className="hero-hp">HP {me.hp}</span>
+      <div className="hero-cluster my-hero-cluster">
+        <div
+          className={`hero-bar my-bar ${
+            spellNeed === "friendly-or-hero"
+              ? "targetable"
+              : ""
+          }`}
+          onClick={onMyHeroClick}
+          data-drop="my-hero"
+        >
+          <div className="hero-portrait">
+            <TrainerSprite
+              spriteKey={PLAYER_SPRITE}
+              emoji="🧢"
+              size={44}
+            />
+
+            <span className="hero-hp">
+              HP {me.hp}
+            </span>
+          </div>
+
+          <div className="hero-info">
+            <div className="hero-name">
+              나
+            </div>
+
+            <div className="hero-sub">
+              덱 {me.deck.length}장
+            </div>
+          </div>
         </div>
-        <div className="hero-info">
-          <div className="hero-name">나</div>
-          <div className="hero-sub">덱 {me.deck.length}장</div>
+
+        <div className="hero-mana">
+          <ManaPips
+            mana={me.mana}
+            maxMana={me.maxMana}
+          />
         </div>
-        <ManaPips mana={me.mana} maxMana={me.maxMana} />
       </div>
 
       <div className="hand">
