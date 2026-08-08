@@ -472,7 +472,9 @@ img.res-icon.small {
 .hand-card {
   position: relative;
   width: 134px;
+  height: 188px;
   min-height: 188px;
+  box-sizing: border-box;
   background:
     linear-gradient(
       160deg,
@@ -623,16 +625,42 @@ img.res-icon.small {
 }
 
 .card-stageline {
-  font-size: 8.5px;
-  color: #6b6252;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 3px;
-  padding: 1px 5px;
-  align-self: flex-start;
+  position: absolute;
+
+  top: 34px;
+  left: 10px;
+
+  z-index: 3;
+
+  max-width: calc(100% - 20px);
+
+  font-size: 8px;
+  line-height: 1.2;
+
+  color: #5c5140;
+
+  background:
+    rgba(255, 255, 255, 0.82);
+
+  border:
+    1px solid
+    rgba(90, 75, 30, 0.18);
+
+  border-radius: 999px;
+
+  padding: 2px 6px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  pointer-events: none;
 }
 
 .card-art {
   height: 66px;
+  min-height: 66px;
+  flex: 0 0 66px;
   border: 2px solid rgba(90, 75, 30, 0.4);
   border-radius: 6px;
   background:
@@ -1884,7 +1912,8 @@ img.res-icon.small {
   }
   .hand-card {
     width: 114px;
-    min-height: 166px;
+    height: 160px;
+    min-height: 160px;
   }
   .hand .hand-card:not(:first-child) {
     margin-left: -22px;
@@ -1925,8 +1954,17 @@ img.res-icon.small {
 /* ---- 손패 카드 오브 (필드 유닛과 동일 문법) ---- */
 .hand-card {
   padding-bottom: 14px;
+}
+
+.hand .hand-card {
   touch-action: none;
 }
+
+.collection-grid .hand-card,
+.collection-item {
+  touch-action: pan-y;
+}
+
 .hcard-orb {
   position: absolute;
   bottom: -11px;
@@ -2513,12 +2551,42 @@ img.res-icon.small {
   }
 }
 @media (orientation: portrait) and (pointer: coarse) {
-  .rotate-prompt {
-    display: flex;
-  }
   .app {
-    display: none;
-  } /* 뒤 콘텐츠 완전히 숨겨서 스크롤/터치 새는 것 방지 */
+    display: none !important;
+  }
+
+  body::before {
+    content:
+      "POKE STONE\A\A"
+      "포케스톤은 가로 모드 전용입니다.\A"
+      "화면을 가로로 돌려주세요.";
+    white-space: pre-line;
+
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+    padding: 32px;
+
+    background:
+      radial-gradient(
+        circle at 50% 40%,
+        #1d2d59,
+        #0b1020 65%
+      );
+
+    color: #fff;
+    text-align: center;
+
+    font-family: var(--display-font);
+    font-size: 18px;
+    line-height: 1.8;
+  }
 }
 
 /* 동적 뷰포트 높이: 모바일 브라우저 주소창 접힘/펼침 대응 */
@@ -2580,9 +2648,9 @@ img.res-icon.small {
 
   .hand-card {
     width: 78px;
+    height: 110px;
     min-height: 110px;
-    padding: 4px 5px 5px;
-    border-width: 3px;
+    box-sizing: border-box;
   }
   .hand .hand-card:not(:first-child) {
     margin-left: -30px;
@@ -4184,5 +4252,190 @@ img.res-icon.small {
   to {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.45);
+  }
+}
+
+/* ============================================================
+   PC 배틀 화면 높이 최적화
+   ============================================================ */
+@media (min-width: 761px) and (min-height: 760px) {
+  .battle {
+    height: calc(100dvh - 24px);
+    min-height: 0;
+  }
+
+  .battle > .field {
+    flex: 1 1 0;
+    min-height: 126px;
+  }
+
+  .battle > .hero-bar,
+  .battle > .mid-bar,
+  .battle > .hand {
+    flex-shrink: 0;
+  }
+
+  .hand {
+    min-height: 205px;
+    align-items: flex-start;
+  }
+}
+
+@media (orientation: landscape)
+  and (pointer: coarse)
+  and (max-height: 520px) {
+
+  .deck-editor .editor-layout {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .deck-editor .collection-pane {
+    flex: 1;
+    min-width: 0;
+
+    height: calc(100dvh - 105px);
+    overflow-y: auto;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+
+    padding-right: 4px;
+  }
+
+  .deck-editor .deck-pane {
+    flex: 0 0 210px;
+    width: 210px;
+    max-width: 32vw;
+
+    height: calc(100dvh - 105px);
+    max-height: none;
+
+    position: static;
+
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+
+    padding: 8px;
+  }
+
+  .deck-editor .collection-grid {
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        auto-fill,
+        minmax(82px, 1fr)
+      );
+
+    gap: 8px;
+  }
+
+  .deck-editor .collection-item {
+    min-width: 0;
+  }
+
+  .deck-editor .deck-row {
+    padding: 4px 6px;
+    margin-bottom: 3px;
+    font-size: 11px;
+  }
+}
+
+@media (orientation: landscape)
+  and (pointer: coarse)
+  and (max-height: 520px) {
+
+  .hand-card .card-art {
+    height: 38px;
+    min-height: 38px;
+    flex: 0 0 38px;
+  }
+
+  .hand-card .card-name {
+    font-size: 8px;
+  }
+
+  .hand-card .card-typebadge {
+    font-size: 6.5px;
+    padding: 1px 5px;
+  }
+
+  .hand-card .card-text {
+    font-size: 6.5px;
+    line-height: 1.2;
+    padding: 2px 3px;
+
+    -webkit-line-clamp: 3;
+  }
+
+  .hand-card .card-cost {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+  }
+
+  .hand-card .hcard-orb {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}
+
+@media (orientation: landscape)
+  and (pointer: coarse)
+  and (max-height: 520px) {
+
+  .pack-buy-area {
+    align-items: stretch;
+    padding-top: 4px;
+    gap: 10px;
+  }
+
+  .pack-row {
+    width: 100%;
+
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    gap: 12px;
+    padding: 8px 14px 14px;
+
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+
+    touch-action: pan-x;
+  }
+
+  .pack-column {
+    flex: 0 0 176px;
+    scroll-snap-align: center;
+  }
+
+  .pack-visual {
+    width: 176px;
+    box-sizing: border-box;
+
+    padding: 20px 12px 18px;
+  }
+
+  .pack-label {
+    font-size: 20px;
+  }
+
+  .pack-ball {
+    width: 54px;
+    height: 54px;
+  }
+
+  .pack-section-label {
+    margin: 6px 14px 0;
+    text-align: left;
   }
 }

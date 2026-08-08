@@ -51,17 +51,38 @@ export default function MainMenu({
   save.adminMode ||
   (save.wins?.champion || 0) > 0;
 
-  function goFullscreen() {
+  async function goFullscreen() {
     const el =
       document.documentElement;
 
-    const req =
-      el.requestFullscreen ||
-      el.webkitRequestFullscreen ||
-      el.msRequestFullscreen;
+    try {
+      if (el.requestFullscreen) {
+        await el.requestFullscreen({
+          navigationUI: "hide",
+        });
+      } else if (
+        el.webkitRequestFullscreen
+      ) {
+        el.webkitRequestFullscreen();
+      } else if (
+        el.msRequestFullscreen
+      ) {
+        el.msRequestFullscreen();
+      }
 
-    if (req) {
-      req.call(el).catch(() => {});
+      if (
+        screen.orientation?.lock
+      ) {
+        try {
+          await screen.orientation.lock(
+            "landscape",
+          );
+        } catch {
+          // 지원하지 않는 브라우저는 무시
+        }
+      }
+    } catch {
+      // 전체화면 미지원 브라우저
     }
   }
 
