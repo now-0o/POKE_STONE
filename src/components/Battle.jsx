@@ -1428,7 +1428,9 @@ export default function Battle({ trainer, deck, onFinish }) {
   return (
     <div
       ref={battleRef}
-      className={`battle ${attackMode ? "aiming" : ""}`}
+      className={`battle battle-board ${attackMode ? "aiming" : ""}`}
+      data-region={trainer.region || "kanto"}
+      data-trainer={trainer.id}
       onContextMenu={(e) => e.preventDefault()}
     >
       {resultOverlay}
@@ -1763,7 +1765,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         <ManaPips mana={me.mana} maxMana={me.maxMana} />
       </div>
 
-      <div className="hand" style={{ "--hc": me.hand.length }}>
+      <div className="hand">
         {me.hand.map((h, idx) => {
           const c = CARD_MAP[h.cardId];
           const playableNow = myTurn && canPlayCard(game, "player", idx);
@@ -1773,8 +1775,20 @@ export default function Battle({ trainer, deck, onFinish }) {
             c.evolvesFrom &&
             !playableNow &&
             !me.discardUsedThisTurn;
+          const fanOffset =
+            idx - (me.hand.length - 1) / 2;
           return (
-            <div key={h.uid} className="hand-card-wrap">
+            return (
+            <div
+              key={h.uid}
+              className="hand-card-wrap"
+              style={{
+                "--fan-angle":
+                  `${fanOffset * 3}deg`,
+                "--fan-y":
+                  `${Math.abs(fanOffset) * 2.2}px`,
+              }}
+            >
               <HandCard
                 cardId={h.cardId}
                 game={game}

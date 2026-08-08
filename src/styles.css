@@ -57,7 +57,7 @@ body {
 }
 
 .app {
-  max-width: 1120px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 12px;
 }
@@ -817,65 +817,36 @@ img.res-icon.small {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: clamp(3px, calc(0.0179 * 100dvmin - 5.5714px), 8px);
-  min-height: 100dvh;
-  box-sizing: border-box;
-  /* .app의 여백을 되찾아 모바일에서 화면을 꽉 채운다 (v8 유동 스케일링) */
-  margin: -12px;
-  width: calc(100% + 24px);
-  padding: clamp(4px, calc(0.0286 * 100dvmin - 9.7143px), 12px)
-    clamp(6px, calc(0.0357 * 100dvmin - 11.1429px), 16px);
-}
-/* 필드는 남는 세로 공간을 나눠 갖고, 나머지는 내용 크기만큼만 차지 */
-.battle > .field {
-  flex: 1 1 0;
-}
-.battle > .hero-bar,
-.battle > .mid-bar,
-.battle > .hand {
-  flex-shrink: 0;
+  gap: 8px;
+  min-height: 96vh;
 }
 
 .hero-bar {
   display: flex;
   align-items: center;
-  gap: clamp(5px, calc(0.0321 * 100dvmin - 10.4286px), 14px);
+  gap: 14px;
   width: 100%;
   box-sizing: border-box;
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  padding: clamp(2px, calc(0.0214 * 100dvmin - 8.2857px), 8px)
-    clamp(8px, calc(0.0286 * 100dvmin - 5.7143px), 16px);
+  padding: 8px 16px;
   backdrop-filter: blur(6px);
 }
 .hero-bar.enemy-bar {
-  /* 공격 대상 히트박스를 넉넉하게 - 정밀 조준 안 해도 되게 */
-  padding: clamp(2px, calc(0.0214 * 100dvmin - 8.2857px), 8px)
-    clamp(10px, calc(0.0357 * 100dvmin - 7.1429px), 20px);
-  min-height: unset;
+  padding: 16px 20px; /* 공격 대상 히트박스를 넉넉하게 - 정밀 조준 안 해도 되게 */
+  min-height: 64px;
 }
 .hero-portrait {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  height: clamp(28px, calc(0.1 * 100dvmin - 20px), 56px);
-  padding: clamp(1px, calc(0.0143 * 100dvmin - 5.8571px), 5px)
-    clamp(4px, calc(0.0286 * 100dvmin - 9.7143px), 12px);
-  min-width: clamp(48px, calc(0.1143 * 100dvmin - 6.8571px), 80px);
-  gap: clamp(3px, calc(0.0107 * 100dvmin - 2.1429px), 6px);
-  box-sizing: border-box;
-}
-.hero-portrait .trainer-sprite {
-  width: clamp(22px, calc(0.0786 * 100dvmin - 15.7143px), 44px);
-  height: clamp(22px, calc(0.0786 * 100dvmin - 15.7143px), 44px);
-}
-.hero-portrait .trainer-emoji {
-  font-size: clamp(16px, calc(0.055 * 100dvmin - 11px), 30px);
+  border-radius: 12px;
+  padding: 5px 12px;
+  min-width: 80px;
+  gap: 2px;
 }
 .hero-portrait.targetable {
   border-color: var(--hp-red);
@@ -891,28 +862,20 @@ img.res-icon.small {
 }
 .hero-hp {
   font-family: var(--display-font);
-  font-size: clamp(8px, calc(0.0214 * 100dvmin - 2.2857px), 14px);
+  font-size: 14px;
   color: #ff8a80;
-  white-space: nowrap;
 }
 .hero-info {
   flex: 1;
-  min-width: 0;
 }
 .hero-name {
   font-family: var(--display-font);
-  font-size: clamp(10px, calc(0.0214 * 100dvmin - 0.2857px), 16px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 16px;
 }
 .hero-sub {
-  font-size: clamp(7px, calc(0.0179 * 100dvmin - 1.5714px), 12px);
+  font-size: 12px;
   color: var(--text-dim);
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 에너지 크리스탈 */
@@ -925,8 +888,8 @@ img.res-icon.small {
   justify-content: flex-end;
 }
 .mana-pip {
-  width: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
-  height: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -949,16 +912,16 @@ img.res-icon.small {
   font-family: var(--display-font);
   margin-left: 6px;
   color: var(--energy-blue);
-  font-size: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
+  font-size: 13px;
 }
 
 /* 필드: 라이트 테이블 존 */
 .field {
   display: flex;
-  gap: clamp(4px, calc(0.0214 * 100dvmin - 6.2857px), 10px);
+  gap: 10px;
   justify-content: center;
   align-items: center;
-  min-height: clamp(60px, calc(0.2357 * 100dvmin - 53.1429px), 126px);
+  min-height: 126px;
   background:
     radial-gradient(
       ellipse 75% 100% at 50% 50%,
@@ -968,12 +931,10 @@ img.res-icon.small {
     var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 18px;
-  padding: clamp(2px, calc(0.0357 * 100dvmin - 15.1429px), 12px)
-    clamp(4px, calc(0.0214 * 100dvmin - 6.2857px), 10px);
-  flex-wrap: nowrap;
+  padding: 12px 10px;
+  flex-wrap: wrap;
   position: relative;
   backdrop-filter: blur(4px);
-  overflow: hidden;
 }
 .enemy-field {
   border-bottom-left-radius: 6px;
@@ -992,9 +953,8 @@ img.res-icon.small {
 /* ---- 필드 유닛 ---- */
 .field-unit {
   position: relative;
-  width: clamp(52px, calc(0.1643 * 100dvmin - 26.8571px), 98px);
-  height: clamp(48px, calc(0.2286 * 100dvmin - 61.7143px), 112px);
-  flex-shrink: 0;
+  width: 98px;
+  height: 112px;
   background:
     linear-gradient(
       160deg,
@@ -1008,10 +968,8 @@ img.res-icon.small {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(2px, calc(0.0107 * 100dvmin - 3.1429px), 5px)
-    clamp(2px, calc(0.0071 * 100dvmin - 1.4286px), 4px)
-    clamp(7px, calc(0.0214 * 100dvmin - 3.2857px), 13px);
-  gap: clamp(1px, calc(0.0071 * 100dvmin - 2.4286px), 3px);
+  padding: 5px 4px 13px;
+  gap: 3px;
   transition:
     transform 0.12s,
     box-shadow 0.12s;
@@ -1193,7 +1151,7 @@ img.res-icon.small {
 
 .unit-art {
   width: 100%;
-  height: clamp(21px, calc(0.1321 * 100dvmin - 42.4286px), 58px);
+  height: 58px;
   border: 1.5px solid rgba(90, 75, 30, 0.35);
   border-radius: 6px;
   background:
@@ -1210,27 +1168,23 @@ img.res-icon.small {
 }
 .unit-name {
   font-family: var(--display-font);
-  font-size: clamp(6.5px, calc(0.0143 * 100dvmin - 0.3571px), 10.5px);
+  font-size: 10.5px;
   text-align: center;
   line-height: 1.15;
   padding: 0 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
 .unit-orb {
   position: absolute;
-  bottom: clamp(-10px, calc(-0.0143 * 100dvmin + 0.8571px), -6px);
-  width: clamp(19px, calc(0.0286 * 100dvmin + 5.2857px), 27px);
-  height: clamp(19px, calc(0.0286 * 100dvmin + 5.2857px), 27px);
+  bottom: -10px;
+  width: 27px;
+  height: 27px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--display-font);
-  font-size: clamp(9px, calc(0.0179 * 100dvmin + 0.4286px), 14px);
+  font-size: 14px;
   color: #fff;
   border: 2px solid rgba(0, 0, 0, 0.35);
   box-shadow:
@@ -1268,16 +1222,15 @@ img.res-icon.small {
 .mid-bar {
   display: flex;
   align-items: center;
-  gap: clamp(4px, calc(0.0286 * 100dvmin - 9.7143px), 12px);
+  gap: 12px;
 }
 .weather-indicator {
   font-family: var(--display-font);
-  font-size: clamp(7px, calc(0.0214 * 100dvmin - 3.2857px), 13px);
+  font-size: 13px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 999px;
-  padding: clamp(3px, calc(0.0214 * 100dvmin - 7.2857px), 9px)
-    clamp(6px, calc(0.0357 * 100dvmin - 11.1429px), 16px);
+  padding: 9px 16px;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -1285,8 +1238,8 @@ img.res-icon.small {
   backdrop-filter: blur(6px);
 }
 .weather-dot {
-  width: clamp(6px, calc(0.0143 * 100dvmin - 0.8571px), 10px);
-  height: clamp(6px, calc(0.0143 * 100dvmin - 0.8571px), 10px);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #4d5a7d;
 }
@@ -1317,15 +1270,14 @@ img.res-icon.small {
 
 .battle-log {
   flex: 1;
-  height: clamp(28px, calc(0.15 * 100dvmin - 44px), 70px);
+  height: 70px;
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--panel-border);
   border-radius: 12px;
-  padding: clamp(2px, calc(0.0179 * 100dvmin - 6.5714px), 7px)
-    clamp(5px, calc(0.025 * 100dvmin - 7px), 12px);
-  font-size: clamp(7px, calc(0.0179 * 100dvmin - 1.5714px), 12px);
-  line-height: 1.4;
+  padding: 7px 12px;
+  font-size: 12px;
+  line-height: 1.55;
   color: #aebad4;
 }
 
@@ -1339,10 +1291,9 @@ img.res-icon.small {
   color: #3a2c05;
   border: none;
   border-radius: 999px;
-  padding: clamp(4px, calc(0.0321 * 100dvmin - 11.4286px), 13px)
-    clamp(7px, calc(0.0607 * 100dvmin - 22.1429px), 24px);
+  padding: 13px 24px;
   font-family: var(--display-font);
-  font-size: clamp(8px, calc(0.025 * 100dvmin - 4px), 15px);
+  font-size: 15px;
   white-space: nowrap;
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.6),
@@ -1360,9 +1311,8 @@ img.res-icon.small {
   border: 1px solid var(--panel-border);
   color: var(--text-dim);
   border-radius: 999px;
-  padding: clamp(3px, calc(0.0179 * 100dvmin - 5.5714px), 8px)
-    clamp(6px, calc(0.0286 * 100dvmin - 7.7143px), 14px);
-  font-size: clamp(7px, calc(0.0179 * 100dvmin - 1.5714px), 12px);
+  padding: 8px 14px;
+  font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -1384,10 +1334,7 @@ img.res-icon.small {
 .hand {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: clamp(3px, calc(0.0464 * 100dvmin - 19.2857px), 16px) 4px
-    clamp(2px, calc(0.0286 * 100dvmin - 11.7143px), 10px);
-  min-height: clamp(91px, calc(0.4393 * 100dvmin - 119.8571px), 214px);
+  padding: 16px 4px 10px;
   flex-wrap: wrap;
 }
 .hand .hand-card:not(:first-child) {
@@ -1399,18 +1346,6 @@ img.res-icon.small {
 }
 .hand .hand-card:not(:first-child):hover {
   margin-left: 2px;
-}
-/* 실제 겹침은 래퍼(.hand-card-wrap) 기준 - 화면 크기 + 손패 장수에 따라
-   하스스톤처럼 카드가 많을수록 더 촘촘하게 겹친다 */
-.hand-card-wrap:not(:first-child) {
-  margin-left: calc(
-    clamp(-19px, calc(0.0321 * 100dvmin - 34.4286px), -10px) -
-      max(0px, calc((var(--hc, 3) - 5) * 4px))
-  );
-}
-.hand-card-wrap:hover,
-.hand-card-wrap:has(.selected) {
-  z-index: 9;
 }
 
 .target-hint {
@@ -4581,63 +4516,702 @@ img.res-icon.small {
 }
 
 /* ============================================================
-   v8: 하스스톤식 유동(fluid) 배틀 레이아웃
-   - 기존의 몇 개 안 되는 스냅 브레이크포인트 대신, 화면의 짧은 쪽
-     (dvmin)에 비례해 모든 배틀 요소 크기가 연속적으로 스케일된다.
-   - 브레이크포인트 사이 "구멍"에 해당하는 화면 크기(예: 가로 모드
-     태블릿, 애매한 높이의 폰)에서도 카드가 깨지거나 텍스트가
-     잘리지 않는다.
-   - .hand-card / .card-* 는 컬렉션·카드팩 화면과 공유하는 클래스라
-     반드시 .battle로 스코프해 다른 화면에 영향이 없게 한다.
+   UNIFIED BATTLE BOARD
+   PC / MOBILE 동일 레이아웃
    ============================================================ */
-.battle .hand-card {
-  width: clamp(64px, calc(0.25 * 100dvmin - 56px), 134px);
-  height: clamp(86px, calc(0.3643 * 100dvmin - 88.8571px), 188px);
-  min-height: clamp(86px, calc(0.3643 * 100dvmin - 88.8571px), 188px);
-  padding: clamp(3px, calc(0.0143 * 100dvmin - 3.8571px), 7px)
-    clamp(4px, calc(0.0143 * 100dvmin - 2.8571px), 8px)
-    clamp(4px, calc(0.0071 * 100dvmin + 0.5714px), 6px);
-  border-width: clamp(3px, calc(0.0036 * 100dvmin + 1.2857px), 4px);
+
+.battle-board {
+  /* 배틀 UI 크기 */
+  --unit-w:
+    clamp(58px, 9vmin, 98px);
+
+  --unit-h:
+    clamp(66px, 10.3vmin, 112px);
+
+  --hand-w:
+    clamp(68px, 11.5vmin, 134px);
+
+  --hand-h:
+    clamp(96px, 16.1vmin, 188px);
+
+  --battle-skin: none;
+
+  position: relative;
+
+  width: 100%;
+
+  height:
+    min(
+      900px,
+      calc(100dvh - 24px)
+    );
+
+  min-height:
+    min(
+      520px,
+      calc(100dvh - 24px)
+    );
+
+  margin: 0 auto;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+
+  border-radius:
+    clamp(12px, 2vmin, 24px);
+
+  background-image:
+    var(--battle-skin),
+    radial-gradient(
+      ellipse 70% 65% at 50% 50%,
+      rgba(65, 94, 160, 0.24),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      #101936 0%,
+      #151e3c 48%,
+      #111936 52%,
+      #0c142d 100%
+    );
+
+  background-size:
+    cover,
+    auto,
+    auto;
+
+  background-position:
+    center,
+    center,
+    center;
+
+  box-shadow:
+    inset 0 0 80px
+      rgba(0, 0, 0, 0.35),
+    0 12px 40px
+      rgba(0, 0, 0, 0.35);
 }
-.battle .hand-card .card-art {
-  height: clamp(26px, calc(0.1429 * 100dvmin - 42.5714px), 66px);
-  min-height: clamp(26px, calc(0.1429 * 100dvmin - 42.5714px), 66px);
-  flex: 0 0 clamp(26px, calc(0.1429 * 100dvmin - 42.5714px), 66px);
+
+
+/* ============================================================
+   영웅
+   ============================================================ */
+
+.battle-board > .hero-bar {
+  position: absolute;
+
+  z-index: 30;
+
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  width:
+    clamp(175px, 28vmin, 290px);
+
+  height:
+    clamp(44px, 7vmin, 64px);
+
+  min-height: 0;
+
+  padding:
+    clamp(3px, 0.7vmin, 7px)
+    clamp(7px, 1.4vmin, 14px);
+
+  display: flex;
+
+  align-items: center;
+
+  gap:
+    clamp(5px, 1vmin, 10px);
+
+  border-radius: 999px;
+
+  background:
+    rgba(17, 26, 53, 0.94);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  backdrop-filter: blur(8px);
+
+  box-shadow:
+    0 5px 18px
+    rgba(0, 0, 0, 0.5);
 }
-.battle .hand-card .card-name {
-  font-size: clamp(8px, calc(0.0179 * 100dvmin - 0.5714px), 13px);
+
+.battle-board > .enemy-bar {
+  top: 1.5%;
 }
-.battle .hand-card .card-typebadge {
-  font-size: clamp(6.5px, calc(0.0089 * 100dvmin + 2.2143px), 9px);
-  padding: 2px clamp(5px, calc(0.0143 * 100dvmin - 1.8571px), 9px);
+
+.battle-board > .my-bar {
+  bottom: 15%;
 }
-.battle .hand-card .card-text {
-  font-size: clamp(6.5px, calc(0.0089 * 100dvmin + 2.2143px), 9px);
-  padding: clamp(2px, calc(0.0036 * 100dvmin + 0.2857px), 3px)
-    clamp(3px, calc(0.0071 * 100dvmin - 0.4286px), 5px);
-  -webkit-line-clamp: 3;
+
+
+/* 영웅 초상화 */
+
+.battle-board .hero-portrait {
+  min-width: 0;
+
+  height: 100%;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  flex-direction: row;
+
+  gap:
+    clamp(2px, 0.5vmin, 5px);
 }
-.battle .hand-card .card-cost {
-  width: clamp(25px, calc(0.0321 * 100dvmin + 9.5714px), 34px);
-  height: clamp(25px, calc(0.0321 * 100dvmin + 9.5714px), 34px);
-  font-size: clamp(12px, calc(0.0214 * 100dvmin + 1.7143px), 18px);
+
+.battle-board
+.hero-portrait
+.trainer-sprite {
+  width:
+    clamp(27px, 5vmin, 44px) !important;
+
+  height:
+    clamp(27px, 5vmin, 44px) !important;
 }
-.battle .hand-card .card-stageline {
-  height: clamp(7px, calc(0.025 * 100dvmin - 5px), 14px);
-  min-height: clamp(7px, calc(0.025 * 100dvmin - 5px), 14px);
-  font-size: clamp(5.5px, calc(0.0107 * 100dvmin + 0.3571px), 8.5px);
-  line-height: clamp(7px, calc(0.025 * 100dvmin - 5px), 14px);
-  padding: 0 clamp(2px, calc(0.0107 * 100dvmin - 3.1429px), 5px);
+
+.battle-board .hero-hp {
+  font-size:
+    clamp(8px, 1.4vmin, 14px);
+
+  white-space: nowrap;
 }
-.battle .hcard-orb {
-  width: clamp(20px, calc(0.0393 * 100dvmin + 1.1429px), 31px);
-  height: clamp(20px, calc(0.0393 * 100dvmin + 1.1429px), 31px);
-  bottom: clamp(-11px, calc(-0.0214 * 100dvmin + 5.2857px), -5px);
-  font-size: clamp(10px, calc(0.0214 * 100dvmin - 0.2857px), 16px);
+
+
+/* 이름 */
+
+.battle-board .hero-info {
+  min-width: 40px;
+
+  flex: 1;
 }
-.battle .hcard-orb.orb-atk {
-  left: clamp(-10px, calc(-0.0143 * 100dvmin + 0.8571px), -6px);
+
+.battle-board .hero-name {
+  font-size:
+    clamp(8px, 1.5vmin, 15px);
 }
-.battle .hcard-orb.orb-hp {
-  right: clamp(-10px, calc(-0.0143 * 100dvmin + 0.8571px), -6px);
+
+.battle-board .hero-sub {
+  margin-top: 0;
+
+  font-size:
+    clamp(6px, 1vmin, 10px);
+
+  white-space: nowrap;
+}
+
+
+/* 마나 */
+
+.battle-board .mana-display {
+  max-width:
+    clamp(70px, 12vmin, 140px);
+
+  gap:
+    clamp(1px, 0.25vmin, 3px);
+
+  flex-wrap: nowrap;
+}
+
+.battle-board .mana-pip {
+  width:
+    clamp(7px, 1.25vmin, 12px);
+
+  height:
+    clamp(7px, 1.25vmin, 12px);
+}
+
+.battle-board .mana-num {
+  margin-left: 3px;
+
+  font-size:
+    clamp(7px, 1.2vmin, 12px);
+}
+
+
+/* ============================================================
+   필드
+   ============================================================ */
+
+.battle-board > .field {
+  position: absolute;
+
+  z-index: 5;
+
+  left: 8%;
+  right: 8%;
+
+  min-height: 0;
+
+  padding:
+    clamp(4px, 1vmin, 10px);
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  gap:
+    clamp(5px, 1.2vmin, 12px);
+
+  flex-wrap: nowrap;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius:
+    clamp(12px, 2vmin, 22px);
+
+  background:
+    radial-gradient(
+      ellipse 70% 100% at 50% 50%,
+      rgba(120, 160, 255, 0.1),
+      rgba(20, 30, 60, 0.12)
+    );
+
+  backdrop-filter: none;
+
+  overflow: visible;
+}
+
+
+/* 상대 */
+
+.battle-board > .enemy-field {
+  top: 10%;
+
+  height: 34%;
+}
+
+
+/* 나 */
+
+.battle-board > .my-field {
+  bottom: 20%;
+
+  height: 34%;
+}
+
+
+/* ============================================================
+   필드 포켓몬
+   ============================================================ */
+
+.battle-board .field-unit {
+  width: var(--unit-w);
+  height: var(--unit-h);
+
+  padding:
+    clamp(3px, 0.7vmin, 5px)
+    clamp(2px, 0.5vmin, 4px)
+    clamp(9px, 1.3vmin, 13px);
+
+  gap:
+    clamp(1px, 0.4vmin, 3px);
+}
+
+.battle-board .unit-art {
+  height:
+    clamp(28px, 5.3vmin, 58px);
+}
+
+.battle-board .unit-name {
+  font-size:
+    clamp(7px, 1.05vmin, 10.5px);
+}
+
+.battle-board .unit-orb {
+  width:
+    clamp(20px, 2.7vmin, 27px);
+
+  height:
+    clamp(20px, 2.7vmin, 27px);
+
+  bottom:
+    clamp(-10px, -1vmin, -6px);
+
+  font-size:
+    clamp(9px, 1.4vmin, 14px);
+}
+
+
+/* ============================================================
+   중앙 UI
+   ============================================================ */
+
+.battle-board > .mid-bar {
+  position: absolute;
+
+  z-index: 20;
+
+  top: 50%;
+
+  left: 0;
+  right: 0;
+
+  height:
+    clamp(36px, 6vmin, 58px);
+
+  transform:
+    translateY(-50%);
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 0 2%;
+}
+
+
+/* 날씨 */
+
+.battle-board .weather-indicator {
+  flex: 0 0 auto;
+
+  padding:
+    clamp(4px, 0.8vmin, 9px)
+    clamp(7px, 1.4vmin, 16px);
+
+  font-size:
+    clamp(7px, 1.2vmin, 12px);
+}
+
+.battle-board .weather-dot {
+  width:
+    clamp(6px, 1vmin, 10px);
+
+  height:
+    clamp(6px, 1vmin, 10px);
+}
+
+
+/* 로그 */
+
+.battle-board .battle-log {
+  position: absolute;
+
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  width:
+    clamp(
+      190px,
+      40%,
+      460px
+    );
+
+  height:
+    clamp(30px, 5.5vmin, 52px);
+
+  padding:
+    clamp(3px, 0.7vmin, 7px)
+    clamp(7px, 1.2vmin, 12px);
+
+  overflow-y: auto;
+
+  background:
+    rgba(5, 10, 27, 0.74);
+
+  font-size:
+    clamp(7px, 1.05vmin, 11px);
+
+  line-height: 1.35;
+
+  text-align: center;
+
+  backdrop-filter: blur(5px);
+}
+
+
+/* 턴 종료 */
+
+.battle-board .btn-endturn {
+  position: absolute;
+
+  right: 2%;
+
+  width:
+    clamp(48px, 7.5vmin, 76px);
+
+  height:
+    clamp(48px, 7.5vmin, 76px);
+
+  padding: 4px;
+
+  border-radius: 50%;
+
+  font-size:
+    clamp(8px, 1.3vmin, 13px);
+
+  line-height: 1.15;
+
+  white-space: normal;
+}
+
+
+/* 항복 */
+
+.battle-board .btn-surrender {
+  position: fixed;
+
+  top:
+    max(
+      8px,
+      env(safe-area-inset-top)
+    );
+
+  right:
+    max(
+      8px,
+      env(safe-area-inset-right)
+    );
+
+  z-index: 50;
+
+  padding:
+    clamp(4px, 0.7vmin, 8px)
+    clamp(7px, 1.1vmin, 12px);
+
+  font-size:
+    clamp(7px, 1vmin, 11px);
+}
+
+.battle-board .surrender-confirm {
+  position: fixed;
+
+  top:
+    max(
+      8px,
+      env(safe-area-inset-top)
+    );
+
+  right:
+    max(
+      8px,
+      env(safe-area-inset-right)
+    );
+
+  z-index: 60;
+
+  padding: 7px 10px;
+
+  border-radius: 10px;
+
+  background:
+    rgba(10, 15, 32, 0.96);
+}
+
+
+/* ============================================================
+   손패
+   ============================================================ */
+
+.battle-board > .hand {
+  position: absolute;
+
+  z-index: 40;
+
+  left: 50%;
+  bottom: -2%;
+
+  transform:
+    translateX(-50%);
+
+  width: 96%;
+
+  height: 20%;
+
+  padding: 0;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: flex-end;
+
+  flex-wrap: nowrap;
+
+  overflow: visible;
+
+  pointer-events: none;
+}
+
+
+/* 카드 wrapper */
+
+.battle-board .hand-card-wrap {
+  flex: 0 0 auto;
+
+  margin-left:
+    clamp(-30px, -2.5vmin, -14px);
+
+  transform:
+    translateY(var(--fan-y, 0))
+    rotate(var(--fan-angle, 0deg));
+
+  transform-origin:
+    50% 145%;
+
+  transition:
+    transform 0.14s ease,
+    margin 0.14s ease;
+
+  pointer-events: auto;
+}
+
+.battle-board
+.hand-card-wrap:first-child {
+  margin-left: 0;
+}
+
+
+/* 카드 자체 */
+
+.battle-board .hand-card {
+  width: var(--hand-w);
+  height: var(--hand-h);
+  min-height: var(--hand-h);
+}
+
+
+/* 기존 카드 내부도 같이 비례 */
+
+.battle-board
+.hand-card
+.card-art {
+  height:
+    clamp(27px, 5.6vmin, 66px);
+
+  min-height:
+    clamp(27px, 5.6vmin, 66px);
+
+  flex-basis:
+    clamp(27px, 5.6vmin, 66px);
+}
+
+.battle-board
+.hand-card
+.card-name {
+  font-size:
+    clamp(7px, 1.15vmin, 13px);
+}
+
+.battle-board
+.hand-card
+.card-stageline {
+  height:
+    clamp(7px, 1.2vmin, 14px);
+
+  min-height:
+    clamp(7px, 1.2vmin, 14px);
+
+  font-size:
+    clamp(5.5px, 0.8vmin, 8.5px);
+
+  line-height:
+    clamp(6px, 1vmin, 12px);
+}
+
+.battle-board
+.hand-card
+.card-typebadge {
+  font-size:
+    clamp(5.5px, 0.85vmin, 9px);
+
+  padding:
+    1px
+    clamp(3px, 0.7vmin, 9px);
+}
+
+.battle-board
+.hand-card
+.card-text {
+  font-size:
+    clamp(5.5px, 0.85vmin, 9px);
+
+  line-height: 1.25;
+
+  padding:
+    clamp(1px, 0.4vmin, 3px)
+    clamp(2px, 0.6vmin, 5px);
+}
+
+.battle-board
+.hand-card
+.card-cost {
+  width:
+    clamp(24px, 3.3vmin, 34px);
+
+  height:
+    clamp(24px, 3.3vmin, 34px);
+
+  font-size:
+    clamp(11px, 1.7vmin, 18px);
+}
+
+.battle-board .hcard-orb {
+  width:
+    clamp(20px, 2.8vmin, 28px);
+
+  height:
+    clamp(20px, 2.8vmin, 28px);
+
+  font-size:
+    clamp(9px, 1.4vmin, 14px);
+}
+
+
+/* ============================================================
+   타겟 안내
+   ============================================================ */
+
+.battle-board .target-hint {
+  bottom: 21%;
+
+  padding:
+    clamp(5px, 0.9vmin, 10px)
+    clamp(10px, 1.6vmin, 20px);
+
+  font-size:
+    clamp(7px, 1.1vmin, 12px);
+}
+
+
+/* ============================================================
+   터치
+   ============================================================ */
+
+@media (pointer: coarse) {
+
+  .battle-board
+  .hand-card.playable:hover {
+    transform:
+      perspective(700px)
+      rotateX(0)
+      rotateY(0);
+  }
+
+  .battle-board
+  .drag-ghost {
+    transform:
+      translate(-50%, -62%)
+      scale(1.05);
+  }
 }
