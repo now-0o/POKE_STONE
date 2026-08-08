@@ -1778,7 +1778,6 @@ export default function Battle({ trainer, deck, onFinish }) {
           const fanOffset =
             idx - (me.hand.length - 1) / 2;
           return (
-            return (
             <div
               key={h.uid}
               className="hand-card-wrap"
