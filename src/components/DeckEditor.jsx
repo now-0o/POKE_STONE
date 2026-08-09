@@ -320,10 +320,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           <input
             type="text"
             value={search}
-            onChange={(e) =>
-              captureCardPositions();
+            onChange={(e) => {
+                captureCardPositions();
 
-              setSearch(e.target.value)
+                setSearch(e.target.value);
+              }
             }
             placeholder="카드 이름 검색"
             className="deck-search-input"
