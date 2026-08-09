@@ -23,6 +23,21 @@ import {
   playSfx,
 } from "../audio.js";
 
+const REGION_LABELS = {
+  kanto: {
+    name: "관동지방",
+    sub: "KANTO",
+  },
+  johto: {
+    name: "성도지방",
+    sub: "JOHTO",
+  },
+  hoenn: {
+    name: "호연지방",
+    sub: "HOENN",
+  },
+};
+
 export default function MainMenu({
   save,
   username,
@@ -50,6 +65,11 @@ export default function MainMenu({
   const johtoUnlocked =
   save.adminMode ||
   (save.wins?.champion || 0) > 0;
+
+  // 목호 격파 후 호연 해금
+  const hoennUnlocked =
+    save.adminMode ||
+    (save.wins?.johto_lance || 0) > 0;
 
   async function goFullscreen() {
     const el =
@@ -90,6 +110,14 @@ export default function MainMenu({
     if (
       region === "johto" &&
       !johtoUnlocked
+    ) {
+      playSfx("buzzer");
+      return;
+    }
+
+    if (
+      region === "hoenn" &&
+      !hoennUnlocked
     ) {
       playSfx("buzzer");
       return;
@@ -256,6 +284,47 @@ export default function MainMenu({
                   : "LOCK"}
               </span>
             </button>
+            <button
+              className={[
+                "region-card",
+                !hoennUnlocked
+                  ? "region-locked"
+                  : "region-hoenn",
+              ].join(" ")}
+              onMouseEnter={() =>
+                hoennUnlocked &&
+                playSfx("cursor")
+              }
+              onClick={() =>
+                selectRegion("hoenn")
+              }
+            >
+              <span className="region-info">
+                <span className="region-name">
+                  호연지방
+                </span>
+
+                <span className="region-sub">
+                  HOENN
+                </span>
+
+                <span className="region-desc">
+                  최상급 AI · 메가진화 · 전설
+                </span>
+
+                {!hoennUnlocked && (
+                  <span className="region-lock-text">
+                    🔒 챔피언 목호 격파 후 해금
+                  </span>
+                )}
+              </span>
+
+              <span className="region-go">
+                {hoennUnlocked
+                  ? "선택 ▶"
+                  : "LOCK"}
+              </span>
+            </button>
           </div>
         </>
       )}
@@ -278,18 +347,21 @@ export default function MainMenu({
 
             <div>
               <strong>
-                {selectedRegion ===
-                "kanto"
-                  ? "관동지방"
-                  : "성도지방"}
-              </strong>
+              {
+                REGION_LABELS[
+                  selectedRegion
+                ]?.name
+              }
+            </strong>
 
-              <span className="trainer-region-sub">
-                {selectedRegion ===
-                "kanto"
-                  ? " KANTO"
-                  : " JOHTO"}
-              </span>
+            <span className="trainer-region-sub">
+              {" "}
+              {
+                REGION_LABELS[
+                  selectedRegion
+                ]?.sub
+              }
+            </span>
             </div>
           </div>
 

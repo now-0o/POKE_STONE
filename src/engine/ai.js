@@ -1,6 +1,6 @@
 // ============================================================
 // AI: 트레이너 난이도별 행동 결정
-// 1 랜덤 / 2 그리디 / 3 시너지 / 4 최적화 / 5 최종보스
+// 1 랜덤 / 2 그리디 / 3 시너지 / 4 최적화 / 5 최종보스 / 6 호연 마스터
 // ============================================================
 import { CARD_MAP } from "../data/cards.js";
 import {
@@ -818,6 +818,46 @@ function scoreCard(game, card, level) {
   }
 
   // ========================================================
+  // Lv6 - 호연 AI
+  // 진화 / 시그니처 / 메가진화를 미리 연결해서 생각
+  // ========================================================
+  if (level >= 6) {
+    // 시그니처 포켓몬 전개 우선
+    if (card.signature) {
+      score += 20;
+    }
+
+    // 이 카드를 내면 손에 있는 다음 진화체를 연결할 수 있음
+    const hasNextEvolution = me.hand.some((h) => {
+      const next = CARD_MAP[h.cardId];
+
+      return (
+        next?.kind === "pokemon" &&
+        next.evolvesFrom === card.id
+      );
+    });
+
+    if (hasNextEvolution) {
+      score += 18;
+    }
+
+    // 이 포켓몬의 메가스톤을 이미 들고 있으면
+    // 메가진화 기반을 적극적으로 전개
+    const hasMegaStone = me.hand.some((h) => {
+      const mega = CARD_MAP[h.cardId];
+
+      return (
+        mega?.kind === "mega" &&
+        mega.megaFor === card.id
+      );
+    });
+
+    if (hasMegaStone) {
+      score += 30;
+    }
+  }
+
+  // ========================================================
   // 도구
   // ========================================================
   if (card.kind === "item") {
@@ -978,6 +1018,19 @@ function scoreCard(game, card, level) {
     if (level >= 5) {
       score += unitValue(base, game) * 0.5;
     }
+
+    if (level >= 6) {
+      // 호연은 메가진화를 훨씬 적극적으로 사용
+      score += 25;
+
+      // 챔피언 시그니처 메가는 최우선
+      if (
+        base.cardId ===
+        game.trainer?.signatureCard
+      ) {
+        score += 35;
+      }
+    }
   }
 
   return score;
@@ -1076,6 +1129,16 @@ function chooseAttack(game, level) {
 
       if (dies) {
         score -= unitValue(a, game) * (level >= 3 ? 2.5 : 1.7);
+      }
+
+      // Lv6는 아무것도 못 잡으면서
+      // 자기 포켓몬만 죽는 교환을 강하게 회피
+      if (
+        level >= 6 &&
+        dies &&
+        !kills
+      ) {
+        score -= 35;
       }
 
       if (kills && !dies) {
@@ -1378,7 +1441,7 @@ export function aiStep(game) {
         }
       }
     } else {
-      // Lv2~5
+      // Lv2~6
       const scored = playable
         .map((pc) => ({
           ...pc,

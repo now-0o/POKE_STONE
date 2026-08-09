@@ -417,6 +417,7 @@ export const ABILITY_TEXT = {
   "신속: 소환된 턴에도 즉시 공격할 수 있다. 소환된 턴 첫 공격은 상대의 전투 반격 피해를 받지 않는다.",
   lance_outrage:
   "역린: 공격할 때 공격력 +2. 공격 후 자신이 피해 1을 받는다.",
+  
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -3091,6 +3092,211 @@ export const TRAINER_CARDS = [
       trainerOnly: true,
     },
   ),
+
+    // ============================================================
+  // 호연지방 시그니처
+  // ============================================================
+
+  P(
+    "hoenn_roxanne_nosepass",
+    "원규의 코코파스",
+    "바위",
+    4,
+    5,
+    9,
+    "L",
+    {
+      ability: "sandstream",
+      secondaryAbility: "sturdy",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_brawly_hariyama",
+    "철구의 하리뭉",
+    "격투",
+    4,
+    7,
+    9,
+    "L",
+    {
+      ability: "guts",
+      secondaryAbility: "counter",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_wattson_manectric",
+    "암페어의 썬더볼트",
+    "전기",
+    4,
+    7,
+    7,
+    "L",
+    {
+      ability: "thunderfang",
+      secondaryAbility: "voltabsorb",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_flannery_camerupt",
+    "민지의 폭타",
+    "불꽃",
+    5,
+    7,
+    9,
+    "L",
+    {
+      ability: "burningfall",
+      secondaryAbility: "flashfire",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_norman_slaking",
+    "종길의 게을킹",
+    "노말",
+    5,
+    10,
+    9,
+    "L",
+    {
+      ability: "moxie",
+      secondaryAbility: "sheerforce",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_winona_altaria",
+    "은송의 파비코리",
+    "드래곤",
+    5,
+    7,
+    10,
+    "L",
+    {
+      ability: "regenerator",
+      secondaryAbility: "multiscale",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_tate_solrock",
+    "풍의 솔록",
+    "바위",
+    5,
+    7,
+    8,
+    "L",
+    {
+      ability: "rockblast",
+      secondaryAbility: "levitate",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_liza_lunatone",
+    "란의 루나톤",
+    "에스퍼",
+    5,
+    6,
+    9,
+    "L",
+    {
+      ability: "moonlight",
+      secondaryAbility: "levitate",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_wallace_milotic",
+    "윤진의 밀로틱",
+    "물",
+    6,
+    7,
+    12,
+    "L",
+    {
+      ability: "primordialsea",
+      secondaryAbility: "marvelscale",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_juan_kingdra",
+    "아단의 킹드라",
+    "드래곤",
+    6,
+    9,
+    10,
+    "L",
+    {
+      ability: "drizzle",
+      secondaryAbility: "swiftswim",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  P(
+    "hoenn_steven_metagross",
+    "성호의 메타그로스",
+    "강철",
+    7,
+    11,
+    12,
+    "L",
+    {
+      ability: "clearbody",
+      secondaryAbility: "toughclaws",
+      signature: true,
+      trainerOnly: true,
+    },
+  ),
+
+  {
+    id: "hoenn_steven_metagrossite",
+    name: "성호의 메타그로스나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+
+    megaFor: "hoenn_steven_metagross",
+    megaSpriteId: 10076,
+
+    mega: {
+      atk: 4,
+      hp: 4,
+      ability: "toughclaws",
+      secondaryAbility: "clearbody",
+    },
+
+    text:
+      "성호의 메타그로스 전용. +4/+4, 단단한발톱과 클리어바디를 얻는다. (게임당 메가진화 1회)",
+
+    trainerOnly: true,
+  },
 ];
 
 export const CARD_MAP = Object.fromEntries(
@@ -3125,6 +3331,19 @@ export const DEX = {
   johto_lance_dragonite_thunder: 149,
   johto_lance_dragonite_extremespeed: 149,
   johto_lance_dragonite_outrage: 149,
+
+  // 호연 시그니처
+  hoenn_roxanne_nosepass: 299,
+  hoenn_brawly_hariyama: 297,
+  hoenn_wattson_manectric: 310,
+  hoenn_flannery_camerupt: 323,
+  hoenn_norman_slaking: 289,
+  hoenn_winona_altaria: 334,
+  hoenn_tate_solrock: 338,
+  hoenn_liza_lunatone: 337,
+  hoenn_wallace_milotic: 350,
+  hoenn_juan_kingdra: 230,
+  hoenn_steven_metagross: 376,
 
   mudkip: 258,
   marshtomp: 259,
@@ -3639,6 +3858,8 @@ export const ITEM_SPRITE = {
   manectite: "manectite",
   banettite: "banettite",
   absolite: "absolite",
+
+  hoenn_steven_metagrossite: "metagrossite",
 };
 
 export const UI_SPRITES = {

@@ -1277,18 +1277,747 @@ export const JOHTO_TRAINERS = [
 ];
 
 // ============================================================
+// 호연지방 체육관 로드
+//
+// 성도 클리어 이후 최상위 지역
+// Lv6 AI + stableDeck + 높은 덱 안정성
+// 메가진화 / 전설 / 강력한 시그니처 적극 사용
+// ============================================================
+
+export const HOENN_TRAINERS = [
+  {
+    id: "hoenn_roxanne",
+    region: "hoenn",
+    name: "금탄체육관 관장 원규",
+    sprite: "roxanne",
+    title: "체육관 관장",
+    emoji: "🪨",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.92,
+
+    reward: 320,
+    hp: 68,
+
+    requires: null,
+
+    introLines: [
+      "바위처럼 단단한 전략을 보여드리겠습니다!",
+    ],
+    winLines: [
+      "아직 호연의 싸움에 익숙하지 않은 것 같군요.",
+    ],
+    loseLines: [
+      "훌륭합니다. 하지만 이제 시작이에요.",
+    ],
+
+    signatureCard: "hoenn_roxanne_nosepass",
+
+    deck: [
+      "hoenn_roxanne_nosepass",
+
+      "geodude",
+      "geodude",
+      "graveler",
+      "graveler",
+      "golem",
+      "golem",
+
+      "nosepass",
+      "nosepass",
+
+      "aron",
+      "aron",
+      "lairon",
+      "lairon",
+      "aggron",
+      "aggron",
+
+      "regirock",
+
+      "aggronite",
+
+      "stoneedge",
+      "stoneedge",
+      "earthquake",
+      "earthquake",
+      "sandstorm",
+      "sandstorm",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "focussash",
+      "lifeorb",
+      "superball",
+      "superball",
+    ],
+  },
+
+  {
+    id: "hoenn_brawly",
+    region: "hoenn",
+    name: "무로체육관 관장 철구",
+    sprite: "brawly",
+    title: "체육관 관장",
+    emoji: "🥊",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.93,
+
+    reward: 340,
+    hp: 70,
+
+    requires: "hoenn_roxanne",
+
+    introLines: [
+      "큰 파도처럼 한 번에 밀어붙여주지!",
+    ],
+    winLines: [
+      "아직 파도를 타는 법을 모르는군!",
+    ],
+    loseLines: [
+      "이런 파도는 처음인데!",
+    ],
+
+    signatureCard: "hoenn_brawly_hariyama",
+
+    deck: [
+      "hoenn_brawly_hariyama",
+
+      "makuhita",
+      "makuhita",
+      "hariyama",
+      "hariyama",
+
+      "meditite",
+      "meditite",
+      "medicham",
+      "medicham",
+
+      "shroomish",
+      "shroomish",
+      "breloom",
+      "breloom",
+
+      "torchic",
+      "torchic",
+      "combusken",
+      "combusken",
+      "blaziken",
+      "blaziken",
+
+      "blazikenite",
+
+      "riolu",
+      "riolu",
+      "lucario",
+      "lucario",
+
+      "infight",
+      "infight",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "lifeorb",
+    ],
+  },
+
+  {
+    id: "hoenn_wattson",
+    region: "hoenn",
+    name: "보라체육관 관장 암페어",
+    sprite: "wattson",
+    title: "체육관 관장",
+    emoji: "⚡",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.94,
+
+    reward: 360,
+    hp: 72,
+
+    requires: "hoenn_brawly",
+
+    introLines: [
+      "왓핫하! 전기로 전부 날려버리겠네!",
+    ],
+    winLines: [
+      "왓핫하! 제대로 감전됐구먼!",
+    ],
+    loseLines: [
+      "왓핫하! 정말 대단한 승부였네!",
+    ],
+
+    signatureCard: "hoenn_wattson_manectric",
+
+    deck: [
+      "hoenn_wattson_manectric",
+
+      "electrike",
+      "electrike",
+      "manectric",
+      "manectric",
+
+      "mareep",
+      "mareep",
+      "flaaffy",
+      "flaaffy",
+      "ampharos",
+      "ampharos",
+
+      "magnemite",
+      "magnemite",
+      "magneton",
+      "magneton",
+      "magnezone",
+      "magnezone",
+
+      "raikou",
+
+      "thunderbolt",
+      "thunderbolt",
+
+      "manectite",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "focussash",
+
+      "quickattack",
+      "quickattack",
+
+      "superball",
+      "superball",
+      "lifeorb",
+    ],
+  },
+
+  {
+    id: "hoenn_flannery",
+    region: "hoenn",
+    name: "용암체육관 관장 민지",
+    sprite: "flannery",
+    title: "체육관 관장",
+    emoji: "🔥",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.94,
+
+    reward: 380,
+    hp: 74,
+
+    requires: "hoenn_wattson",
+
+    introLines: [
+      "불타오르는 승부를 보여주겠어!",
+    ],
+    winLines: [
+      "이게 용암체육관의 뜨거움이야!",
+    ],
+    loseLines: [
+      "너무 뜨거워서 내가 먼저 타버렸네...",
+    ],
+
+    signatureCard: "hoenn_flannery_camerupt",
+
+    deck: [
+      "hoenn_flannery_camerupt",
+
+      "numel",
+      "numel",
+      "camerupt",
+      "camerupt",
+
+      "torchic",
+      "torchic",
+      "combusken",
+      "combusken",
+      "blaziken",
+      "blaziken",
+
+      "blazikenite",
+
+      "vulpix",
+      "vulpix",
+      "ninetales",
+      "ninetales",
+
+      "ponyta",
+      "ponyta",
+      "rapidash",
+      "rapidash",
+
+      "groudon",
+
+      "flamethrower",
+      "flamethrower",
+      "sunnyday",
+      "sunnyday",
+      "earthquake",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "lifeorb",
+    ],
+  },
+
+  {
+    id: "hoenn_norman",
+    region: "hoenn",
+    name: "등화체육관 관장 종길",
+    sprite: "norman",
+    title: "체육관 관장",
+    emoji: "🦥",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.95,
+
+    reward: 400,
+    hp: 76,
+
+    requires: "hoenn_flannery",
+
+    introLines: [
+      "여기까지 왔다면 실력으로 증명해봐라.",
+    ],
+    winLines: [
+      "강함에는 아직 더 배울 것이 있다.",
+    ],
+    loseLines: [
+      "훌륭하군. 네 실력을 인정하마.",
+    ],
+
+    signatureCard: "hoenn_norman_slaking",
+
+    deck: [
+      "hoenn_norman_slaking",
+
+      "slakoth",
+      "slakoth",
+      "vigoroth",
+      "vigoroth",
+      "slaking",
+      "slaking",
+
+      "kangaskhan",
+      "kangaskhan",
+
+      "kangaskhanite",
+
+      "snorlax",
+      "snorlax",
+
+      "tauros",
+      "tauros",
+
+      "porygon",
+      "porygon",
+      "porygon2",
+      "porygon2",
+
+      "eevee",
+      "eevee",
+
+      "quickattack",
+      "quickattack",
+      "infight",
+      "infight",
+
+      "hyperball",
+      "hyperball",
+
+      "fullrestore",
+      "fullrestore",
+      "lifeorb",
+      "focussash",
+    ],
+  },
+
+  {
+    id: "hoenn_winona",
+    region: "hoenn",
+    name: "검방울체육관 관장 은송",
+    sprite: "winona",
+    title: "체육관 관장",
+    emoji: "🪽",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.95,
+
+    reward: 420,
+    hp: 78,
+
+    requires: "hoenn_norman",
+
+    introLines: [
+      "하늘을 지배하는 포켓몬의 아름다움을 보여드리죠.",
+    ],
+    winLines: [
+      "하늘에서 내려다보면 승부의 흐름이 보인답니다.",
+    ],
+    loseLines: [
+      "당신은 제 예상보다 더 높이 날았군요.",
+    ],
+
+    signatureCard: "hoenn_winona_altaria",
+
+    deck: [
+      "hoenn_winona_altaria",
+
+      "swablu",
+      "swablu",
+      "altaria",
+      "altaria",
+
+      "bagon",
+      "bagon",
+      "shelgon",
+      "shelgon",
+      "salamence",
+      "salamence",
+
+      "salamencite",
+
+      "taillow",
+      "taillow",
+      "swellow",
+      "swellow",
+
+      "wingull",
+      "wingull",
+      "pelipper",
+      "pelipper",
+
+      "skarmory",
+      "skarmory",
+
+      "latias",
+
+      "dragonclaw",
+      "dragonclaw",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "focussash",
+      "lifeorb",
+    ],
+  },
+
+  {
+    id: "hoenn_tate_liza",
+    region: "hoenn",
+    name: "이끼체육관 관장 풍&란",
+    sprite: "tateandliza-gen3",
+    title: "체육관 관장",
+    emoji: "🔮",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.96,
+
+    reward: 450,
+    hp: 80,
+
+    requires: "hoenn_winona",
+
+    introLines: [
+      "우리 둘의 마음은 하나!",
+      "생각하지 않아도 서로의 움직임을 알 수 있어!",
+    ],
+    winLines: [
+      "우리의 호흡을 깨뜨리긴 어려울걸!",
+    ],
+    loseLines: [
+      "우리 둘의 마음을... 읽은 거야?",
+    ],
+
+    signatureCards: [
+      "hoenn_tate_solrock",
+      "hoenn_liza_lunatone",
+    ],
+
+    deck: [
+      "hoenn_tate_solrock",
+      "hoenn_liza_lunatone",
+
+      "lunatone",
+      "lunatone",
+
+      "ralts",
+      "ralts",
+      "kirlia",
+      "kirlia",
+      "gardevoir",
+      "gardevoir",
+
+      "gardevoirite",
+
+      "natu",
+      "natu",
+      "xatu",
+      "xatu",
+
+      "bronzor",
+      "bronzor",
+      "bronzong",
+      "bronzong",
+
+      "jirachi",
+      "deoxys",
+
+      "psychic",
+      "psychic",
+      "stoneedge",
+      "moonblast",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "focussash",
+      "lifeorb",
+    ],
+  },
+
+  {
+    id: "hoenn_wallace",
+    region: "hoenn",
+    name: "루네체육관 관장 윤진",
+    sprite: "wallace",
+    title: "체육관 관장",
+    emoji: "🌊",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.97,
+
+    reward: 480,
+    hp: 82,
+
+    requires: "hoenn_tate_liza",
+
+    introLines: [
+      "물의 아름다움과 강함을 동시에 보여드리죠.",
+    ],
+    winLines: [
+      "아름다운 승부였습니다.",
+    ],
+    loseLines: [
+      "당신의 승리가 더욱 아름답군요.",
+    ],
+
+    signatureCard: "hoenn_wallace_milotic",
+
+    deck: [
+      "hoenn_wallace_milotic",
+
+      "feebas",
+      "feebas",
+      "milotic",
+      "milotic",
+
+      "mudkip",
+      "mudkip",
+      "marshtomp",
+      "marshtomp",
+      "swampert",
+      "swampert",
+
+      "swampertite",
+
+      "lotad",
+      "lotad",
+      "lombre",
+      "lombre",
+      "ludicolo",
+      "ludicolo",
+
+      "wailmer",
+      "wailmer",
+      "wailord",
+      "wailord",
+
+      "kyogre",
+
+      "raindance",
+      "raindance",
+      "surf",
+      "surf",
+
+      "hyperball",
+      "fullrestore",
+      "shellbell",
+    ],
+  },
+
+  {
+    id: "hoenn_juan",
+    region: "hoenn",
+    name: "루네체육관 관장 아단",
+    sprite: "juan",
+    title: "체육관 관장",
+    emoji: "💧",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.97,
+
+    reward: 520,
+    hp: 84,
+
+    requires: "hoenn_wallace",
+
+    introLines: [
+      "루네의 물은 깊고도 아름답지. 그 깊이를 견뎌보게.",
+    ],
+    winLines: [
+      "아직 물의 흐름을 완전히 읽지는 못했군.",
+    ],
+    loseLines: [
+      "훌륭하군! 참으로 우아한 승리일세.",
+    ],
+
+    signatureCard: "hoenn_juan_kingdra",
+
+    deck: [
+      "hoenn_juan_kingdra",
+
+      "horsea",
+      "horsea",
+      "seadra",
+      "seadra",
+      "kingdra",
+      "kingdra",
+
+      "magikarp",
+      "magikarp",
+      "gyarados",
+      "gyarados",
+
+      "gyaradosite",
+
+      "wingull",
+      "wingull",
+      "pelipper",
+      "pelipper",
+
+      "feebas",
+      "feebas",
+      "milotic",
+      "milotic",
+
+      "lapras",
+      "lapras",
+
+      "latios",
+
+      "raindance",
+      "raindance",
+      "hydropump",
+      "hydropump",
+      "surf",
+
+      "hyperball",
+      "fullrestore",
+    ],
+  },
+
+  {
+    id: "hoenn_steven",
+    region: "hoenn",
+    name: "챔피언 성호",
+    sprite: "steven",
+    title: "챔피언",
+    emoji: "💎",
+
+    aiLevel: 6,
+    stableDeck: true,
+    consistencyAssist: 0.98,
+
+    reward: 600,
+    hp: 90,
+
+    requires: "hoenn_juan",
+
+    introLines: [
+      "여기까지 온 트레이너라면 설명은 필요 없겠지.",
+      "나와 내 포켓몬들의 모든 힘을 보여주겠다.",
+    ],
+    winLines: [
+      "좋은 승부였다. 다시 도전해주길 기다리지.",
+    ],
+    loseLines: [
+      "훌륭하다. 네가 호연의 새로운 최강자다.",
+    ],
+
+    signatureCard: "hoenn_steven_metagross",
+
+    deck: [
+      "hoenn_steven_metagross",
+      "hoenn_steven_metagrossite",
+
+      "beldum",
+      "beldum",
+      "metang",
+      "metang",
+      "metagross",
+      "metagross",
+
+      "aron",
+      "aron",
+      "lairon",
+      "lairon",
+      "aggron",
+      "aggron",
+
+      "mawile",
+      "mawile",
+
+      "skarmory",
+      "skarmory",
+
+      "registeel",
+      "jirachi",
+
+      "ironhead",
+      "ironhead",
+      "psychic",
+      "psychic",
+      "earthquake",
+
+      "hyperball",
+      "hyperball",
+      "fullrestore",
+      "focussash",
+      "lifeorb",
+    ],
+  },
+];
+
+// ============================================================
 // 지역별 트레이너
 // ============================================================
 
 export const TRAINERS_BY_REGION = {
   kanto: KANTO_TRAINERS,
   johto: JOHTO_TRAINERS,
+  hoenn: HOENN_TRAINERS,
 };
 
-// 기존 TRAINERS를 사용하는 코드 하위호환
 export const TRAINERS = [
   ...KANTO_TRAINERS,
   ...JOHTO_TRAINERS,
+  ...HOENN_TRAINERS,
 ];
 
 export const TRAINER_MAP =
