@@ -1444,7 +1444,7 @@ export const CARDS = [
 
   // ---------- 3세대 ----------
 
-  P("torchic", "아차모", "불꽃", 1, 2, 1, "C", {
+  P("torchic", "아차모", "불꽃", 1, 2, 2, "C", {
     ability: "blaze",
   }),
 
