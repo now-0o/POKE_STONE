@@ -1157,8 +1157,16 @@ export default function Battle({ trainer, deck, onFinish }) {
       return;
     }
     if (!myTurn || selectedHand === null) return;
-    const card = CARD_MAP[me.hand[selectedHand].cardId];
-    const need = spellNeedsTarget(card);
+
+      const selected = me.hand[selectedHand];
+
+      if (!selected) {
+        setSelectedHand(null);
+        return;
+      }
+
+      const card = CARD_MAP[selected.cardId];
+      const need = spellNeedsTarget(card);
     if (need === "enemy" && side === "enemy") {
       playCard(game, "player", selectedHand, { uid: unit.uid });
       setSelectedHand(null);
@@ -1184,7 +1192,14 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (Date.now() < suppressUntil.current) return;
     if (!myTurn || selectedHand === null) return;
 
-    const card = CARD_MAP[me.hand[selectedHand].cardId];
+    const selected = me.hand[selectedHand];
+
+    if (!selected) {
+      setSelectedHand(null);
+      return;
+    }
+
+    const card = CARD_MAP[selected.cardId];
 
     if (
       spellNeedsTarget(card) === "enemy" &&
@@ -1206,7 +1221,14 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (Date.now() < suppressUntil.current) return;
     if (!myTurn || selectedHand === null) return;
 
-    const card = CARD_MAP[me.hand[selectedHand].cardId];
+    const selected = me.hand[selectedHand];
+
+    if (!selected) {
+      setSelectedHand(null);
+      return;
+    }
+
+    const card = CARD_MAP[selected.cardId];
     const need = spellNeedsTarget(card);
 
     if (need === "friendly-or-hero") {
@@ -1255,6 +1277,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const { units: legalTargets, hero: heroTargetable } = validAttackTargets(
     game,
     "player",
+    aimUid,
   );
   const attackMode = aimUid !== null;
 
@@ -1485,8 +1508,8 @@ export default function Battle({ trainer, deck, onFinish }) {
                 onClick={() => onDeoxysFormChoose("attack")}
               >
                 <strong>어택폼</strong>
-                <span>13 / 4</span>
-                <small>즉시 공격 · 첫 공격 +5 · 반격 무시</small>
+                <span>10 / 4</span>
+                <small>즉시 공격 · 첫 공격 +2 · 반격 무시</small>
               </button>
 
               <button
@@ -1494,7 +1517,7 @@ export default function Battle({ trainer, deck, onFinish }) {
                 onClick={() => onDeoxysFormChoose("defense")}
               >
                 <strong>디펜스폼</strong>
-                <span>4 / 13</span>
+                <span>4 / 12</span>
                 <small>도발 · 받는 피해 -2</small>
               </button>
 
@@ -1503,7 +1526,7 @@ export default function Battle({ trainer, deck, onFinish }) {
                 onClick={() => onDeoxysFormChoose("speed")}
               >
                 <strong>스피드폼</strong>
-                <span>7 / 8</span>
+                <span>5 / 9</span>
                 <small>즉시 공격 · 매 턴 2회 공격</small>
               </button>
             </div>
@@ -1955,7 +1978,15 @@ export default function Battle({ trainer, deck, onFinish }) {
                   className="btn-discard-redraw"
                   onClick={(e) => {
                     e.stopPropagation();
-                    discardToDraw(game, "player", idx);
+
+                    const ok = discardToDraw(game, "player", idx);
+
+                    if (ok) {
+                      setSelectedHand(null);
+                      setDragIdx(null);
+                    }
+
+                    playSfx(ok ? "click" : "buzzer");
                     rerender();
                   }}
                   title="진화 대상이 없다 - 버리고 카드 1장 뽑기 (턴당 1회)"

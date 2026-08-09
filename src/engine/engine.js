@@ -1926,7 +1926,7 @@ const DEOXYS_FORMS = {
 
   attack: {
     label: "어택폼",
-    atk: 13,
+    atk: 10,
     hp: 4,
     ability: "deoxys_attack",
   },
@@ -1934,14 +1934,14 @@ const DEOXYS_FORMS = {
   defense: {
     label: "디펜스폼",
     atk: 4,
-    hp: 13,
+    hp: 12,
     ability: "deoxys_defense",
   },
 
   speed: {
     label: "스피드폼",
-    atk: 7,
-    hp: 8,
+    atk: 5,
+    hp: 9,
     ability: "deoxys_speed",
   },
 };
@@ -4428,11 +4428,19 @@ export function resolveMew(game, side, targetUid) {
     );
   }
   // 덱에서 포켓몬 1장 드로우
-  const poke = me.deck.filter((c) => CARD_MAP[c.cardId]?.kind === "pokemon");
-  if (poke.length && me.hand.length < 10) {
+  const poke = me.deck
+  .map((cardId, index) => ({ cardId, index }))
+  .filter(({ cardId }) => CARD_MAP[cardId]?.kind === "pokemon");
+
+  if (poke.length && me.hand.length < MAX_HAND) {
     const pick = poke[Math.floor(Math.random() * poke.length)];
-    me.deck.splice(me.deck.indexOf(pick), 1);
-    me.hand.push(pick);
+
+    me.deck.splice(pick.index, 1);
+    me.hand.push({
+      uid: nextUid(),
+      cardId: pick.cardId,
+    });
+
     log(game, `${CARD_MAP[pick.cardId]?.name}을(를) 손으로 가져왔다.`);
   }
   return true;

@@ -128,7 +128,7 @@ function typedDamageAgainstUnit(
 
   if (mult < 1) {
     return Math.max(
-      0,
+      1,
       Math.floor(
         base * mult,
       ),
