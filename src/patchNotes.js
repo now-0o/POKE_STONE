@@ -4,7 +4,7 @@
 
 export const PATCH_NOTES = [
   {
-    version: "1.10",
+    version: "1.11",
     date: "2026-08-09",
     title: "덱 편집 기능 개선",
     changes: [
