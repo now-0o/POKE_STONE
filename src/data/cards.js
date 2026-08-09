@@ -575,7 +575,7 @@ export const CARDS = [
     ability: "moxie",
   }),
   P("sunkern", "해너츠", "풀", 1, 0, 2, "C", { ability: "chlorophyll" }),
-  P("sunflora", "해루미나", "풀", 3, 5, 4, "R", {
+  P("sunflora", "해루미", "풀", 3, 5, 4, "R", {
     stage: 1,
     evolvesFrom: "sunkern",
     ability: "chlorophyll",
