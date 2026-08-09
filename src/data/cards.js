@@ -154,36 +154,30 @@ export const ABILITY_TEXT = {
   sandstream: "모래날림: 나왔을 때 날씨를 모래바람으로 만든다",
   airlock: "에어록: 나왔을 때 모든 날씨를 없앤다",
   sandveil: "모래숨기: 모래바람일 때 받는 피해 1 감소",
-  sandforce:
-  "모래의힘: 모래바람 동안 공격력 +2",
+  sandforce: "모래의힘: 모래바람 동안 공격력 +2",
   // 방어/생존
   originpulse:
     "근원의파동: 나올 때 폭우 발동. 상대 전체 물 피해 3 + 무작위 1마리를 얼린다",
   icebeamdance:
     "오로라빔: 나올 때 상대 전체 얼음 피해 2 + 1마리에게 얼음 상태이상",
   skydive: "불사르기: 나올 때 불꽃 피해 3을 무작위로 3회 입힌다",
-  burningfall:
-    "분화: 나올 때 적 전체 불꽃 피해 3. 쾌청이면 피해 +2",
+  burningfall: "분화: 나올 때 적 전체 불꽃 피해 3. 쾌청이면 피해 +2",
   thunderwave:
     "천둥차기: 나올 때 적 전체 전기 피해 3. 무작위 1마리에게 마비 상태이상",
   thunderfang:
     "와일드볼트: 나올 때 무작위 상대에게 전기 피해 4 + 마비 상태이상",
-  precipiceblades:
-    "단애의칼: 나올 때 쾌청 발동. 상대 전체 땅 피해 4",
+  precipiceblades: "단애의칼: 나올 때 쾌청 발동. 상대 전체 땅 피해 4",
   frostedgale:
     "얼어붙는시선: 나올 때 상대 전체 얼음 피해 2 + 전부 얼음 상태이상",
-  icelock:
-    "눈보라: 나올 때 상대 전체에게 얼음 상태이상 + 얼음 피해 1",
+  icelock: "눈보라: 나올 때 상대 전체에게 얼음 상태이상 + 얼음 피해 1",
   leafstorm:
     "리프스톰: 나올 때 상대 전체 풀 피해 2 + 아군 전체 회복 2 + 카드 1장 드로우",
   aeroblast:
     "에어로블라스트: 나올 때 상대 전체 비행 피해 3. 멀티스케일(풀피 시 피해 절반) 유지",
-  rockblast:
-    "스톤에지: 나올 때 상대에게 바위 피해 2를 무작위로 4회 입힌다",
+  rockblast: "스톤에지: 나올 때 상대에게 바위 피해 2를 무작위로 4회 입힌다",
   mistball:
     "미스트볼: 나올 때 무작위 상대에게 드래곤 피해 4. 아군 드래곤 포켓몬 공격력 +1",
-  dragonascent:
-    "화룡점정: 나올 때 날씨 초기화. 상대 전체 드래곤 피해 3",
+  dragonascent: "화룡점정: 나올 때 날씨 초기화. 상대 전체 드래곤 피해 3",
   irondefense:
     "철벽: 나올 때 도발로 모든 공격을 자신에게 유도하고 체력 +3을 얻는다",
   taunt: "도발: 상대는 이 포켓몬을 먼저 공격해야 한다",
@@ -259,48 +253,38 @@ export const ABILITY_TEXT = {
   aura_fighting: "파동: 필드에 있는 동안 다른 아군 격투 포켓몬 공격력 +1",
   aura_dragon: "용의숨결: 필드에 있는 동안 다른 아군 드래곤 포켓몬 공격력 +1",
 
-    // ============================================================
+  // ============================================================
   // v6 확장 신규 특성
   // ============================================================
 
   pickup:
     "픽업: 나왔을 때 덱에서 메가스톤을 제외한 도구 카드 1장을 무작위로 손으로 가져온다",
 
-  technician:
-    "테크니션: 자신의 공격력이 3 이하라면 공격 피해 +2",
+  technician: "테크니션: 자신의 공격력이 3 이하라면 공격 피해 +2",
 
-  clearbody:
-    "클리어바디: 상대 효과로 공격력이 감소하지 않는다",
+  clearbody: "클리어바디: 상대 효과로 공격력이 감소하지 않는다",
 
-  oblivious:
-    "둔감: 잠듦과 상대의 공격력 감소 효과에 면역",
+  oblivious: "둔감: 잠듦과 상대의 공격력 감소 효과에 면역",
 
-  hypercutter:
-    "괴력집게: 상대 효과로 공격력이 감소하지 않는다",
+  hypercutter: "괴력집게: 상대 효과로 공격력이 감소하지 않는다",
 
-  rockhead:
-    "돌머리: 자신의 공격이나 특성으로 발생하는 반동 피해를 받지 않는다",
+  rockhead: "돌머리: 자신의 공격이나 특성으로 발생하는 반동 피해를 받지 않는다",
 
-  shellarmor:
-    "조가비갑옷: 한 번의 공격으로 받는 피해가 최대 4를 넘지 않는다",
+  shellarmor: "조가비갑옷: 한 번의 공격으로 받는 피해가 최대 4를 넘지 않는다",
 
   aromatherapy:
     "아로마테라피: 내 턴 종료 시 상태이상인 아군 포켓몬 1마리의 상태이상을 해제한다",
 
-  sheerforce:
-    "우격다짐: 상태이상이 없는 포켓몬을 공격할 때 피해 +1",
+  sheerforce: "우격다짐: 상태이상이 없는 포켓몬을 공격할 때 피해 +1",
 
-  webtrap:
-    "거미집: 나왔을 때 무작위 상대 포켓몬의 공격력 -1 및 독 상태이상",
+  webtrap: "거미집: 나왔을 때 무작위 상대 포켓몬의 공격력 -1 및 독 상태이상",
 
   counter:
     "카운터: 전투 공격으로 피해를 받으면 받은 피해의 절반(올림)을 공격자에게 되돌린다",
 
-  speedboost:
-    "가속: 내 턴 종료마다 공격력 +1. 최대 +3",
+  speedboost: "가속: 내 턴 종료마다 공격력 +1. 최대 +3",
 
-  raindish:
-    "젖은접시: 비가 내릴 때 내 턴 종료 시 체력 1 회복",
+  raindish: "젖은접시: 비가 내릴 때 내 턴 종료 시 체력 1 회복",
 
   effectspore:
     "포자: 공격당할 때 30% 확률로 공격자에게 독·마비·잠듦 중 하나를 건다",
@@ -308,11 +292,9 @@ export const ABILITY_TEXT = {
   wonderguard:
     "불가사의부적: 약점 타입의 직접 공격이 아니면 피해를 받지 않는다. 상태이상·날씨 등 간접 피해는 받는다",
 
-  waterveil:
-    "수의베일: 화상 상태이상에 걸리지 않는다",
+  waterveil: "수의베일: 화상 상태이상에 걸리지 않는다",
 
-  marvelscale:
-    "이상한비늘: 상태이상이 걸려 있으면 받는 피해 2 감소",
+  marvelscale: "이상한비늘: 상태이상이 걸려 있으면 받는 피해 2 감소",
 
   forecast:
     "기분파: 날씨에 따라 자신의 타입이 변한다. 비=물, 쾌청=불꽃, 모래바람=바위, 날씨 없음=노말",
@@ -320,57 +302,43 @@ export const ABILITY_TEXT = {
   colorchange:
     "변색: 타입 공격을 받으면 자신의 타입을 그 공격 타입으로 변경한다",
 
-  cursedbody:
-    "저주받은바디: 공격당하면 공격자의 공격력 -1",
+  cursedbody: "저주받은바디: 공격당하면 공격자의 공격력 -1",
 
   lusterpurge:
     "라스터퍼지: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 에스퍼 피해 4를 주고 공격력 -1",
 
-  wishmaker:
-    "소원메이커: 나왔을 때 아군 전체 체력 2 회복. 카드 1장 드로우",
+  wishmaker: "소원메이커: 나왔을 때 아군 전체 체력 2 회복. 카드 1장 드로우",
 
   formchange:
     "폼체인지: 소환할 때 노말·어택·디펜스·스피드 폼 중 하나를 선택한다. 선택한 폼은 배틀 동안 고정된다",
 
-  pressure:
-    "프레셔: 필드에 있는 동안 상대 기술 카드의 비용이 1 증가한다",
+  pressure: "프레셔: 필드에 있는 동안 상대 기술 카드의 비용이 1 증가한다",
 
   deoxys_attack:
     "어택폼: 소환 즉시 공격 가능. 첫 공격 피해 +5 및 반격 피해를 받지 않는다. 첫 공격 후 공격력 -3",
 
-  deoxys_defense:
-    "디펜스폼: 도발. 받는 피해 2 감소",
+  deoxys_defense: "디펜스폼: 도발. 받는 피해 2 감소",
 
-  deoxys_speed:
-    "스피드폼: 소환 즉시 공격 가능. 한 턴에 두 번 공격할 수 있다",
+  deoxys_speed: "스피드폼: 소환 즉시 공격 가능. 한 턴에 두 번 공격할 수 있다",
 
   // 메가진화 전용
-  megalauncher:
-    "메가런처: 공격할 때 대상 양옆의 상대 포켓몬에게도 피해 1",
+  megalauncher: "메가런처: 공격할 때 대상 양옆의 상대 포켓몬에게도 피해 1",
 
-  toughclaws:
-    "단단한발톱: 기본 공격 피해 +2",
+  toughclaws: "단단한발톱: 기본 공격 피해 +2",
 
-  adaptability:
-    "적응력: 상성 우위로 공격할 때 추가 피해 +2",
+  adaptability: "적응력: 상성 우위로 공격할 때 추가 피해 +2",
 
-  trace:
-    "트레이스: 메가진화할 때 무작위 상대 포켓몬의 특성을 복사한다",
+  trace: "트레이스: 메가진화할 때 무작위 상대 포켓몬의 특성을 복사한다",
 
-  parentalbond:
-    "부자유친: 공격 후 같은 대상에게 추가 피해 2",
+  parentalbond: "부자유친: 공격 후 같은 대상에게 추가 피해 2",
 
-  hugepower:
-    "천하장사: 공격할 때 자신의 공격력을 2배로 계산한다",
+  hugepower: "천하장사: 공격할 때 자신의 공격력을 2배로 계산한다",
 
-  filter:
-    "필터: 약점 타입으로 받는 피해 2 감소",
+  filter: "필터: 약점 타입으로 받는 피해 2 감소",
 
-  pixilate:
-    "페어리스킨: 기본 공격을 페어리 타입으로 취급하고 피해 +1",
+  pixilate: "페어리스킨: 기본 공격을 페어리 타입으로 취급하고 피해 +1",
 
-  magicbounce:
-    "매직미러: 자신에게 걸리는 상태이상을 건 상대에게 되돌린다",
+  magicbounce: "매직미러: 자신에게 걸리는 상태이상을 건 상대에게 되돌린다",
 
   // ============================================================
   // 관동 트레이너 시그니처
@@ -396,28 +364,22 @@ export const ABILITY_TEXT = {
   // 성도 트레이너 시그니처
   // ============================================================
   falkner_roost:
-  "날개쉬기: 공격 후 체력 1 회복. 체력이 가득 차 있으면 대신 공격력 +1.",
-  bugsy_furycutter:
-  "연속자르기: 공격할 때마다 공격력 +1. 최대 +3.",
+    "날개쉬기: 공격 후 체력 1 회복. 체력이 가득 차 있으면 대신 공격력 +1.",
+  bugsy_furycutter: "연속자르기: 공격할 때마다 공격력 +1. 최대 +3.",
   whitney_rollout:
-  "구르기: 공격할 때마다 다음 공격의 피해 +1. 피해를 받으면 중첩이 초기화된다.",
+    "구르기: 공격할 때마다 다음 공격의 피해 +1. 피해를 받으면 중첩이 초기화된다.",
   morty_curse:
-  "저주: 나왔을 때 공격력이 가장 높은 상대 포켓몬을 저주한다. 저주받은 포켓몬은 턴 종료마다 피해 1.",
-  chuck_dynamicpunch:
-  "폭발펀치: 공격으로 피해를 준 상대 포켓몬의 공격력 -1.",
-  jasmine_autotomize:
-  "바디퍼지: 도발. 피해를 받을 때마다 공격력 +1. 최대 +3.",
-  pryce_iceshard:
-  "얼음뭉치: 얼어 있는 포켓몬을 공격하면 피해 +2.",
+    "저주: 나왔을 때 공격력이 가장 높은 상대 포켓몬을 저주한다. 저주받은 포켓몬은 턴 종료마다 피해 1.",
+  chuck_dynamicpunch: "폭발펀치: 공격으로 피해를 준 상대 포켓몬의 공격력 -1.",
+  jasmine_autotomize: "바디퍼지: 도발. 피해를 받을 때마다 공격력 +1. 최대 +3.",
+  pryce_iceshard: "얼음뭉치: 얼어 있는 포켓몬을 공격하면 피해 +2.",
   clair_dragonpulse:
-  "용의파동: 상성으로 받는 추가 피해를 받지 않는다. 공격할 때마다 상대 트레이너에게 피해 1.",
+    "용의파동: 상성으로 받는 추가 피해를 받지 않는다. 공격할 때마다 상대 트레이너에게 피해 1.",
   lance_thunder:
-  "번개: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 전기 피해 2를 주고 마비시킨다.",
+    "번개: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 전기 피해 2를 주고 마비시킨다.",
   lance_extremespeed:
-  "신속: 소환된 턴에도 즉시 공격할 수 있다. 소환된 턴 첫 공격은 상대의 전투 반격 피해를 받지 않는다.",
-  lance_outrage:
-  "역린: 공격할 때 공격력 +2. 공격 후 자신이 피해 1을 받는다.",
-  
+    "신속: 소환된 턴에도 즉시 공격할 수 있다. 소환된 턴 첫 공격은 상대의 전투 반격 피해를 받지 않는다.",
+  lance_outrage: "역린: 공격할 때 공격력 +2. 공격 후 자신이 피해 1을 받는다.",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -686,7 +648,7 @@ export const CARDS = [
   }),
   P("eevee", "이브이", "노말", 1, 1, 2, "C", {
     flavor:
-      "샤미드, 쥬피썬더, 부스터, 블래키, 에브이, 님피아, 리피아, 글레이시아로 진화할 수 있다."
+      "샤미드, 쥬피썬더, 부스터, 블래키, 에브이, 님피아, 리피아, 글레이시아로 진화할 수 있다.",
   }),
   P("snorlax", "잠만보", "노말", 6, 3, 10, "E", { ability: "taunt" }),
   P("chansey", "럭키", "노말", 3, 1, 6, "R", { ability: "healer" }),
@@ -1341,7 +1303,6 @@ export const CARDS = [
     ability: "shellarmor",
   }),
 
-
   // ---------- 2세대 ----------
 
   P("bayleef", "베이리프", "풀", 3, 3, 5, "R", {
@@ -1440,7 +1401,6 @@ export const CARDS = [
     evolvesFrom: "porygon",
     ability: "download",
   }),
-
 
   // ---------- 3세대 ----------
 
@@ -1850,7 +1810,7 @@ export const CARDS = [
     text: "내 덱에서 무작위 포켓몬 1장을 손으로 가져온다.",
   },
 
-    // ============================================================
+  // ============================================================
   // v6 신규 기술 카드
   // ============================================================
 
@@ -2575,7 +2535,7 @@ export const CARDS = [
     mega: { atk: 3, hp: 2, ability: "intimidate", reBattlecry: true },
     text: "보만다 전용. +3/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)",
   },
-    // ---------- v6 추가 메가스톤 ----------
+  // ---------- v6 추가 메가스톤 ----------
 
   {
     id: "blastoisinite",
@@ -2921,127 +2881,55 @@ export const TRAINER_CARDS = [
   // 성도지방 시그니처
   // ============================================================
 
-  P(
-    "johto_falkner_pidgeotto",
-    "비상의 피죤",
-    "비행",
-    3,
-    4,
-    5,
-    "L",
-    {
-      ability: "falkner_roost",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_falkner_pidgeotto", "비상의 피죤", "비행", 3, 4, 5, "L", {
+    ability: "falkner_roost",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "johto_bugsy_scyther",
-    "호일의 스라크",
-    "벌레",
-    4,
-    5,
-    5,
-    "L",
-    {
-      ability: "bugsy_furycutter",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_bugsy_scyther", "호일의 스라크", "벌레", 4, 5, 5, "L", {
+    ability: "bugsy_furycutter",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "johto_whitney_miltank",
-    "꼭두의 밀탱크",
-    "노말",
-    4,
-    4,
-    8,
-    "L",
-    {
-      ability: "whitney_rollout",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_whitney_miltank", "꼭두의 밀탱크", "노말", 4, 4, 8, "L", {
+    ability: "whitney_rollout",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "johto_morty_gengar",
-    "유빈의 팬텀",
-    "고스트",
-    5,
-    6,
-    6,
-    "L",
-    {
-      ability: "morty_curse",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_morty_gengar", "유빈의 팬텀", "고스트", 5, 6, 6, "L", {
+    ability: "morty_curse",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "johto_chuck_poliwrath",
-    "사도의 강챙이",
-    "격투",
-    5,
-    6,
-    8,
-    "L",
-    {
-      ability: "chuck_dynamicpunch",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_chuck_poliwrath", "사도의 강챙이", "격투", 5, 6, 8, "L", {
+    ability: "chuck_dynamicpunch",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "johto_jasmine_steelix",
-    "규리의 강철톤",
-    "강철",
-    5,
-    5,
-    10,
-    "L",
-    {
-      ability: "jasmine_autotomize",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_jasmine_steelix", "규리의 강철톤", "강철", 5, 5, 10, "L", {
+    ability: "jasmine_autotomize",
+    signature: true,
+    trainerOnly: true,
+  }),
 
   // 눈보라 + 얼음뭉치 두 특성
-  P(
-    "johto_pryce_mamoswine",
-    "류옹의 맘모꾸리",
-    "얼음",
-    5,
-    6,
-    8,
-    "L",
-    {
-      ability: "blizzard",
-      secondaryAbility: "pryce_iceshard",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_pryce_mamoswine", "류옹의 맘모꾸리", "얼음", 5, 6, 8, "L", {
+    ability: "blizzard",
+    secondaryAbility: "pryce_iceshard",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "johto_clair_kingdra",
-    "이향의 킹드라",
-    "드래곤",
-    5,
-    7,
-    8,
-    "L",
-    {
-      ability: "clair_dragonpulse",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("johto_clair_kingdra", "이향의 킹드라", "드래곤", 5, 7, 8, "L", {
+    ability: "clair_dragonpulse",
+    signature: true,
+    trainerOnly: true,
+  }),
 
   // ============================================================
   // 목호 - 망나뇽 3마리
@@ -3093,185 +2981,86 @@ export const TRAINER_CARDS = [
     },
   ),
 
-    // ============================================================
+  // ============================================================
   // 호연지방 시그니처
   // ============================================================
 
-  P(
-    "hoenn_roxanne_nosepass",
-    "원규의 코코파스",
-    "바위",
-    4,
-    5,
-    9,
-    "L",
-    {
-      ability: "sandstream",
-      secondaryAbility: "sturdy",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_roxanne_nosepass", "원규의 코코파스", "바위", 4, 5, 9, "L", {
+    ability: "sandstream",
+    secondaryAbility: "sturdy",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_brawly_hariyama",
-    "철구의 하리뭉",
-    "격투",
-    4,
-    7,
-    9,
-    "L",
-    {
-      ability: "guts",
-      secondaryAbility: "counter",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_brawly_hariyama", "철구의 하리뭉", "격투", 4, 7, 9, "L", {
+    ability: "guts",
+    secondaryAbility: "counter",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_wattson_manectric",
-    "암페어의 썬더볼트",
-    "전기",
-    4,
-    7,
-    7,
-    "L",
-    {
-      ability: "thunderfang",
-      secondaryAbility: "voltabsorb",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_wattson_manectric", "암페어의 썬더볼트", "전기", 4, 7, 7, "L", {
+    ability: "thunderfang",
+    secondaryAbility: "voltabsorb",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_flannery_camerupt",
-    "민지의 폭타",
-    "불꽃",
-    5,
-    7,
-    9,
-    "L",
-    {
-      ability: "burningfall",
-      secondaryAbility: "flashfire",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_flannery_camerupt", "민지의 폭타", "불꽃", 5, 7, 9, "L", {
+    ability: "burningfall",
+    secondaryAbility: "flashfire",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_norman_slaking",
-    "종길의 게을킹",
-    "노말",
-    5,
-    10,
-    9,
-    "L",
-    {
-      ability: "moxie",
-      secondaryAbility: "sheerforce",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_norman_slaking", "종길의 게을킹", "노말", 5, 10, 9, "L", {
+    ability: "moxie",
+    secondaryAbility: "sheerforce",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_winona_altaria",
-    "은송의 파비코리",
-    "드래곤",
-    5,
-    7,
-    10,
-    "L",
-    {
-      ability: "regenerator",
-      secondaryAbility: "multiscale",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_winona_altaria", "은송의 파비코리", "드래곤", 5, 7, 10, "L", {
+    ability: "regenerator",
+    secondaryAbility: "multiscale",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_tate_solrock",
-    "풍의 솔록",
-    "바위",
-    5,
-    7,
-    8,
-    "L",
-    {
-      ability: "rockblast",
-      secondaryAbility: "levitate",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_tate_solrock", "풍의 솔록", "바위", 5, 7, 8, "L", {
+    ability: "rockblast",
+    secondaryAbility: "levitate",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_liza_lunatone",
-    "란의 루나톤",
-    "에스퍼",
-    5,
-    6,
-    9,
-    "L",
-    {
-      ability: "moonlight",
-      secondaryAbility: "levitate",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_liza_lunatone", "란의 루나톤", "에스퍼", 5, 6, 9, "L", {
+    ability: "moonlight",
+    secondaryAbility: "levitate",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_wallace_milotic",
-    "윤진의 밀로틱",
-    "물",
-    6,
-    7,
-    12,
-    "L",
-    {
-      ability: "primordialsea",
-      secondaryAbility: "marvelscale",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_wallace_milotic", "윤진의 밀로틱", "물", 6, 7, 12, "L", {
+    ability: "primordialsea",
+    secondaryAbility: "marvelscale",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_juan_kingdra",
-    "아단의 킹드라",
-    "드래곤",
-    6,
-    9,
-    10,
-    "L",
-    {
-      ability: "drizzle",
-      secondaryAbility: "swiftswim",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_juan_kingdra", "아단의 킹드라", "드래곤", 6, 9, 10, "L", {
+    ability: "drizzle",
+    secondaryAbility: "swiftswim",
+    signature: true,
+    trainerOnly: true,
+  }),
 
-  P(
-    "hoenn_steven_metagross",
-    "성호의 메타그로스",
-    "강철",
-    7,
-    11,
-    12,
-    "L",
-    {
-      ability: "clearbody",
-      secondaryAbility: "toughclaws",
-      signature: true,
-      trainerOnly: true,
-    },
-  ),
+  P("hoenn_steven_metagross", "성호의 메타그로스", "강철", 7, 11, 12, "L", {
+    ability: "clearbody",
+    secondaryAbility: "toughclaws",
+    signature: true,
+    trainerOnly: true,
+  }),
 
   {
     id: "hoenn_steven_metagrossite",
@@ -3292,8 +3081,7 @@ export const TRAINER_CARDS = [
       secondaryAbility: "clearbody",
     },
 
-    text:
-      "성호의 메타그로스 전용. +4/+4, 단단한발톱과 클리어바디를 얻는다. (게임당 메가진화 1회)",
+    text: "성호의 메타그로스 전용. +4/+4, 단단한발톱과 클리어바디를 얻는다. (게임당 메가진화 1회)",
 
     trainerOnly: true,
   },
@@ -3653,7 +3441,7 @@ export const DEX = {
   croagunk: 453,
   toxicroak: 454,
   carnivine: 455,
-    // v6 1~3세대 확장
+  // v6 1~3세대 확장
   squirtle: 7,
   wartortle: 8,
   blastoise: 9,
@@ -3817,7 +3605,7 @@ export const ITEM_SPRITE = {
   darkpulse: "tm-dark",
   ironhead: "tm-steel",
   dragonclaw: "tm-dragon",
-    // v6 신규 기술
+  // v6 신규 기술
   sheercold: "tm-ice",
   fissure: "tm-ground",
   horndrill: "tm-normal",

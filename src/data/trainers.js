@@ -613,16 +613,11 @@ export const JOHTO_TRAINERS = [
       "하늘을 지배하는 건 비행 포켓몬이다!",
     ],
 
-    winLines: [
-      "바람의 흐름을 읽지 못했군.",
-    ],
+    winLines: ["바람의 흐름을 읽지 못했군."],
 
-    loseLines: [
-      "내 날개가... 꺾이다니!",
-    ],
+    loseLines: ["내 날개가... 꺾이다니!"],
 
-    signatureCard:
-      "johto_falkner_pidgeotto",
+    signatureCard: "johto_falkner_pidgeotto",
 
     deck: [
       "johto_falkner_pidgeotto",
@@ -689,16 +684,11 @@ export const JOHTO_TRAINERS = [
       "내 연구의 성과를 보여줄게!",
     ],
 
-    winLines: [
-      "벌레 포켓몬의 힘, 이제 알겠지?",
-    ],
+    winLines: ["벌레 포켓몬의 힘, 이제 알겠지?"],
 
-    loseLines: [
-      "아직 연구가 부족했나 봐...",
-    ],
+    loseLines: ["아직 연구가 부족했나 봐..."],
 
-    signatureCard:
-      "johto_bugsy_scyther",
+    signatureCard: "johto_bugsy_scyther",
 
     deck: [
       "johto_bugsy_scyther",
@@ -765,16 +755,11 @@ export const JOHTO_TRAINERS = [
       "금방 끝날 거야!",
     ],
 
-    winLines: [
-      "역시 내 포켓몬들이 최고야!",
-    ],
+    winLines: ["역시 내 포켓몬들이 최고야!"],
 
-    loseLines: [
-      "으아앙! 졌잖아!",
-    ],
+    loseLines: ["으아앙! 졌잖아!"],
 
-    signatureCard:
-      "johto_whitney_miltank",
+    signatureCard: "johto_whitney_miltank",
 
     deck: [
       "johto_whitney_miltank",
@@ -842,16 +827,11 @@ export const JOHTO_TRAINERS = [
       "네가 어디까지 볼 수 있는지 시험해보겠어.",
     ],
 
-    winLines: [
-      "아직 보이지 않는 것이 많은 모양이군.",
-    ],
+    winLines: ["아직 보이지 않는 것이 많은 모양이군."],
 
-    loseLines: [
-      "네가 본 미래가... 더 멀리 있었군.",
-    ],
+    loseLines: ["네가 본 미래가... 더 멀리 있었군."],
 
-    signatureCard:
-      "johto_morty_gengar",
+    signatureCard: "johto_morty_gengar",
 
     deck: [
       "johto_morty_gengar",
@@ -913,21 +893,13 @@ export const JOHTO_TRAINERS = [
 
     requires: "johto_morty",
 
-    introLines: [
-      "포켓몬도 트레이너도 단련이 전부다!",
-      "자, 정면승부다!",
-    ],
+    introLines: ["포켓몬도 트레이너도 단련이 전부다!", "자, 정면승부다!"],
 
-    winLines: [
-      "수련이 부족하군!",
-    ],
+    winLines: ["수련이 부족하군!"],
 
-    loseLines: [
-      "좋은 주먹이었다!",
-    ],
+    loseLines: ["좋은 주먹이었다!"],
 
-    signatureCard:
-      "johto_chuck_poliwrath",
+    signatureCard: "johto_chuck_poliwrath",
 
     deck: [
       "johto_chuck_poliwrath",
@@ -994,16 +966,11 @@ export const JOHTO_TRAINERS = [
       "쉽게 무너지지는 않을 거예요.",
     ],
 
-    winLines: [
-      "강철의 힘이 버텨냈군요.",
-    ],
+    winLines: ["강철의 힘이 버텨냈군요."],
 
-    loseLines: [
-      "강철보다 강한 마음이군요.",
-    ],
+    loseLines: ["강철보다 강한 마음이군요."],
 
-    signatureCard:
-      "johto_jasmine_steelix",
+    signatureCard: "johto_jasmine_steelix",
 
     deck: [
       "johto_jasmine_steelix",
@@ -1070,16 +1037,11 @@ export const JOHTO_TRAINERS = [
       "차가운 얼음은 쉽게 녹지 않는다.",
     ],
 
-    winLines: [
-      "경험의 차이를 느꼈겠지.",
-    ],
+    winLines: ["경험의 차이를 느꼈겠지."],
 
-    loseLines: [
-      "훌륭하구나. 젊은 힘도 무시할 수 없군.",
-    ],
+    loseLines: ["훌륭하구나. 젊은 힘도 무시할 수 없군."],
 
-    signatureCard:
-      "johto_pryce_mamoswine",
+    signatureCard: "johto_pryce_mamoswine",
 
     deck: [
       "johto_pryce_mamoswine",
@@ -1145,16 +1107,11 @@ export const JOHTO_TRAINERS = [
       "여기까지 온 실력이 진짜인지 확인해주겠어.",
     ],
 
-    winLines: [
-      "역시 아직 나를 넘기엔 부족해.",
-    ],
+    winLines: ["역시 아직 나를 넘기엔 부족해."],
 
-    loseLines: [
-      "내가... 졌다고?",
-    ],
+    loseLines: ["내가... 졌다고?"],
 
-    signatureCard:
-      "johto_clair_kingdra",
+    signatureCard: "johto_clair_kingdra",
 
     deck: [
       "johto_clair_kingdra",
@@ -1219,13 +1176,9 @@ export const JOHTO_TRAINERS = [
       "최강의 드래곤 포켓몬들과 상대해보도록 하지.",
     ],
 
-    winLines: [
-      "강함만으로 챔피언을 넘을 수는 없다.",
-    ],
+    winLines: ["강함만으로 챔피언을 넘을 수는 없다."],
 
-    loseLines: [
-      "훌륭하다. 네가 새로운 강자군.",
-    ],
+    loseLines: ["훌륭하다. 네가 새로운 강자군."],
 
     signatureCards: [
       "johto_lance_dragonite_thunder",
@@ -1297,20 +1250,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.92,
 
-    reward: 320,
+    reward: 250,
     hp: 68,
 
     requires: null,
 
-    introLines: [
-      "바위처럼 단단한 전략을 보여드리겠습니다!",
-    ],
-    winLines: [
-      "아직 호연의 싸움에 익숙하지 않은 것 같군요.",
-    ],
-    loseLines: [
-      "훌륭합니다. 하지만 이제 시작이에요.",
-    ],
+    introLines: ["바위처럼 단단한 전략을 보여드리겠습니다!"],
+    winLines: ["아직 호연의 싸움에 익숙하지 않은 것 같군요."],
+    loseLines: ["훌륭합니다. 하지만 이제 시작이에요."],
 
     signatureCard: "hoenn_roxanne_nosepass",
 
@@ -1367,20 +1314,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.93,
 
-    reward: 340,
+    reward: 270,
     hp: 70,
 
     requires: "hoenn_roxanne",
 
-    introLines: [
-      "큰 파도처럼 한 번에 밀어붙여주지!",
-    ],
-    winLines: [
-      "아직 파도를 타는 법을 모르는군!",
-    ],
-    loseLines: [
-      "이런 파도는 처음인데!",
-    ],
+    introLines: ["큰 파도처럼 한 번에 밀어붙여주지!"],
+    winLines: ["아직 파도를 타는 법을 모르는군!"],
+    loseLines: ["이런 파도는 처음인데!"],
 
     signatureCard: "hoenn_brawly_hariyama",
 
@@ -1438,20 +1379,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.94,
 
-    reward: 360,
+    reward: 300,
     hp: 72,
 
     requires: "hoenn_brawly",
 
-    introLines: [
-      "왓핫하! 전기로 전부 날려버리겠네!",
-    ],
-    winLines: [
-      "왓핫하! 제대로 감전됐구먼!",
-    ],
-    loseLines: [
-      "왓핫하! 정말 대단한 승부였네!",
-    ],
+    introLines: ["왓핫하! 전기로 전부 날려버리겠네!"],
+    winLines: ["왓핫하! 제대로 감전됐구먼!"],
+    loseLines: ["왓핫하! 정말 대단한 승부였네!"],
 
     signatureCard: "hoenn_wattson_manectric",
 
@@ -1510,20 +1445,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.94,
 
-    reward: 380,
+    reward: 320,
     hp: 74,
 
     requires: "hoenn_wattson",
 
-    introLines: [
-      "불타오르는 승부를 보여주겠어!",
-    ],
-    winLines: [
-      "이게 용암체육관의 뜨거움이야!",
-    ],
-    loseLines: [
-      "너무 뜨거워서 내가 먼저 타버렸네...",
-    ],
+    introLines: ["불타오르는 승부를 보여주겠어!"],
+    winLines: ["이게 용암체육관의 뜨거움이야!"],
+    loseLines: ["너무 뜨거워서 내가 먼저 타버렸네..."],
 
     signatureCard: "hoenn_flannery_camerupt",
 
@@ -1581,20 +1510,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.95,
 
-    reward: 400,
+    reward: 340,
     hp: 76,
 
     requires: "hoenn_flannery",
 
-    introLines: [
-      "여기까지 왔다면 실력으로 증명해봐라.",
-    ],
-    winLines: [
-      "강함에는 아직 더 배울 것이 있다.",
-    ],
-    loseLines: [
-      "훌륭하군. 네 실력을 인정하마.",
-    ],
+    introLines: ["여기까지 왔다면 실력으로 증명해봐라."],
+    winLines: ["강함에는 아직 더 배울 것이 있다."],
+    loseLines: ["훌륭하군. 네 실력을 인정하마."],
 
     signatureCard: "hoenn_norman_slaking",
 
@@ -1654,20 +1577,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.95,
 
-    reward: 420,
+    reward: 360,
     hp: 78,
 
     requires: "hoenn_norman",
 
-    introLines: [
-      "하늘을 지배하는 포켓몬의 아름다움을 보여드리죠.",
-    ],
-    winLines: [
-      "하늘에서 내려다보면 승부의 흐름이 보인답니다.",
-    ],
-    loseLines: [
-      "당신은 제 예상보다 더 높이 날았군요.",
-    ],
+    introLines: ["하늘을 지배하는 포켓몬의 아름다움을 보여드리죠."],
+    winLines: ["하늘에서 내려다보면 승부의 흐름이 보인답니다."],
+    loseLines: ["당신은 제 예상보다 더 높이 날았군요."],
 
     signatureCard: "hoenn_winona_altaria",
 
@@ -1726,7 +1643,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.96,
 
-    reward: 450,
+    reward: 380,
     hp: 80,
 
     requires: "hoenn_winona",
@@ -1735,17 +1652,10 @@ export const HOENN_TRAINERS = [
       "우리 둘의 마음은 하나!",
       "생각하지 않아도 서로의 움직임을 알 수 있어!",
     ],
-    winLines: [
-      "우리의 호흡을 깨뜨리긴 어려울걸!",
-    ],
-    loseLines: [
-      "우리 둘의 마음을... 읽은 거야?",
-    ],
+    winLines: ["우리의 호흡을 깨뜨리긴 어려울걸!"],
+    loseLines: ["우리 둘의 마음을... 읽은 거야?"],
 
-    signatureCards: [
-      "hoenn_tate_solrock",
-      "hoenn_liza_lunatone",
-    ],
+    signatureCards: ["hoenn_tate_solrock", "hoenn_liza_lunatone"],
 
     deck: [
       "hoenn_tate_solrock",
@@ -1801,20 +1711,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.97,
 
-    reward: 480,
+    reward: 400,
     hp: 82,
 
     requires: "hoenn_tate_liza",
 
-    introLines: [
-      "물의 아름다움과 강함을 동시에 보여드리죠.",
-    ],
-    winLines: [
-      "아름다운 승부였습니다.",
-    ],
-    loseLines: [
-      "당신의 승리가 더욱 아름답군요.",
-    ],
+    introLines: ["물의 아름다움과 강함을 동시에 보여드리죠."],
+    winLines: ["아름다운 승부였습니다."],
+    loseLines: ["당신의 승리가 더욱 아름답군요."],
 
     signatureCard: "hoenn_wallace_milotic",
 
@@ -1872,20 +1776,14 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.97,
 
-    reward: 520,
+    reward: 420,
     hp: 84,
 
     requires: "hoenn_wallace",
 
-    introLines: [
-      "루네의 물은 깊고도 아름답지. 그 깊이를 견뎌보게.",
-    ],
-    winLines: [
-      "아직 물의 흐름을 완전히 읽지는 못했군.",
-    ],
-    loseLines: [
-      "훌륭하군! 참으로 우아한 승리일세.",
-    ],
+    introLines: ["루네의 물은 깊고도 아름답지. 그 깊이를 견뎌보게."],
+    winLines: ["아직 물의 흐름을 완전히 읽지는 못했군."],
+    loseLines: ["훌륭하군! 참으로 우아한 승리일세."],
 
     signatureCard: "hoenn_juan_kingdra",
 
@@ -1944,7 +1842,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.98,
 
-    reward: 600,
+    reward: 450,
     hp: 90,
 
     requires: "hoenn_juan",
@@ -1953,12 +1851,8 @@ export const HOENN_TRAINERS = [
       "여기까지 온 트레이너라면 설명은 필요 없겠지.",
       "나와 내 포켓몬들의 모든 힘을 보여주겠다.",
     ],
-    winLines: [
-      "좋은 승부였다. 다시 도전해주길 기다리지.",
-    ],
-    loseLines: [
-      "훌륭하다. 네가 호연의 새로운 최강자다.",
-    ],
+    winLines: ["좋은 승부였다. 다시 도전해주길 기다리지."],
+    loseLines: ["훌륭하다. 네가 호연의 새로운 최강자다."],
 
     signatureCard: "hoenn_steven_metagross",
 
@@ -2020,10 +1914,4 @@ export const TRAINERS = [
   ...HOENN_TRAINERS,
 ];
 
-export const TRAINER_MAP =
-  Object.fromEntries(
-    TRAINERS.map((t) => [
-      t.id,
-      t,
-    ]),
-  );
+export const TRAINER_MAP = Object.fromEntries(TRAINERS.map((t) => [t.id, t]));

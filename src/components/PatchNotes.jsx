@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { PATCH_NOTES } from '../patchNotes.js';
-import { playSfx } from '../audio.js';
+import React, { useState } from "react";
+import { PATCH_NOTES } from "../patchNotes.js";
+import { playSfx } from "../audio.js";
 
 export default function PatchNotes() {
   const [open, setOpen] = useState(false);
@@ -9,8 +9,11 @@ export default function PatchNotes() {
     <>
       <button
         className="btn-patchnotes"
-        onMouseEnter={() => playSfx('cursor')}
-        onClick={() => { playSfx('click'); setOpen((v) => !v); }}
+        onMouseEnter={() => playSfx("cursor")}
+        onClick={() => {
+          playSfx("click");
+          setOpen((v) => !v);
+        }}
         title="패치노트"
       >
         📋 v{PATCH_NOTES[0].version}
@@ -19,7 +22,15 @@ export default function PatchNotes() {
         <div className="patchnotes-panel">
           <div className="patchnotes-header">
             <span>패치노트</span>
-            <button className="btn-ghost small" onClick={() => { playSfx('click'); setOpen(false); }}>✕</button>
+            <button
+              className="btn-ghost small"
+              onClick={() => {
+                playSfx("click");
+                setOpen(false);
+              }}
+            >
+              ✕
+            </button>
           </div>
           <div className="patchnotes-body">
             {PATCH_NOTES.map((entry) => (
@@ -30,7 +41,9 @@ export default function PatchNotes() {
                   <span className="patchnotes-date">{entry.date}</span>
                 </div>
                 <ul>
-                  {entry.changes.map((c, i) => <li key={i}>{c}</li>)}
+                  {entry.changes.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
                 </ul>
               </div>
             ))}

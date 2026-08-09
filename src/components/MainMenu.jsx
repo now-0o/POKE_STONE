@@ -1,27 +1,14 @@
-import React, {
-  useState,
-} from "react";
+import React, { useState } from "react";
 
-import {
-  TRAINERS_BY_REGION,
-  TRAINER_MAP,
-} from "../data/trainers.js";
+import { TRAINERS_BY_REGION, TRAINER_MAP } from "../data/trainers.js";
 
-import {
-  resetSave,
-} from "../state/save.js";
+import { resetSave } from "../state/save.js";
 
-import {
-  TrainerSprite,
-} from "./Card.jsx";
+import { TrainerSprite } from "./Card.jsx";
 
-import {
-  UI_SPRITES,
-} from "../data/cards.js";
+import { UI_SPRITES } from "../data/cards.js";
 
-import {
-  playSfx,
-} from "../audio.js";
+import { playSfx } from "../audio.js";
 
 const REGION_LABELS = {
   kanto: {
@@ -47,56 +34,36 @@ export default function MainMenu({
   onSaveChange,
   onLogout,
 }) {
-  const [
-    confirmReset,
-    setConfirmReset,
-  ] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   // null = 지방 선택 화면
-  const [
-    selectedRegion,
-    setSelectedRegion,
-  ] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState(null);
 
-  const deckReady =
-    save.deck.length === 30;
+  const deckReady = save.deck.length === 30;
 
   // 레드 격파 후 성도 해금
-  const johtoUnlocked =
-  save.adminMode ||
-  (save.wins?.champion || 0) > 0;
+  const johtoUnlocked = save.adminMode || (save.wins?.champion || 0) > 0;
 
   // 목호 격파 후 호연 해금
-  const hoennUnlocked =
-    save.adminMode ||
-    (save.wins?.johto_lance || 0) > 0;
+  const hoennUnlocked = save.adminMode || (save.wins?.johto_lance || 0) > 0;
 
   async function goFullscreen() {
-    const el =
-      document.documentElement;
+    const el = document.documentElement;
 
     try {
       if (el.requestFullscreen) {
         await el.requestFullscreen({
           navigationUI: "hide",
         });
-      } else if (
-        el.webkitRequestFullscreen
-      ) {
+      } else if (el.webkitRequestFullscreen) {
         el.webkitRequestFullscreen();
-      } else if (
-        el.msRequestFullscreen
-      ) {
+      } else if (el.msRequestFullscreen) {
         el.msRequestFullscreen();
       }
 
-      if (
-        screen.orientation?.lock
-      ) {
+      if (screen.orientation?.lock) {
         try {
-          await screen.orientation.lock(
-            "landscape",
-          );
+          await screen.orientation.lock("landscape");
         } catch {
           // 지원하지 않는 브라우저는 무시
         }
@@ -107,18 +74,12 @@ export default function MainMenu({
   }
 
   function selectRegion(region) {
-    if (
-      region === "johto" &&
-      !johtoUnlocked
-    ) {
+    if (region === "johto" && !johtoUnlocked) {
       playSfx("buzzer");
       return;
     }
 
-    if (
-      region === "hoenn" &&
-      !hoennUnlocked
-    ) {
+    if (region === "hoenn" && !hoennUnlocked) {
       playSfx("buzzer");
       return;
     }
@@ -131,30 +92,21 @@ export default function MainMenu({
     if (save.adminMode) {
       return true;
     }
-  
+
     if (!t.requires) {
       return true;
     }
-  
-    return (
-      (save.wins?.[t.requires] || 0) > 0
-    );
+
+    return (save.wins?.[t.requires] || 0) > 0;
   }
 
-  const trainers =
-    selectedRegion
-      ? TRAINERS_BY_REGION[
-          selectedRegion
-        ]
-      : [];
+  const trainers = selectedRegion ? TRAINERS_BY_REGION[selectedRegion] : [];
 
   return (
     <div className="main-menu">
       <button
         className="btn-fullscreen"
-        onMouseEnter={() =>
-          playSfx("cursor")
-        }
+        onMouseEnter={() => playSfx("cursor")}
         onClick={() => {
           playSfx("click");
           goFullscreen();
@@ -165,13 +117,9 @@ export default function MainMenu({
       </button>
 
       <div className="title-block">
-        <h1 className="game-title">
-          POKE STONE
-        </h1>
+        <h1 className="game-title">POKE STONE</h1>
 
-        <p className="game-subtitle">
-          FAN-MADE CARD BATTLE
-        </p>
+        <p className="game-subtitle">FAN-MADE CARD BATTLE</p>
       </div>
 
       <div className="menu-money">
@@ -197,7 +145,6 @@ export default function MainMenu({
             height={22}
             draggable={false}
           />
-
           팩 {save.packsOpened}개 개봉
         </span>
       </div>
@@ -207,110 +154,65 @@ export default function MainMenu({
           ========================================= */}
       {!selectedRegion && (
         <>
-          <div className="region-title">
-            도전할 지방을 선택하세요
-          </div>
+          <div className="region-title">도전할 지방을 선택하세요</div>
 
           <div className="region-select">
             <button
               className="region-card"
-              onMouseEnter={() =>
-                playSfx("cursor")
-              }
-              onClick={() =>
-                selectRegion("kanto")
-              }
+              onMouseEnter={() => playSfx("cursor")}
+              onClick={() => selectRegion("kanto")}
             >
-
               <span className="region-info">
-                <span className="region-name">
-                  관동지방
-                </span>
+                <span className="region-name">관동지방</span>
 
-                <span className="region-sub">
-                  KANTO
-                </span>
+                <span className="region-sub">KANTO</span>
 
-                <span className="region-desc">
-                  체육관 로드 · 챔피언 레드
-                </span>
+                <span className="region-desc">체육관 로드 · 챔피언 레드</span>
               </span>
 
-              <span className="region-go">
-                선택 ▶
-              </span>
+              <span className="region-go">선택 ▶</span>
             </button>
 
             <button
               className={[
                 "region-card",
-                !johtoUnlocked
-                  ? "region-locked"
-                  : "region-johto",
+                !johtoUnlocked ? "region-locked" : "region-johto",
               ].join(" ")}
-              onMouseEnter={() =>
-                johtoUnlocked &&
-                playSfx("cursor")
-              }
-              onClick={() =>
-                selectRegion("johto")
-              }
+              onMouseEnter={() => johtoUnlocked && playSfx("cursor")}
+              onClick={() => selectRegion("johto")}
             >
-
               <span className="region-info">
-                <span className="region-name">
-                  성도지방
-                </span>
+                <span className="region-name">성도지방</span>
 
-                <span className="region-sub">
-                  JOHTO
-                </span>
+                <span className="region-sub">JOHTO</span>
 
-                <span className="region-desc">
-                  강한 AI · 안정적인 덱
-                </span>
+                <span className="region-desc">강한 AI · 안정적인 덱</span>
 
                 {!johtoUnlocked && (
                   <span className="region-lock-text">
-                    🔒 챔피언 레드 격파 후
-                    해금
+                    🔒 챔피언 레드 격파 후 해금
                   </span>
                 )}
               </span>
 
               <span className="region-go">
-                {johtoUnlocked
-                  ? "선택 ▶"
-                  : "LOCK"}
+                {johtoUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
             <button
               className={[
                 "region-card",
-                !hoennUnlocked
-                  ? "region-locked"
-                  : "region-hoenn",
+                !hoennUnlocked ? "region-locked" : "region-hoenn",
               ].join(" ")}
-              onMouseEnter={() =>
-                hoennUnlocked &&
-                playSfx("cursor")
-              }
-              onClick={() =>
-                selectRegion("hoenn")
-              }
+              onMouseEnter={() => hoennUnlocked && playSfx("cursor")}
+              onClick={() => selectRegion("hoenn")}
             >
               <span className="region-info">
-                <span className="region-name">
-                  호연지방
-                </span>
+                <span className="region-name">호연지방</span>
 
-                <span className="region-sub">
-                  HOENN
-                </span>
+                <span className="region-sub">HOENN</span>
 
-                <span className="region-desc">
-                  최상급 AI · 메가진화 · 전설
-                </span>
+                <span className="region-desc">최상급 AI · 메가진화 · 전설</span>
 
                 {!hoennUnlocked && (
                   <span className="region-lock-text">
@@ -320,9 +222,7 @@ export default function MainMenu({
               </span>
 
               <span className="region-go">
-                {hoennUnlocked
-                  ? "선택 ▶"
-                  : "LOCK"}
+                {hoennUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
           </div>
@@ -346,58 +246,35 @@ export default function MainMenu({
             </button>
 
             <div>
-              <strong>
-              {
-                REGION_LABELS[
-                  selectedRegion
-                ]?.name
-              }
-            </strong>
+              <strong>{REGION_LABELS[selectedRegion]?.name}</strong>
 
-            <span className="trainer-region-sub">
-              {" "}
-              {
-                REGION_LABELS[
-                  selectedRegion
-                ]?.sub
-              }
-            </span>
+              <span className="trainer-region-sub">
+                {" "}
+                {REGION_LABELS[selectedRegion]?.sub}
+              </span>
             </div>
           </div>
 
           <div className="trainer-list">
             {trainers.map((t) => {
-              const wins =
-                save.wins?.[t.id] ||
-                0;
+              const wins = save.wins?.[t.id] || 0;
 
-              const progressUnlocked =
-                trainerUnlocked(t);
+              const progressUnlocked = trainerUnlocked(t);
 
-              const canBattle =
-                deckReady &&
-                progressUnlocked;
+              const canBattle = deckReady && progressUnlocked;
 
-              const requiredTrainer =
-                t.requires
-                  ? TRAINER_MAP[
-                      t.requires
-                    ]
-                  : null;
+              const requiredTrainer = t.requires
+                ? TRAINER_MAP[t.requires]
+                : null;
 
               return (
                 <button
                   key={t.id}
                   className={[
                     "trainer-card",
-                    !canBattle
-                      ? "btn-locked"
-                      : "",
+                    !canBattle ? "btn-locked" : "",
                   ].join(" ")}
-                  onMouseEnter={() =>
-                    canBattle &&
-                    playSfx("cursor")
-                  }
+                  onMouseEnter={() => canBattle && playSfx("cursor")}
                   onClick={() => {
                     if (canBattle) {
                       playSfx("click");
@@ -408,55 +285,41 @@ export default function MainMenu({
                   }}
                 >
                   <TrainerSprite
-                    spriteKey={
-                      t.sprite
-                    }
+                    spriteKey={t.sprite}
                     emoji={t.emoji}
                     size={56}
                   />
 
                   <span className="trainer-info">
-                    <span className="trainer-name">
-                      {t.name}
-                    </span>
+                    <span className="trainer-name">{t.name}</span>
 
                     <span className="trainer-meta">
                       {progressUnlocked ? (
                         <>
                           <img
                             className="res-icon small"
-                            src={
-                              UI_SPRITES.coin
-                            }
+                            src={UI_SPRITES.coin}
                             alt=""
                             width={14}
                             height={14}
-                            draggable={
-                              false
-                            }
+                            draggable={false}
                           />
 
                           {t.reward}
 
-                          {wins > 0 &&
-                            ` · 승리 ${wins}회`}
+                          {wins > 0 && ` · 승리 ${wins}회`}
                         </>
                       ) : (
                         <>
-                          🔒{" "}
-                          {requiredTrainer
-                            ?.name ||
-                            "이전 트레이너"}{" "}
-                          격파 필요
+                          🔒 {requiredTrainer?.name || "이전 트레이너"} 격파
+                          필요
                         </>
                       )}
                     </span>
                   </span>
 
                   <span className="trainer-go">
-                    {canBattle
-                      ? "배틀 ▶"
-                      : "LOCK"}
+                    {canBattle ? "배틀 ▶" : "LOCK"}
                   </span>
                 </button>
               );
@@ -467,17 +330,14 @@ export default function MainMenu({
 
       {!deckReady && (
         <p className="deck-warning center">
-          덱이 30장이 아니에요. 덱
-          편집에서 채워주세요!
+          덱이 30장이 아니에요. 덱 편집에서 채워주세요!
         </p>
       )}
 
       <div className="menu-buttons">
         <button
           className="btn-secondary with-icon"
-          onMouseEnter={() =>
-            playSfx("cursor")
-          }
+          onMouseEnter={() => playSfx("cursor")}
           onClick={() => {
             playSfx("slide");
             onShop();
@@ -491,15 +351,12 @@ export default function MainMenu({
             height={20}
             draggable={false}
           />
-
           카드팩 상점
         </button>
 
         <button
           className="btn-secondary with-icon"
-          onMouseEnter={() =>
-            playSfx("cursor")
-          }
+          onMouseEnter={() => playSfx("cursor")}
           onClick={() => {
             playSfx("pc");
             onDeck();
@@ -513,7 +370,6 @@ export default function MainMenu({
             height={20}
             draggable={false}
           />
-
           컬렉션 · 덱
         </button>
       </div>
@@ -529,7 +385,6 @@ export default function MainMenu({
             {username}님
           </span>
         )}
-
         {onLogout && (
           <button
             className="btn-ghost small"
@@ -540,10 +395,7 @@ export default function MainMenu({
           >
             로그아웃
           </button>
-        )}
-
-        {" "}
-
+        )}{" "}
         {!confirmReset ? (
           <button
             className="btn-ghost small"
@@ -557,22 +409,18 @@ export default function MainMenu({
         ) : (
           <span>
             정말 초기화할까요?{" "}
-
             <button
               className="btn-ghost small danger"
               onClick={() => {
                 playSfx("click");
                 resetSave();
                 setConfirmReset(false);
-                setSelectedRegion(
-                  null,
-                );
+                setSelectedRegion(null);
                 onSaveChange(true);
               }}
             >
               네, 전부 삭제
             </button>{" "}
-
             <button
               className="btn-ghost small"
               onClick={() => {

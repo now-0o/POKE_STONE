@@ -164,39 +164,28 @@ const SIGNATURE_CRY_FILE = {
   // =========================
   // 성도
   // =========================
-  johto_falkner_pidgeotto:
-    "pidgeotto",
+  johto_falkner_pidgeotto: "pidgeotto",
 
-  johto_bugsy_scyther:
-    "scyther",
+  johto_bugsy_scyther: "scyther",
 
-  johto_whitney_miltank:
-    "miltank",
+  johto_whitney_miltank: "miltank",
 
-  johto_morty_gengar:
-    "gengar",
+  johto_morty_gengar: "gengar",
 
-  johto_chuck_poliwrath:
-    "poliwrath",
+  johto_chuck_poliwrath: "poliwrath",
 
-  johto_jasmine_steelix:
-    "steelix",
+  johto_jasmine_steelix: "steelix",
 
-  johto_pryce_mamoswine:
-    "mamoswine",
+  johto_pryce_mamoswine: "mamoswine",
 
-  johto_clair_kingdra:
-    "kingdra",
+  johto_clair_kingdra: "kingdra",
 
   // 목호 - 세 카드 모두 같은 망나뇽 울음소리
-  johto_lance_dragonite_thunder:
-    "dragonite",
+  johto_lance_dragonite_thunder: "dragonite",
 
-  johto_lance_dragonite_extremespeed:
-    "dragonite",
+  johto_lance_dragonite_extremespeed: "dragonite",
 
-  johto_lance_dragonite_outrage:
-    "dragonite",
+  johto_lance_dragonite_outrage: "dragonite",
 };
 
 // 파일명이 카드 ID와 다른 경우만 매핑

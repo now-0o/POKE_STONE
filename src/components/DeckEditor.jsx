@@ -1,28 +1,49 @@
-import React, {
-  useState,
-  useMemo,
-  useRef,
-  useLayoutEffect,
-} from 'react';
-import { CARDS, CARD_MAP, MAX_COPIES, TYPE_COLORS, RARITY_NAME, DEX } from '../data/cards.js';
-import { persist } from '../state/save.js';
-import { HandCard, Sprite, useInspect } from './Card.jsx';
-import { playSfx } from '../audio.js';
+import React, { useState, useMemo, useRef, useLayoutEffect } from "react";
+import {
+  CARDS,
+  CARD_MAP,
+  MAX_COPIES,
+  TYPE_COLORS,
+  RARITY_NAME,
+  DEX,
+} from "../data/cards.js";
+import { persist } from "../state/save.js";
+import { HandCard, Sprite, useInspect } from "./Card.jsx";
+import { playSfx } from "../audio.js";
 
-const TYPE_FILTERS = ['전체', '물', '불꽃', '풀', '전기', '얼음', '격투', '독', '땅', '비행', '에스퍼', '벌레', '바위', '고스트', '드래곤', '악', '강철', '페어리', '노말', '기술', '도구'];
+const TYPE_FILTERS = [
+  "전체",
+  "물",
+  "불꽃",
+  "풀",
+  "전기",
+  "얼음",
+  "격투",
+  "독",
+  "땅",
+  "비행",
+  "에스퍼",
+  "벌레",
+  "바위",
+  "고스트",
+  "드래곤",
+  "악",
+  "강철",
+  "페어리",
+  "노말",
+  "기술",
+  "도구",
+];
 
 export default function DeckEditor({ save, onSaveChange, onBack }) {
-  const [filter, setFilter] = useState('전체');
-  const [search, setSearch] =
-  useState("");
-  const [sortMode, setSortMode] = useState('cost'); // 'dex' | 'cost' | 'rarity_desc' | 'rarity_asc'
+  const [filter, setFilter] = useState("전체");
+  const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState("cost"); // 'dex' | 'cost' | 'rarity_desc' | 'rarity_asc'
   const { inspect, press, clickSuppressed } = useInspect();
 
-  const activePreset =
-  save.activeDeckPreset || 0;
+  const activePreset = save.activeDeckPreset || 0;
 
-  const presets =
-    save.deckPresets || [];
+  const presets = save.deckPresets || [];
 
   const deckCounts = useMemo(() => {
     const c = {};
@@ -31,34 +52,33 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }, [save.deck]);
 
   const ownedCards = useMemo(() => {
-    return CARDS
-      .filter((card) => (save.collection[card.id] || 0) > 0)
-      .filter((card) => filter === '전체' || card.type === filter)
+    return CARDS.filter((card) => (save.collection[card.id] || 0) > 0)
+      .filter((card) => filter === "전체" || card.type === filter)
       .filter((card) => {
-        const q =
-          search
-            .trim()
-            .toLowerCase();
+        const q = search.trim().toLowerCase();
 
         if (!q) return true;
 
         return (
-          card.name
-            .toLowerCase()
-            .includes(q) ||
-          card.id
-            .toLowerCase()
-            .includes(q)
+          card.name.toLowerCase().includes(q) ||
+          card.id.toLowerCase().includes(q)
         );
       })
       .sort((a, b) => {
         const RARITY_ORDER = { C: 0, R: 1, E: 2, L: 3 };
-        if (sortMode === 'dex') {
-          const da = DEX[a.id] ?? 99999, db = DEX[b.id] ?? 99999;
+        if (sortMode === "dex") {
+          const da = DEX[a.id] ?? 99999,
+            db = DEX[b.id] ?? 99999;
           return da - db || a.name.localeCompare(b.name);
         }
-        if (sortMode === 'rarity_desc') return (RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]) || (a.cost - b.cost);
-        if (sortMode === 'rarity_asc') return (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || (a.cost - b.cost);
+        if (sortMode === "rarity_desc")
+          return (
+            RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || a.cost - b.cost
+          );
+        if (sortMode === "rarity_asc")
+          return (
+            RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.cost - b.cost
+          );
         return a.cost - b.cost || a.name.localeCompare(b.name); // 'cost' (기본)
       });
   }, [save.collection, filter, search, sortMode]);
@@ -72,14 +92,9 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
     const rects = new Map();
 
-    grid
-      .querySelectorAll("[data-card-id]")
-      .forEach((el) => {
-        rects.set(
-          el.dataset.cardId,
-          el.getBoundingClientRect(),
-        );
-      });
+    grid.querySelectorAll("[data-card-id]").forEach((el) => {
+      rects.set(el.dataset.cardId, el.getBoundingClientRect());
+    });
 
     previousCardRectsRef.current = rects;
   }
@@ -88,103 +103,74 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     const grid = collectionGridRef.current;
     if (!grid) return;
 
-    if (
-      window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches
-    ) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
 
-    const previousRects =
-      previousCardRectsRef.current;
+    const previousRects = previousCardRectsRef.current;
 
-    grid
-      .querySelectorAll("[data-card-id]")
-      .forEach((el) => {
-        const cardId =
-          el.dataset.cardId;
+    grid.querySelectorAll("[data-card-id]").forEach((el) => {
+      const cardId = el.dataset.cardId;
 
-        const newRect =
-          el.getBoundingClientRect();
+      const newRect = el.getBoundingClientRect();
 
-        const oldRect =
-          previousRects.get(cardId);
+      const oldRect = previousRects.get(cardId);
 
-        /*
-        * 이전에도 있던 카드:
-        * 이전 위치에서 현재 위치까지 자연스럽게 이동
-        */
-        if (oldRect) {
-          const deltaX =
-            oldRect.left - newRect.left;
+      /*
+       * 이전에도 있던 카드:
+       * 이전 위치에서 현재 위치까지 자연스럽게 이동
+       */
+      if (oldRect) {
+        const deltaX = oldRect.left - newRect.left;
 
-          const deltaY =
-            oldRect.top - newRect.top;
+        const deltaY = oldRect.top - newRect.top;
 
-          if (
-            Math.abs(deltaX) > 1 ||
-            Math.abs(deltaY) > 1
-          ) {
-            el
-              .getAnimations()
-              .forEach((animation) =>
-                animation.cancel(),
-              );
+        if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+          el.getAnimations().forEach((animation) => animation.cancel());
 
-            el.animate(
-              [
-                {
-                  transform:
-                    `translate(${deltaX}px, ${deltaY}px)`,
-                },
-                {
-                  transform:
-                    "translate(0, 0)",
-                },
-              ],
+          el.animate(
+            [
               {
-                duration: 240,
-                easing:
-                  "cubic-bezier(0.22, 1, 0.36, 1)",
+                transform: `translate(${deltaX}px, ${deltaY}px)`,
               },
-            );
-          }
-
-          return;
+              {
+                transform: "translate(0, 0)",
+              },
+            ],
+            {
+              duration: 240,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            },
+          );
         }
 
-        /*
-        * 검색/필터 변경으로 새로 나타난 카드
-        */
-        el
-          .getAnimations()
-          .forEach((animation) =>
-            animation.cancel(),
-          );
+        return;
+      }
 
-        el.animate(
-          [
-            {
-              opacity: 0,
-              transform:
-                "translateY(8px) scale(0.96)",
-            },
-            {
-              opacity: 1,
-              transform:
-                "translateY(0) scale(1)",
-            },
-          ],
+      /*
+       * 검색/필터 변경으로 새로 나타난 카드
+       */
+      el.getAnimations().forEach((animation) => animation.cancel());
+
+      el.animate(
+        [
           {
-            duration: 180,
-            easing: "ease-out",
+            opacity: 0,
+            transform: "translateY(8px) scale(0.96)",
           },
-        );
-      });
+          {
+            opacity: 1,
+            transform: "translateY(0) scale(1)",
+          },
+        ],
+        {
+          duration: 180,
+          easing: "ease-out",
+        },
+      );
+    });
 
-    previousCardRectsRef.current =
-      new Map();
+    previousCardRectsRef.current = new Map();
   }, [ownedCards]);
 
   function addToDeck(cardId) {
@@ -193,11 +179,14 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     const inDeck = save.deck.filter((id) => id === cardId).length; // 항상 실제 덱 기준
     const owned = save.collection[cardId] || 0;
     const max = Math.min(MAX_COPIES[card.rarity], owned);
-    if (save.deck.length >= 30 || inDeck >= max) { playSfx('buzzer'); return; }
+    if (save.deck.length >= 30 || inDeck >= max) {
+      playSfx("buzzer");
+      return;
+    }
     save.deck = [...save.deck, cardId]; // 새 배열로 교체 -> 메모/리렌더 정상 갱신
     syncActivePreset(save.deck);
     persist(save);
-    playSfx('pickup');
+    playSfx("pickup");
     onSaveChange();
   }
 
@@ -207,7 +196,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     save.deck = [...save.deck.slice(0, idx), ...save.deck.slice(idx + 1)]; // 새 배열로 교체
     syncActivePreset(save.deck);
     persist(save);
-    playSfx('putdown');
+    playSfx("putdown");
     onSaveChange();
   }
 
@@ -216,80 +205,62 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     const ids = [...new Set(save.deck)];
     return ids
       .map((id) => ({ card: CARD_MAP[id], count: deckCounts[id] }))
-      .sort((a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name));
+      .sort(
+        (a, b) =>
+          a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name),
+      );
   }, [save.deck, deckCounts]);
 
-  function syncActivePreset(
-    deck = save.deck,
-  ) {
+  function syncActivePreset(deck = save.deck) {
     if (!Array.isArray(save.deckPresets)) {
       return;
     }
 
-    save.deckPresets =
-      save.deckPresets.map(
-        (preset, index) =>
-          index ===
-          save.activeDeckPreset
-            ? {
-                ...preset,
-                deck: [...deck],
-              }
-            : preset,
-      );
+    save.deckPresets = save.deckPresets.map((preset, index) =>
+      index === save.activeDeckPreset
+        ? {
+            ...preset,
+            deck: [...deck],
+          }
+        : preset,
+    );
   }
 
-
   function selectPreset(index) {
-    if (
-      index ===
-      save.activeDeckPreset
-    ) {
+    if (index === save.activeDeckPreset) {
       return;
     }
 
     playSfx("click");
 
     /*
-    * 현재 덱을 현재 프리셋에
-    * 마지막으로 저장
-    */
+     * 현재 덱을 현재 프리셋에
+     * 마지막으로 저장
+     */
     syncActivePreset(save.deck);
 
-    const nextPreset =
-      save.deckPresets[index];
+    const nextPreset = save.deckPresets[index];
 
-    save.activeDeckPreset =
-      index;
+    save.activeDeckPreset = index;
 
-    save.deck = [
-      ...(nextPreset?.deck || []),
-    ];
+    save.deck = [...(nextPreset?.deck || [])];
 
     persist(save);
 
     onSaveChange();
   }
 
+  function renamePreset(index, value) {
+    const name = value.trim() || `덱 ${index + 1}`;
 
-  function renamePreset(
-    index,
-    value,
-  ) {
-    const name =
-      value.trim() ||
-      `덱 ${index + 1}`;
-
-    save.deckPresets =
-      save.deckPresets.map(
-        (preset, i) =>
-          i === index
-            ? {
-                ...preset,
-                name,
-              }
-            : preset,
-      );
+    save.deckPresets = save.deckPresets.map((preset, i) =>
+      i === index
+        ? {
+            ...preset,
+            name,
+          }
+        : preset,
+    );
 
     persist(save);
 
@@ -306,26 +277,33 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
       <div className="editor-topbar">
         <div className="screen-header">
-          <button className="btn-ghost" onClick={() => { playSfx('click'); onBack(); }}>← 돌아가기</button>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              playSfx("click");
+              onBack();
+            }}
+          >
+            ← 돌아가기
+          </button>
           <h2>컬렉션 · 덱 편집</h2>
-          <div className={`deck-count ${save.deck.length === 30 ? 'ok' : 'warn'}`}>
+          <div
+            className={`deck-count ${save.deck.length === 30 ? "ok" : "warn"}`}
+          >
             덱 {save.deck.length}/30
           </div>
         </div>
         <div className="deck-search-row">
-          <span className="deck-search-icon">
-            🔎
-          </span>
+          <span className="deck-search-icon">🔎</span>
 
           <input
             type="text"
             value={search}
             onChange={(e) => {
-                captureCardPositions();
+              captureCardPositions();
 
-                setSearch(e.target.value);
-              }
-            }
+              setSearch(e.target.value);
+            }}
             placeholder="카드 이름 검색"
             className="deck-search-input"
           />
@@ -348,10 +326,14 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           {TYPE_FILTERS.map((t) => (
             <button
               key={t}
-              className={`filter-btn ${filter === t ? 'active' : ''}`}
-              style={t !== '전체' ? { '--type-color': TYPE_COLORS[t] } : {}}
-              onMouseEnter={() => playSfx('cursor')}
-              onClick={() => { playSfx('click'); captureCardPositions(); setFilter(t); }}
+              className={`filter-btn ${filter === t ? "active" : ""}`}
+              style={t !== "전체" ? { "--type-color": TYPE_COLORS[t] } : {}}
+              onMouseEnter={() => playSfx("cursor")}
+              onClick={() => {
+                playSfx("click");
+                captureCardPositions();
+                setFilter(t);
+              }}
             >
               {t}
             </button>
@@ -361,15 +343,19 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         {/* 정렬 */}
         <div className="sort-row">
           {[
-            { key: 'dex', label: '도감번호순' },
-            { key: 'cost', label: '코스트순' },
-            { key: 'rarity_desc', label: '등급 높은순' },
-            { key: 'rarity_asc', label: '등급 낮은순' },
+            { key: "dex", label: "도감번호순" },
+            { key: "cost", label: "코스트순" },
+            { key: "rarity_desc", label: "등급 높은순" },
+            { key: "rarity_asc", label: "등급 낮은순" },
           ].map(({ key, label }) => (
             <button
               key={key}
-              className={`sort-btn ${sortMode === key ? 'active' : ''}`}
-              onClick={() => { playSfx('click'); captureCardPositions(); setSortMode(key); }}
+              className={`sort-btn ${sortMode === key ? "active" : ""}`}
+              onClick={() => {
+                playSfx("click");
+                captureCardPositions();
+                setSortMode(key);
+              }}
             >
               {label}
             </button>
@@ -386,7 +372,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               const inDeck = deckCounts[card.id] || 0;
               const max = Math.min(MAX_COPIES[card.rarity], owned);
               return (
-                <div key={card.id} className="collection-item" data-card-id={card.id}>
+                <div
+                  key={card.id}
+                  className="collection-item"
+                  data-card-id={card.id}
+                >
                   <HandCard
                     cardId={card.id}
                     playable={inDeck < max && save.deck.length < 30}
@@ -404,54 +394,38 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
         {/* 덱 리스트 */}
         <div className="deck-pane">
-            <div className="deck-preset-tabs">
-            {presets.map(
-              (preset, index) => (
-                <button
-                  key={index}
-                  className={`deck-preset-btn ${
-                    activePreset === index
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    selectPreset(index)
-                  }
-                >
-                  <span className="deck-preset-name">
-                    {preset.name}
-                  </span>
+          <div className="deck-preset-tabs">
+            {presets.map((preset, index) => (
+              <button
+                key={index}
+                className={`deck-preset-btn ${
+                  activePreset === index ? "active" : ""
+                }`}
+                onClick={() => selectPreset(index)}
+              >
+                <span className="deck-preset-name">{preset.name}</span>
 
-                 <span className="deck-preset-count">
-                    {activePreset === index
-                      ? save.deck.length
-                      : preset.deck.length
-                    }/30
-                  </span>
-                </button>
-              ),
-            )}
+                <span className="deck-preset-count">
+                  {activePreset === index
+                    ? save.deck.length
+                    : preset.deck.length}
+                  /30
+                </span>
+              </button>
+            ))}
           </div>
 
           <div className="deck-name-editor">
             <span>덱 이름</span>
 
             <input
-              key={`${activePreset}-${
-                presets[activePreset]?.name
-              }`}
+              key={`${activePreset}-${presets[activePreset]?.name}`}
               type="text"
               maxLength={16}
               defaultValue={
-                presets[activePreset]?.name ||
-                `덱 ${activePreset + 1}`
+                presets[activePreset]?.name || `덱 ${activePreset + 1}`
               }
-              onBlur={(e) =>
-                renamePreset(
-                  activePreset,
-                  e.target.value,
-                )
-              }
+              onBlur={(e) => renamePreset(activePreset, e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.currentTarget.blur();
@@ -464,12 +438,14 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             <div
               key={card.id}
               className="deck-row"
-              style={{ '--type-color': TYPE_COLORS[card.type] }}
+              style={{ "--type-color": TYPE_COLORS[card.type] }}
               onClick={() => removeFromDeck(card.id)}
               title="클릭하면 1장 제거"
             >
               <span className="deck-row-cost">{card.cost}</span>
-              <span className="deck-row-emoji"><Sprite cardId={card.id} emoji={card.emoji} size={22} /></span>
+              <span className="deck-row-emoji">
+                <Sprite cardId={card.id} emoji={card.emoji} size={22} />
+              </span>
               <span className="deck-row-name">{card.name}</span>
               <span className="deck-row-count">×{count}</span>
             </div>

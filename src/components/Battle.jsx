@@ -139,7 +139,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   function getImpactElement(impact) {
     if (typeof document === "undefined") return null;
-  
+
     if (impact.targetUid === "hero") {
       return document.querySelector(
         impact.side === "enemy"
@@ -147,20 +147,18 @@ export default function Battle({ trainer, deck, onFinish }) {
           : '[data-drop="my-hero"] .hero-portrait',
       );
     }
-  
-    return document.querySelector(
-      `[data-uid="${impact.targetUid}"]`,
-    );
+
+    return document.querySelector(`[data-uid="${impact.targetUid}"]`);
   }
 
   function getImpactRect(impact) {
     const el = getImpactElement(impact);
-  
+
     // 살아있는 대상은 현재 실제 화면 위치를 사용
     // → 공격자가 상대 앞까지 돌진해 있으면 그 위치가 잡힘
     if (el) {
       const rect = el.getBoundingClientRect();
-  
+
       return {
         left: rect.left,
         top: rect.top,
@@ -170,12 +168,10 @@ export default function Battle({ trainer, deck, onFinish }) {
         y: rect.top + rect.height / 2,
       };
     }
-  
+
     // 기술 등으로 이미 죽어서 DOM에서 사라진 경우
     // 직전에 저장해둔 좌표 사용
-    return battleRectsRef.current.get(
-      impactRectKey(impact),
-    );
+    return battleRectsRef.current.get(impactRectKey(impact));
   }
 
   // 실제 데미지에 따른 강도
@@ -252,14 +248,12 @@ export default function Battle({ trainer, deck, onFinish }) {
             : impact.amount >= 3
               ? 4
               : 2;
-    
+
       // 포켓몬은 바깥 래퍼를 흔들어서
       // 안쪽 field-unit의 돌진 transform과 충돌하지 않게 한다.
       const shakeEl =
-        impact.targetUid === "hero"
-          ? el
-          : el.closest(".unit-pop") || el;
-    
+        impact.targetUid === "hero" ? el : el.closest(".unit-pop") || el;
+
       shakeEl.animate(
         [
           {
@@ -279,14 +273,11 @@ export default function Battle({ trainer, deck, onFinish }) {
           },
         ],
         {
-          duration:
-            impact.amount >= 6
-              ? 390
-              : 300,
+          duration: impact.amount >= 6 ? 390 : 300,
           easing: "ease-out",
         },
       );
-    
+
       // 붉은 피격광은 실제로 움직이고 있는 field-unit에 적용
       // → 돌진한 위치를 그대로 따라감
       el.animate(
@@ -307,14 +298,11 @@ export default function Battle({ trainer, deck, onFinish }) {
           },
         ],
         {
-          duration:
-            impact.amount >= 6
-              ? 390
-              : 300,
+          duration: impact.amount >= 6 ? 390 : 300,
           easing: "ease-out",
         },
       );
-    
+
       return;
     }
 
@@ -380,8 +368,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
         if (!rect) return null;
 
-        const battleRect =
-        battleRef.current?.getBoundingClientRect();
+        const battleRect = battleRef.current?.getBoundingClientRect();
 
         if (!battleRect) return null;
 
@@ -422,160 +409,134 @@ export default function Battle({ trainer, deck, onFinish }) {
         totalDuration: 650,
       };
     }
-  
-    const attackerEl = document.querySelector(
-      `[data-uid="${action.uid}"]`,
-    );
-  
+
+    const attackerEl = document.querySelector(`[data-uid="${action.uid}"]`);
+
     if (!attackerEl) {
       return {
         impactDelay: 360,
         totalDuration: 650,
       };
     }
-  
-    const attackerRect =
-      battleRectsRef.current.get(action.uid);
-  
-    const targetSide =
-      action.side === "player"
-        ? "enemy"
-        : "player";
-  
+
+    const attackerRect = battleRectsRef.current.get(action.uid);
+
+    const targetSide = action.side === "player" ? "enemy" : "player";
+
     const targetKey =
-      action.targetUid === "hero"
-        ? `hero-${targetSide}`
-        : action.targetUid;
-  
-    const targetRect =
-      battleRectsRef.current.get(targetKey);
-  
+      action.targetUid === "hero" ? `hero-${targetSide}` : action.targetUid;
+
+    const targetRect = battleRectsRef.current.get(targetKey);
+
     if (!attackerRect || !targetRect) {
       return {
         impactDelay: 360,
         totalDuration: 650,
       };
     }
-  
+
     // ------------------------------------------------------------
     // 이번 공격으로 "공격 대상"에게 실제 들어간 피해만 찾는다.
     // 반격 피해 / 까칠한피부 / 반동 피해는 제외.
     // ------------------------------------------------------------
-    const targetImpact =
-      action.impacts?.find(
-        (impact) =>
-          impact.type === "damage" &&
-          impact.targetUid === action.targetUid &&
-          impact.side === targetSide,
-      );
-  
-    const damage =
-      targetImpact?.amount || 0;
-  
+    const targetImpact = action.impacts?.find(
+      (impact) =>
+        impact.type === "damage" &&
+        impact.targetUid === action.targetUid &&
+        impact.side === targetSide,
+    );
+
+    const damage = targetImpact?.amount || 0;
+
     // ------------------------------------------------------------
     // 피해량에 따라 공격 모션 강도 결정
     // ------------------------------------------------------------
     let windup = 0.05;
     let windupScale = 0.97;
-  
+
     let attackScale = 1.06;
-  
+
     let totalDuration = 560;
-  
+
     let windupEnd = 0.18;
     let hitPoint = 0.6;
     let holdPoint = 0.68;
-  
+
     let stopDistance = 38;
-  
+
     if (damage >= 9) {
       // 대형 공격
       windup = 0.18;
       windupScale = 0.88;
-  
+
       attackScale = 1.17;
-  
+
       totalDuration = 880;
-  
+
       windupEnd = 0.32;
       hitPoint = 0.65;
       holdPoint = 0.74;
-  
+
       stopDistance = 20;
     } else if (damage >= 6) {
       // 강한 공격
       windup = 0.13;
       windupScale = 0.91;
-  
+
       attackScale = 1.13;
-  
+
       totalDuration = 780;
-  
+
       windupEnd = 0.28;
       hitPoint = 0.64;
       holdPoint = 0.73;
-  
+
       stopDistance = 24;
     } else if (damage >= 3) {
       // 중간 공격
       windup = 0.09;
       windupScale = 0.94;
-  
+
       attackScale = 1.1;
-  
+
       totalDuration = 680;
-  
+
       windupEnd = 0.23;
       hitPoint = 0.62;
       holdPoint = 0.71;
-  
+
       stopDistance = 30;
     }
-  
-    let dx =
-      targetRect.x -
-      attackerRect.x;
-  
-    let dy =
-      targetRect.y -
-      attackerRect.y;
-  
-    const distance =
-      Math.hypot(dx, dy);
-  
+
+    let dx = targetRect.x - attackerRect.x;
+
+    let dy = targetRect.y - attackerRect.y;
+
+    const distance = Math.hypot(dx, dy);
+
     if (distance > 0) {
-      const ratio = Math.max(
-        0,
-        (distance - stopDistance) /
-          distance,
-      );
-  
+      const ratio = Math.max(0, (distance - stopDistance) / distance);
+
       dx *= ratio;
       dy *= ratio;
     }
-  
+
     // 뒤로 빠지는 거리.
     // 상대 방향의 정확한 반대 방향으로 이동한다.
     const backX = -dx * windup;
     const backY = -dy * windup;
-  
+
     // 강공격일수록 충돌 직후 아주 약하게 더 밀고 들어감.
-    const smashBoost =
-      damage >= 9
-        ? 1.035
-        : damage >= 6
-          ? 1.02
-          : 1;
-  
+    const smashBoost = damage >= 9 ? 1.035 : damage >= 6 ? 1.02 : 1;
+
     attackerEl.animate(
       [
         // 원위치
         {
-          transform:
-            "translate(0px, 0px) scale(1)",
+          transform: "translate(0px, 0px) scale(1)",
           offset: 0,
         },
-  
+
         // --------------------------------------------------------
         // 준비동작
         // 공격이 강할수록 훨씬 뒤로 당긴다.
@@ -587,7 +548,7 @@ export default function Battle({ trainer, deck, onFinish }) {
           `,
           offset: windupEnd,
         },
-  
+
         // --------------------------------------------------------
         // 박치기
         // 뒤로 모은 뒤 빠르게 전진
@@ -599,7 +560,7 @@ export default function Battle({ trainer, deck, onFinish }) {
           `,
           offset: hitPoint,
         },
-  
+
         // --------------------------------------------------------
         // 충돌 후 살짝 더 밀고 들어가는 프레임
         // 강공격 특유의 무게감
@@ -614,7 +575,7 @@ export default function Battle({ trainer, deck, onFinish }) {
           `,
           offset: holdPoint,
         },
-  
+
         // --------------------------------------------------------
         // 약간 튕겨나오기
         // --------------------------------------------------------
@@ -628,31 +589,25 @@ export default function Battle({ trainer, deck, onFinish }) {
           `,
           offset: 0.82,
         },
-  
+
         // 원위치
         {
-          transform:
-            "translate(0px, 0px) scale(1)",
+          transform: "translate(0px, 0px) scale(1)",
           offset: 1,
         },
       ],
       {
         duration: totalDuration,
-  
+
         // 처음엔 묵직하고
         // 돌진 순간 확 빨라지는 느낌
-        easing:
-          "cubic-bezier(.18,.72,.22,1)",
+        easing: "cubic-bezier(.18,.72,.22,1)",
       },
     );
-  
+
     return {
-      impactDelay:
-        Math.round(
-          totalDuration *
-            hitPoint,
-        ),
-  
+      impactDelay: Math.round(totalDuration * hitPoint),
+
       totalDuration,
     };
   }
@@ -760,36 +715,26 @@ export default function Battle({ trainer, deck, onFinish }) {
         key: la.seq,
       });
 
-      const attackTiming =
-        animateAttackLunge(la);
+      const attackTiming = animateAttackLunge(la);
 
       // 충돌하는 정확한 순간에
       // 피격 / 숫자 / 화면 흔들림 발생
-      clearTimeout(
-        impactDelayTimer.current,
-      );
+      clearTimeout(impactDelayTimer.current);
 
-      impactDelayTimer.current =
-        setTimeout(() => {
-          showImpacts(
-            la.impacts || [],
-            la.seq,
-          );
-        }, attackTiming.impactDelay);
+      impactDelayTimer.current = setTimeout(() => {
+        showImpacts(la.impacts || [], la.seq);
+      }, attackTiming.impactDelay);
 
       // 공격자가 원위치로 돌아온 뒤 종료
-      clearTimeout(
-        atkFxTimer.current,
-      );
+      clearTimeout(atkFxTimer.current);
 
-      atkFxTimer.current =
-        setTimeout(() => {
-          cleanupDeaths(game);
+      atkFxTimer.current = setTimeout(() => {
+        cleanupDeaths(game);
 
-          setAtkFx(null);
+        setAtkFx(null);
 
-          rerender();
-        }, attackTiming.totalDuration + 40);
+        rerender();
+      }, attackTiming.totalDuration + 40);
     }
 
     // 일반 공격이 아닌
@@ -1158,15 +1103,15 @@ export default function Battle({ trainer, deck, onFinish }) {
     }
     if (!myTurn || selectedHand === null) return;
 
-      const selected = me.hand[selectedHand];
+    const selected = me.hand[selectedHand];
 
-      if (!selected) {
-        setSelectedHand(null);
-        return;
-      }
+    if (!selected) {
+      setSelectedHand(null);
+      return;
+    }
 
-      const card = CARD_MAP[selected.cardId];
-      const need = spellNeedsTarget(card);
+    const card = CARD_MAP[selected.cardId];
+    const need = spellNeedsTarget(card);
     if (need === "enemy" && side === "enemy") {
       playCard(game, "player", selectedHand, { uid: unit.uid });
       setSelectedHand(null);
@@ -1205,12 +1150,7 @@ export default function Battle({ trainer, deck, onFinish }) {
       spellNeedsTarget(card) === "enemy" &&
       card.spell?.target !== "enemy-pokemon"
     ) {
-      playCard(
-        game,
-        "player",
-        selectedHand,
-        { uid: "hero" },
-      );
+      playCard(game, "player", selectedHand, { uid: "hero" });
 
       setSelectedHand(null);
       rerender();
@@ -1246,11 +1186,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   }
 
   function onDeoxysFormChoose(form) {
-    const ok = resolveDeoxysForm(
-      game,
-      "player",
-      form,
-    );
+    const ok = resolveDeoxysForm(game, "player", form);
 
     playSfx(ok ? "click" : "buzzer");
 
@@ -1521,10 +1457,7 @@ export default function Battle({ trainer, deck, onFinish }) {
                 <small>도발 · 받는 피해 -2</small>
               </button>
 
-              <button
-                type="button"
-                onClick={() => onDeoxysFormChoose("speed")}
-              >
+              <button type="button" onClick={() => onDeoxysFormChoose("speed")}>
                 <strong>스피드폼</strong>
                 <span>5 / 9</span>
                 <small>즉시 공격 · 매 턴 2회 공격</small>
@@ -1730,11 +1663,9 @@ export default function Battle({ trainer, deck, onFinish }) {
         <div
           className={`hero-bar enemy-bar ${
             (attackMode && heroTargetable) ||
-            (
-              spellMode &&
+            (spellMode &&
               spellNeed === "enemy" &&
-              activeCard?.spell?.target !== "enemy-pokemon"
-            )
+              activeCard?.spell?.target !== "enemy-pokemon")
               ? "targetable"
               : ""
           }`}
@@ -1747,28 +1678,20 @@ export default function Battle({ trainer, deck, onFinish }) {
               emoji={trainer.emoji}
               size={44}
             />
-            <span className="hero-hp">
-              HP {foe.hp}
-            </span>
+            <span className="hero-hp">HP {foe.hp}</span>
           </div>
 
           <div className="hero-info">
-            <div className="hero-name">
-              {foe.name}
-            </div>
+            <div className="hero-name">{foe.name}</div>
 
             <div className="hero-sub">
-              손패 {foe.hand.length}장 · 덱{" "}
-              {foe.deck.length}장
+              손패 {foe.hand.length}장 · 덱 {foe.deck.length}장
             </div>
           </div>
         </div>
 
         <div className="hero-mana">
-          <ManaPips
-            mana={foe.mana}
-            maxMana={foe.maxMana}
-          />
+          <ManaPips mana={foe.mana} maxMana={foe.maxMana} />
         </div>
       </div>
 
@@ -1792,46 +1715,26 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       {/* 중앙: 날씨 + 로그 */}
-      <div
-        className="mid-bar"
-        data-drop="board"
-      >
-        <div
-          className={`weather-indicator ${
-            game.weather || "none"
-          }`}
-        >
+      <div className="mid-bar" data-drop="board">
+        <div className={`weather-indicator ${game.weather || "none"}`}>
           <span className="weather-dot" />
 
-          {game.weather
-            ? WEATHER_NAME[game.weather]
-            : "날씨 없음"}
+          {game.weather ? WEATHER_NAME[game.weather] : "날씨 없음"}
         </div>
 
-        <div
-          className="battle-log"
-          ref={logRef}
-        >
-          {game.log.slice(-8).map(
-            (line, i) => (
-              <div key={i}>
-                {line}
-              </div>
-            ),
-          )}
+        <div className="battle-log" ref={logRef}>
+          {game.log.slice(-8).map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
         </div>
 
         <div className="battle-actions">
           <button
-            className={`btn-endturn ${
-              myTurn ? "" : "disabled"
-            }`}
+            className={`btn-endturn ${myTurn ? "" : "disabled"}`}
             onClick={onEndTurn}
             disabled={!myTurn}
           >
-            {myTurn
-              ? "턴 종료"
-              : "상대 턴..."}
+            {myTurn ? "턴 종료" : "상대 턴..."}
           </button>
 
           {!confirmSurrender ? (
@@ -1903,41 +1806,26 @@ export default function Battle({ trainer, deck, onFinish }) {
       <div className="hero-cluster my-hero-cluster">
         <div
           className={`hero-bar my-bar ${
-            spellNeed === "friendly-or-hero"
-              ? "targetable"
-              : ""
+            spellNeed === "friendly-or-hero" ? "targetable" : ""
           }`}
           onClick={onMyHeroClick}
           data-drop="my-hero"
         >
           <div className="hero-portrait">
-            <TrainerSprite
-              spriteKey={PLAYER_SPRITE}
-              emoji="🧢"
-              size={44}
-            />
+            <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={44} />
 
-            <span className="hero-hp">
-              HP {me.hp}
-            </span>
+            <span className="hero-hp">HP {me.hp}</span>
           </div>
 
           <div className="hero-info">
-            <div className="hero-name">
-              나
-            </div>
+            <div className="hero-name">나</div>
 
-            <div className="hero-sub">
-              덱 {me.deck.length}장
-            </div>
+            <div className="hero-sub">덱 {me.deck.length}장</div>
           </div>
         </div>
 
         <div className="hero-mana">
-          <ManaPips
-            mana={me.mana}
-            maxMana={me.maxMana}
-          />
+          <ManaPips mana={me.mana} maxMana={me.maxMana} />
         </div>
       </div>
 
@@ -1951,17 +1839,14 @@ export default function Battle({ trainer, deck, onFinish }) {
             c.evolvesFrom &&
             !playableNow &&
             !me.discardUsedThisTurn;
-          const fanOffset =
-            idx - (me.hand.length - 1) / 2;
+          const fanOffset = idx - (me.hand.length - 1) / 2;
           return (
             <div
               key={h.uid}
               className="hand-card-wrap"
               style={{
-                "--fan-angle":
-                  `${fanOffset * 3}deg`,
-                "--fan-y":
-                  `${Math.abs(fanOffset) * 2.2}px`,
+                "--fan-angle": `${fanOffset * 3}deg`,
+                "--fan-y": `${Math.abs(fanOffset) * 2.2}px`,
               }}
             >
               <HandCard

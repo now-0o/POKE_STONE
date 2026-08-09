@@ -56,19 +56,11 @@ export function Sprite({
 }) {
   const [failed, setFailed] = useState(false);
 
-  const url = spriteUrl(
-    cardId,
-    mega,
-    busted,
-    spriteId,
-  );
+  const url = spriteUrl(cardId, mega, busted, spriteId);
 
   if (!url || failed) {
     return (
-      <div
-        className="card-emoji"
-        style={{ fontSize: size * 0.7 }}
-      >
+      <div className="card-emoji" style={{ fontSize: size * 0.7 }}>
         {emoji}
       </div>
     );
@@ -172,24 +164,16 @@ export function HandCard({
   const card = CARD_MAP[cardId];
   const cost = game ? effectiveCost(card, game) : card.cost;
   const discounted = cost < card.cost;
-  const shownAbility =
-  unit ? unit.ability : card.ability;
-  const shownSecondaryAbility =
-    unit
-      ? unit.secondaryAbility
-      : card.secondaryAbility;
+  const shownAbility = unit ? unit.ability : card.ability;
+  const shownSecondaryAbility = unit
+    ? unit.secondaryAbility
+    : card.secondaryAbility;
   const abilityTexts = [
-    shownAbility
-      ? ABILITY_TEXT[shownAbility]
-      : "",
-    shownSecondaryAbility
-      ? ABILITY_TEXT[shownSecondaryAbility]
-      : "",
+    shownAbility ? ABILITY_TEXT[shownAbility] : "",
+    shownSecondaryAbility ? ABILITY_TEXT[shownSecondaryAbility] : "",
   ].filter(Boolean);
   const abilityText =
-    abilityTexts.length > 0
-      ? abilityTexts.join("\n")
-      : card.text || "";
+    abilityTexts.length > 0 ? abilityTexts.join("\n") : card.text || "";
   const shownName = unit ? unit.name : card.name;
   const shownAtk = unit ? unit.atk : card.atk;
   const shownHp = unit ? unit.hp : card.hp;
@@ -304,14 +288,10 @@ export function FieldUnit({
     unit.ability === "fortress" ||
     unit.ability === "brock_rockwall" ||
     unit.ability === "jasmine_autotomize";
-  
+
   const abilityText = [
-    unit.ability
-      ? ABILITY_TEXT[unit.ability]
-      : "",
-    unit.secondaryAbility
-      ? ABILITY_TEXT[unit.secondaryAbility]
-      : "",
+    unit.ability ? ABILITY_TEXT[unit.ability] : "",
+    unit.secondaryAbility ? ABILITY_TEXT[unit.secondaryAbility] : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -326,9 +306,7 @@ export function FieldUnit({
           targetable ? "targetable" : "",
           unit.frozen > 0 || unit.status ? "frozen" : "",
           unit.mega ? "mega" : "",
-          hasTaunt
-          ? "taunt"
-          : "",
+          hasTaunt ? "taunt" : "",
           lunge ? `lunge-${lunge}` : "",
           hit ? "hit-flash" : "",
         ].join(" ")}
