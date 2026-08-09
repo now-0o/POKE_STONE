@@ -350,7 +350,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               className={`filter-btn ${filter === t ? 'active' : ''}`}
               style={t !== '전체' ? { '--type-color': TYPE_COLORS[t] } : {}}
               onMouseEnter={() => playSfx('cursor')}
-              onClick={() => { playSfx('click'); setFilter(t); }}
+              onClick={() => { playSfx('click'); captureCardPositions(); setFilter(t); }}
             >
               {t}
             </button>
@@ -368,7 +368,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             <button
               key={key}
               className={`sort-btn ${sortMode === key ? 'active' : ''}`}
-              onClick={() => { playSfx('click'); setSortMode(key); }}
+              onClick={() => { playSfx('click'); captureCardPositions(); setSortMode(key); }}
             >
               {label}
             </button>

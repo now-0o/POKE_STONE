@@ -5838,3 +5838,23 @@ img.card-sprite {
       calc(100vh - 186px);
   }
 }
+
+/* ============================================================
+   DECK COLLECTION MOTION
+   ============================================================ */
+
+.deck-editor .collection-item {
+  will-change:
+    transform,
+    opacity;
+
+  transform-origin:
+    center center;
+
+  backface-visibility:
+    hidden;
+}
+
+.deck-editor .collection-grid {
+  position: relative;
+}
