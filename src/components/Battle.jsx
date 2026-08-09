@@ -14,6 +14,7 @@ import {
   discardToDraw,
   resolveHyperball,
   cleanupDeaths,
+  resolveDeoxysForm,
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
@@ -1079,8 +1080,15 @@ export default function Battle({ trainer, deck, onFinish }) {
       return;
     }
     if (need === "enemy") {
-      if (zone === "unit-enemy" && uid) attemptPlay({ uid });
-      else if (zone === "enemy-hero") attemptPlay({ uid: "hero" });
+      if (zone === "unit-enemy" && uid) {
+        attemptPlay({ uid });
+      } else if (
+        zone === "enemy-hero" &&
+        card.spell?.target !== "enemy-pokemon"
+      ) {
+        attemptPlay({ uid: "hero" });
+      }
+
       return;
     }
     if (need === "friendly") {
@@ -1175,9 +1183,20 @@ export default function Battle({ trainer, deck, onFinish }) {
   function onHeroClick() {
     if (Date.now() < suppressUntil.current) return;
     if (!myTurn || selectedHand === null) return;
+
     const card = CARD_MAP[me.hand[selectedHand].cardId];
-    if (spellNeedsTarget(card) === "enemy") {
-      playCard(game, "player", selectedHand, { uid: "hero" });
+
+    if (
+      spellNeedsTarget(card) === "enemy" &&
+      card.spell?.target !== "enemy-pokemon"
+    ) {
+      playCard(
+        game,
+        "player",
+        selectedHand,
+        { uid: "hero" },
+      );
+
       setSelectedHand(null);
       rerender();
     }
@@ -1201,6 +1220,23 @@ export default function Battle({ trainer, deck, onFinish }) {
     const ok = resolveHyperball(game, "player", pickUid);
 
     playSfx(ok ? "click" : "buzzer");
+    rerender();
+  }
+
+  function onDeoxysFormChoose(form) {
+    const ok = resolveDeoxysForm(
+      game,
+      "player",
+      form,
+    );
+
+    playSfx(ok ? "click" : "buzzer");
+
+    if (ok) {
+      setSelectedHand(null);
+      setAimUid(null);
+    }
+
     rerender();
   }
 
@@ -1428,6 +1464,53 @@ export default function Battle({ trainer, deck, onFinish }) {
     >
       {resultOverlay}
 
+      {game.pendingDeoxysForm?.side === "player" && (
+        <div className="deoxys-form-overlay">
+          <div className="deoxys-form-box">
+            <h2>테오키스 폼 선택</h2>
+            <p>이번 배틀에서 사용할 폼을 선택하세요.</p>
+
+            <div className="deoxys-form-grid">
+              <button
+                type="button"
+                onClick={() => onDeoxysFormChoose("normal")}
+              >
+                <strong>노말폼</strong>
+                <span>8 / 8</span>
+                <small>프레셔 · 상대 기술 비용 +1</small>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDeoxysFormChoose("attack")}
+              >
+                <strong>어택폼</strong>
+                <span>13 / 4</span>
+                <small>즉시 공격 · 첫 공격 +5 · 반격 무시</small>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDeoxysFormChoose("defense")}
+              >
+                <strong>디펜스폼</strong>
+                <span>4 / 13</span>
+                <small>도발 · 받는 피해 -2</small>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDeoxysFormChoose("speed")}
+              >
+                <strong>스피드폼</strong>
+                <span>7 / 8</span>
+                <small>즉시 공격 · 매 턴 2회 공격</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 전투 피격 / 회복 / 버프 연출 */}
       <div className="combat-impact-layer">
         {impactFx.map((fx) => (
@@ -1624,7 +1707,11 @@ export default function Battle({ trainer, deck, onFinish }) {
         <div
           className={`hero-bar enemy-bar ${
             (attackMode && heroTargetable) ||
-            (spellMode && spellNeed === "enemy")
+            (
+              spellMode &&
+              spellNeed === "enemy" &&
+              activeCard?.spell?.target !== "enemy-pokemon"
+            )
               ? "targetable"
               : ""
           }`}

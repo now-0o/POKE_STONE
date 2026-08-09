@@ -154,6 +154,8 @@ export const ABILITY_TEXT = {
   sandstream: "모래날림: 나왔을 때 날씨를 모래바람으로 만든다",
   airlock: "에어록: 나왔을 때 모든 날씨를 없앤다",
   sandveil: "모래숨기: 모래바람일 때 받는 피해 1 감소",
+  sandforce:
+  "모래의힘: 모래바람 동안 공격력 +2",
   // 방어/생존
   originpulse:
     "근원의파동: 나올 때 폭우 발동. 상대 전체 물 피해 3 + 무작위 1마리를 얼린다",
@@ -257,6 +259,119 @@ export const ABILITY_TEXT = {
   aura_fighting: "파동: 필드에 있는 동안 다른 아군 격투 포켓몬 공격력 +1",
   aura_dragon: "용의숨결: 필드에 있는 동안 다른 아군 드래곤 포켓몬 공격력 +1",
 
+    // ============================================================
+  // v6 확장 신규 특성
+  // ============================================================
+
+  pickup:
+    "픽업: 나왔을 때 덱에서 메가스톤을 제외한 도구 카드 1장을 무작위로 손으로 가져온다",
+
+  technician:
+    "테크니션: 자신의 공격력이 3 이하라면 공격 피해 +2",
+
+  clearbody:
+    "클리어바디: 상대 효과로 공격력이 감소하지 않는다",
+
+  oblivious:
+    "둔감: 잠듦과 상대의 공격력 감소 효과에 면역",
+
+  hypercutter:
+    "괴력집게: 상대 효과로 공격력이 감소하지 않는다",
+
+  rockhead:
+    "돌머리: 자신의 공격이나 특성으로 발생하는 반동 피해를 받지 않는다",
+
+  shellarmor:
+    "조가비갑옷: 한 번의 공격으로 받는 피해가 최대 4를 넘지 않는다",
+
+  aromatherapy:
+    "아로마테라피: 내 턴 종료 시 상태이상인 아군 포켓몬 1마리의 상태이상을 해제한다",
+
+  sheerforce:
+    "우격다짐: 상태이상이 없는 포켓몬을 공격할 때 피해 +1",
+
+  webtrap:
+    "거미집: 나왔을 때 무작위 상대 포켓몬의 공격력 -1 및 독 상태이상",
+
+  counter:
+    "카운터: 전투 공격으로 피해를 받으면 받은 피해의 절반(올림)을 공격자에게 되돌린다",
+
+  speedboost:
+    "가속: 내 턴 종료마다 공격력 +1. 최대 +3",
+
+  raindish:
+    "젖은접시: 비가 내릴 때 내 턴 종료 시 체력 1 회복",
+
+  effectspore:
+    "포자: 공격당할 때 30% 확률로 공격자에게 독·마비·잠듦 중 하나를 건다",
+
+  wonderguard:
+    "불가사의부적: 약점 타입의 직접 공격이 아니면 피해를 받지 않는다. 상태이상·날씨 등 간접 피해는 받는다",
+
+  waterveil:
+    "수의베일: 화상 상태이상에 걸리지 않는다",
+
+  marvelscale:
+    "이상한비늘: 상태이상이 걸려 있으면 받는 피해 2 감소",
+
+  forecast:
+    "기분파: 날씨에 따라 자신의 타입이 변한다. 비=물, 쾌청=불꽃, 모래바람=바위, 날씨 없음=노말",
+
+  colorchange:
+    "변색: 타입 공격을 받으면 자신의 타입을 그 공격 타입으로 변경한다",
+
+  cursedbody:
+    "저주받은바디: 공격당하면 공격자의 공격력 -1",
+
+  lusterpurge:
+    "라스터퍼지: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 에스퍼 피해 4를 주고 공격력 -1",
+
+  wishmaker:
+    "소원메이커: 나왔을 때 아군 전체 체력 2 회복. 카드 1장 드로우",
+
+  formchange:
+    "폼체인지: 소환할 때 노말·어택·디펜스·스피드 폼 중 하나를 선택한다. 선택한 폼은 배틀 동안 고정된다",
+
+  pressure:
+    "프레셔: 필드에 있는 동안 상대 기술 카드의 비용이 1 증가한다",
+
+  deoxys_attack:
+    "어택폼: 소환 즉시 공격 가능. 첫 공격 피해 +5 및 반격 피해를 받지 않는다. 첫 공격 후 공격력 -3",
+
+  deoxys_defense:
+    "디펜스폼: 도발. 받는 피해 2 감소",
+
+  deoxys_speed:
+    "스피드폼: 소환 즉시 공격 가능. 한 턴에 두 번 공격할 수 있다",
+
+  // 메가진화 전용
+  megalauncher:
+    "메가런처: 공격할 때 대상 양옆의 상대 포켓몬에게도 피해 1",
+
+  toughclaws:
+    "단단한발톱: 기본 공격 피해 +2",
+
+  adaptability:
+    "적응력: 상성 우위로 공격할 때 추가 피해 +2",
+
+  trace:
+    "트레이스: 메가진화할 때 무작위 상대 포켓몬의 특성을 복사한다",
+
+  parentalbond:
+    "부자유친: 공격 후 같은 대상에게 추가 피해 2",
+
+  hugepower:
+    "천하장사: 공격할 때 자신의 공격력을 2배로 계산한다",
+
+  filter:
+    "필터: 약점 타입으로 받는 피해 2 감소",
+
+  pixilate:
+    "페어리스킨: 기본 공격을 페어리 타입으로 취급하고 피해 +1",
+
+  magicbounce:
+    "매직미러: 자신에게 걸리는 상태이상을 건 상대에게 되돌린다",
+
   // ============================================================
   // 관동 트레이너 시그니처
   // ============================================================
@@ -345,7 +460,11 @@ export const CARDS = [
     evolvesFrom: "eevee",
     ability: "waterabsorb",
   }),
-  P("politoed", "왕구리", "물", 3, 2, 5, "R", { ability: "drizzle" }),
+  P("politoed", "왕구리", "물", 4, 3, 6, "R", {
+    stage: 2,
+    evolvesFrom: "poliwhirl",
+    ability: "drizzle",
+  }),
   P("kyogre", "가이오가", "물", 8, 8, 9, "L", { ability: "originpulse" }),
   P("psyduck", "고라파덕", "물", 1, 1, 2, "C", {}),
   P("golduck", "골덕", "물", 3, 5, 4, "R", {
@@ -566,7 +685,7 @@ export const CARDS = [
   }),
   P("eevee", "이브이", "노말", 1, 1, 2, "C", {
     flavor:
-      "샤미드, 부스터, 블래키, 에브이, 님피아, 리피아, 글레이시아로 진화할 수 있다.",
+      "샤미드, 쥬피썬더, 부스터, 블래키, 에브이, 님피아, 리피아, 글레이시아로 진화할 수 있다."
   }),
   P("snorlax", "잠만보", "노말", 6, 3, 10, "E", { ability: "taunt" }),
   P("chansey", "럭키", "노말", 3, 1, 6, "R", { ability: "healer" }),
@@ -1117,6 +1236,359 @@ export const CARDS = [
     ability: "intimidate",
   }),
 
+  // ============================================================
+  // v6: 1~3세대 대규모 확장
+  // ============================================================
+
+  // ---------- 1세대 ----------
+
+  P("squirtle", "꼬부기", "물", 1, 1, 2, "C", {
+    ability: "torrent",
+  }),
+
+  P("wartortle", "어니부기", "물", 3, 3, 5, "R", {
+    stage: 1,
+    evolvesFrom: "squirtle",
+    ability: "torrent",
+  }),
+
+  P("blastoise", "거북왕", "물", 5, 6, 8, "E", {
+    stage: 2,
+    evolvesFrom: "wartortle",
+    ability: "torrent",
+  }),
+
+  P("meowth", "나옹", "노말", 1, 1, 2, "C", {
+    ability: "pickup",
+  }),
+
+  P("persian", "페르시온", "노말", 3, 4, 4, "R", {
+    stage: 1,
+    evolvesFrom: "meowth",
+    ability: "technician",
+  }),
+
+  P("poliwag", "발챙이", "물", 1, 1, 2, "C", {
+    ability: "swiftswim",
+  }),
+
+  P("poliwhirl", "슈륙챙이", "물", 2, 2, 4, "C", {
+    stage: 1,
+    evolvesFrom: "poliwag",
+    ability: "swiftswim",
+  }),
+
+  P("poliwrath", "강챙이", "격투", 4, 6, 5, "R", {
+    stage: 2,
+    evolvesFrom: "poliwhirl",
+    ability: "guts",
+  }),
+
+  P("tentacool", "왕눈해", "독", 2, 2, 3, "C", {
+    ability: "poisonpoint",
+  }),
+
+  P("tentacruel", "독파리", "독", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "tentacool",
+    ability: "clearbody",
+  }),
+
+  P("slowpoke", "야돈", "에스퍼", 1, 1, 3, "C", {
+    ability: "oblivious",
+  }),
+
+  P("slowbro", "야도란", "에스퍼", 4, 3, 8, "R", {
+    stage: 1,
+    evolvesFrom: "slowpoke",
+    ability: "regenerator",
+  }),
+
+  P("krabby", "크랩", "물", 1, 2, 1, "C", {
+    ability: "hypercutter",
+  }),
+
+  P("kingler", "킹크랩", "물", 4, 7, 4, "R", {
+    stage: 1,
+    evolvesFrom: "krabby",
+    ability: "hypercutter",
+  }),
+
+  P("cubone", "탕구리", "땅", 1, 1, 2, "C", {
+    ability: "rockhead",
+  }),
+
+  P("marowak", "텅구리", "땅", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "cubone",
+    ability: "rockhead",
+  }),
+
+  P("jolteon", "쥬피썬더", "전기", 3, 5, 4, "R", {
+    stage: 1,
+    evolvesFrom: "eevee",
+    ability: "voltabsorb",
+  }),
+
+  P("omanyte", "암나이트", "바위", 2, 2, 4, "C", {
+    ability: "shellarmor",
+  }),
+
+  P("omastar", "암스타", "바위", 4, 5, 7, "R", {
+    stage: 1,
+    evolvesFrom: "omanyte",
+    ability: "shellarmor",
+  }),
+
+
+  // ---------- 2세대 ----------
+
+  P("bayleef", "베이리프", "풀", 3, 3, 5, "R", {
+    stage: 1,
+    evolvesFrom: "chikorita",
+    ability: "overgrow",
+  }),
+
+  P("meganium", "메가니움", "풀", 5, 5, 9, "E", {
+    stage: 2,
+    evolvesFrom: "bayleef",
+    ability: "aromatherapy",
+  }),
+
+  P("cyndaquil", "브케인", "불꽃", 1, 2, 1, "C", {
+    ability: "blaze",
+  }),
+
+  P("quilava", "마그케인", "불꽃", 3, 4, 4, "R", {
+    stage: 1,
+    evolvesFrom: "cyndaquil",
+    ability: "blaze",
+  }),
+
+  P("typhlosion", "블레이범", "불꽃", 5, 7, 6, "E", {
+    stage: 2,
+    evolvesFrom: "quilava",
+    ability: "burningfall",
+  }),
+
+  P("totodile", "리아코", "물", 1, 2, 2, "C", {
+    ability: "torrent",
+  }),
+
+  P("croconaw", "엘리게이", "물", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "totodile",
+    ability: "torrent",
+  }),
+
+  P("feraligatr", "장크로다일", "물", 5, 7, 7, "E", {
+    stage: 2,
+    evolvesFrom: "croconaw",
+    ability: "sheerforce",
+  }),
+
+  P("spinarak", "페이검", "벌레", 1, 1, 2, "C", {
+    ability: "poisonpoint",
+  }),
+
+  P("ariados", "아리아도스", "벌레", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "spinarak",
+    ability: "webtrap",
+  }),
+
+  P("chinchou", "초라기", "전기", 1, 1, 3, "C", {
+    ability: "voltabsorb",
+  }),
+
+  P("lanturn", "랜턴", "전기", 4, 3, 8, "R", {
+    stage: 1,
+    evolvesFrom: "chinchou",
+    ability: "voltabsorb",
+    secondaryAbility: "waterabsorb",
+  }),
+
+  P("sudowoodo", "꼬지모", "바위", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "bonsly",
+    ability: "sturdy",
+    secondaryAbility: "taunt",
+  }),
+
+  P("aipom", "에이팜", "노말", 1, 2, 1, "C", {
+    ability: "pickup",
+  }),
+
+  P("wobbuffet", "마자용", "에스퍼", 4, 0, 10, "R", {
+    ability: "counter",
+  }),
+
+  P("pineco", "피콘", "벌레", 1, 0, 3, "C", {
+    ability: "sturdy",
+  }),
+
+  P("forretress", "쏘콘", "벌레", 4, 2, 8, "R", {
+    stage: 1,
+    evolvesFrom: "pineco",
+    ability: "sturdy",
+    secondaryAbility: "explode",
+  }),
+
+  P("porygon2", "폴리곤2", "노말", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "porygon",
+    ability: "download",
+  }),
+
+
+  // ---------- 3세대 ----------
+
+  P("torchic", "아차모", "불꽃", 1, 2, 1, "C", {
+    ability: "blaze",
+  }),
+
+  P("combusken", "영치코", "격투", 3, 4, 4, "R", {
+    stage: 1,
+    evolvesFrom: "torchic",
+    ability: "blaze",
+  }),
+
+  P("blaziken", "번치코", "격투", 5, 7, 6, "E", {
+    stage: 2,
+    evolvesFrom: "combusken",
+    ability: "speedboost",
+  }),
+
+  P("lotad", "연꽃몬", "물", 1, 1, 2, "C", {
+    ability: "raindish",
+  }),
+
+  P("lombre", "로토스", "물", 3, 3, 5, "R", {
+    stage: 1,
+    evolvesFrom: "lotad",
+    ability: "raindish",
+  }),
+
+  P("ludicolo", "로파파", "물", 5, 5, 7, "E", {
+    stage: 2,
+    evolvesFrom: "lombre",
+    ability: "raindish",
+    secondaryAbility: "swiftswim",
+  }),
+
+  P("shroomish", "버섯꼬", "풀", 1, 1, 2, "C", {
+    ability: "effectspore",
+  }),
+
+  P("breloom", "버섯모", "격투", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "shroomish",
+    ability: "effectspore",
+  }),
+
+  P("nincada", "토중몬", "벌레", 1, 1, 2, "C", {}),
+
+  P("ninjask", "아이스크", "벌레", 3, 4, 4, "R", {
+    stage: 1,
+    evolvesFrom: "nincada",
+    ability: "speedboost",
+  }),
+
+  P("shedinja", "껍질몬", "고스트", 3, 3, 1, "R", {
+    stage: 1,
+    evolvesFrom: "nincada",
+    ability: "wonderguard",
+  }),
+
+  P("mawile", "입치트", "강철", 4, 4, 6, "R", {
+    ability: "intimidate",
+  }),
+
+  P("aron", "가보리", "강철", 1, 1, 3, "C", {
+    ability: "sturdy",
+  }),
+
+  P("lairon", "갱도라", "강철", 3, 3, 6, "R", {
+    stage: 1,
+    evolvesFrom: "aron",
+    ability: "sturdy",
+  }),
+
+  P("aggron", "보스로라", "강철", 5, 5, 9, "E", {
+    stage: 2,
+    evolvesFrom: "lairon",
+    ability: "sturdy",
+  }),
+
+  P("electrike", "썬더라이", "전기", 1, 2, 1, "C", {
+    ability: "static",
+  }),
+
+  P("manectric", "썬더볼트", "전기", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "electrike",
+    ability: "static",
+  }),
+
+  P("wailmer", "고래왕자", "물", 2, 1, 5, "C", {
+    ability: "waterveil",
+  }),
+
+  P("wailord", "고래왕", "물", 6, 4, 12, "E", {
+    stage: 1,
+    evolvesFrom: "wailmer",
+    ability: "waterveil",
+  }),
+
+  P("cacnea", "선인왕", "풀", 1, 2, 1, "C", {
+    ability: "sandveil",
+  }),
+
+  P("cacturne", "밤선인", "악", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "cacnea",
+    ability: "sandveil",
+  }),
+
+  P("feebas", "빈티나", "물", 1, 0, 2, "C", {}),
+
+  P("milotic", "밀로틱", "물", 5, 4, 9, "E", {
+    stage: 1,
+    evolvesFrom: "feebas",
+    ability: "marvelscale",
+  }),
+
+  P("castform", "캐스퐁", "노말", 4, 4, 5, "R", {
+    ability: "forecast",
+  }),
+
+  P("kecleon", "켈리몬", "노말", 3, 3, 5, "R", {
+    ability: "colorchange",
+  }),
+
+  P("shuppet", "어둠대신", "고스트", 1, 2, 1, "C", {
+    ability: "cursedbody",
+  }),
+
+  P("banette", "다크펫", "고스트", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "shuppet",
+    ability: "cursedbody",
+  }),
+
+  P("latios", "라티오스", "드래곤", 7, 8, 7, "L", {
+    ability: "lusterpurge",
+  }),
+
+  P("jirachi", "지라치", "강철", 7, 6, 8, "L", {
+    ability: "wishmaker",
+  }),
+
+  P("deoxys", "테오키스", "에스퍼", 8, 8, 8, "L", {
+    ability: "formchange",
+    flavor: "소환할 때 4가지 폼 중 하나를 선택한다.",
+  }),
+
   // ============ 기술 카드 (22) ============
   {
     id: "hydropump",
@@ -1377,6 +1849,373 @@ export const CARDS = [
     text: "내 덱에서 무작위 포켓몬 1장을 손으로 가져온다.",
   },
 
+    // ============================================================
+  // v6 신규 기술 카드
+  // ============================================================
+
+  {
+    id: "sheercold",
+    name: "절대영도",
+    kind: "spell",
+    type: "기술",
+    moveType: "얼음",
+    cost: 5,
+    rarity: "L",
+    emoji: "🥶",
+    spell: {
+      effect: "execute",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 1마리를 즉시 기절시킨다. 상대 트레이너는 지정할 수 없다.",
+  },
+
+  {
+    id: "fissure",
+    name: "땅가르기",
+    kind: "spell",
+    type: "기술",
+    moveType: "땅",
+    cost: 5,
+    rarity: "L",
+    emoji: "🌋",
+    spell: {
+      effect: "execute",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 1마리를 즉시 기절시킨다. 상대 트레이너는 지정할 수 없다.",
+  },
+
+  {
+    id: "horndrill",
+    name: "뿔드릴",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 5,
+    rarity: "L",
+    emoji: "🦏",
+    spell: {
+      effect: "execute",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 1마리를 즉시 기절시킨다. 상대 트레이너는 지정할 수 없다.",
+  },
+
+  {
+    id: "guillotine",
+    name: "가위자르기",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 5,
+    rarity: "L",
+    emoji: "✂️",
+    spell: {
+      effect: "execute",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 1마리를 즉시 기절시킨다. 상대 트레이너는 지정할 수 없다.",
+  },
+
+  {
+    id: "hyperbeam",
+    name: "파괴광선",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 7,
+    rarity: "E",
+    emoji: "💥",
+    spell: {
+      effect: "damage",
+      amount: 9,
+      target: "enemy-any",
+    },
+    text: "상대 하나에게 노말 피해 9. 타입 상성을 적용한다.",
+  },
+
+  {
+    id: "fireblast",
+    name: "불대문자",
+    kind: "spell",
+    type: "기술",
+    moveType: "불꽃",
+    cost: 6,
+    rarity: "E",
+    emoji: "🔥",
+    spell: {
+      effect: "damage_status",
+      amount: 7,
+      status: "burn",
+      chance: 1,
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 하나에게 불꽃 피해 7을 주고 화상 상태로 만든다.",
+  },
+
+  {
+    id: "blizzardmove",
+    name: "눈보라",
+    kind: "spell",
+    type: "기술",
+    moveType: "얼음",
+    cost: 8,
+    rarity: "E",
+    emoji: "🌨️",
+    spell: {
+      effect: "aoe_status",
+      amount: 3,
+      status: "ice",
+      chance: 0.4,
+      target: "enemy-field",
+    },
+    text: "상대 포켓몬 전체에게 얼음 피해 3. 각각 40% 확률로 얼음 상태이상.",
+  },
+
+  {
+    id: "heatwave",
+    name: "열풍",
+    kind: "spell",
+    type: "기술",
+    moveType: "불꽃",
+    cost: 7,
+    rarity: "E",
+    emoji: "♨️",
+    spell: {
+      effect: "aoe_status",
+      amount: 3,
+      status: "burn",
+      chance: 0.4,
+      target: "enemy-field",
+    },
+    text: "상대 포켓몬 전체에게 불꽃 피해 3. 각각 40% 확률로 화상 상태이상.",
+  },
+
+  {
+    id: "sludgewave",
+    name: "오물웨이브",
+    kind: "spell",
+    type: "기술",
+    moveType: "독",
+    cost: 7,
+    rarity: "E",
+    emoji: "☣️",
+    spell: {
+      effect: "aoe_status",
+      amount: 2,
+      status: "poison",
+      chance: 1,
+      target: "enemy-field",
+    },
+    text: "상대 포켓몬 전체에게 독 피해 2를 주고 전부 독 상태로 만든다.",
+  },
+
+  {
+    id: "discharge",
+    name: "방전",
+    kind: "spell",
+    type: "기술",
+    moveType: "전기",
+    cost: 6,
+    rarity: "E",
+    emoji: "⚡",
+    spell: {
+      effect: "aoe_status",
+      amount: 2,
+      status: "para",
+      chance: 0.5,
+      target: "enemy-field",
+    },
+    text: "상대 포켓몬 전체에게 전기 피해 2. 각각 50% 확률로 마비 상태이상.",
+  },
+
+  {
+    id: "dracometeor",
+    name: "용성군",
+    kind: "spell",
+    type: "기술",
+    moveType: "드래곤",
+    cost: 8,
+    rarity: "E",
+    emoji: "☄️",
+    spell: {
+      effect: "aoe_self_debuff",
+      amount: 4,
+      selfAtkDelta: -1,
+      target: "enemy-field",
+    },
+    text: "상대 포켓몬 전체에게 드래곤 피해 4. 사용 후 내 포켓몬 전체 공격력 -1.",
+  },
+
+  {
+    id: "explosionmove",
+    name: "대폭발",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 10,
+    rarity: "L",
+    emoji: "💣",
+    spell: {
+      effect: "all_field_damage",
+      amount: 8,
+      target: "board",
+    },
+    text: "양쪽 필드의 모든 포켓몬에게 피해 8.",
+  },
+
+  {
+    id: "perishsong",
+    name: "멸망의노래",
+    kind: "spell",
+    type: "기술",
+    moveType: "고스트",
+    cost: 7,
+    rarity: "L",
+    emoji: "🎵",
+    spell: {
+      effect: "perish_song",
+      countdown: 2,
+      target: "board",
+    },
+    text: "양쪽 필드의 모든 포켓몬에게 멸망 카운트 2. 두 번째 턴 종료 시 기절한다.",
+  },
+
+  {
+    id: "spore",
+    name: "버섯포자",
+    kind: "spell",
+    type: "기술",
+    moveType: "풀",
+    cost: 4,
+    rarity: "R",
+    emoji: "🍄",
+    spell: {
+      effect: "apply_status",
+      status: "sleep",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 하나를 잠듦 상태로 만든다.",
+  },
+
+  {
+    id: "willowisp",
+    name: "도깨비불",
+    kind: "spell",
+    type: "기술",
+    moveType: "불꽃",
+    cost: 3,
+    rarity: "R",
+    emoji: "👻",
+    spell: {
+      effect: "apply_status",
+      status: "burn",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 하나를 화상 상태로 만든다.",
+  },
+
+  {
+    id: "thunderwave_move",
+    name: "전기자석파",
+    kind: "spell",
+    type: "기술",
+    moveType: "전기",
+    cost: 3,
+    rarity: "R",
+    emoji: "📡",
+    spell: {
+      effect: "apply_status",
+      status: "para",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 하나를 마비 상태로 만든다.",
+  },
+
+  {
+    id: "toxic",
+    name: "맹독",
+    kind: "spell",
+    type: "기술",
+    moveType: "독",
+    cost: 4,
+    rarity: "R",
+    emoji: "☠️",
+    spell: {
+      effect: "apply_status",
+      status: "poison",
+      immediateDamage: 1,
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 하나를 독 상태로 만들고 즉시 피해 1.",
+  },
+
+  {
+    id: "recover",
+    name: "회복",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 4,
+    rarity: "R",
+    emoji: "✨",
+    spell: {
+      effect: "heal",
+      amount: 6,
+      target: "friendly-pokemon",
+    },
+    text: "아군 포켓몬 하나의 체력을 6 회복한다.",
+  },
+
+  {
+    id: "roar",
+    name: "울부짖기",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 5,
+    rarity: "E",
+    emoji: "📣",
+    spell: {
+      effect: "bounce_enemy",
+      target: "enemy-pokemon",
+    },
+    text: "상대 포켓몬 하나를 상대 손으로 되돌린다.",
+  },
+
+  {
+    id: "safeguard",
+    name: "신비의부적",
+    kind: "spell",
+    type: "기술",
+    moveType: "노말",
+    cost: 4,
+    rarity: "R",
+    emoji: "🛡️",
+    spell: {
+      effect: "team_status_guard",
+      turns: 2,
+      target: "friendly-field",
+    },
+    text: "내 포켓몬 전체가 2턴 동안 새 상태이상에 걸리지 않는다.",
+  },
+
+  {
+    id: "haze",
+    name: "흑안개",
+    kind: "spell",
+    type: "기술",
+    moveType: "얼음",
+    cost: 4,
+    rarity: "R",
+    emoji: "🌫️",
+    spell: {
+      effect: "reset_attack",
+      target: "board",
+    },
+    text: "필드의 모든 포켓몬 공격력을 카드의 기본 공격력으로 되돌린다.",
+  },
+
   // ============ 도구 (4) ============
   {
     id: "everstone",
@@ -1537,7 +2376,11 @@ export const CARDS = [
     evolvesFrom: "glameow",
     ability: "intimidate",
   }),
-  P("ambipom", "에이팜", "노말", 3, 3, 4, "R", { ability: "skilllink" }),
+  P("ambipom", "겟핸보숭", "노말", 3, 3, 4, "R", {
+    stage: 1,
+    evolvesFrom: "aipom",
+    ability: "skilllink",
+  }),
   // 에스퍼
   P("mimejr", "흉내내", "에스퍼", 1, 1, 2, "C", {}),
   // 격투
@@ -1670,7 +2513,7 @@ export const CARDS = [
     text: "아군 포켓몬의 모든 상태이상을 낫게 한다.",
   },
 
-  // ============ 메가스톤 (5) ============
+  // ============ 메가스톤 (20) ============
   {
     id: "swampertite",
     name: "대짱이나이트",
@@ -1730,6 +2573,286 @@ export const CARDS = [
     megaFor: "salamence",
     mega: { atk: 3, hp: 2, ability: "intimidate", reBattlecry: true },
     text: "보만다 전용. +3/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)",
+  },
+    // ---------- v6 추가 메가스톤 ----------
+
+  {
+    id: "blastoisinite",
+    name: "거북왕나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "blastoise",
+    megaSpriteId: 10036,
+    mega: {
+      atk: 2,
+      hp: 3,
+      ability: "megalauncher",
+    },
+    text: "거북왕 전용. +2/+3, 메가런처를 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "venusaurite",
+    name: "이상해꽃나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "venusaur",
+    megaSpriteId: 10033,
+    mega: {
+      atk: 2,
+      hp: 4,
+      ability: "thickfat",
+    },
+    text: "이상해꽃 전용. +2/+4, 두꺼운지방을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "charizarditex",
+    name: "리자몽나이트X",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "charizard",
+    megaSpriteId: 10034,
+    mega: {
+      atk: 3,
+      hp: 2,
+      ability: "toughclaws",
+      type: "드래곤",
+    },
+    text: "리자몽 전용. +3/+2, 드래곤 타입으로 변하고 단단한발톱을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "beedrillite",
+    name: "독침붕나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "beedrill",
+    megaSpriteId: 10090,
+    mega: {
+      atk: 4,
+      hp: 1,
+      ability: "adaptability",
+    },
+    text: "독침붕 전용. +4/+1, 적응력을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "alakazite",
+    name: "후딘나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "alakazam",
+    megaSpriteId: 10037,
+    mega: {
+      atk: 4,
+      hp: 1,
+      ability: "trace",
+    },
+    text: "후딘 전용. +4/+1, 메가진화 시 상대 특성 하나를 복사한다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "kangaskhanite",
+    name: "캥카나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "kangaskhan",
+    megaSpriteId: 10039,
+    mega: {
+      atk: 2,
+      hp: 3,
+      ability: "parentalbond",
+    },
+    text: "캥카 전용. +2/+3, 부자유친을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "ampharosite",
+    name: "전룡나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "ampharos",
+    megaSpriteId: 10045,
+    mega: {
+      atk: 3,
+      hp: 3,
+      ability: "voltabsorb",
+      type: "드래곤",
+    },
+    text: "전룡 전용. +3/+3, 드래곤 타입으로 변하고 축전을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "tyranitarite",
+    name: "마기라스나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "tyranitar",
+    megaSpriteId: 10049,
+    mega: {
+      atk: 3,
+      hp: 4,
+      ability: "sandstream",
+      secondaryAbility: "sandforce",
+      battlecryWeather: "sand",
+    },
+    text: "마기라스 전용. +3/+4, 모래바람을 다시 일으키고 모래바람 동안 공격력 +2. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "blazikenite",
+    name: "번치코나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "blaziken",
+    megaSpriteId: 10050,
+    mega: {
+      atk: 3,
+      hp: 2,
+      ability: "speedboost",
+    },
+    text: "번치코 전용. +3/+2, 가속을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "gardevoirite",
+    name: "가디안나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "gardevoir",
+    megaSpriteId: 10051,
+    mega: {
+      atk: 3,
+      hp: 2,
+      ability: "pixilate",
+      type: "페어리",
+    },
+    text: "가디안 전용. +3/+2, 페어리 타입으로 변하고 페어리스킨을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "mawilite",
+    name: "입치트나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "mawile",
+    megaSpriteId: 10052,
+    mega: {
+      atk: 2,
+      hp: 3,
+      ability: "hugepower",
+    },
+    text: "입치트 전용. +2/+3, 천하장사를 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "aggronite",
+    name: "보스로라나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "aggron",
+    megaSpriteId: 10053,
+    mega: {
+      atk: 2,
+      hp: 5,
+      ability: "filter",
+      secondaryAbility: "taunt",
+    },
+    text: "보스로라 전용. +2/+5, 필터와 도발을 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "manectite",
+    name: "썬더볼트나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "manectric",
+    megaSpriteId: 10055,
+    mega: {
+      atk: 3,
+      hp: 2,
+      ability: "intimidate",
+      secondaryAbility: "voltabsorb",
+      reIntimidate: true,
+    },
+    text: "썬더볼트 전용. +3/+2, 위협이 다시 발동하고 축전을 함께 얻는다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "banettite",
+    name: "다크펫나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "banette",
+    megaSpriteId: 10056,
+    mega: {
+      atk: 4,
+      hp: 1,
+      ability: "cursedbody",
+      curseStrongest: true,
+    },
+    text: "다크펫 전용. +4/+1, 저주받은바디를 얻고 가장 강한 상대 포켓몬을 저주한다. (게임당 메가진화 1회)",
+  },
+
+  {
+    id: "absolite",
+    name: "앱솔나이트",
+    kind: "mega",
+    type: "도구",
+    cost: 2,
+    rarity: "L",
+    emoji: "🔮",
+    megaFor: "absol",
+    megaSpriteId: 10057,
+    mega: {
+      atk: 4,
+      hp: 1,
+      ability: "magicbounce",
+    },
+    text: "앱솔 전용. +4/+1, 매직미러를 얻는다. (게임당 메가진화 1회)",
   },
 ];
 
@@ -2311,14 +3434,127 @@ export const DEX = {
   croagunk: 453,
   toxicroak: 454,
   carnivine: 455,
+    // v6 1~3세대 확장
+  squirtle: 7,
+  wartortle: 8,
+  blastoise: 9,
+
+  meowth: 52,
+  persian: 53,
+
+  poliwag: 60,
+  poliwhirl: 61,
+  poliwrath: 62,
+
+  tentacool: 72,
+  tentacruel: 73,
+
+  slowpoke: 79,
+  slowbro: 80,
+
+  krabby: 98,
+  kingler: 99,
+
+  cubone: 104,
+  marowak: 105,
+
+  jolteon: 135,
+
+  omanyte: 138,
+  omastar: 139,
+
+  bayleef: 153,
+  meganium: 154,
+
+  cyndaquil: 155,
+  quilava: 156,
+  typhlosion: 157,
+
+  totodile: 158,
+  croconaw: 159,
+  feraligatr: 160,
+
+  spinarak: 167,
+  ariados: 168,
+
+  chinchou: 170,
+  lanturn: 171,
+
+  sudowoodo: 185,
+  aipom: 190,
+  wobbuffet: 202,
+
+  pineco: 204,
+  forretress: 205,
+
+  porygon2: 233,
+
+  torchic: 255,
+  combusken: 256,
+  blaziken: 257,
+
+  lotad: 270,
+  lombre: 271,
+  ludicolo: 272,
+
+  shroomish: 285,
+  breloom: 286,
+
+  nincada: 290,
+  ninjask: 291,
+  shedinja: 292,
+
+  mawile: 303,
+
+  aron: 304,
+  lairon: 305,
+  aggron: 306,
+
+  electrike: 309,
+  manectric: 310,
+
+  wailmer: 320,
+  wailord: 321,
+
+  cacnea: 331,
+  cacturne: 332,
+
+  feebas: 349,
+  milotic: 350,
+
+  castform: 351,
+  kecleon: 352,
+
+  shuppet: 353,
+  banette: 354,
+
+  latios: 381,
+  jirachi: 385,
+  deoxys: 386,
 };
 
 export const MEGA_DEX = {
   swampert: 10064,
-  charizard: 10035,
+  charizard: 10035, // Y 기본
   gyarados: 10041,
   gengar: 10038,
   salamence: 10089,
+
+  // v6 추가
+  blastoise: 10036,
+  venusaur: 10033,
+  beedrill: 10090,
+  alakazam: 10037,
+  kangaskhan: 10039,
+  ampharos: 10045,
+  tyranitar: 10049,
+  blaziken: 10050,
+  gardevoir: 10051,
+  mawile: 10052,
+  aggron: 10053,
+  manectric: 10055,
+  banette: 10056,
+  absol: 10057,
 };
 
 export const ITEM_SPRITE = {
@@ -2362,6 +3598,47 @@ export const ITEM_SPRITE = {
   darkpulse: "tm-dark",
   ironhead: "tm-steel",
   dragonclaw: "tm-dragon",
+    // v6 신규 기술
+  sheercold: "tm-ice",
+  fissure: "tm-ground",
+  horndrill: "tm-normal",
+  guillotine: "tm-normal",
+
+  hyperbeam: "tm-normal",
+  fireblast: "tm-fire",
+  blizzardmove: "tm-ice",
+  heatwave: "tm-fire",
+  sludgewave: "tm-poison",
+  discharge: "tm-electric",
+  dracometeor: "tm-dragon",
+  explosionmove: "tm-normal",
+  perishsong: "tm-ghost",
+
+  spore: "tm-grass",
+  willowisp: "tm-fire",
+  thunderwave_move: "tm-electric",
+  toxic: "tm-poison",
+  recover: "tm-normal",
+  roar: "tm-normal",
+  safeguard: "tm-normal",
+  haze: "tm-ice",
+
+  // v6 메가스톤
+  blastoisinite: "blastoisinite",
+  venusaurite: "venusaurite",
+  charizarditex: "charizardite-x",
+  beedrillite: "beedrillite",
+  alakazite: "alakazite",
+  kangaskhanite: "kangaskhanite",
+  ampharosite: "ampharosite",
+  tyranitarite: "tyranitarite",
+  blazikenite: "blazikenite",
+  gardevoirite: "gardevoirite",
+  mawilite: "mawilite",
+  aggronite: "aggronite",
+  manectite: "manectite",
+  banettite: "banettite",
+  absolite: "absolite",
 };
 
 export const UI_SPRITES = {
@@ -2386,16 +3663,31 @@ export function trainerSpriteUrl(key) {
   return `https://play.pokemonshowdown.com/sprites/trainers/${key}.png`;
 }
 
-export function spriteUrl(cardId, mega = false, busted = false) {
-  if (cardId === "mimikyu" && busted) return `${SPRITE_BASE}/pokemon/10143.png`;
+export function spriteUrl(
+  cardId,
+  mega = false,
+  busted = false,
+  spriteId = null,
+) {
+  if (cardId === "mimikyu" && busted) {
+    return `${SPRITE_BASE}/pokemon/10143.png`;
+  }
 
-  if (mega && MEGA_DEX[cardId])
+  if (spriteId) {
+    return `${SPRITE_BASE}/pokemon/${spriteId}.png`;
+  }
+
+  if (mega && MEGA_DEX[cardId]) {
     return `${SPRITE_BASE}/pokemon/${MEGA_DEX[cardId]}.png`;
+  }
 
-  if (DEX[cardId]) return `${SPRITE_BASE}/pokemon/${DEX[cardId]}.png`;
+  if (DEX[cardId]) {
+    return `${SPRITE_BASE}/pokemon/${DEX[cardId]}.png`;
+  }
 
-  if (ITEM_SPRITE[cardId])
+  if (ITEM_SPRITE[cardId]) {
     return `${SPRITE_BASE}/items/${ITEM_SPRITE[cardId]}.png`;
+  }
 
   return null;
 }

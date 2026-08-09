@@ -51,6 +51,104 @@ function hasAbility(unit, ability) {
   );
 }
 
+function lowerAttack(
+  game,
+  unit,
+  amount,
+  sourceName = null,
+) {
+  if (!unit || amount <= 0) {
+    return 0;
+  }
+
+  if (
+    hasAbility(unit, "clearbody") ||
+    hasAbility(unit, "hypercutter") ||
+    hasAbility(unit, "oblivious")
+  ) {
+    if (sourceName) {
+      log(
+        game,
+        `${unit.name}의 특성으로 ${sourceName}의 공격력 감소를 막았다!`,
+      );
+    }
+
+    return 0;
+  }
+
+  const before = unit.atk;
+
+  unit.atk =
+    Math.max(
+      0,
+      unit.atk - amount,
+    );
+
+  return before - unit.atk;
+}
+
+
+function refreshForecastUnit(
+  game,
+  unit,
+) {
+  if (
+    !unit ||
+    !hasAbility(
+      unit,
+      "forecast",
+    )
+  ) {
+    return;
+  }
+
+  const nextType =
+    game.weather === "rain"
+      ? "물"
+      : game.weather === "sun"
+        ? "불꽃"
+        : game.weather === "sand"
+          ? "바위"
+          : "노말";
+
+  if (
+    unit.type !== nextType
+  ) {
+    unit.type = nextType;
+
+    log(
+      game,
+      `${unit.name}의 기분파! ${nextType} 타입으로 변했다!`,
+    );
+  }
+}
+
+function refreshForecastAll(game) {
+  ["player", "enemy"].forEach(
+    (side) => {
+      game.players[
+        side
+      ].field.forEach(
+        (unit) => {
+          refreshForecastUnit(
+            game,
+            unit,
+          );
+        },
+      );
+    },
+  );
+}
+
+function setWeather(
+  game,
+  weather,
+) {
+  game.weather = weather;
+
+  refreshForecastAll(game);
+}
+
 function typeMultAgainstUnit(attackType, unit) {
   const mult = typeMult(attackType, unit.type);
 
@@ -257,7 +355,7 @@ function canStableDrawCard(
   if (!card) return false;
 
   if (
-    effectiveCost(card, game) >
+    effectiveCost(card, game, side) >
     p.mana
   ) {
     return false;
@@ -549,6 +647,7 @@ function makePlayer(deckIds, name, hp = 40) {
     fatigue: 0,
     megaUsed: false,
     discardUsedThisTurn: false,
+    _statusGuardTurns: 0,
     _productiveActionsThisTurn: 0,
     _brickTurns: 0,
   };
@@ -580,17 +679,155 @@ export function drawCard(game, side, silent = false) {
 // ---------- 턴 진행 ----------
 // ── 상태이상 헬퍼 ──────────────────────────────────────────
 // 포켓몬에게 상태이상 부여 (쾌청 중 얼음 불가 등 규칙 포함)
-export function applyStatus(game, unit, statusType) {
-  if (unit.status) return; // 이미 상태이상 있으면 중첩 불가
-  if (statusType === "ice" && game.weather === "sun") return; // 쾌청 중 얼음 불가
+export function applyStatus(
+  game,
+  unit,
+  statusType,
+  sourceUnit = null,
+) {
+  if (
+    !unit ||
+    unit.hp <= 0
+  ) {
+    return false;
+  }
+
+  // 혹시 데이터에서 잘못 들어와도 보정
+  if (
+    statusType === "paralyze"
+  ) {
+    statusType = "para";
+  }
+
+  if (unit.status) {
+    return false;
+  }
+
+  const owner =
+    game.players[
+      unit.side
+    ];
+
+  // 신비의부적
+  if (
+    owner?._statusGuardTurns > 0
+  ) {
+    log(
+      game,
+      `${unit.name}은(는) 신비의부적으로 상태이상을 막았다!`,
+    );
+
+    return false;
+  }
+
+  // 수의베일
+  if (
+    hasAbility(
+      unit,
+      "waterveil",
+    ) &&
+    statusType === "burn"
+  ) {
+    log(
+      game,
+      `${unit.name}의 수의베일! 화상을 막았다!`,
+    );
+
+    return false;
+  }
+
+  // 둔감
+  if (
+    hasAbility(
+      unit,
+      "oblivious",
+    ) &&
+    statusType === "sleep"
+  ) {
+    log(
+      game,
+      `${unit.name}의 둔감! 잠듦을 막았다!`,
+    );
+
+    return false;
+  }
+
+  // 매직미러
+  if (
+    hasAbility(
+      unit,
+      "magicbounce",
+    )
+  ) {
+    if (
+      sourceUnit &&
+      sourceUnit.hp > 0
+    ) {
+      log(
+        game,
+        `${unit.name}의 매직미러! 상태이상을 ${sourceUnit.name}에게 되돌렸다!`,
+      );
+
+      applyStatus(
+        game,
+        sourceUnit,
+        statusType,
+        null,
+      );
+    } else {
+      log(
+        game,
+        `${unit.name}의 매직미러! 상태이상을 튕겨냈다!`,
+      );
+    }
+
+    return false;
+  }
+
+  // 쾌청 중 얼음 불가
+  if (
+    statusType === "ice" &&
+    game.weather === "sun"
+  ) {
+    return false;
+  }
+
   // 타입 면역
-  if (statusType === "burn" && unit.type === "불꽃") return;
-  if (statusType === "para" && unit.type === "전기") return;
-  if (statusType === "poison" && (unit.type === "독" || unit.type === "강철"))
-    return;
-  if (statusType === "ice" && unit.type === "얼음") return;
+  if (
+    statusType === "burn" &&
+    unit.type === "불꽃"
+  ) {
+    return false;
+  }
+
+  if (
+    statusType === "para" &&
+    unit.type === "전기"
+  ) {
+    return false;
+  }
+
+  if (
+    statusType === "poison" &&
+    (
+      unit.type === "독" ||
+      unit.type === "강철"
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    statusType === "ice" &&
+    unit.type === "얼음"
+  ) {
+    return false;
+  }
+
   unit.status = statusType;
   unit.statusTurns = 0;
+
+  return true;
 }
 
 // 턴 시작 시 상태이상 판정
@@ -641,6 +878,16 @@ function startTurn(game, side) {
   p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
   p.mana = p.maxMana;
   p.discardUsedThisTurn = false;
+  if (p._statusGuardTurns > 0) {
+  p._statusGuardTurns -= 1;
+
+  if (p._statusGuardTurns === 0) {
+    log(
+      game,
+      `${p.name}의 신비의부적 효과가 사라졌다.`,
+    );
+  }
+}
   p.field.forEach((u) => {
     u.extraUsed = false;
     if (u.resting) {
@@ -757,7 +1004,13 @@ export function endTurn(game) {
         log(game, `${u.name}의 치유의마음! 양옆 포켓몬이 회복했다.`);
     }
     // 생명의 구슬: 턴 종료 시 반동 피해 1
-    if (u.item === "lifeorb") {
+    if (
+      u.item === "lifeorb" &&
+      !hasAbility(
+        u,
+        "rockhead",
+      )
+    ) {
       u.hp -= 1;
       log(game, `${u.name}의 생명의구슬 반동! 체력이 1 줄었다.`);
     }
@@ -772,6 +1025,28 @@ export function endTurn(game) {
       const dmg = u.statusTurns;
       u.hp -= dmg;
       log(game, `${u.name}은(는) 독으로 체력이 ${dmg} 줄었다!`);
+    }
+    // 멸망의노래
+    if (
+      u._perishCount != null
+    ) {
+      u._perishCount -= 1;
+
+      if (
+        u._perishCount <= 0
+      ) {
+        u.hp = 0;
+
+        log(
+          game,
+          `${u.name}의 멸망 카운트가 0! 기절했다!`,
+        );
+      } else {
+        log(
+          game,
+          `${u.name}의 멸망 카운트: ${u._perishCount}`,
+        );
+      }
     }
     // 유빈의 팬텀 - 저주
     if (
@@ -800,6 +1075,75 @@ export function endTurn(game) {
 
       log(game, `${u.name}의 물의파동! 체력을 1 회복했다.`);
     }
+
+    // 가속
+    if (
+      hasAbility(
+        u,
+        "speedboost",
+      ) &&
+      (u._speedBoostStacks || 0) < 3
+    ) {
+      u._speedBoostStacks =
+        (u._speedBoostStacks || 0) + 1;
+
+      u.atk += 1;
+
+      log(
+        game,
+        `${u.name}의 가속! 공격력 +1!`,
+      );
+    }
+
+    // 젖은접시
+    if (
+      hasAbility(
+        u,
+        "raindish",
+      ) &&
+      game.weather === "rain" &&
+      u.hp < u.maxHp
+    ) {
+      const before = u.hp;
+
+      u.hp =
+        Math.min(
+          u.maxHp,
+          u.hp + 1,
+        );
+
+      if (u.hp > before) {
+        log(
+          game,
+          `${u.name}의 젖은접시! 체력을 1 회복했다!`,
+        );
+      }
+    }
+
+    // 아로마테라피
+    if (
+      hasAbility(
+        u,
+        "aromatherapy",
+      )
+    ) {
+      const target =
+        p.field.find(
+          (ally) =>
+            ally.hp > 0 &&
+            ally.status,
+        );
+
+      if (target) {
+        target.status = null;
+        target.statusTurns = 0;
+
+        log(
+          game,
+          `${u.name}의 아로마테라피! ${target.name}의 상태이상이 회복됐다!`,
+        );
+      }
+    }
   });
 
   cleanupDeaths(game);
@@ -827,37 +1171,241 @@ export function endTurn(game) {
 }
 
 // ---------- 계산 ----------
-export function effectiveCost(card, game) {
+export function effectiveCost(
+  card,
+  game,
+  side = null,
+) {
   let cost = card.cost;
-  if (game.weather === "sun") {
-    if (card.ability === "chlorophyll") cost -= 1;
-    if (card.id === "solarbeam") cost -= 2;
+
+  if (
+    game.weather === "sun"
+  ) {
+    if (
+      card.ability ===
+      "chlorophyll"
+    ) {
+      cost -= 1;
+    }
+
+    if (
+      card.id ===
+      "solarbeam"
+    ) {
+      cost -= 2;
+    }
   }
-  return Math.max(0, cost);
+
+
+  // 테오키스 노말폼 - 프레셔
+  if (
+    side &&
+    card.type === "기술"
+  ) {
+    const foe =
+      game.players[
+        other(side)
+      ];
+
+    const pressureCount =
+      foe.field.filter(
+        (u) =>
+          u.hp > 0 &&
+          hasAbility(
+            u,
+            "pressure",
+          ),
+      ).length;
+
+    cost += pressureCount;
+  }
+
+
+  return Math.max(
+    0,
+    cost,
+  );
 }
 
-export function effectiveAtk(unit, game) {
+export function effectiveAtk(
+  unit,
+  game,
+) {
   let atk = unit.atk;
+
+
   if (
-    PINCH_ABILITIES.includes(unit.ability) &&
-    unit.hp <= Math.ceil(unit.maxHp / 2)
-  )
-    atk += 2;
-  if (unit.status === "burn") atk = Math.max(0, Math.floor(atk / 2)); // 화상: 공격력 절반
-  if (game.weather === "rain" && unit.type === "물") atk += 1;
-  if (game.weather === "sun" && unit.type === "불꽃") atk += 1;
-  if (game.weather === "sun" && unit.ability === "solarpower") atk += 2;
-  if (game.weather === "rain" && unit.ability === "misty_miraclestar") {
+    PINCH_ABILITIES.some(
+      (ability) =>
+        hasAbility(
+          unit,
+          ability,
+        ),
+    ) &&
+    unit.hp <=
+      Math.ceil(
+        unit.maxHp / 2,
+      )
+  ) {
     atk += 2;
   }
-  if (unit.ability === "fortress") return unit.hp;
-  const owner = game.players[unit.side];
+
+
+  // 테크니션
+  if (
+    hasAbility(
+      unit,
+      "technician",
+    ) &&
+    unit.atk <= 3
+  ) {
+    atk += 2;
+  }
+
+
+  // 단단한발톱
+  if (
+    hasAbility(
+      unit,
+      "toughclaws",
+    )
+  ) {
+    atk += 2;
+  }
+
+
+  // 페어리스킨
+  if (
+    hasAbility(
+      unit,
+      "pixilate",
+    )
+  ) {
+    atk += 1;
+  }
+
+
+  // 메가마기라스
+  if (
+    game.weather === "sand" &&
+    hasAbility(
+      unit,
+      "sandforce",
+    )
+  ) {
+    atk += 2;
+  }
+
+
+  // 천하장사
+  if (
+    hasAbility(
+      unit,
+      "hugepower",
+    )
+  ) {
+    atk *= 2;
+  }
+
+
+  // 화상
+  if (
+    unit.status === "burn"
+  ) {
+    atk =
+      Math.max(
+        0,
+        Math.floor(
+          atk / 2,
+        ),
+      );
+  }
+
+
+  if (
+    game.weather === "rain" &&
+    unit.type === "물"
+  ) {
+    atk += 1;
+  }
+
+  if (
+    game.weather === "sun" &&
+    unit.type === "불꽃"
+  ) {
+    atk += 1;
+  }
+
+
+  if (
+    game.weather === "sun" &&
+    hasAbility(
+      unit,
+      "solarpower",
+    )
+  ) {
+    atk += 2;
+  }
+
+
+  if (
+    game.weather === "rain" &&
+    hasAbility(
+      unit,
+      "misty_miraclestar",
+    )
+  ) {
+    atk += 2;
+  }
+
+
+  if (
+    hasAbility(
+      unit,
+      "fortress",
+    )
+  ) {
+    return unit.hp;
+  }
+
+
+  const owner =
+    game.players[
+      unit.side
+    ];
+
   if (owner) {
-    owner.field.forEach((u) => {
-      if (u.uid !== unit.uid && AURA_TYPES[u.ability] === unit.type) atk += 1;
-    });
+    owner.field.forEach(
+      (u) => {
+        if (
+          u.uid !== unit.uid &&
+          AURA_TYPES[
+            u.ability
+          ] === unit.type
+        ) {
+          atk += 1;
+        }
+      },
+    );
   }
-  return Math.max(0, atk);
+
+
+  return Math.max(
+    0,
+    atk,
+  );
+}
+
+
+function effectiveAttackType(
+  unit,
+) {
+  return hasAbility(
+    unit,
+    "pixilate",
+  )
+    ? "페어리"
+    : unit.type;
 }
 
 export function typeMult(attackType, defendType) {
@@ -1016,6 +1564,33 @@ function applyDamage(
 
   let dmg = amount;
 
+  // ============================================================
+  // v6 신규 방어 특성
+  // ============================================================
+
+  // 불가사의부적
+  // 약점 타입의 직접 피해만 통과
+  if (
+    !typedIgnore &&
+    sourceType &&
+    hasAbility(unit, "wonderguard")
+  ) {
+    const mult =
+      typeMultAgainstUnit(
+        sourceType,
+        unit,
+      );
+
+    if (mult <= 1) {
+      log(
+        game,
+        `${unit.name}의 불가사의부적! 공격이 통하지 않았다!`,
+      );
+
+      return finishImpact(0);
+    }
+  }
+
   // 웅의 롱스톤 - 스톤에지
   if (unit.ability === "brock_rockwall") {
     const before = dmg;
@@ -1032,32 +1607,39 @@ function applyDamage(
   }
 
   // 부유
-  if (!typedIgnore && sourceType === "땅" && unit.ability === "levitate") {
+  if (!typedIgnore && sourceType === "땅" && hasAbility(unit, "levitate")) {
     log(game, `${unit.name}은(는) 부유로 피해를 받지 않았다!`);
 
     return finishImpact(0);
   }
 
   // 타오르는불꽃
-  if (!typedIgnore && sourceType === "불꽃" && unit.ability === "flashfire") {
+  if (!typedIgnore && sourceType === "불꽃" && hasAbility(unit, "flashfire")) {
     log(game, `${unit.name}의 타오르는불꽃! 불꽃 피해를 받지 않는다!`);
 
     return finishImpact(0);
   }
 
   // 축전
-  if (!typedIgnore && sourceType === "전기" && unit.ability === "voltabsorb") {
+  if (
+    !typedIgnore &&
+    sourceType === "전기" &&
+    hasAbility(unit, "voltabsorb")
+  ) {
     const heal = Math.min(1, unit.maxHp - unit.hp);
 
     unit.hp += heal;
 
-    log(game, `${unit.name}의 축전! 전기를 흡수해 체력을 회복했다!`);
+    log(
+      game,
+      `${unit.name}의 축전! 전기를 흡수해 체력을 회복했다!`,
+    );
 
     return finishImpact(0);
   }
 
   // 저수
-  if (!typedIgnore && sourceType === "물" && unit.ability === "waterabsorb") {
+  if (!typedIgnore && sourceType === "물" && hasAbility(unit, "waterabsorb")) {
     const heal = Math.min(1, unit.maxHp - unit.hp);
 
     unit.hp += heal;
@@ -1071,7 +1653,7 @@ function applyDamage(
   if (
     !typedIgnore &&
     (sourceType === "불꽃" || sourceType === "얼음") &&
-    unit.ability === "thickfat"
+    hasAbility(unit, "thickfat")
   ) {
     dmg = Math.max(0, dmg - 1);
 
@@ -1081,7 +1663,7 @@ function applyDamage(
   }
 
   // 모래숨기
-  if (!typedIgnore && game.weather === "sand" && unit.ability === "sandveil") {
+  if (!typedIgnore && game.weather === "sand" && hasAbility(unit, "sandveil")) {
     dmg = Math.max(0, dmg - 1);
 
     if (dmg < amount) {
@@ -1091,7 +1673,10 @@ function applyDamage(
 
   // 멀티스케일
   if (
-    (unit.ability === "multiscale" || unit.ability === "aeroblast") &&
+    (
+      hasAbility(unit, "multiscale") ||
+      hasAbility(unit, "aeroblast")
+    ) &&
     unit.hp === unit.maxHp &&
     dmg > 1
   ) {
@@ -1100,12 +1685,98 @@ function applyDamage(
     log(game, `${unit.name}의 멀티스케일! 피해가 절반이 됐다!`);
   }
 
+    // 조가비갑옷
+  if (
+    !typedIgnore &&
+    hasAbility(unit, "shellarmor") &&
+    dmg > 4
+  ) {
+    dmg = 4;
+
+    log(
+      game,
+      `${unit.name}의 조가비갑옷! 피해를 4로 줄였다!`,
+    );
+  }
+
+
+  // 이상한비늘
+  if (
+    unit.status &&
+    hasAbility(unit, "marvelscale")
+  ) {
+    const before = dmg;
+
+    dmg =
+      Math.max(
+        0,
+        dmg - 2,
+      );
+
+    if (dmg < before) {
+      log(
+        game,
+        `${unit.name}의 이상한비늘! 피해가 2 줄었다!`,
+      );
+    }
+  }
+
+
+  // 필터
+  if (
+    !typedIgnore &&
+    sourceType &&
+    hasAbility(unit, "filter") &&
+    typeMultAgainstUnit(
+      sourceType,
+      unit,
+    ) > 1
+  ) {
+    const before = dmg;
+
+    dmg =
+      Math.max(
+        0,
+        dmg - 2,
+      );
+
+    if (dmg < before) {
+      log(
+        game,
+        `${unit.name}의 필터! 약점 피해가 2 줄었다!`,
+      );
+    }
+  }
+
+  // 테오키스 디펜스폼
+  if (
+    hasAbility(
+      unit,
+      "deoxys_defense",
+    )
+  ) {
+    const before = dmg;
+
+    dmg =
+      Math.max(
+        0,
+        dmg - 2,
+      );
+
+    if (dmg < before) {
+      log(
+        game,
+        `${unit.name}의 디펜스폼! 피해가 2 줄었다!`,
+      );
+    }
+  }
+
   if (dmg <= 0) {
     return finishImpact(0);
   }
 
   // 따라큐 탈
-  if (unit.ability === "disguise" && !unit.sturdyUsed) {
+  if (hasAbility(unit, "disguise") && !unit.sturdyUsed) {
     unit.hp -= 1;
     unit.sturdyUsed = true;
 
@@ -1116,7 +1787,7 @@ function applyDamage(
 
   // 옹골참
   if (
-    unit.ability === "sturdy" &&
+    hasAbility(unit, "sturdy") &&
     unit.maxHp > 1 &&
     unit.hp === unit.maxHp &&
     dmg >= unit.hp
@@ -1145,6 +1816,25 @@ function applyDamage(
 
   unit.hp -= dmg;
 
+  // 켈리몬 - 변색
+  if (
+    !typedIgnore &&
+    sourceType &&
+    unit.hp > 0 &&
+    hasAbility(
+      unit,
+      "colorchange",
+    ) &&
+    unit.type !== sourceType
+  ) {
+    unit.type = sourceType;
+
+    log(
+      game,
+      `${unit.name}의 변색! ${sourceType} 타입으로 변했다!`,
+    );
+  }
+
   // 불꽃 피해를 받으면 얼음 해제
   if (sourceType === "불꽃" && unit.status === "ice") {
     unit.status = null;
@@ -1171,7 +1861,7 @@ export function cleanupDeaths(game) {
           drawCard(game, side);
           log(game, `${u.name}의 예지몽! 카드를 1장 뽑았다.`);
         }
-        if (u.ability === "explode") {
+        if (hasAbility(u, "explode")) {
           const foes = game.players[other(side)].field.filter((f) => f.hp > 0);
           if (foes.length > 0) {
             const t = foes[Math.floor(Math.random() * foes.length)];
@@ -1203,13 +1893,14 @@ function makeUnit(card, game, side) {
     name: card.name,
     type: card.type,
     atk: card.atk,
+    baseAtk: card.atk,
     hp: card.hp,
     maxHp: card.hp,
     rarity: card.rarity,
     emoji: card.emoji,
     ability: card.ability || null,
     secondaryAbility:
-    card.secondaryAbility || null,
+      card.secondaryAbility || null,
     stage: card.stage || 0,
     canAttack: false,
     summonedTurn: game.turnCount,
@@ -1223,6 +1914,153 @@ function makeUnit(card, game, side) {
     noEvolve: false,
     side,
   };
+}
+
+const DEOXYS_FORMS = {
+  normal: {
+    label: "노말폼",
+    atk: 8,
+    hp: 8,
+    ability: "pressure",
+  },
+
+  attack: {
+    label: "어택폼",
+    atk: 13,
+    hp: 4,
+    ability: "deoxys_attack",
+  },
+
+  defense: {
+    label: "디펜스폼",
+    atk: 4,
+    hp: 13,
+    ability: "deoxys_defense",
+  },
+
+  speed: {
+    label: "스피드폼",
+    atk: 7,
+    hp: 8,
+    ability: "deoxys_speed",
+  },
+};
+
+
+function applyDeoxysForm(
+  game,
+  unit,
+  form,
+) {
+  const data =
+    DEOXYS_FORMS[form];
+
+  if (
+    !unit ||
+    unit.cardId !== "deoxys" ||
+    !data
+  ) {
+    return false;
+  }
+
+
+  unit.deoxysForm = form;
+
+  unit.name =
+    `테오키스 (${data.label})`;
+
+  unit.type = "에스퍼";
+
+  unit.atk = data.atk;
+  unit.baseAtk = data.atk;
+
+  unit.hp = data.hp;
+  unit.maxHp = data.hp;
+
+  unit.ability =
+    data.ability;
+
+  unit.secondaryAbility =
+    null;
+
+
+  // 어택폼
+  if (form === "attack") {
+    unit.canAttack = true;
+
+    unit._deoxysAttackUsed =
+      false;
+  }
+
+
+  // 스피드폼
+  if (form === "speed") {
+    unit.canAttack = true;
+
+    unit.extraUsed = false;
+  }
+
+
+  log(
+    game,
+    `${unit.name}(으)로 폼체인지했다!`,
+  );
+
+  return true;
+}
+
+
+export function resolveDeoxysForm(
+  game,
+  side,
+  form,
+) {
+  const pending =
+    game.pendingDeoxysForm;
+
+  if (
+    !pending ||
+    pending.side !== side
+  ) {
+    return false;
+  }
+
+  if (
+    !DEOXYS_FORMS[form]
+  ) {
+    return false;
+  }
+
+
+  const unit =
+    game.players[
+      side
+    ].field.find(
+      (u) =>
+        u.uid === pending.uid,
+    );
+
+  if (!unit) {
+    game.pendingDeoxysForm =
+      null;
+
+    return false;
+  }
+
+
+  const result =
+    applyDeoxysForm(
+      game,
+      unit,
+      form,
+    );
+
+  if (result) {
+    game.pendingDeoxysForm =
+      null;
+  }
+
+  return result;
 }
 
 function runBattlecry(game, side, unit) {
@@ -1256,7 +2094,7 @@ function runBattlecry(game, side, unit) {
       break;
     case "airlock":
       if (game.weather) {
-        game.weather = null;
+        setWeather(game, null);
         log(game, `${unit.name}의 에어록! 날씨가 사라졌다!`);
       }
       break;
@@ -1294,7 +2132,7 @@ function runBattlecry(game, side, unit) {
       break;
     }
     case "primordialsea":
-      game.weather = "rain";
+      setWeather(game, "rain");
       foe.field.forEach((u) => applyDamage(game, u, 2, "물"));
       log(
         game,
@@ -1303,7 +2141,7 @@ function runBattlecry(game, side, unit) {
       cleanupDeaths(game);
       break;
     case "desolateland":
-      game.weather = "sun";
+      setWeather(game, "sun");
       foe.field.forEach((u) => applyDamage(game, u, 2, "땅"));
       log(
         game,
@@ -1371,21 +2209,33 @@ function runBattlecry(game, side, unit) {
       const targets = foe.field.filter((u) => u.hp > 0);
       if (targets.length) {
         const t = targets[Math.floor(Math.random() * targets.length)];
-        t.atk = Math.max(0, t.atk - 2);
-        log(game, `${unit.name}의 위협! ${t.name}의 공격력이 2 떨어졌다!`);
+        const lowered =
+          lowerAttack(
+            game,
+            t,
+            2,
+            "위협",
+          );
+
+        if (lowered > 0) {
+          log(
+            game,
+            `${unit.name}의 위협! ${t.name}의 공격력이 -${lowered}!`,
+          );
+        }
       }
       break;
     }
     case "drizzle":
-      game.weather = "rain";
+      setWeather(game, "rain");
       log(game, `${unit.name}의 잔비! 비가 내리기 시작했다!`);
       break;
     case "drought":
-      game.weather = "sun";
+      setWeather(game, "sun");
       log(game, `${unit.name}의 가뭄! 햇살이 강해졌다!`);
       break;
     case "sandstream":
-      game.weather = "sand";
+      setWeather(game, "sand");
       log(game, `${unit.name}의 모래날림! 모래바람이 불기 시작했다!`);
       break;
     case "keeneye":
@@ -1455,7 +2305,7 @@ function runBattlecry(game, side, unit) {
     // =================== 레전드 전용기 ===================
 
     case "originpulse": // 가이오가: 근원의파동
-      game.weather = "rain";
+      setWeather(game, "rain");
       foe.field.forEach((u) => applyDamage(game, u, 3, "물"));
       if (foe.field.length) {
         const alive = foe.field.filter((u) => u.hp > 0);
@@ -1542,7 +2392,7 @@ function runBattlecry(game, side, unit) {
     }
 
     case "precipiceblades": // 그란돈: 절벽의칼날
-      game.weather = "sun";
+      setWeather(game, "sun");
       foe.field.forEach((u) => applyDamage(game, u, 4, "땅"));
       log(game, `${unit.name}의 단애의칼! 쾌청 발동 + 상대 전체 땅 피해 4!`);
       cleanupDeaths(game);
@@ -1649,7 +2499,7 @@ function runBattlecry(game, side, unit) {
     }
 
     case "dragonascent": // 레쿠쟈: 용승천
-      game.weather = null;
+      setWeather(game, null);
       foe.field.forEach((u) => applyDamage(game, u, 3, "드래곤"));
       log(
         game,
@@ -1699,16 +2549,22 @@ function runBattlecry(game, side, unit) {
       )[0];
 
       if (t) {
-        t.atk = Math.max(0, t.atk - 2);
+        const lowered =
+          lowerAttack(game, t, 2, "사이코커터");
 
-        log(game, `${unit.name}의 사이코커터! ${t.name}의 공격력 -2!`);
+        if (lowered > 0) {
+          log(
+            game,
+            `${unit.name}의 사이코커터! ${t.name}의 공격력이 -${lowered}!`,
+          );
+        }
       }
 
       break;
     }
 
     case "erika_flowerdance":
-      game.weather = "sun";
+      setWeather(game, "sun");
 
       log(game, `${unit.name}의 그래스필드! 햇살이 강해졌다!`);
 
@@ -1723,23 +2579,30 @@ function runBattlecry(game, side, unit) {
 
       if (t) {
         applyStatus(game, t, "poison");
-        t.atk = Math.max(0, t.atk - 1);
 
-        log(game, `${unit.name}의 독가루! ${t.name}은(는) 독 상태, 공격력 -1!`);
+        const lowered =
+          lowerAttack(game, t, 1, "독가루");
+
+        if (lowered > 0) {
+          log(
+            game,
+            `${unit.name}의 독가루! ${t.name}은(는) 독 상태, 공격력 -${lowered}!`,
+          );
+        }
       }
 
       break;
     }
 
     case "misty_miraclestar":
-      game.weather = "rain";
+      setWeather(game, "rain");
 
       log(game, `${unit.name}의 물의파동! 비가 내리기 시작했다!`);
 
       break;
 
     case "blaine_eruption":
-      game.weather = "sun";
+      setWeather(game, "sun");
 
       foe.field.forEach((u) => applyDamage(game, u, 2, "불꽃"));
 
@@ -1838,16 +2701,280 @@ function runBattlecry(game, side, unit) {
     
       break;
     }
+
+        // ============================================================
+    // v6 신규 등장 특성
+    // ============================================================
+
+    case "pickup": {
+      if (
+        me.hand.length >=
+        MAX_HAND
+      ) {
+        log(
+          game,
+          `${unit.name}의 픽업! 손패가 가득 차 있다.`,
+        );
+
+        break;
+      }
+
+
+      const candidates =
+        me.deck
+          .map(
+            (cardId, index) => ({
+              cardId,
+              index,
+              card:
+                CARD_MAP[
+                  cardId
+                ],
+            }),
+          )
+          .filter(
+            (x) =>
+              x.card &&
+              x.card.type ===
+                "도구" &&
+              x.card.kind !==
+                "mega",
+          );
+
+
+      if (
+        candidates.length
+      ) {
+        const pick =
+          candidates[
+            Math.floor(
+              Math.random() *
+                candidates.length,
+            )
+          ];
+
+        me.deck.splice(
+          pick.index,
+          1,
+        );
+
+        me.hand.push({
+          uid: nextUid(),
+          cardId: pick.cardId,
+        });
+
+        log(
+          game,
+          `${unit.name}의 픽업! ${pick.card.name}을(를) 주워왔다!`,
+        );
+      } else {
+        log(
+          game,
+          `${unit.name}의 픽업! 주울 도구가 없었다.`,
+        );
+      }
+
+      break;
+    }
+
+
+    case "webtrap": {
+      const targets =
+        foe.field.filter(
+          (u) => u.hp > 0,
+        );
+
+      if (
+        targets.length
+      ) {
+        const t =
+          targets[
+            Math.floor(
+              Math.random() *
+                targets.length,
+            )
+          ];
+
+        lowerAttack(
+          game,
+          t,
+          1,
+          "거미집",
+        );
+
+        applyStatus(
+          game,
+          t,
+          "poison",
+          unit,
+        );
+
+        log(
+          game,
+          `${unit.name}의 거미집! ${t.name}의 공격력 -1 + 독!`,
+        );
+      }
+
+      break;
+    }
+
+
+    case "lusterpurge": {
+      const targets =
+        foe.field.filter(
+          (u) => u.hp > 0,
+        );
+
+      const t =
+        [...targets].sort(
+          (a, b) =>
+            effectiveAtk(
+              b,
+              game,
+            ) -
+            effectiveAtk(
+              a,
+              game,
+            ),
+        )[0];
+
+
+      if (t) {
+        const dmg =
+          calcTypedDamageAgainstUnit(
+            4,
+            "에스퍼",
+            t,
+          );
+
+        applyDamage(
+          game,
+          t,
+          dmg,
+          "에스퍼",
+        );
+
+        if (t.hp > 0) {
+          lowerAttack(
+            game,
+            t,
+            1,
+            "라스터퍼지",
+          );
+        }
+
+        log(
+          game,
+          `${unit.name}의 라스터퍼지! ${t.name}에게 에스퍼 피해!`,
+        );
+
+        cleanupDeaths(game);
+      }
+
+      break;
+    }
+
+
+    case "wishmaker": {
+      me.field.forEach(
+        (ally) => {
+          ally.hp =
+            Math.min(
+              ally.maxHp,
+              ally.hp + 2,
+            );
+        },
+      );
+
+      drawCard(
+        game,
+        side,
+      );
+
+      log(
+        game,
+        `${unit.name}의 소원메이커! 아군 전체 회복 + 카드 1장 드로우!`,
+      );
+
+      break;
+    }
+
+
+    case "formchange": {
+      // AI는 알아서 하나 선택
+      if (
+        side === "enemy"
+      ) {
+        const forms = [
+          "normal",
+          "attack",
+          "defense",
+          "speed",
+        ];
+
+        const form =
+          forms[
+            Math.floor(
+              Math.random() *
+                forms.length,
+            )
+          ];
+
+        applyDeoxysForm(
+          game,
+          unit,
+          form,
+        );
+      } else {
+        // 플레이어는 Battle.jsx에서 선택
+        game.pendingDeoxysForm = {
+          side,
+          uid: unit.uid,
+        };
+
+        log(
+          game,
+          `${unit.name}의 폼체인지! 폼을 선택하세요.`,
+        );
+      }
+
+      break;
+    }
       
     default:
       break;
   }
-  // 쓱쓱: 비면 소환 즉시 공격 가능
-  if (unit.ability === "swiftswim" && game.weather === "rain") {
+    // 캐스퐁 타입 동기화
+  refreshForecastUnit(
+    game,
+    unit,
+  );
+
+
+  // 쓱쓱
+  if (
+    hasAbility(
+      unit,
+      "swiftswim",
+    ) &&
+    game.weather === "rain"
+  ) {
     unit.canAttack = true;
-    log(game, `${unit.name}은(는) 쓱쓱으로 바로 움직일 수 있다!`);
+
+    log(
+      game,
+      `${unit.name}은(는) 쓱쓱으로 바로 움직일 수 있다!`,
+    );
   }
-  if (unit.ability === "rush") {
+
+
+  // 돌진
+  if (
+    hasAbility(
+      unit,
+      "rush",
+    )
+  ) {
     unit.canAttack = true;
   }
 }
@@ -1859,7 +2986,7 @@ export function canPlayCard(game, side, handIdx) {
   const h = p.hand[handIdx];
   if (!h) return false;
   const card = CARD_MAP[h.cardId];
-  if (effectiveCost(card, game) > p.mana) return false;
+  if (effectiveCost(card, game, side) > p.mana) return false;
   if (
     card.kind === "pokemon" &&
     !card.evolvesFrom &&
@@ -1887,6 +3014,15 @@ export function canPlayCard(game, side, handIdx) {
   if (card.kind === "spell") {
     const t = card.spell.target;
     if (t === "enemy-any") return true; // 영웅은 항상 있음
+    if (
+      t === "enemy-pokemon"
+    ) {
+      return (
+        game.players[
+          other(side)
+        ].field.length > 0
+      );
+    }
     if (t === "friendly-pokemon") return p.field.length > 0;
     return true;
   }
@@ -1928,7 +3064,7 @@ export function playCard(
   if (!canPlayCard(game, side, handIdx)) return false;
   const h = p.hand[handIdx];
   const card = CARD_MAP[h.cardId];
-  const cost = effectiveCost(card, game);
+  const cost = effectiveCost(card, game, side);
 
   beginImpactCapture(game);
 
@@ -1968,6 +3104,7 @@ export function playCard(
     base.name = card.name;
     base.type = card.type;
     base.atk = card.atk;
+    base.baseAtk = card.atk;
     base.maxHp = card.hp;
     base.hp = Math.max(1, card.hp - damageTaken);
     base.rarity = card.rarity;
@@ -1985,45 +3122,277 @@ export function playCard(
   }
 
   // ----- 메가진화 -----
-  if (card.kind === "mega") {
+  if (
+    card.kind === "mega"
+  ) {
     const base = target
-      ? p.field.find((u) => u.uid === target.uid && u.cardId === card.megaFor)
-      : p.field.find((u) => u.cardId === card.megaFor && !u.mega);
-    if (!base || base.mega || p.megaUsed) return false;
+      ? p.field.find(
+          (u) =>
+            u.uid ===
+              target.uid &&
+            u.cardId ===
+              card.megaFor,
+        )
+      : p.field.find(
+          (u) =>
+            u.cardId ===
+              card.megaFor &&
+            !u.mega,
+        );
+
+    if (
+      !base ||
+      base.mega ||
+      p.megaUsed
+    ) {
+      return false;
+    }
+
+
     p.mana -= cost;
-    p.hand.splice(handIdx, 1);
+
+    p.hand.splice(
+      handIdx,
+      1,
+    );
+
     p.megaUsed = true;
+
     base.mega = true;
-    base.name = `메가 ${base.name}`;
-    base.atk += card.mega.atk;
-    base.maxHp += card.mega.hp;
-    base.hp += card.mega.hp;
-    base.ability = card.mega.ability;
-    log(game, `${base.name}(으)로 메가진화했다!!`);
-    if (card.mega.battlecryWeather) {
-      game.weather = card.mega.battlecryWeather;
-      log(game, `가뭄 발동! 햇살이 강해졌다!`);
+
+    base.name =
+      `메가 ${base.name}`;
+
+
+    base.atk +=
+      card.mega.atk;
+
+    base.maxHp +=
+      card.mega.hp;
+
+    base.hp +=
+      card.mega.hp;
+
+
+    base.ability =
+      card.mega.ability ||
+      base.ability;
+
+    base.secondaryAbility =
+      card.mega
+        .secondaryAbility ||
+      null;
+
+
+    if (
+      card.mega.type
+    ) {
+      base.type =
+        card.mega.type;
     }
-    if (card.mega.reBattlecry) {
-      runBattlecry(game, side, base);
+
+
+    // 흑안개가 메가진화 스탯으로 복구하도록
+    base.baseAtk =
+      base.atk;
+
+
+    // Card.jsx에서 사용할 메가 폼
+    base.megaSpriteId =
+      card.megaSpriteId ||
+      null;
+
+
+    log(
+      game,
+      `${base.name}(으)로 메가진화했다!!`,
+    );
+
+
+    // 날씨 발동
+    if (
+      card.mega
+        .battlecryWeather
+    ) {
+      setWeather(
+        game,
+        card.mega
+          .battlecryWeather,
+      );
+
+      const weatherName =
+        WEATHER_NAME[
+          card.mega
+            .battlecryWeather
+        ];
+
+      log(
+        game,
+        `${base.name}의 힘으로 ${weatherName} 날씨가 됐다!`,
+      );
     }
-    if (card.mega.reIntimidate) {
-      const foes = game.players[other(side)].field.filter((u) => u.hp > 0);
-      if (foes.length) {
-        const t = foes[Math.floor(Math.random() * foes.length)];
-        t.atk = Math.max(0, t.atk - 2);
-        log(game, `위협 재발동! ${t.name}의 공격력이 2 떨어졌다!`);
+
+
+    // 팬텀 등 기존 전투의함성 재발동
+    if (
+      card.mega
+        .reBattlecry
+    ) {
+      runBattlecry(
+        game,
+        side,
+        base,
+      );
+    }
+
+
+    // 갸라도스 / 썬더볼트
+    if (
+      card.mega
+        .reIntimidate
+    ) {
+      const foes =
+        game.players[
+          other(side)
+        ].field.filter(
+          (u) =>
+            u.hp > 0,
+        );
+
+      if (
+        foes.length
+      ) {
+        const t =
+          foes[
+            Math.floor(
+              Math.random() *
+                foes.length,
+            )
+          ];
+
+        const lowered =
+          lowerAttack(
+            game,
+            t,
+            2,
+            "위협",
+          );
+
+        if (lowered > 0) {
+          log(
+            game,
+            `위협 재발동! ${t.name}의 공격력 -${lowered}!`,
+          );
+        }
       }
     }
+
+
+    // 메가후딘 - 트레이스
     if (
-      base.ability === "swiftswim" &&
-      game.weather === "rain" &&
-      !base.canAttack
+      hasAbility(
+        base,
+        "trace",
+      )
     ) {
-      base.canAttack = true;
-      log(game, `쓱쓱 발동! ${base.name}이(가) 바로 움직일 수 있다!`);
+      const candidates =
+        game.players[
+          other(side)
+        ].field.filter(
+          (u) =>
+            u.hp > 0 &&
+            u.ability,
+        );
+
+      if (
+        candidates.length
+      ) {
+        const copied =
+          candidates[
+            Math.floor(
+              Math.random() *
+                candidates.length,
+            )
+          ];
+
+        base.ability =
+          copied.ability;
+
+        log(
+          game,
+          `${base.name}의 트레이스! ${copied.name}의 특성을 복사했다!`,
+        );
+      }
     }
-    markPlay(game, side, card, { anim: "mega", uid: base.uid });
+
+
+    // 메가다크펫
+    if (
+      card.mega
+        .curseStrongest
+    ) {
+      const targets =
+        game.players[
+          other(side)
+        ].field.filter(
+          (u) =>
+            u.hp > 0,
+        );
+
+      const t =
+        [...targets].sort(
+          (a, b) =>
+            effectiveAtk(
+              b,
+              game,
+            ) -
+            effectiveAtk(
+              a,
+              game,
+            ),
+        )[0];
+
+      if (t) {
+        t._mortyCurse =
+          true;
+
+        log(
+          game,
+          `${base.name}의 저주! ${t.name}에게 저주를 걸었다!`,
+        );
+      }
+    }
+
+
+    // 쓱쓱
+    if (
+      hasAbility(
+        base,
+        "swiftswim",
+      ) &&
+      game.weather ===
+        "rain"
+    ) {
+      base.canAttack =
+        true;
+
+      log(
+        game,
+        `${base.name}의 쓱쓱! 바로 공격할 수 있다!`,
+      );
+    }
+
+
+    markPlay(
+      game,
+      side,
+      card,
+      {
+        anim: "mega",
+        uid: base.uid,
+      },
+    );
+
     return true;
   }
 
@@ -2063,18 +3432,19 @@ export function playCard(
     if (s.effect === "weather") {
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
-      game.weather = s.weather;
+
+      setWeather(
+        game,
+        s.weather,
+      );
+
       log(
         game,
         `${p.name}이(가) ${card.name}을(를) 사용했다! ${WEATHER_NAME[s.weather]}!`,
       );
-      recordImpact(game, {
-        type: "cleanse",
-        side,
-        targetUid: u.uid,
-        amount: 0,
-      });
+
       markPlay(game, side, card);
+
       return true;
     }
 
@@ -2211,6 +3581,566 @@ export function playCard(
         log(game, `${card.name}! ${u.name}의 상태이상이 회복됐다!`);
       }
       markPlay(game, side, card);
+      return true;
+    }
+
+    // ============================================================
+    // v6 신규 기술
+    // ============================================================
+
+    // ---------- 일격기 ----------
+    if (s.effect === "execute") {
+      if (
+        !target ||
+        target.uid === "hero"
+      ) {
+        return false;
+      }
+
+      const u =
+        foe.field.find(
+          (x) =>
+            x.uid === target.uid,
+        );
+
+      if (!u) {
+        return false;
+      }
+
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      const before = u.hp;
+
+      u.hp = 0;
+
+      recordImpact(game, {
+        type: "damage",
+        side: other(side),
+        targetUid: u.uid,
+        amount: before,
+      });
+
+      log(
+        game,
+        `${card.name}! ${u.name}이(가) 일격에 쓰러졌다!`,
+      );
+
+      cleanupDeaths(game);
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 단일 피해 + 상태이상 ----------
+    if (
+      s.effect ===
+      "damage_status"
+    ) {
+      if (
+        !target ||
+        target.uid === "hero"
+      ) {
+        return false;
+      }
+
+      const u =
+        foe.field.find(
+          (x) =>
+            x.uid === target.uid,
+        );
+
+      if (!u) {
+        return false;
+      }
+
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      const base =
+        spellDamageAmount(
+          card,
+          game,
+        );
+
+      const dmg =
+        calcTypedDamageAgainstUnit(
+          base,
+          card.moveType,
+          u,
+        );
+
+      const dealt =
+        applyDamage(
+          game,
+          u,
+          dmg,
+          card.moveType,
+        );
+
+      if (
+        u.hp > 0 &&
+        Math.random() <
+          (s.chance ?? 1)
+      ) {
+        applyStatus(
+          game,
+          u,
+          s.status,
+        );
+      }
+
+      log(
+        game,
+        `${card.name}! ${u.name}에게 피해 ${dealt}!`,
+      );
+
+      cleanupDeaths(game);
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 광역 피해 + 상태이상 ----------
+    if (
+      s.effect ===
+      "aoe_status"
+    ) {
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      const base =
+        spellDamageAmount(
+          card,
+          game,
+        );
+
+      foe.field.forEach(
+        (u) => {
+          const dmg =
+            calcTypedDamageAgainstUnit(
+              base,
+              card.moveType,
+              u,
+            );
+
+          applyDamage(
+            game,
+            u,
+            dmg,
+            card.moveType,
+          );
+
+          if (
+            u.hp > 0 &&
+            Math.random() <
+              (s.chance ?? 1)
+          ) {
+            applyStatus(
+              game,
+              u,
+              s.status,
+            );
+          }
+        },
+      );
+
+      log(
+        game,
+        `${card.name}! 상대 전체를 공격했다!`,
+      );
+
+      cleanupDeaths(game);
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 용성군 ----------
+    if (
+      s.effect ===
+      "aoe_self_debuff"
+    ) {
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      const base =
+        spellDamageAmount(
+          card,
+          game,
+        );
+
+      foe.field.forEach(
+        (u) => {
+          const dmg =
+            calcTypedDamageAgainstUnit(
+              base,
+              card.moveType,
+              u,
+            );
+
+          applyDamage(
+            game,
+            u,
+            dmg,
+            card.moveType,
+          );
+        },
+      );
+
+      p.field.forEach(
+        (u) => {
+          u.atk =
+            Math.max(
+              0,
+              u.atk +
+                (s.selfAtkDelta || 0),
+            );
+        },
+      );
+
+      log(
+        game,
+        `${card.name}! 상대 전체 공격 후 내 포켓몬 공격력 -1!`,
+      );
+
+      cleanupDeaths(game);
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 대폭발 ----------
+    if (
+      s.effect ===
+      "all_field_damage"
+    ) {
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      ["player", "enemy"]
+        .forEach(
+          (fieldSide) => {
+            game.players[
+              fieldSide
+            ].field.forEach(
+              (u) => {
+                applyDamage(
+                  game,
+                  u,
+                  s.amount,
+                  null,
+                  true,
+                );
+              },
+            );
+          },
+        );
+
+      log(
+        game,
+        `${card.name}! 양쪽 필드 전체에 피해 ${s.amount}!`,
+      );
+
+      cleanupDeaths(game);
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 멸망의노래 ----------
+    if (
+      s.effect ===
+      "perish_song"
+    ) {
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      ["player", "enemy"]
+        .forEach(
+          (fieldSide) => {
+            game.players[
+              fieldSide
+            ].field.forEach(
+              (u) => {
+                u._perishCount =
+                  s.countdown || 2;
+              },
+            );
+          },
+        );
+
+      log(
+        game,
+        `${card.name}! 필드의 모든 포켓몬에게 멸망 카운트가 시작됐다!`,
+      );
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 상태이상 기술 ----------
+    if (
+      s.effect ===
+      "apply_status"
+    ) {
+      if (
+        !target ||
+        target.uid === "hero"
+      ) {
+        return false;
+      }
+
+      const u =
+        foe.field.find(
+          (x) =>
+            x.uid === target.uid,
+        );
+
+      if (!u) {
+        return false;
+      }
+
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      const applied =
+        applyStatus(
+          game,
+          u,
+          s.status,
+        );
+
+      if (
+        applied &&
+        s.immediateDamage
+      ) {
+        applyDamage(
+          game,
+          u,
+          s.immediateDamage,
+          null,
+          true,
+        );
+      }
+
+      if (applied) {
+        log(
+          game,
+          `${card.name}! ${u.name}에게 상태이상을 걸었다!`,
+        );
+      } else {
+        log(
+          game,
+          `${card.name}! 하지만 효과가 없었다!`,
+        );
+      }
+
+      cleanupDeaths(game);
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 울부짖기 ----------
+    if (
+      s.effect ===
+      "bounce_enemy"
+    ) {
+      if (
+        !target ||
+        target.uid === "hero"
+      ) {
+        return false;
+      }
+
+      if (
+        foe.hand.length >=
+        MAX_HAND
+      ) {
+        return false;
+      }
+
+      const index =
+        foe.field.findIndex(
+          (u) =>
+            u.uid === target.uid,
+        );
+
+      if (index === -1) {
+        return false;
+      }
+
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      const [u] =
+        foe.field.splice(
+          index,
+          1,
+        );
+
+      foe.hand.push({
+        uid: nextUid(),
+        cardId: u.cardId,
+      });
+
+      log(
+        game,
+        `${card.name}! ${u.name}을(를) 손으로 되돌렸다!`,
+      );
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 신비의부적 ----------
+    if (
+      s.effect ===
+      "team_status_guard"
+    ) {
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      p._statusGuardTurns =
+        s.turns || 2;
+
+      log(
+        game,
+        `${card.name}! ${p.name}의 포켓몬이 상태이상으로부터 보호된다!`,
+      );
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
+      return true;
+    }
+
+
+    // ---------- 흑안개 ----------
+    if (
+      s.effect ===
+      "reset_attack"
+    ) {
+      p.mana -= cost;
+      p.hand.splice(
+        handIdx,
+        1,
+      );
+
+      ["player", "enemy"]
+        .forEach(
+          (fieldSide) => {
+            game.players[
+              fieldSide
+            ].field.forEach(
+              (u) => {
+                const original =
+                  u.baseAtk ??
+                  CARD_MAP[
+                    u.cardId
+                  ]?.atk;
+
+                if (
+                  original != null
+                ) {
+                  u.atk =
+                    original;
+                }
+              },
+            );
+          },
+        );
+
+      log(
+        game,
+        `${card.name}! 모든 포켓몬의 공격력 변화가 초기화됐다!`,
+      );
+
+      markPlay(
+        game,
+        side,
+        card,
+      );
+
       return true;
     }
 
@@ -2457,16 +4387,23 @@ export function validAttackTargets(game, side, attackerUid = null) {
   const attacker = attackerUid
     ? game.players[side].field.find((u) => u.uid === attackerUid)
     : null;
-  const noguard = attacker && attacker.ability === "noguard";
-  const taunts = noguard
+  const noguard =
+    attacker &&
+    hasAbility(
+      attacker,
+      "noguard",
+    );
+  const taunts =
+  noguard
     ? []
     : foe.field.filter(
         (u) =>
           (
-            u.ability === "taunt" ||
-            u.ability === "fortress" ||
-            u.ability === "brock_rockwall" ||
-            u.ability === "jasmine_autotomize"
+            hasAbility(u, "taunt") ||
+            hasAbility(u, "deoxys_defense") ||
+            hasAbility(u, "fortress") ||
+            hasAbility(u, "brock_rockwall") ||
+            hasAbility(u, "jasmine_autotomize")
           ) &&
           u.hp > 0,
       );
@@ -2714,38 +4651,169 @@ function finishJohtoAttack(
   }
 }
 
-function spendAttack(game, unit) {
+function prepareExpansionAttack(
+  game,
+  unit,
+) {
+  const result = {
+    bonusDamage: 0,
+    noCounter: false,
+  };
+
+
+  // 테오키스 어택폼
   if (
-    (unit.ability === "skilllink" || unit.ability === "blue_hurricane") &&
+    hasAbility(
+      unit,
+      "deoxys_attack",
+    ) &&
+    !unit
+      ._deoxysAttackUsed
+  ) {
+    result.bonusDamage =
+      5;
+
+    result.noCounter =
+      true;
+
+    unit._deoxysAttackUsed =
+      true;
+
+    unit
+      ._deoxysAttackDebuffPending =
+      true;
+
+    log(
+      game,
+      `${unit.name}의 사이코부스트! 첫 공격 피해 +5!`,
+    );
+  }
+
+
+  return result;
+}
+
+function finishExpansionAttack(
+  game,
+  unit,
+) {
+  if (
+    unit
+      ?._deoxysAttackDebuffPending
+  ) {
+    unit
+      ._deoxysAttackDebuffPending =
+      false;
+
+    unit.atk =
+      Math.max(
+        0,
+        unit.atk - 3,
+      );
+
+    log(
+      game,
+      `${unit.name}의 사이코부스트 반동! 공격력 -3!`,
+    );
+  }
+}
+
+function spendAttack(
+  game,
+  unit,
+) {
+  const canDouble =
+    hasAbility(
+      unit,
+      "skilllink",
+    ) ||
+    hasAbility(
+      unit,
+      "blue_hurricane",
+    ) ||
+    hasAbility(
+      unit,
+      "deoxys_speed",
+    );
+
+
+  if (
+    canDouble &&
     !unit.extraUsed
   ) {
     unit.extraUsed = true;
 
-    if (unit.ability === "blue_hurricane") {
-      log(game, `${unit.name}의 폭풍! 한 번 더 공격할 수 있다!`);
+
+    if (
+      hasAbility(
+        unit,
+        "deoxys_speed",
+      )
+    ) {
+      log(
+        game,
+        `${unit.name}의 스피드폼! 한 번 더 공격할 수 있다!`,
+      );
+    } else if (
+      hasAbility(
+        unit,
+        "blue_hurricane",
+      )
+    ) {
+      log(
+        game,
+        `${unit.name}의 폭풍! 한 번 더 공격할 수 있다!`,
+      );
     } else {
-      log(game, `${unit.name}의 스킬링크! 한 번 더 공격할 수 있다!`);
+      log(
+        game,
+        `${unit.name}의 스킬링크! 한 번 더 공격할 수 있다!`,
+      );
     }
   } else {
-    unit.canAttack = false;
+    unit.canAttack =
+      false;
 
-    if (unit.ability === "truant") {
-      unit.resting = true;
+    if (
+      hasAbility(
+        unit,
+        "truant",
+      )
+    ) {
+      unit.resting =
+        true;
     }
   }
 
-  // 레드의 피카츄 - 볼트태클 반동
-  if (unit.ability === "red_volttackle") {
+
+  // 레드 피카츄 반동
+  if (
+    hasAbility(
+      unit,
+      "red_volttackle",
+    ) &&
+    !hasAbility(
+      unit,
+      "rockhead",
+    )
+  ) {
     unit.hp -= 2;
 
-    recordImpact(game, {
-      type: "damage",
-      side: unit.side,
-      targetUid: unit.uid,
-      amount: 2,
-    });
+    recordImpact(
+      game,
+      {
+        type: "damage",
+        side: unit.side,
+        targetUid:
+          unit.uid,
+        amount: 2,
+      },
+    );
 
-    log(game, `${unit.name}의 볼트태클 반동! 피해 2!`);
+    log(
+      game,
+      `${unit.name}의 볼트태클 반동! 피해 2!`,
+    );
   }
 }
 
@@ -2768,33 +4836,70 @@ export function attack(game, side, attackerUid, target) {
           game,
           atkUnit,
         );
-    
-      const dmg =
+
+      const expansion =
+        prepareExpansionAttack(
+          game,
+          atkUnit,
+        );
+
+      let dmg =
         effectiveAtk(
           atkUnit,
           game,
         ) +
-        johto.bonusDamage;
-    
-      // 실제 영웅 HP 감소
+        johto.bonusDamage +
+        expansion.bonusDamage;
+
+
       foe.hp -= dmg;
-    
+
       recordImpact(game, {
         type: "damage",
         side: other(side),
         targetUid: "hero",
         amount: dmg,
       });
-    
+
+
+      // 메가캥카 - 부자유친
+      if (
+        hasAbility(
+          atkUnit,
+          "parentalbond",
+        ) &&
+        foe.hp > 0
+      ) {
+        foe.hp -= 2;
+
+        recordImpact(game, {
+          type: "damage",
+          side: other(side),
+          targetUid: "hero",
+          amount: 2,
+        });
+
+        log(
+          game,
+          `${atkUnit.name}의 부자유친! 추가 피해 2!`,
+        );
+      }
+
+
       spendAttack(
         game,
         atkUnit,
       );
-    
+
       finishJohtoAttack(
         game,
         atkUnit,
         foe,
+      );
+
+      finishExpansionAttack(
+        game,
+        atkUnit,
       );
 
       markProductiveAction(
@@ -2806,6 +4911,8 @@ export function attack(game, side, attackerUid, target) {
         game,
         `${atkUnit.name}이(가) ${foe.name}을(를) 직접 공격! 피해 ${dmg}!`,
       );
+
+      cleanupDeaths(game);
     
       game.animSeq =
         (game.animSeq || 0) + 1;
@@ -2833,39 +4940,93 @@ export function attack(game, side, attackerUid, target) {
       atkUnit,
     );
 
-  const atkDmgBase =
-    effectiveAtk(
-      atkUnit,
-      game,
-    );
+    const expansion =
+      prepareExpansionAttack(
+        game,
+        atkUnit,
+      );
 
-  const defDmgBase =
-    effectiveAtk(
-      defUnit,
-      game,
-    );
+    const attackType =
+      effectiveAttackType(
+        atkUnit,
+      );
 
-  const bigChanceMult =
-    atkUnit.ability ===
-    "bigchance"
-      ? 1.5
-      : 1;
+    const defenseAttackType =
+      effectiveAttackType(
+        defUnit,
+      );
 
-  // 이향의 용의파동까지 반영한
-  // 실제 상성 계산
-  let atkDmg = Math.ceil(
-    calcTypedDamageAgainstUnit(
-      atkDmgBase,
-      atkUnit.type,
-      defUnit,
-    ) * bigChanceMult,
-  );
+      const atkDmgBase =
+        effectiveAtk(
+          atkUnit,
+          game,
+        );
 
-  // 구르기 누적
-  if (atkDmg > 0) {
-    atkDmg +=
-      johto.bonusDamage;
-  }
+      const defDmgBase =
+        effectiveAtk(
+          defUnit,
+          game,
+        );
+
+      const bigChanceMult =
+        atkUnit.ability ===
+        "bigchance"
+          ? 1.5
+          : 1;
+
+      // 이향의 용의파동까지 반영한
+      // 실제 상성 계산
+      let atkDmg = Math.ceil(
+        calcTypedDamageAgainstUnit(
+          atkDmgBase,
+          attackType,
+          defUnit,
+        ) * bigChanceMult,
+      );
+
+      // 구르기 누적
+    if (atkDmg > 0) {
+      atkDmg +=
+        johto.bonusDamage;
+
+      atkDmg +=
+        expansion.bonusDamage;
+
+      // 우격다짐
+      if (
+        hasAbility(
+          atkUnit,
+          "sheerforce",
+        ) &&
+        !defUnit.status
+      ) {
+        atkDmg += 1;
+
+        log(
+          game,
+          `${atkUnit.name}의 우격다짐! 피해 +1!`,
+        );
+      }
+
+      // 적응력
+      if (
+        hasAbility(
+          atkUnit,
+          "adaptability",
+        ) &&
+        typeMultAgainstUnit(
+          attackType,
+          defUnit,
+        ) > 1
+      ) {
+        atkDmg += 2;
+
+        log(
+          game,
+          `${atkUnit.name}의 적응력! 약점 피해 +2!`,
+        );
+      }
+    }
 
   // 류옹의 맘모꾸리 - 얼음뭉치
   if (
@@ -2887,28 +5048,36 @@ export function attack(game, side, attackerUid, target) {
   let defDmg =
     calcTypedDamageAgainstUnit(
       defDmgBase,
-      defUnit.type,
+      defenseAttackType,
       atkUnit,
     );
 
-  // 목호 망나뇽 신속
   // 첫 공격에서는 일반 전투 반격만 무효
   if (
-    johto.extremeGuard
+    johto.extremeGuard ||
+    expansion.noCounter
   ) {
     defDmg = 0;
 
-    log(
-      game,
-      `${atkUnit.name}의 신속! 첫 공격의 반격 피해를 받지 않는다!`,
-    );
+    if (expansion.noCounter) {
+      log(
+        game,
+        `${atkUnit.name}의 어택폼! 첫 공격의 반격을 받지 않는다!`,
+      );
+    } else {
+      log(
+        game,
+        `${atkUnit.name}의 신속! 첫 공격의 반격 피해를 받지 않는다!`,
+      );
+    }
   }
+
   if (atkUnit.ability === "bigchance" && atkDmgBase > 0)
     log(game, `${atkUnit.name}의 대운! 피해가 1.5배!`);
 
   const mult =
   typeMultAgainstUnit(
-    atkUnit.type,
+    attackType,
     defUnit,
   );
   const defenderHpBefore =
@@ -2918,7 +5087,7 @@ export function attack(game, side, attackerUid, target) {
     game,
     defUnit,
     atkDmg,
-    atkUnit.type,
+    attackType,
   );
 
   const damageDealt =
@@ -2930,14 +5099,173 @@ export function attack(game, side, attackerUid, target) {
 
   // 신속이면 일반 반격 생략
   if (
-    !johto.extremeGuard
+    !johto.extremeGuard &&
+    !expansion.noCounter
   ) {
     applyDamage(
       game,
       atkUnit,
       defDmg,
-      defUnit.type,
+      defenseAttackType,
     );
+  }
+
+  // 마자용 - 카운터
+  if (
+    hasAbility(
+      defUnit,
+      "counter",
+    ) &&
+    damageDealt > 0 &&
+    atkUnit.hp > 0
+  ) {
+    const counterDamage =
+      Math.ceil(
+        damageDealt / 2,
+      );
+
+    applyDamage(
+      game,
+      atkUnit,
+      counterDamage,
+      null,
+      true,
+    );
+
+    log(
+      game,
+      `${defUnit.name}의 카운터! ${atkUnit.name}에게 피해 ${counterDamage}!`,
+    );
+  }
+
+
+  // 포자
+  if (
+    hasAbility(
+      defUnit,
+      "effectspore",
+    ) &&
+    atkUnit.hp > 0 &&
+    Math.random() < 0.3
+  ) {
+    const statuses = [
+      "poison",
+      "para",
+      "sleep",
+    ];
+
+    const status =
+      statuses[
+        Math.floor(
+          Math.random() *
+          statuses.length,
+        )
+      ];
+
+    if (
+      applyStatus(
+        game,
+        atkUnit,
+        status,
+        defUnit,
+      )
+    ) {
+      log(
+        game,
+        `${defUnit.name}의 포자! ${atkUnit.name}에게 상태이상!`,
+      );
+    }
+  }
+
+
+  // 저주받은바디
+  if (
+    hasAbility(
+      defUnit,
+      "cursedbody",
+    ) &&
+    atkUnit.hp > 0
+  ) {
+    const lowered =
+      lowerAttack(
+        game,
+        atkUnit,
+        1,
+        "저주받은바디",
+      );
+
+    if (lowered > 0) {
+      log(
+        game,
+        `${defUnit.name}의 저주받은바디! ${atkUnit.name}의 공격력 -1!`,
+      );
+    }
+  }
+
+
+  // 메가캥카 - 부자유친
+  if (
+    hasAbility(
+      atkUnit,
+      "parentalbond",
+    ) &&
+    defUnit.hp > 0
+  ) {
+    applyDamage(
+      game,
+      defUnit,
+      2,
+      null,
+      true,
+    );
+
+    log(
+      game,
+      `${atkUnit.name}의 부자유친! 추가 피해 2!`,
+    );
+  }
+
+
+  // 메가거북왕 - 메가런처
+  if (
+    hasAbility(
+      atkUnit,
+      "megalauncher",
+    )
+  ) {
+    const index =
+      foe.field.findIndex(
+        (u) =>
+          u.uid === defUnit.uid,
+      );
+
+    const neighbors = [
+      foe.field[index - 1],
+      foe.field[index + 1],
+    ].filter(
+      (u) =>
+        u &&
+        u.hp > 0,
+    );
+
+    neighbors.forEach(
+      (u) => {
+        applyDamage(
+          game,
+          u,
+          1,
+          null,
+          true,
+        );
+      },
+    );
+
+    if (neighbors.length) {
+      log(
+        game,
+        `${atkUnit.name}의 메가런처! 양옆 포켓몬에게 피해 1!`,
+      );
+    }
   }
 
   // 사도의 강챙이 - 폭발펀치
@@ -2949,16 +5277,20 @@ export function attack(game, side, attackerUid, target) {
     damageDealt > 0 &&
     defUnit.hp > 0
   ) {
-    defUnit.atk =
-      Math.max(
-        0,
-        defUnit.atk - 1,
+    const lowered =
+      lowerAttack(
+        game,
+        defUnit,
+        1,
+        "폭발펀치",
       );
 
-    log(
-      game,
-      `${atkUnit.name}의 폭발펀치! ${defUnit.name}의 공격력 -1!`,
-    );
+    if (lowered > 0) {
+      log(
+        game,
+        `${atkUnit.name}의 폭발펀치! ${defUnit.name}의 공격력 -1!`,
+      );
+    }
   }
 
   spendAttack(
@@ -2970,6 +5302,11 @@ export function attack(game, side, attackerUid, target) {
     game,
     atkUnit,
     foe,
+  );
+
+  finishExpansionAttack(
+    game,
+    atkUnit,
   );
 
   markProductiveAction(
@@ -3080,6 +5417,9 @@ export function attack(game, side, attackerUid, target) {
 
     log(game, `${atkUnit.name}의 조개껍질방울! 체력을 ${healed} 회복했다.`);
   }
+
+  cleanupDeaths(game);
+
   game.animSeq = (game.animSeq || 0) + 1;
 
   game.lastAction = {
@@ -3101,7 +5441,14 @@ export function spellNeedsTarget(card) {
   if (card.kind === "item") return "friendly";
   if (card.kind !== "spell") return null;
   const t = card.spell.target;
-  if (t === "enemy-any") return "enemy";
+
+  if (t === "enemy-any") {
+    return "enemy";
+  }
+
+  if (t === "enemy-pokemon") {
+    return "enemy";
+  }
   if (t === "friendly-pokemon") {
     const e = card.spell.effect;
     if (e === "heal" || e === "fullheal") return "friendly-or-hero";

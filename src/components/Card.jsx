@@ -46,16 +46,34 @@ export function useTilt() {
 }
 
 // ---- 스프라이트 (실패 시 이모지 폴백) ----
-export function Sprite({ cardId, mega, emoji, size, busted = false }) {
+export function Sprite({
+  cardId,
+  mega,
+  emoji,
+  size,
+  busted = false,
+  spriteId = null,
+}) {
   const [failed, setFailed] = useState(false);
-  const url = spriteUrl(cardId, mega, busted);
+
+  const url = spriteUrl(
+    cardId,
+    mega,
+    busted,
+    spriteId,
+  );
+
   if (!url || failed) {
     return (
-      <div className="card-emoji" style={{ fontSize: size * 0.7 }}>
+      <div
+        className="card-emoji"
+        style={{ fontSize: size * 0.7 }}
+      >
         {emoji}
       </div>
     );
   }
+
   return (
     <img
       className="card-sprite"
@@ -95,6 +113,13 @@ export function TrainerSprite({ spriteKey, emoji, size = 64 }) {
 }
 
 const STAGE_LABEL = { 1: "1단계 진화", 2: "2단계 진화" };
+
+const DEOXYS_SPRITE_IDS = {
+  normal: 386,
+  attack: 10001,
+  defense: 10002,
+  speed: 10003,
+};
 
 // ---- 꾹 눌러 크게 보기 공용 훅 (컬렉션/카드팩 등) ----
 export function useInspect(delay = 250) {
@@ -213,6 +238,11 @@ export function HandCard({
         <Sprite
           cardId={card.id}
           mega={unit ? unit.mega : false}
+          spriteId={
+            unit?.cardId === "deoxys" && unit?.deoxysForm
+              ? DEOXYS_SPRITE_IDS[unit.deoxysForm]
+              : unit?.megaSpriteId
+          }
           emoji={card.emoji}
           size={56}
           busted={unit?.cardId === "mimikyu" && unit.sturdyUsed}
@@ -268,10 +298,12 @@ export function FieldUnit({
   const hurt = unit.hp < unit.maxHp;
 
   const hasTaunt =
-  unit.ability === "taunt" ||
-  unit.ability === "fortress" ||
-  unit.ability === "brock_rockwall" ||
-  unit.ability === "jasmine_autotomize";
+    unit.ability === "taunt" ||
+    unit.secondaryAbility === "taunt" ||
+    unit.ability === "deoxys_defense" ||
+    unit.ability === "fortress" ||
+    unit.ability === "brock_rockwall" ||
+    unit.ability === "jasmine_autotomize";
   
   const abilityText = [
     unit.ability
@@ -331,6 +363,11 @@ export function FieldUnit({
           <Sprite
             cardId={unit.cardId}
             mega={unit.mega}
+            spriteId={
+              unit.cardId === "deoxys" && unit.deoxysForm
+                ? DEOXYS_SPRITE_IDS[unit.deoxysForm]
+                : unit.megaSpriteId
+            }
             emoji={unit.emoji}
             size={48}
             busted={unit.cardId === "mimikyu" && unit.sturdyUsed}
