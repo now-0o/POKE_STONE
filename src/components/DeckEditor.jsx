@@ -286,8 +286,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                     {preset.name}
                   </span>
 
-                  <span className="deck-preset-count">
-                    {preset.deck.length}/30
+                 <span className="deck-preset-count">
+                    {activePreset === index
+                      ? save.deck.length
+                      : preset.deck.length
+                    }/30
                   </span>
                 </button>
               ),

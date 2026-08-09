@@ -42,41 +42,33 @@ export function ensureDeckPresets(save) {
     Array.from(
       { length: DECK_PRESET_COUNT },
       (_, index) => {
-        const old =
-          oldPresets[index];
-
-        if (old) {
-          return {
-            name:
-              old.name?.trim() ||
-              `덱 ${index + 1}`,
-
-            deck:
-              Array.isArray(old.deck)
-                ? [...old.deck]
-                : [],
-          };
-        }
+        const old = oldPresets[index];
 
         return {
           name:
-            index === 0
+            old?.name?.trim() ||
+            (index === 0
               ? "기본 덱"
-              : `덱 ${index + 1}`,
+              : `덱 ${index + 1}`),
 
-          /*
-           * 기존 유저는 현재 쓰던 덱을
-           * 1번 프리셋으로 이관
-           */
           deck:
-            index === 0
-              ? [...currentDeck]
+            Array.isArray(old?.deck)
+              ? [...old.deck]
               : [],
         };
       },
     );
 
   save.activeDeckPreset = active;
+
+  /*
+   * 현재 실제 사용 중인 save.deck을
+   * 활성화된 프리셋과 항상 일치시킨다.
+   */
+  save.deckPresets[active] = {
+    ...save.deckPresets[active],
+    deck: [...currentDeck],
+  };
 
   return save;
 }

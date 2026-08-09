@@ -5558,3 +5558,283 @@ img.card-sprite {
       rgba(0, 0, 0, 0.55);
   }
 }
+
+/* ============================================================
+   DECK PRESET + SEARCH
+   ============================================================ */
+
+/* ---------- 검색 ---------- */
+
+.deck-search-row {
+  position: relative;
+
+  width: min(380px, 100%);
+  margin-bottom: 10px;
+}
+
+.deck-search-input {
+  width: 100%;
+  height: 36px;
+
+  box-sizing: border-box;
+
+  padding:
+    0
+    36px
+    0
+    36px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.14);
+
+  border-radius: 999px;
+
+  background:
+    rgba(0, 0, 0, 0.28);
+
+  color: var(--text);
+
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.deck-search-input::placeholder {
+  color:
+    rgba(255, 255, 255, 0.38);
+}
+
+.deck-search-input:focus {
+  border-color:
+    var(--accent);
+
+  background:
+    rgba(0, 0, 0, 0.4);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(245, 197, 66, 0.08);
+}
+
+.deck-search-icon {
+  position: absolute;
+
+  left: 12px;
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+
+  font-size: 13px;
+
+  pointer-events: none;
+
+  z-index: 2;
+}
+
+.deck-search-clear {
+  position: absolute;
+
+  right: 7px;
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  color:
+    rgba(255, 255, 255, 0.75);
+
+  font-size: 16px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.deck-search-clear:hover {
+  background:
+    rgba(255, 255, 255, 0.16);
+
+  color: #fff;
+}
+
+
+/* ---------- 덱 프리셋 ---------- */
+
+.deck-preset-tabs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 6px;
+
+  margin-bottom: 10px;
+}
+
+.deck-preset-btn {
+  min-width: 0;
+
+  padding: 8px 5px 7px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 3px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+
+  border-radius: 9px;
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  color: var(--text);
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.1s,
+    box-shadow 0.15s;
+}
+
+.deck-preset-btn:hover {
+  background:
+    rgba(255, 255, 255, 0.09);
+
+  transform:
+    translateY(-1px);
+}
+
+.deck-preset-btn.active {
+  border-color:
+    var(--accent);
+
+  background:
+    rgba(245, 197, 66, 0.13);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(245, 197, 66, 0.12),
+    0 0 10px
+    rgba(245, 197, 66, 0.08);
+}
+
+.deck-preset-name {
+  width: 100%;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-align: center;
+
+  font-family:
+    var(--display-font);
+
+  font-size: 10px;
+}
+
+.deck-preset-btn.active
+.deck-preset-name {
+  color: var(--accent);
+}
+
+.deck-preset-count {
+  font-size: 9px;
+
+  color:
+    var(--text-dim);
+}
+
+
+/* ---------- 덱 이름 변경 ---------- */
+
+.deck-name-editor {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 12px;
+
+  color:
+    var(--text-dim);
+
+  font-size: 10px;
+}
+
+.deck-name-editor > span {
+  flex-shrink: 0;
+}
+
+.deck-name-editor input {
+  min-width: 0;
+  flex: 1;
+
+  height: 29px;
+
+  box-sizing: border-box;
+
+  padding: 0 8px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+
+  border-radius: 7px;
+
+  background:
+    rgba(0, 0, 0, 0.25);
+
+  color: var(--text);
+
+  font-size: 11px;
+
+  outline: none;
+}
+
+.deck-name-editor input:focus {
+  border-color:
+    var(--accent);
+}
+
+
+/* 검색창 추가로 상단바가 더 높아졌으므로
+   우측 덱 패널 sticky 위치도 조금 내림 */
+@media (min-width: 761px) {
+  .deck-editor .deck-pane {
+    top: 170px;
+    max-height:
+      calc(100vh - 186px);
+  }
+}
