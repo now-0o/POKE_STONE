@@ -1,4 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+} from 'react';
 import { CARDS, CARD_MAP, MAX_COPIES, TYPE_COLORS, RARITY_NAME, DEX } from '../data/cards.js';
 import { persist } from '../state/save.js';
 import { HandCard, Sprite, useInspect } from './Card.jsx';
@@ -57,6 +62,130 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         return a.cost - b.cost || a.name.localeCompare(b.name); // 'cost' (기본)
       });
   }, [save.collection, filter, search, sortMode]);
+
+  const collectionGridRef = useRef(null);
+  const previousCardRectsRef = useRef(new Map());
+
+  function captureCardPositions() {
+    const grid = collectionGridRef.current;
+    if (!grid) return;
+
+    const rects = new Map();
+
+    grid
+      .querySelectorAll("[data-card-id]")
+      .forEach((el) => {
+        rects.set(
+          el.dataset.cardId,
+          el.getBoundingClientRect(),
+        );
+      });
+
+    previousCardRectsRef.current = rects;
+  }
+
+  useLayoutEffect(() => {
+    const grid = collectionGridRef.current;
+    if (!grid) return;
+
+    if (
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches
+    ) {
+      return;
+    }
+
+    const previousRects =
+      previousCardRectsRef.current;
+
+    grid
+      .querySelectorAll("[data-card-id]")
+      .forEach((el) => {
+        const cardId =
+          el.dataset.cardId;
+
+        const newRect =
+          el.getBoundingClientRect();
+
+        const oldRect =
+          previousRects.get(cardId);
+
+        /*
+        * 이전에도 있던 카드:
+        * 이전 위치에서 현재 위치까지 자연스럽게 이동
+        */
+        if (oldRect) {
+          const deltaX =
+            oldRect.left - newRect.left;
+
+          const deltaY =
+            oldRect.top - newRect.top;
+
+          if (
+            Math.abs(deltaX) > 1 ||
+            Math.abs(deltaY) > 1
+          ) {
+            el
+              .getAnimations()
+              .forEach((animation) =>
+                animation.cancel(),
+              );
+
+            el.animate(
+              [
+                {
+                  transform:
+                    `translate(${deltaX}px, ${deltaY}px)`,
+                },
+                {
+                  transform:
+                    "translate(0, 0)",
+                },
+              ],
+              {
+                duration: 240,
+                easing:
+                  "cubic-bezier(0.22, 1, 0.36, 1)",
+              },
+            );
+          }
+
+          return;
+        }
+
+        /*
+        * 검색/필터 변경으로 새로 나타난 카드
+        */
+        el
+          .getAnimations()
+          .forEach((animation) =>
+            animation.cancel(),
+          );
+
+        el.animate(
+          [
+            {
+              opacity: 0,
+              transform:
+                "translateY(8px) scale(0.96)",
+            },
+            {
+              opacity: 1,
+              transform:
+                "translateY(0) scale(1)",
+            },
+          ],
+          {
+            duration: 180,
+            easing: "ease-out",
+          },
+        );
+      });
+
+    previousCardRectsRef.current =
+      new Map();
+  }, [ownedCards]);
 
   function addToDeck(cardId) {
     if (clickSuppressed()) return;
@@ -192,6 +321,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             type="text"
             value={search}
             onChange={(e) =>
+              captureCardPositions();
+
               setSearch(e.target.value)
             }
             placeholder="카드 이름 검색"
@@ -202,7 +333,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             <button
               type="button"
               className="deck-search-clear"
-              onClick={() => setSearch("")}
+              onClick={() => {
+                captureCardPositions();
+
+                setSearch("");
+              }}
             >
               ×
             </button>
@@ -244,13 +379,13 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
       <div className="editor-layout">
         {/* 컬렉션 */}
         <div className="collection-pane">
-          <div className="collection-grid">
+          <div className="collection-grid" ref={collectionGridRef}>
             {ownedCards.map((card) => {
               const owned = save.collection[card.id];
               const inDeck = deckCounts[card.id] || 0;
               const max = Math.min(MAX_COPIES[card.rarity], owned);
               return (
-                <div key={card.id} className="collection-item">
+                <div key={card.id} className="collection-item" data-card-id={card.id}>
                   <HandCard
                     cardId={card.id}
                     playable={inDeck < max && save.deck.length < 30}
