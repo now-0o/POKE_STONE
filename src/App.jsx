@@ -5,7 +5,7 @@ import PackShop from './components/PackShop.jsx';
 import DeckEditor from './components/DeckEditor.jsx';
 import Auth from './components/Auth.jsx';
 import PatchNotes from './components/PatchNotes.jsx';
-import { loadSave, newSave, persist, addReward, recordWin, LOSE_REWARD, activateAdminMode } from './state/save.js';
+import { loadSave, newSave, persist, addReward, recordWin, LOSE_REWARD, activateAdminMode, ensureDeckPresets, } from './state/save.js';
 import { getToken, getStoredUsername, clearAuth, fetchSave, pushSave } from './state/api.js';
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from './audio.js';
 
@@ -65,7 +65,10 @@ export default function App() {
   // 다른 계정으로 로그인했을 때 이전 계정의 로컬 캐시가 남아있는 문제를 막기 위해
   // 항상 서버 응답으로 완전히 덮어씀.
   function applyServerSave(serverSave) {
-    const save = serverSave || newSave();
+    const save =
+    ensureDeckPresets(
+      serverSave || newSave(),
+    );
     persist(save);
     saveRef.current = save;
     if (!serverSave) pushSave(save).catch(() => {}); // 신규 유저면 서버에도 첫 세이브 반영

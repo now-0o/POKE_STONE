@@ -189,11 +189,11 @@ export const ABILITY_TEXT = {
   disguise: "탈: 몸을 덮는 탈로 1번 공격을 막고 1의 피해를 입는다.",
   levitate: "부유: 땅 타입의 기술을 받지 않는다",
   thickfat: "두꺼운지방: 불꽃/얼음 타입에게 받는 피해 1 감소",
-  waterabsorb: "저수: 물 타입 공격을 받으면 피해 대신 체력을 2 회복한다",
-  voltabsorb: "축전: 전기 타입 공격을 받으면 피해 대신 체력을 2 회복한다",
+  waterabsorb: "저수: 물 타입 공격을 받으면 피해 대신 체력을 1 회복한다",
+  voltabsorb: "축전: 전기 타입 공격을 받으면 피해 대신 체력을 1 회복한다",
   flashfire: "타오르는불꽃: 불꽃 타입 피해를 받지 않는다",
   multiscale: "멀티스케일: 체력이 가득일 때 받는 피해가 절반이 된다",
-  regenerator: "재생력: 내 턴 종료 시 이 포켓몬의 체력을 2 회복한다",
+  regenerator: "재생력: 내 턴 종료 시 이 포켓몬의 체력을 1 회복한다",
   fortress: "바디프레스: 도발. 공격할 수 없지만, 반격 피해는 현재 체력과 같다",
   // 반격
   static: "정전기: 접촉 시 피해 1 + 40% 확률로 상대에게 마비 상태이상",
@@ -499,7 +499,7 @@ export const CARDS = [
 
   // ============ 땅 (9) ============
   P("diglett", "디그다", "땅", 1, 1, 1, "C", { ability: "rush" }),
-  P("dugtrio", "닥트리오", "땅", 3, 6, 3, "R", {
+  P("dugtrio", "닥트리오", "땅", 3, 5, 3, "R", {
     stage: 1,
     evolvesFrom: "diglett",
     ability: "skilllink",
@@ -565,7 +565,8 @@ export const CARDS = [
     evolvesFrom: "rattata",
   }),
   P("eevee", "이브이", "노말", 1, 1, 2, "C", {
-    flavor: "샤미드, 부스터, 블래키, 에브이, 님피아로 진화할 수 있다.",
+    flavor:
+      "샤미드, 부스터, 블래키, 에브이, 님피아, 리피아, 글레이시아로 진화할 수 있다.",
   }),
   P("snorlax", "잠만보", "노말", 6, 3, 10, "E", { ability: "taunt" }),
   P("chansey", "럭키", "노말", 3, 1, 6, "R", { ability: "healer" }),
@@ -1436,8 +1437,12 @@ export const CARDS = [
     evolvesFrom: "cherubi",
     ability: "drought",
   }),
-  P("carnivine", "무쪽이", "풀", 4, 5, 5, "R", { ability: "sleeppowder" }),
-  P("leafeon", "리피아", "풀", 4, 6, 5, "R", { ability: "rush" }),
+  P("carnivine", "무스틈니", "풀", 4, 5, 5, "R", { ability: "sleeppowder" }),
+  P("leafeon", "리피아", "풀", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "eevee",
+    ability: "rush",
+  }),
   // 물
   P("buizel", "브이젤", "물", 1, 2, 1, "C", { ability: "rush" }),
   P("floatzel", "플로젤", "물", 3, 5, 4, "R", {
@@ -1445,7 +1450,7 @@ export const CARDS = [
     evolvesFrom: "buizel",
     ability: "rush",
   }),
-  P("gastrodon", "트리토돈", "물", 4, 4, 7, "R", { ability: "waterabsorb" }),
+  P("gastrodon", "트리토돈", "물", 4, 4, 6, "R", { ability: "waterabsorb" }),
   // 전기
   P("pachirisu", "파치리스", "전기", 2, 2, 4, "C", { ability: "static" }),
   // 얼음
@@ -1455,15 +1460,19 @@ export const CARDS = [
     evolvesFrom: "snover",
     ability: "blizzard",
   }),
-  P("glaceon", "글레이시아", "얼음", 4, 5, 6, "R", { ability: "freezedry" }),
+  P("glaceon", "글레이시아", "얼음", 4, 5, 6, "R", {
+    stage: 1,
+    evolvesFrom: "eevee",
+    ability: "freezedry",
+  }),
   // 바위
   P("cranidos", "두개도스", "바위", 2, 4, 2, "C", {}),
-  P("rampardos", "램펄드", "바위", 4, 8, 5, "R", {
+  P("rampardos", "램펄드", "바위", 4, 7, 4, "R", {
     stage: 1,
     evolvesFrom: "cranidos",
     ability: "moldbreaker",
   }),
-  P("bonsly", "우소하치", "바위", 1, 1, 2, "C", {}),
+  P("bonsly", "꼬지지", "바위", 1, 1, 2, "C", {}),
   // 강철
   P("shieldon", "방패톱스", "강철", 1, 0, 3, "C", { ability: "sturdy" }),
   P("bastiodon", "바리톱스", "강철", 3, 0, 8, "R", {
@@ -1473,12 +1482,12 @@ export const CARDS = [
   }),
   // 벌레
   P("burmy", "도롱충이", "벌레", 1, 1, 2, "C", {}),
-  P("wormadam", "나메일", "벌레", 3, 3, 6, "R", {
+  P("wormadam", "도롱마담", "벌레", 3, 3, 6, "R", {
     stage: 1,
     evolvesFrom: "burmy",
     ability: "levitate",
   }),
-  P("mothim", "나모스", "벌레", 3, 5, 3, "R", {
+  P("mothim", "나메일", "벌레", 3, 5, 3, "R", {
     stage: 1,
     evolvesFrom: "burmy",
     ability: "rush",
@@ -1528,7 +1537,7 @@ export const CARDS = [
     evolvesFrom: "glameow",
     ability: "intimidate",
   }),
-  P("ambipom", "에이팜", "노말", 3, 5, 5, "R", { ability: "skilllink" }),
+  P("ambipom", "에이팜", "노말", 3, 3, 4, "R", { ability: "skilllink" }),
   // 에스퍼
   P("mimejr", "흉내내", "에스퍼", 1, 1, 2, "C", {}),
   // 격투

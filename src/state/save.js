@@ -11,6 +11,76 @@ import {
 const SAVE_KEY = 'pkm_stone_v1';
 export const LOSE_REWARD = 30;
 
+export const DECK_PRESET_COUNT = 3;
+
+export function ensureDeckPresets(save) {
+  if (!save) return save;
+
+  const currentDeck =
+    Array.isArray(save.deck)
+      ? [...save.deck]
+      : [];
+
+  const oldPresets =
+    Array.isArray(save.deckPresets)
+      ? save.deckPresets
+      : [];
+
+  let active =
+    Number.isInteger(save.activeDeckPreset)
+      ? save.activeDeckPreset
+      : 0;
+
+  if (
+    active < 0 ||
+    active >= DECK_PRESET_COUNT
+  ) {
+    active = 0;
+  }
+
+  save.deckPresets =
+    Array.from(
+      { length: DECK_PRESET_COUNT },
+      (_, index) => {
+        const old =
+          oldPresets[index];
+
+        if (old) {
+          return {
+            name:
+              old.name?.trim() ||
+              `덱 ${index + 1}`,
+
+            deck:
+              Array.isArray(old.deck)
+                ? [...old.deck]
+                : [],
+          };
+        }
+
+        return {
+          name:
+            index === 0
+              ? "기본 덱"
+              : `덱 ${index + 1}`,
+
+          /*
+           * 기존 유저는 현재 쓰던 덱을
+           * 1번 프리셋으로 이관
+           */
+          deck:
+            index === 0
+              ? [...currentDeck]
+              : [],
+        };
+      },
+    );
+
+  save.activeDeckPreset = active;
+
+  return save;
+}
+
 export function loadSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -31,6 +101,7 @@ export function loadSave() {
         if (counts[id] <= limit) kept.push(id);
       });
       save.deck = kept;
+      ensureDeckPresets(save);
       return save;
     }
   } catch (e) { /* 무시하고 새로 시작 */ }
@@ -49,6 +120,9 @@ export function newSave() {
     wins: {},
     packsOpened: 0,
   };
+
+  ensureDeckPresets(save);
+
   persist(save);
   return save;
 }

@@ -71,17 +71,28 @@ function calcTypedDamageAgainstUnit(
   attackType,
   unit,
 ) {
-  const mult =
-    typeMultAgainstUnit(attackType, unit);
+  if (base <= 0) return 0;
 
+  const mult =
+    typeMultAgainstUnit(
+      attackType,
+      unit,
+    );
+
+  // 무효 타입은 그대로 0
   if (mult === 0) return 0;
-  if (mult > 1)
+
+  if (mult > 1) {
     return Math.ceil(base * mult);
-  if (mult < 1)
+  }
+
+  // 반감이어도 최소 피해 1
+  if (mult < 1) {
     return Math.max(
-      0,
+      1,
       Math.floor(base * mult),
     );
+  }
 
   return base;
 }
@@ -731,7 +742,7 @@ export function endTurn(game) {
   // 럭키 치유의마음: 턴 종료 시 아군 전체 1 회복
   p.field.forEach((u) => {
     if (u.ability === "regenerator" && u.hp < u.maxHp) {
-      u.hp = Math.min(u.maxHp, u.hp + 2);
+      u.hp = Math.min(u.maxHp, u.hp + 1);
       log(game, `${u.name}의 재생력! 체력을 회복했다.`);
     }
     if (u.ability === "healer") {
@@ -856,11 +867,34 @@ export function typeMult(attackType, defendType) {
   return m === undefined ? 1 : m;
 }
 
-export function calcTypedDamage(base, attackType, defendType) {
-  const m = typeMult(attackType, defendType);
+export function calcTypedDamage(
+  base,
+  attackType,
+  defendType,
+) {
+  if (base <= 0) return 0;
+
+  const m =
+    typeMult(
+      attackType,
+      defendType,
+    );
+
+  // 타입 무효는 진짜 0
   if (m === 0) return 0;
-  if (m > 1) return Math.ceil(base * m);
-  if (m < 1) return Math.max(0, Math.floor(base * m));
+
+  if (m > 1) {
+    return Math.ceil(base * m);
+  }
+
+  // 반감은 최소 1
+  if (m < 1) {
+    return Math.max(
+      1,
+      Math.floor(base * m),
+    );
+  }
+
   return base;
 }
 
@@ -1013,7 +1047,7 @@ function applyDamage(
 
   // 축전
   if (!typedIgnore && sourceType === "전기" && unit.ability === "voltabsorb") {
-    const heal = Math.min(2, unit.maxHp - unit.hp);
+    const heal = Math.min(1, unit.maxHp - unit.hp);
 
     unit.hp += heal;
 
@@ -1024,7 +1058,7 @@ function applyDamage(
 
   // 저수
   if (!typedIgnore && sourceType === "물" && unit.ability === "waterabsorb") {
-    const heal = Math.min(2, unit.maxHp - unit.hp);
+    const heal = Math.min(1, unit.maxHp - unit.hp);
 
     unit.hp += heal;
 
