@@ -3440,7 +3440,7 @@ function spendAttack(game, unit) {
 
   // 레드 피카츄 반동
   if (hasAbility(unit, "red_volttackle") && !hasAbility(unit, "rockhead")) {
-    unit.hp -= 2;
+    unit.hp -= 1;
 
     recordImpact(game, {
       type: "damage",

@@ -2206,16 +2206,12 @@ img.res-icon.small {
   pointer-events: none;
   animation: inspect-in 0.14s ease-out;
 }
+
 .inspect-overlay .hand-card {
-  height: 220px;
-  min-height: 220px;
   scale: 1.8;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
 }
 
-.inspect-overlay .card-text {
-  min-height: 48px;
-}
 @keyframes inspect-in {
   from {
     opacity: 0;
@@ -5827,4 +5823,59 @@ img.res-icon.small {
 
 .deck-editor .collection-grid {
   position: relative;
+}
+
+/* 덱 편집 카드 설명 - 약 3줄 */
+.deck-editor .collection-item .card-text {
+  flex: 0 0 44px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+}
+
+/* 배틀 - 꾹 눌러 확대 카드 */
+.battle-board .inspect-overlay .hand-card {
+  width: 134px;
+  height: 188px;
+  min-height: 188px;
+}
+
+/* 확대 카드 내부도 원래 카드 크기로 복구 */
+.battle-board .inspect-overlay .hand-card .card-art {
+  height: 66px;
+  min-height: 66px;
+  flex-basis: 66px;
+}
+
+.battle-board .inspect-overlay .hand-card .card-name {
+  font-size: 13px;
+}
+
+.battle-board .inspect-overlay .hand-card .card-stageline {
+  height: 14px;
+  min-height: 14px;
+  font-size: 8.5px;
+  line-height: 12px;
+}
+
+.battle-board .inspect-overlay .hand-card .card-typebadge {
+  font-size: 9px;
+  padding: 2px 9px;
+}
+
+.battle-board .inspect-overlay .hand-card .card-text {
+  font-size: 9px;
+  line-height: 1.4;
+  padding: 3px 5px;
+
+  flex: 0 0 44px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+}
+
+.battle-board .inspect-overlay .hand-card .card-cost {
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
 }
