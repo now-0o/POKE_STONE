@@ -3446,10 +3446,10 @@ function spendAttack(game, unit) {
       type: "damage",
       side: unit.side,
       targetUid: unit.uid,
-      amount: 2,
+      amount: 1,
     });
 
-    log(game, `${unit.name}의 볼트태클 반동! 피해 2!`);
+    log(game, `${unit.name}의 볼트태클 반동! 피해 1!`);
   }
 }
 
