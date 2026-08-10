@@ -151,120 +151,120 @@ export function useInspect(delay = 250) {
 
 function AutoScrollCardText({ text }) {
   const boxRef = useRef(null);
+  const innerRef = useRef(null);
 
   useEffect(() => {
     const box = boxRef.current;
-    if (!box) return;
+    const inner = innerRef.current;
 
-    let animationId = null;
-    let timeoutId = null;
-    let direction = 1;
-    let lastTime = null;
-    let disposed = false;
+    if (!box || !inner) return;
 
-    const SPEED = 10;
-    const TOP_WAIT = 500;
-    const BOTTOM_WAIT = 800;
-
-    const stop = () => {
-      if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-      }
-
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-    };
-
-    const animate = (time) => {
-      if (disposed) return;
-
-      const maxScroll = box.scrollHeight - box.clientHeight;
-
-      if (maxScroll <= 1) return;
-
-      if (lastTime === null) {
-        lastTime = time;
-      }
-
-      const delta = (time - lastTime) / 1000;
-
-      lastTime = time;
-
-      box.scrollTop += direction * SPEED * delta;
-
-      // 맨 아래
-      if (direction === 1 && box.scrollTop >= maxScroll - 0.5) {
-        box.scrollTop = maxScroll;
-        direction = -1;
-        lastTime = null;
-
-        timeoutId = setTimeout(() => {
-          animationId = requestAnimationFrame(animate);
-        }, BOTTOM_WAIT);
-
-        return;
-      }
-
-      // 맨 위
-      if (direction === -1 && box.scrollTop <= 0.5) {
-        box.scrollTop = 0;
-        direction = 1;
-        lastTime = null;
-
-        timeoutId = setTimeout(() => {
-          animationId = requestAnimationFrame(animate);
-        }, TOP_WAIT);
-
-        return;
-      }
-
-      animationId = requestAnimationFrame(animate);
-    };
+    let animation = null;
+    let cancelled = false;
+    let frame1 = null;
+    let frame2 = null;
 
     const start = () => {
-      if (disposed) return;
+      if (cancelled) return;
 
-      stop();
+      const distance = box.scrollHeight - box.clientHeight;
 
-      box.scrollTop = 0;
-      direction = 1;
-      lastTime = null;
+      // 설명이 전부 보이면 움직이지 않음
+      if (distance <= 1) {
+        inner.style.transform = "translateY(0)";
+        return;
+      }
 
-      const maxScroll = box.scrollHeight - box.clientHeight;
+      /*
+       * 초당 약 8px 이동.
+       * 뮤처럼 28px 넘치면
+       * 한쪽 이동에 약 3.5초.
+       */
+      const SPEED = 8;
 
-      if (maxScroll <= 1) return;
+      const moveTime = Math.max(1800, (distance / SPEED) * 1000);
 
-      timeoutId = setTimeout(() => {
-        animationId = requestAnimationFrame(animate);
-      }, TOP_WAIT);
+      const topWait = 500;
+      const bottomWait = 800;
+
+      const total = topWait + moveTime + bottomWait + moveTime;
+
+      const topEnd = topWait / total;
+
+      const bottomArrive = (topWait + moveTime) / total;
+
+      const bottomEnd = (topWait + moveTime + bottomWait) / total;
+
+      animation?.cancel();
+
+      animation = inner.animate(
+        [
+          {
+            transform: "translateY(0px)",
+            offset: 0,
+          },
+          {
+            transform: "translateY(0px)",
+            offset: topEnd,
+          },
+          {
+            transform: `translateY(-${distance}px)`,
+            offset: bottomArrive,
+          },
+          {
+            transform: `translateY(-${distance}px)`,
+            offset: bottomEnd,
+          },
+          {
+            transform: "translateY(0px)",
+            offset: 1,
+          },
+        ],
+        {
+          duration: total,
+          iterations: Infinity,
+          easing: "linear",
+        },
+      );
     };
 
-    // 렌더 완료 후 딱 한 번 시작
-    const frameId = requestAnimationFrame(() => {
-      requestAnimationFrame(start);
-    });
+    const boot = () => {
+      frame1 = requestAnimationFrame(() => {
+        frame2 = requestAnimationFrame(start);
+      });
+    };
 
-    // 폰트 로딩 때문에 높이가 바뀔 경우 한 번만 재시작
-    document.fonts?.ready.then(() => {
-      if (!disposed) {
-        start();
-      }
-    });
+    // 폰트 로딩이 끝난 뒤 실제 글 높이로 시작
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) {
+          boot();
+        }
+      });
+    } else {
+      boot();
+    }
 
     return () => {
-      disposed = true;
+      cancelled = true;
 
-      cancelAnimationFrame(frameId);
-      stop();
+      if (frame1 !== null) {
+        cancelAnimationFrame(frame1);
+      }
+
+      if (frame2 !== null) {
+        cancelAnimationFrame(frame2);
+      }
+
+      animation?.cancel();
     };
   }, [text]);
 
   return (
     <div ref={boxRef} className="card-text">
-      <div className="card-text-inner">{text}</div>
+      <div ref={innerRef} className="card-text-inner">
+        {text}
+      </div>
     </div>
   );
 }
