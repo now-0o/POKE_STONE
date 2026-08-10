@@ -461,6 +461,10 @@ export const ABILITY_TEXT = {
     "다크홀: 나올 때 상대 포켓몬 전체에게 악 타입 피해 1을 주고 무작위 상대 하나를 잠들게 한다",
   multitype:
     "멀티타입: 나올 때 상대 필드에 가장 유리한 타입으로 변하고 +1/+1",
+  slowstart:
+    "슬로스타트: 나온 뒤 다음 자신의 턴에는 공격할 수 없다. 그 다음 턴부터 정상적으로 공격할 수 있다",
+  crushgrip:
+    "묵사발: 최대 체력인 포켓몬을 공격하면 공격 피해 +4",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -2360,8 +2364,9 @@ export const CARDS = [
     ability: "flashfire",
   }),
 
-  P("regigigas", "레지기가스", "노말", 8, 10, 9, "L", {
-    ability: "truant",
+  P("regigigas", "레지기가스", "노말", 8, 10, 12, "L", {
+    ability: "slowstart",
+    secondaryAbility: "crushgrip",
   }),
 
   P("giratina", "기라티나", "고스트", 9, 7, 12, "L", {

@@ -639,17 +639,55 @@ function startTurn(game, side) {
   }
   p.field.forEach((u) => {
     u.extraUsed = false;
+    // 게으름
     if (u.resting) {
       u.canAttack = false;
       u.resting = false;
-      log(game, `${u.name}은(는) 게으름을 피우고 있다...`);
-      if (u.frozen > 0) u.frozen -= 1;
-      resolveStatusAtTurnStart(game, side, u);
+      log(
+        game,
+        `${u.name}은(는) 게으름을 피우고 있다...`,
+      );
+      if (u.frozen > 0) {
+        u.frozen -= 1;
+      }
+      resolveStatusAtTurnStart(
+        game,
+        side,
+        u,
+      );
+      return;
+    }
+    // 레지기가스 - 슬로스타트
+    // 소환 후 처음 맞는 자신의 턴은 공격 불가
+    if (
+      hasAbility(u, "slowstart") &&
+      u._slowStartPending
+    ) {
+      u.canAttack = false;
+      u._slowStartPending = false;
+      log(
+        game,
+        `${u.name}의 슬로스타트! 아직 몸이 풀리지 않아 움직일 수 없다!`,
+      );
+      if (u.frozen > 0) {
+        u.frozen -= 1;
+      }
+      resolveStatusAtTurnStart(
+        game,
+        side,
+        u,
+      );
       return;
     }
     u.canAttack = true;
-    if (u.frozen > 0) u.frozen -= 1;
-    resolveStatusAtTurnStart(game, side, u);
+    if (u.frozen > 0) {
+      u.frozen -= 1;
+    }
+    resolveStatusAtTurnStart(
+      game,
+      side,
+      u,
+    );
   });
   // 새 턴 행동 카운터 초기화
   p._productiveActionsThisTurn = 0;
@@ -1419,6 +1457,10 @@ function makeUnit(card, game, side) {
     stage: card.stage || 0,
     canAttack: false,
     summonedTurn: game.turnCount,
+    // 레지기가스 - 슬로스타트
+  _slowStartPending:
+    card.ability === "slowstart" ||
+    card.secondaryAbility === "slowstart",
     frozen: 0, // DEPRECATED (하위호환 잔류, 신규 코드에서는 status 사용)
     status: null, // null | 'ice' | 'sleep' | 'para'
     statusTurns: 0, // ice: 남은 얼림 최소턴 / sleep: 잠든 총 턴 수 누적 / para: 미사용
@@ -4021,6 +4063,19 @@ export function attack(game, side, attackerUid, target) {
     atkDmg += johto.bonusDamage;
 
     atkDmg += expansion.bonusDamage;
+
+    // 레지기가스 - 묵사발
+    if (
+      hasAbility(atkUnit, "crushgrip") &&
+      defUnit.hp === defUnit.maxHp
+    ) {
+      atkDmg += 4;
+
+      log(
+        game,
+        `${atkUnit.name}의 묵사발! 체력이 가득 찬 ${defUnit.name}에게 피해 +4!`,
+      );
+    }
 
     // 우격다짐
     if (hasAbility(atkUnit, "sheerforce") && !defUnit.status) {
