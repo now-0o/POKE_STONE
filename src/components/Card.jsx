@@ -151,37 +151,39 @@ export function useInspect(delay = 250) {
 
 function AutoScrollCardText({ text }) {
   const boxRef = useRef(null);
+  const innerRef = useRef(null);
 
   useEffect(() => {
     const box = boxRef.current;
-    if (!box) return;
+    const inner = innerRef.current;
 
-    let rafId = null;
+    if (!box || !inner) return;
+
+    let animationId = null;
     let timeoutId = null;
     let direction = 1;
     let lastTime = null;
+    let disposed = false;
 
-    const SPEED = 5; // 초당 약 5px
-    const TOP_WAIT = 700;
-    const BOTTOM_WAIT = 1000;
+    const SPEED = 10;
+    const TOP_WAIT = 500;
+    const BOTTOM_WAIT = 800;
 
-    const start = () => {
-      const maxScroll = box.scrollHeight - box.clientHeight;
-
-      if (maxScroll <= 1) {
-        box.scrollTop = 0;
-        return;
+    const stop = () => {
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
       }
 
-      box.scrollTop = 0;
-
-      timeoutId = setTimeout(() => {
-        lastTime = null;
-        rafId = requestAnimationFrame(step);
-      }, TOP_WAIT);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
     };
 
-    const step = (time) => {
+    const animate = (time) => {
+      if (disposed) return;
+
       const maxScroll = box.scrollHeight - box.clientHeight;
 
       if (maxScroll <= 1) {
@@ -199,60 +201,88 @@ function AutoScrollCardText({ text }) {
 
       box.scrollTop += direction * SPEED * delta;
 
-      // 맨 아래 도착
       if (direction === 1 && box.scrollTop >= maxScroll - 0.5) {
         box.scrollTop = maxScroll;
+
         direction = -1;
         lastTime = null;
 
         timeoutId = setTimeout(() => {
-          rafId = requestAnimationFrame(step);
+          animationId = requestAnimationFrame(animate);
         }, BOTTOM_WAIT);
 
         return;
       }
 
-      // 다시 맨 위 도착
       if (direction === -1 && box.scrollTop <= 0.5) {
         box.scrollTop = 0;
+
         direction = 1;
         lastTime = null;
 
         timeoutId = setTimeout(() => {
-          rafId = requestAnimationFrame(step);
+          animationId = requestAnimationFrame(animate);
         }, TOP_WAIT);
 
         return;
       }
 
-      rafId = requestAnimationFrame(step);
+      animationId = requestAnimationFrame(animate);
     };
 
-    const observer = new ResizeObserver(() => {
-      cancelAnimationFrame(rafId);
-      clearTimeout(timeoutId);
+    const start = () => {
+      if (disposed) return;
 
+      stop();
+
+      box.scrollTop = 0;
       direction = 1;
       lastTime = null;
 
-      start();
-    });
+      const maxScroll = box.scrollHeight - box.clientHeight;
+
+      if (maxScroll <= 1) {
+        return;
+      }
+
+      timeoutId = setTimeout(() => {
+        animationId = requestAnimationFrame(animate);
+      }, TOP_WAIT);
+    };
+
+    // 최초 렌더 후 측정
+    const startFrame = requestAnimationFrame(start);
+
+    // 박스 크기 + 실제 글 높이 둘 다 감시
+    const observer = new ResizeObserver(start);
 
     observer.observe(box);
+    observer.observe(inner);
 
-    // 렌더 직후 실제 높이가 잡힌 다음 시작
-    requestAnimationFrame(start);
+    // 커스텀 폰트 로딩 완료 후 다시 측정
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!disposed) {
+          start();
+        }
+      });
+    }
 
     return () => {
+      disposed = true;
+
+      cancelAnimationFrame(startFrame);
+
       observer.disconnect();
-      cancelAnimationFrame(rafId);
-      clearTimeout(timeoutId);
+      stop();
     };
   }, [text]);
 
   return (
     <div ref={boxRef} className="card-text">
-      <div className="card-text-inner">{text}</div>
+      <div ref={innerRef} className="card-text-inner">
+        {text}
+      </div>
     </div>
   );
 }
