@@ -44,6 +44,22 @@ export function other(side) {
   return side === "player" ? "enemy" : "player";
 }
 
+const TAUNT_ABILITIES = [
+  "taunt",
+  "deoxys_defense",
+  "fortress",
+  "brock_rockwall",
+  "jasmine_autotomize",
+];
+
+function hasTaunt(unit) {
+  if (!unit || unit._tauntDisabled) {
+    return false;
+  }
+
+  return TAUNT_ABILITIES.some((ability) => hasAbility(unit, ability));
+}
+
 function hasAbility(unit, ability) {
   return unit?.ability === ability || unit?.secondaryAbility === ability;
 }
@@ -1417,21 +1433,18 @@ function runBattlecry(game, side, unit) {
   const me = game.players[side];
   switch (unit.ability) {
     case "moldbreaker": {
-      const targets = foe.field.filter(
-        (u) =>
-          (u.ability === "taunt" ||
-            u.secondaryAbility === "taunt" ||
-            u.ability === "fortress") &&
-          u.hp > 0,
-      );
+      const targets = foe.field.filter((u) => hasTaunt(u) && u.hp > 0);
+
       if (targets.length) {
         game.pendingBattlecry = {
           side,
           uid: unit.uid,
           targets: targets.map((t) => t.uid),
         };
+
         log(game, `${unit.name}의 틀깨기! 상대 도발 포켓몬을 선택하세요.`);
       }
+
       break;
     }
     case "foresight":
@@ -3073,15 +3086,7 @@ export function validAttackTargets(game, side, attackerUid = null) {
   const noguard = attacker && hasAbility(attacker, "noguard");
   const taunts = noguard
     ? []
-    : foe.field.filter(
-        (u) =>
-          (hasAbility(u, "taunt") ||
-            hasAbility(u, "deoxys_defense") ||
-            hasAbility(u, "fortress") ||
-            hasAbility(u, "brock_rockwall") ||
-            hasAbility(u, "jasmine_autotomize")) &&
-          u.hp > 0,
-      );
+    : foe.field.filter((u) => hasTaunt(u) && u.hp > 0);
   if (taunts.length > 0) return { units: taunts, hero: false };
   return { units: foe.field, hero: true };
 }
@@ -3129,8 +3134,9 @@ export function resolveMoldbreaker(game, side, targetUid) {
   const t = foe.field.find((u) => u.uid === targetUid);
   game.pendingBattlecry = null;
   if (!t) return false;
-  t.ability = null;
-  log(game, `도발이 사라졌다!`);
+  t._tauntDisabled = true;
+
+  log(game, `${t.name}의 도발 효과가 사라졌다!`);
   applyDamage(game, t, 2, "벌레");
   cleanupDeaths(game);
   return true;

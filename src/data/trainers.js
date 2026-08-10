@@ -1250,7 +1250,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.92,
 
-    reward: 250,
+    reward: 200,
     hp: 68,
 
     requires: null,
@@ -1314,7 +1314,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.93,
 
-    reward: 270,
+    reward: 220,
     hp: 70,
 
     requires: "hoenn_roxanne",
@@ -1379,7 +1379,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.94,
 
-    reward: 300,
+    reward: 240,
     hp: 72,
 
     requires: "hoenn_brawly",
@@ -1445,7 +1445,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.94,
 
-    reward: 320,
+    reward: 260,
     hp: 74,
 
     requires: "hoenn_wattson",
@@ -1510,7 +1510,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.95,
 
-    reward: 340,
+    reward: 280,
     hp: 76,
 
     requires: "hoenn_flannery",
@@ -1577,7 +1577,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.95,
 
-    reward: 360,
+    reward: 300,
     hp: 78,
 
     requires: "hoenn_norman",
@@ -1643,7 +1643,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.96,
 
-    reward: 380,
+    reward: 320,
     hp: 80,
 
     requires: "hoenn_winona",
@@ -1711,7 +1711,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.97,
 
-    reward: 400,
+    reward: 340,
     hp: 82,
 
     requires: "hoenn_tate_liza",
@@ -1776,7 +1776,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.97,
 
-    reward: 420,
+    reward: 360,
     hp: 84,
 
     requires: "hoenn_wallace",
@@ -1842,7 +1842,7 @@ export const HOENN_TRAINERS = [
     stableDeck: true,
     consistencyAssist: 0.98,
 
-    reward: 450,
+    reward: 400,
     hp: 90,
 
     requires: "hoenn_juan",

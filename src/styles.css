@@ -693,16 +693,28 @@ img.res-icon.small {
 .card-text {
   font-size: 9px;
   line-height: 1.4;
+
   color: #45403a;
+
   background: rgba(255, 255, 255, 0.55);
+
   border: 1px solid rgba(90, 75, 30, 0.22);
+
   border-radius: 5px;
+
   padding: 3px 5px;
+
   flex: 1;
+  min-height: 0;
+
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+
+  position: relative;
+}
+
+.card-text-inner {
+  width: 100%;
+  white-space: pre-line;
 }
 
 .card-footer {

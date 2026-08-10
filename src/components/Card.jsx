@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   CARD_MAP,
   TYPE_COLORS,
@@ -149,6 +149,114 @@ export function useInspect(delay = 250) {
   return { inspect, press, clickSuppressed };
 }
 
+function AutoScrollCardText({ text }) {
+  const boxRef = useRef(null);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+
+    let rafId = null;
+    let timeoutId = null;
+    let direction = 1;
+    let lastTime = null;
+
+    const SPEED = 5; // 초당 약 5px
+    const TOP_WAIT = 700;
+    const BOTTOM_WAIT = 1000;
+
+    const start = () => {
+      const maxScroll = box.scrollHeight - box.clientHeight;
+
+      if (maxScroll <= 1) {
+        box.scrollTop = 0;
+        return;
+      }
+
+      box.scrollTop = 0;
+
+      timeoutId = setTimeout(() => {
+        lastTime = null;
+        rafId = requestAnimationFrame(step);
+      }, TOP_WAIT);
+    };
+
+    const step = (time) => {
+      const maxScroll = box.scrollHeight - box.clientHeight;
+
+      if (maxScroll <= 1) {
+        box.scrollTop = 0;
+        return;
+      }
+
+      if (lastTime === null) {
+        lastTime = time;
+      }
+
+      const delta = (time - lastTime) / 1000;
+
+      lastTime = time;
+
+      box.scrollTop += direction * SPEED * delta;
+
+      // 맨 아래 도착
+      if (direction === 1 && box.scrollTop >= maxScroll - 0.5) {
+        box.scrollTop = maxScroll;
+        direction = -1;
+        lastTime = null;
+
+        timeoutId = setTimeout(() => {
+          rafId = requestAnimationFrame(step);
+        }, BOTTOM_WAIT);
+
+        return;
+      }
+
+      // 다시 맨 위 도착
+      if (direction === -1 && box.scrollTop <= 0.5) {
+        box.scrollTop = 0;
+        direction = 1;
+        lastTime = null;
+
+        timeoutId = setTimeout(() => {
+          rafId = requestAnimationFrame(step);
+        }, TOP_WAIT);
+
+        return;
+      }
+
+      rafId = requestAnimationFrame(step);
+    };
+
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
+
+      direction = 1;
+      lastTime = null;
+
+      start();
+    });
+
+    observer.observe(box);
+
+    // 렌더 직후 실제 높이가 잡힌 다음 시작
+    requestAnimationFrame(start);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
+    };
+  }, [text]);
+
+  return (
+    <div ref={boxRef} className="card-text">
+      <div className="card-text-inner">{text}</div>
+    </div>
+  );
+}
+
 // ---- 손패 카드 (TCG 프레임) ----
 export function HandCard({
   cardId,
@@ -247,7 +355,7 @@ export function HandCard({
         </span>
       </div>
 
-      {abilityText && <div className="card-text">{abilityText}</div>}
+      {abilityText && <AutoScrollCardText text={abilityText} />}
 
       {isPokemon && (
         <>
@@ -282,19 +390,32 @@ export function FieldUnit({
   const hurt = unit.hp < unit.maxHp;
 
   const hasTaunt =
-    unit.ability === "taunt" ||
-    unit.secondaryAbility === "taunt" ||
-    unit.ability === "deoxys_defense" ||
-    unit.ability === "fortress" ||
-    unit.ability === "brock_rockwall" ||
-    unit.ability === "jasmine_autotomize";
+    !unit._tauntDisabled &&
+    (unit.ability === "taunt" ||
+      unit.secondaryAbility === "taunt" ||
+      unit.ability === "deoxys_defense" ||
+      unit.secondaryAbility === "deoxys_defense" ||
+      unit.ability === "fortress" ||
+      unit.secondaryAbility === "fortress" ||
+      unit.ability === "brock_rockwall" ||
+      unit.secondaryAbility === "brock_rockwall" ||
+      unit.ability === "jasmine_autotomize" ||
+      unit.secondaryAbility === "jasmine_autotomize");
 
-  const abilityText = [
+  const abilityTexts = [
     unit.ability ? ABILITY_TEXT[unit.ability] : "",
-    unit.secondaryAbility ? ABILITY_TEXT[unit.secondaryAbility] : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+
+    unit.secondaryAbility &&
+    !(unit._tauntDisabled && unit.secondaryAbility === "taunt")
+      ? ABILITY_TEXT[unit.secondaryAbility]
+      : "",
+  ].filter(Boolean);
+
+  if (unit._tauntDisabled) {
+    abilityTexts.push("도발 효과가 해제되었습니다.");
+  }
+
+  const abilityText = abilityTexts.join("\n");
 
   return (
     <div className="unit-pop">
