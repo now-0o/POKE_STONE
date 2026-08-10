@@ -8,6 +8,7 @@ import {
   TYPE_COLORS,
   RARITY_NAME,
   DEX,
+  ABILITY_TEXT,
 } from "../data/cards.js";
 import { persist } from "../state/save.js";
 import { HandCard, Sprite, useInspect } from "./Card.jsx";
@@ -37,11 +38,148 @@ const TYPE_FILTERS = [
   "도구",
 ];
 
+function getAbilityLabel(abilityId) {
+  const text =
+    ABILITY_TEXT[abilityId];
+
+  if (!text) {
+    return abilityId;
+  }
+
+  return text.split(":")[0].trim();
+}
+
+function getCardAbilities(card) {
+  return [
+    card.ability,
+    card.secondaryAbility,
+    card.mega?.ability,
+  ].filter(Boolean);
+}
+
+/*
+ * 진화 관계를 양방향으로 연결한다.
+ *
+ * 아차모 ↔ 영치코 ↔ 번치코
+ *
+ * 분기진화도 같은 진화 가족으로 취급.
+ */
+function buildEvolutionFamilyMap() {
+  const pokemonCards =
+    CARDS.filter(
+      (card) =>
+        card.kind === "pokemon",
+    );
+
+  const graph = new Map();
+
+  pokemonCards.forEach((card) => {
+    graph.set(
+      card.id,
+      new Set(),
+    );
+  });
+
+  pokemonCards.forEach((card) => {
+    if (
+      !card.evolvesFrom ||
+      !graph.has(card.evolvesFrom)
+    ) {
+      return;
+    }
+
+    graph
+      .get(card.id)
+      .add(card.evolvesFrom);
+
+    graph
+      .get(card.evolvesFrom)
+      .add(card.id);
+  });
+
+  const familyMap =
+    new Map();
+
+  pokemonCards.forEach((card) => {
+    if (familyMap.has(card.id)) {
+      return;
+    }
+
+    const visited =
+      new Set();
+
+    const stack = [
+      card.id,
+    ];
+
+    while (stack.length) {
+      const id =
+        stack.pop();
+
+      if (visited.has(id)) {
+        continue;
+      }
+
+      visited.add(id);
+
+      graph
+        .get(id)
+        ?.forEach(
+          (nextId) => {
+            if (
+              !visited.has(nextId)
+            ) {
+              stack.push(nextId);
+            }
+          },
+        );
+    }
+
+    const family =
+      [...visited];
+
+    family.forEach((id) => {
+      familyMap.set(
+        id,
+        family,
+      );
+    });
+  });
+
+  return familyMap;
+}
+
+const EVOLUTION_FAMILY_MAP =
+  buildEvolutionFamilyMap();
+
 export default function DeckEditor({ save, onSaveChange, onBack }) {
   const [filter, setFilter] = useState("전체");
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState("cost"); // 'dex' | 'cost' | 'rarity_desc' | 'rarity_asc'
+  const [
+    abilityFilters,
+    setAbilityFilters,
+  ] = useState([]);
   const { inspect, press, clickSuppressed } = useInspect();
+
+  function toggleAbilityFilter(
+    abilityId,
+  ) {
+    setAbilityFilters(
+      (prev) =>
+        prev.includes(abilityId)
+          ? prev.filter(
+              (id) =>
+                id !== abilityId,
+            )
+          : [
+              ...prev,
+              abilityId,
+            ],
+    );
+
+    playSfx("click");
+  }
 
   const activePreset = save.activeDeckPreset || 0;
 
@@ -53,6 +191,46 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     return c;
   }, [save.deck]);
 
+  const abilityOptions =
+  useMemo(() => {
+    const ids =
+      new Set();
+
+    CARDS.forEach(
+      (card) => {
+        if (
+          !save.collection[
+            card.id
+          ]
+        ) {
+          return;
+        }
+
+        getCardAbilities(
+          card,
+        ).forEach(
+          (abilityId) =>
+            ids.add(
+              abilityId,
+            ),
+        );
+      },
+    );
+
+    return [...ids]
+      .map((id) => ({
+        id,
+        label:
+          getAbilityLabel(id),
+      }))
+      .sort((a, b) =>
+        a.label.localeCompare(
+          b.label,
+          "ko",
+        ),
+      );
+  }, [save.collection]);
+
   const legendaryPokemonCount = useMemo(() => {
     return save.deck.reduce((count, id) => {
       const card = CARD_MAP[id];
@@ -61,37 +239,194 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     }, 0);
   }, [save.deck]);
 
-  const ownedCards = useMemo(() => {
-    return CARDS.filter((card) => (save.collection[card.id] || 0) > 0)
-      .filter((card) => filter === "전체" || card.type === filter)
+  const searchMatchIds =
+  useMemo(() => {
+    const q =
+      search
+        .trim()
+        .toLowerCase();
+
+    if (!q) {
+      return null;
+    }
+
+    const result =
+      new Set();
+
+    /*
+     * 먼저 직접 검색에 걸린
+     * 카드를 찾는다.
+     */
+    const directMatches =
+      CARDS.filter(
+        (card) =>
+          card.name
+            .toLowerCase()
+            .includes(q) ||
+          card.id
+            .toLowerCase()
+            .includes(q),
+      );
+
+    directMatches.forEach(
+      (card) => {
+        result.add(card.id);
+
+        /*
+         * 포켓몬이면
+         * 진화 가족 전체 추가
+         */
+        if (
+          card.kind ===
+          "pokemon"
+        ) {
+          const family =
+            EVOLUTION_FAMILY_MAP.get(
+              card.id,
+            );
+
+          family?.forEach(
+            (id) =>
+              result.add(id),
+          );
+        }
+      },
+    );
+
+    return result;
+  }, [search]);
+
+  const ownedCards =
+  useMemo(() => {
+    return CARDS
+      .filter(
+        (card) =>
+          (
+            save.collection[
+              card.id
+            ] || 0
+          ) > 0,
+      )
+
+      // 타입 필터
+      .filter(
+        (card) =>
+          filter ===
+            "전체" ||
+          card.type ===
+            filter,
+      )
+
+      // 특성 필터
       .filter((card) => {
-        const q = search.trim().toLowerCase();
+        if (
+          abilityFilters.length ===
+          0
+        ) {
+          return true;
+        }
 
-        if (!q) return true;
+        const abilities =
+          getCardAbilities(
+            card,
+          );
 
-        return (
-          card.name.toLowerCase().includes(q) ||
-          card.id.toLowerCase().includes(q)
+        return abilityFilters.some(
+          (abilityId) =>
+            abilities.includes(
+              abilityId,
+            ),
         );
       })
-      .sort((a, b) => {
-        const RARITY_ORDER = { C: 0, R: 1, E: 2, L: 3 };
-        if (sortMode === "dex") {
-          const da = DEX[a.id] ?? 99999,
-            db = DEX[b.id] ?? 99999;
-          return da - db || a.name.localeCompare(b.name);
+
+      // 이름 + 진화체 검색
+      .filter((card) => {
+        if (
+          !searchMatchIds
+        ) {
+          return true;
         }
-        if (sortMode === "rarity_desc")
+
+        return searchMatchIds.has(
+          card.id,
+        );
+      })
+
+      .sort((a, b) => {
+        const RARITY_ORDER = {
+          C: 0,
+          R: 1,
+          E: 2,
+          L: 3,
+        };
+
+        if (
+          sortMode === "dex"
+        ) {
+          const da =
+            DEX[a.id] ??
+            99999;
+
+          const db =
+            DEX[b.id] ??
+            99999;
+
           return (
-            RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || a.cost - b.cost
+            da -
+              db ||
+            a.name.localeCompare(
+              b.name,
+            )
           );
-        if (sortMode === "rarity_asc")
+        }
+
+        if (
+          sortMode ===
+          "rarity_desc"
+        ) {
           return (
-            RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.cost - b.cost
+            RARITY_ORDER[
+              b.rarity
+            ] -
+              RARITY_ORDER[
+                a.rarity
+              ] ||
+            a.cost -
+              b.cost
           );
-        return a.cost - b.cost || a.name.localeCompare(b.name); // 'cost' (기본)
+        }
+
+        if (
+          sortMode ===
+          "rarity_asc"
+        ) {
+          return (
+            RARITY_ORDER[
+              a.rarity
+            ] -
+              RARITY_ORDER[
+                b.rarity
+              ] ||
+            a.cost -
+              b.cost
+          );
+        }
+
+        return (
+          a.cost -
+            b.cost ||
+          a.name.localeCompare(
+            b.name,
+          )
+        );
       });
-  }, [save.collection, filter, search, sortMode]);
+  }, [
+    save.collection,
+    filter,
+    searchMatchIds,
+    abilityFilters,
+    sortMode,
+  ]);
 
   const collectionGridRef = useRef(null);
   const previousCardRectsRef = useRef(new Map());
@@ -366,6 +701,65 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             </button>
           ))}
         </div>
+
+        <details className="ability-filter-box">
+          <summary>
+            특성 필터
+            {abilityFilters.length >
+              0 &&
+              ` (${abilityFilters.length})`}
+          </summary>
+
+          <div className="ability-filter-list">
+            {abilityOptions.map(
+              ({ id, label }) => (
+                <label
+                  key={id}
+                  className={[
+                    "ability-filter-check",
+                    abilityFilters.includes(
+                      id,
+                    )
+                      ? "active"
+                      : "",
+                  ].join(" ")}
+                >
+                  <input
+                    type="checkbox"
+                    checked={abilityFilters.includes(
+                      id,
+                    )}
+                    onChange={() =>
+                      toggleAbilityFilter(
+                        id,
+                      )
+                    }
+                  />
+
+                  <span>
+                    {label}
+                  </span>
+                </label>
+              ),
+            )}
+          </div>
+
+          {abilityFilters.length >
+            0 && (
+            <button
+              type="button"
+              className="ability-filter-reset"
+              onClick={() => {
+                playSfx("click");
+                setAbilityFilters(
+                  [],
+                );
+              }}
+            >
+              특성 필터 초기화
+            </button>
+          )}
+        </details>
 
         {/* 정렬 */}
         <div className="sort-row">

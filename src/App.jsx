@@ -26,6 +26,53 @@ import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
 const ADMIN_CODE = "stonemaster"; // 숨겨진 관리자 모드 진입 코드 (아무 화면에서나 그냥 타이핑)
 
+function getBattleBgmKey(trainer) {
+  if (!trainer) {
+    return "youngster";
+  }
+
+  // 성호
+  if (
+    trainer.sprite === "steven" ||
+    trainer.name?.includes("성호")
+  ) {
+    return "steven";
+  }
+
+  // 레드 / 목호
+  if (
+    trainer.sprite === "red" ||
+    trainer.sprite === "lance" ||
+    trainer.id === "champion" ||
+    trainer.id === "johto_lance"
+  ) {
+    return "red_lance";
+  }
+
+  // 체육관 관장
+  if (trainer.title === "체육관 관장") {
+    if (
+      trainer.region === "hoenn" ||
+      trainer.id?.startsWith("hoenn_")
+    ) {
+      return "hoenn";
+    }
+
+    if (
+      trainer.region === "johto" ||
+      trainer.id?.startsWith("johto_")
+    ) {
+      return "johto";
+    }
+
+    // 관동은 기존 데이터에 region이 없는 카드가 있으므로 기본값
+    return "kanto";
+  }
+
+  // 반바지 꼬마 등 일반 트레이너
+  return "youngster";
+}
+
 export default function App() {
   const saveRef = useRef(null);
   const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck
@@ -47,16 +94,25 @@ export default function App() {
 
   // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집 / 상점 / 배틀
   useEffect(() => {
-    if (authStatus === "anon" || authStatus === "checking") {
+    if (
+      authStatus === "anon" ||
+      authStatus === "checking"
+    ) {
       playBgm("login");
     } else if (screen === "shop") {
       playBgm("shop");
     } else if (screen === "battle") {
-      playBgm("battle");
+      playBgm(
+        getBattleBgmKey(trainer),
+      );
     } else {
-      playBgm("main"); // menu, deck
+      playBgm("main");
     }
-  }, [authStatus, screen]);
+  }, [
+    authStatus,
+    screen,
+    trainer?.id,
+  ]);
 
   // 앱 첫 로딩: 저장된 토큰이 있으면 유효한지 서버에 확인하고 세이브를 받아온다
   useEffect(() => {

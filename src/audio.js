@@ -14,8 +14,15 @@
 const BGM_FILES = {
   login: "/audio/bgm/login.mp3",
   main: "/audio/bgm/main.mp3",
-  battle: "/audio/bgm/battle.mp3",
   shop: "/audio/bgm/shop.mp3",
+
+  // 배틀 BGM
+  youngster: "/audio/bgm/youngster.mp3",
+  kanto: "/audio/bgm/kanto.mp3",
+  johto: "/audio/bgm/johto.mp3",
+  hoenn: "/audio/bgm/hoenn.mp3",
+  red_lance: "/audio/bgm/red_lance.mp3",
+  steven: "/audio/bgm/steven.mp3",
 };
 
 const SFX_FILES = {

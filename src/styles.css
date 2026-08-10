@@ -5879,3 +5879,86 @@ img.res-icon.small {
   height: 34px;
   font-size: 18px;
 }
+
+/* =========================================
+   덱 편집 - 특성 필터
+   ========================================= */
+
+.ability-filter-box {
+  margin-top: 8px;
+  padding: 7px 10px;
+
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+
+  background: rgba(10, 14, 28, 0.45);
+}
+
+.ability-filter-box summary {
+  cursor: pointer;
+  user-select: none;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  color: var(--text);
+}
+
+.ability-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  margin-top: 9px;
+
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.ability-filter-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 7px;
+
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+
+  font-size: 10px;
+  color: var(--text-dim);
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.ability-filter-check:hover {
+  border-color: var(--accent);
+}
+
+.ability-filter-check.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(245, 197, 66, 0.12);
+}
+
+.ability-filter-check input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.ability-filter-reset {
+  margin-top: 8px;
+
+  border: 0;
+  background: none;
+
+  color: var(--text-dim);
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.ability-filter-reset:hover {
+  color: var(--accent);
+}
