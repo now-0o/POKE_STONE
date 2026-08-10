@@ -242,7 +242,7 @@ export const ABILITY_TEXT = {
   skilllink: "스킬링크: 한 턴에 두 번 공격할 수 있다",
   noguard: "노가드: 도발을 무시하고 아무 대상이나 공격할 수 있다",
   moldbreaker:
-    "틀깨기: 나올 때 상대 도발 포켓몬 하나를 골라 도발을 없애고 벌레 타입 피해 2를 입힌다",
+    "틀깨기: 나올 때 상대 도발 포켓몬 하나를 골라 도발을 없애고 자신의 타입 피해 2를 입힌다",
   truant: "게으름: 공격한 다음 턴에는 쉬어야 한다",
   moxie: "자기과신: 상대 포켓몬을 쓰러뜨리면 공격력 +1",
   // 등장 효과
@@ -768,7 +768,7 @@ export const CARDS = [
   P("primeape", "성원숭", "격투", 3, 5, 4, "R", {
     stage: 1,
     evolvesFrom: "mankey",
-    ability: "guts",
+    ability: "moldbreaker",
   }),
   P("hitmonlee", "시라소몬", "격투", 4, 6, 3, "R", { ability: "rush" }),
   P("hitmonchan", "홍수몬", "격투", 4, 4, 5, "R", { ability: "skilllink" }),
@@ -1135,7 +1135,7 @@ export const CARDS = [
   P("donphan", "코리갑", "땅", 3, 5, 4, "R", {
     stage: 1,
     evolvesFrom: "phanpy",
-    ability: "rush",
+    ability: "moldbreaker",
   }),
   P("wooper", "우파", "땅", 1, 1, 2, "C", {}),
   P("quagsire", "누오", "땅", 3, 4, 5, "R", {
@@ -2542,8 +2542,13 @@ export const CARDS = [
     rarity: "L",
     emoji: "🔮",
     megaFor: "gyarados",
-    mega: { atk: 2, hp: 2, ability: "intimidate", reIntimidate: true },
-    text: "갸라도스 전용. +2/+2, 위협이 다시 발동한다 - 무작위 적의 공격력 -2. (게임당 메가진화 1회)",
+    mega: {
+      atk: 2,
+      hp: 2,
+      ability: "moldbreaker",
+      reBattlecry: true,
+    },
+    text: "갸라도스 전용. +2/+2, 틀깨기를 얻는다 - 메가진화할 때 상대 도발 포켓몬 하나를 골라 도발을 없애고 자신의 타입 피해 2를 입힌다. (게임당 메가진화 1회)",
   },
   {
     id: "gengarite",
@@ -2693,10 +2698,11 @@ export const CARDS = [
     mega: {
       atk: 3,
       hp: 3,
-      ability: "voltabsorb",
+      ability: "moldbreaker",
       type: "드래곤",
+      reBattlecry: true,
     },
-    text: "전룡 전용. +3/+3, 드래곤 타입으로 변하고 축전을 얻는다. (게임당 메가진화 1회)",
+    text: "전룡 전용. +3/+3, 드래곤 타입으로 변하고 틀깨기를 얻는다 - 메가진화할 때 상대 도발 포켓몬 하나를 골라 도발을 없애고 자신의 타입 피해 2를 입힌다. (게임당 메가진화 1회)",
   },
 
   {

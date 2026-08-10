@@ -158,6 +158,12 @@ function calcTypedDamageAgainstUnit(base, attackType, unit) {
   return base;
 }
 
+function applyTypedAbilityDamage(game, unit, baseDamage, attackType) {
+  const dmg = calcTypedDamageAgainstUnit(baseDamage, attackType, unit);
+
+  return applyDamage(game, unit, dmg, attackType);
+}
+
 function putStartingCard(player, cardId) {
   if (!cardId) return false;
 
@@ -1289,7 +1295,7 @@ export function cleanupDeaths(game) {
           const foes = game.players[other(side)].field.filter((f) => f.hp > 0);
           if (foes.length > 0) {
             const t = foes[Math.floor(Math.random() * foes.length)];
-            applyDamage(game, t, 2, "전기");
+            applyTypedAbilityDamage(game, t, 2, "전기");
             log(game, `${u.name}의 대폭발! ${t.name}에게 피해 2!`);
           }
         }
@@ -1489,7 +1495,7 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 성스러운불꽃! 아군 전체가 크게 회복했다.`);
       break;
     case "muddywater":
-      foe.field.forEach((u) => applyDamage(game, u, 1, "물"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 1, "물"));
       log(game, `${unit.name}의 탁류! 적 전체에게 물 피해 1!`);
       cleanupDeaths(game);
       break;
@@ -1497,7 +1503,7 @@ function runBattlecry(game, side, unit) {
       const targets = foe.field.filter((u) => u.hp > 0);
       if (targets.length) {
         const t = targets[Math.floor(Math.random() * targets.length)];
-        applyDamage(game, t, 3, "땅");
+        applyTypedAbilityDamage(game, t, 3, "땅");
         log(game, `${unit.name}의 대지의힘! ${t.name}에게 땅 피해 3!`);
         cleanupDeaths(game);
       }
@@ -1505,7 +1511,7 @@ function runBattlecry(game, side, unit) {
     }
     case "primordialsea":
       setWeather(game, "rain");
-      foe.field.forEach((u) => applyDamage(game, u, 2, "물"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "물"));
       log(
         game,
         `${unit.name}의 근원의바다! 폭우와 함께 적 전체에게 물 피해 2!`,
@@ -1514,7 +1520,7 @@ function runBattlecry(game, side, unit) {
       break;
     case "desolateland":
       setWeather(game, "sun");
-      foe.field.forEach((u) => applyDamage(game, u, 2, "땅"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "땅"));
       log(
         game,
         `${unit.name}의 끝의대지! 대지가 갈라지며 적 전체에게 땅 피해 2!`,
@@ -1522,7 +1528,7 @@ function runBattlecry(game, side, unit) {
       cleanupDeaths(game);
       break;
     case "blizzard": {
-      foe.field.forEach((u) => applyDamage(game, u, 1, "얼음"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 1, "얼음"));
       const alive = foe.field.filter((u) => u.hp > 0);
       if (alive.length) {
         const t = alive[Math.floor(Math.random() * alive.length)];
@@ -1614,7 +1620,7 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 달빛! 아군 포켓몬이 회복했다.`);
       break;
     case "psystrike":
-      foe.field.forEach((u) => applyDamage(game, u, 3, "에스퍼"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 3, "에스퍼"));
       log(game, `${unit.name}의 사이코브레이크! 적 전체에게 에스퍼 피해 3!`);
       cleanupDeaths(game);
       break;
@@ -1624,7 +1630,7 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 자연회복! 아군 전체 회복 + 드로우!`);
       break;
     case "thunderstrike":
-      foe.field.forEach((u) => applyDamage(game, u, 2, "전기"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "전기"));
       log(game, `${unit.name}의 번개! 적 전체에게 피해 2!`);
       cleanupDeaths(game);
       break;
@@ -1632,7 +1638,7 @@ function runBattlecry(game, side, unit) {
       const targets = foe.field.filter((u) => u.hp > 0);
       if (targets.length) {
         const t = targets[Math.floor(Math.random() * targets.length)];
-        applyDamage(game, t, 3, "불꽃");
+        applyTypedAbilityDamage(game, t, 3, "불꽃");
         log(game, `${unit.name}의 불대문자! ${t.name}에게 피해 3!`);
         cleanupDeaths(game);
       }
@@ -1669,7 +1675,7 @@ function runBattlecry(game, side, unit) {
 
     case "originpulse": // 가이오가: 근원의파동
       setWeather(game, "rain");
-      foe.field.forEach((u) => applyDamage(game, u, 2, "물"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "물"));
       if (foe.field.length) {
         const alive = foe.field.filter((u) => u.hp > 0);
         if (alive.length) {
@@ -1685,7 +1691,7 @@ function runBattlecry(game, side, unit) {
       break;
 
     case "icebeamdance": // 스이쿤: 오로라빔
-      foe.field.forEach((u) => applyDamage(game, u, 2, "얼음"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "얼음"));
       cleanupDeaths(game);
       {
         const alive2 = foe.field.filter((u) => u.hp > 0);
@@ -1703,7 +1709,7 @@ function runBattlecry(game, side, unit) {
         const pool = foe.field.filter((u) => u.hp > 0);
         if (!pool.length) break;
         const t = pool[Math.floor(Math.random() * pool.length)];
-        applyDamage(game, t, 3, "불꽃");
+        applyTypedAbilityDamage(game, t, 3, "불꽃");
       }
       log(game, `${unit.name}의 불사르기! 불꽃 피해 3을 무작위 3회!`);
       cleanupDeaths(game);
@@ -1713,7 +1719,9 @@ function runBattlecry(game, side, unit) {
     case "burningfall": {
       const bonus = game.weather === "sun" ? 1 : 0;
 
-      foe.field.forEach((u) => applyDamage(game, u, 2 + bonus, "불꽃"));
+      foe.field.forEach((u) =>
+        applyTypedAbilityDamage(game, u, 2 + bonus, "불꽃"),
+      );
 
       log(
         game,
@@ -1728,7 +1736,7 @@ function runBattlecry(game, side, unit) {
 
     case "thunderwave": {
       // 썬더: 천둥차기
-      foe.field.forEach((u) => applyDamage(game, u, 2, "전기"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "전기"));
       cleanupDeaths(game);
       const aliveTW = foe.field.filter((u) => u.hp > 0);
       if (aliveTW.length) {
@@ -1747,7 +1755,7 @@ function runBattlecry(game, side, unit) {
       const pool = foe.field.filter((u) => u.hp > 0);
       if (pool.length) {
         const t = pool[Math.floor(Math.random() * pool.length)];
-        applyDamage(game, t, 4, "전기");
+        applyTypedAbilityDamage(game, t, 4, "전기");
         applyStatus(game, t, "para");
         log(
           game,
@@ -1760,14 +1768,14 @@ function runBattlecry(game, side, unit) {
 
     case "precipiceblades": // 그란돈: 단애의칼
       setWeather(game, "sun");
-      foe.field.forEach((u) => applyDamage(game, u, 3, "땅"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 3, "땅"));
       log(game, `${unit.name}의 단애의칼! 쾌청 발동 + 상대 전체 땅 피해 3!`);
       cleanupDeaths(game);
       break;
 
     case "frostedgale": // 프리져: 얼어붙는시선
       foe.field.forEach((u) => {
-        applyDamage(game, u, 2, "얼음");
+        applyTypedAbilityDamage(game, u, 2, "얼음");
         if (u.hp > 0) applyStatus(game, u, "ice");
       });
       log(
@@ -1777,12 +1785,17 @@ function runBattlecry(game, side, unit) {
       cleanupDeaths(game);
       break;
 
-    case "icelock": // 레지아이스: 눈보라
+    case "icelock":
       foe.field.forEach((u) => {
-        if (u.hp > 0) applyStatus(game, u, "ice");
-        applyDamage(game, u, 1, "얼음");
+        if (u.hp > 0) {
+          applyStatus(game, u, "ice");
+        }
+
+        applyTypedAbilityDamage(game, u, 1, "얼음");
       });
+
       log(game, `${unit.name}의 눈보라! 상대 전체 얼림 + 얼음 피해 1!`);
+
       cleanupDeaths(game);
       break;
 
@@ -1887,7 +1900,7 @@ function runBattlecry(game, side, unit) {
       break;
     }
     case "aeroblast": // 루기아: 에어로블라스트
-      foe.field.forEach((u) => applyDamage(game, u, 3, "비행"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 3, "비행"));
       log(
         game,
         `${unit.name}의 에어로블라스트! 상대 전체 비행 피해 3! 멀티스케일 유지.`,
@@ -1901,7 +1914,7 @@ function runBattlecry(game, side, unit) {
         const pool = foe.field.filter((u) => u.hp > 0);
         if (!pool.length) break;
         const t = pool[Math.floor(Math.random() * pool.length)];
-        applyDamage(game, t, 2, "바위");
+        applyTypedAbilityDamage(game, t, 2, "바위");
       }
       log(game, `${unit.name}의 스톤에지! 바위 피해 2를 4회!`);
       cleanupDeaths(game);
@@ -1913,7 +1926,7 @@ function runBattlecry(game, side, unit) {
       const pool3 = foe.field.filter((u) => u.hp > 0);
       if (pool3.length) {
         const t = pool3[Math.floor(Math.random() * pool3.length)];
-        applyDamage(game, t, 4, "드래곤");
+        applyTypedAbilityDamage(game, t, 4, "드래곤");
         log(game, `${unit.name}의 미스트볼! ${t.name}에게 드래곤 피해 4!`);
         cleanupDeaths(game);
       }
@@ -1928,7 +1941,7 @@ function runBattlecry(game, side, unit) {
 
     case "dragonascent": // 레쿠쟈: 화룡점정
       setWeather(game, null);
-      foe.field.forEach((u) => applyDamage(game, u, 3, "드래곤"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 3, "드래곤"));
       log(
         game,
         `${unit.name}의 화룡점정! 날씨 초기화 + 상대 전체 드래곤 피해 3!`,
@@ -1959,7 +1972,7 @@ function runBattlecry(game, side, unit) {
       )[0];
 
       if (t) {
-        applyDamage(game, t, 1, "전기");
+        applyTypedAbilityDamage(game, t, 1, "전기");
         applyStatus(game, t, "para");
 
         log(game, `${unit.name}의 스파크! ${t.name}에게 피해 1 + 마비!`);
@@ -2029,7 +2042,7 @@ function runBattlecry(game, side, unit) {
     case "blaine_eruption":
       setWeather(game, "sun");
 
-      foe.field.forEach((u) => applyDamage(game, u, 2, "불꽃"));
+      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 2, "불꽃"));
 
       log(game, `${unit.name}의 히트스탬프! 쾌청 + 상대 전체 불꽃 피해 2!`);
 
@@ -2075,7 +2088,7 @@ function runBattlecry(game, side, unit) {
       )[0];
 
       if (t) {
-        applyDamage(game, t, 2, "전기");
+        applyTypedAbilityDamage(game, t, 2, "전기");
 
         if (t.hp > 0) {
           applyStatus(game, t, "para");
@@ -3204,17 +3217,47 @@ export function resolveMew(game, side, targetUid) {
 
 export function resolveMoldbreaker(game, side, targetUid) {
   const pending = game.pendingBattlecry;
-  if (!pending || pending.side !== side || !pending.targets.includes(targetUid))
+
+  if (
+    !pending ||
+    pending.side !== side ||
+    !pending.targets.includes(targetUid)
+  ) {
     return false;
+  }
+
+  const me = game.players[side];
+
   const foe = game.players[other(side)];
+
+  // 틀깨기를 사용한 포켓몬
+  const source = me.field.find((u) => u.uid === pending.uid);
+
+  // 선택한 도발 포켓몬
   const t = foe.field.find((u) => u.uid === targetUid);
+
   game.pendingBattlecry = null;
-  if (!t) return false;
+
+  if (!t || !source) {
+    return false;
+  }
+
+  // 도발 해제
   t._tauntDisabled = true;
 
-  log(game, `${t.name}의 도발 효과가 사라졌다!`);
-  applyDamage(game, t, 2, "벌레");
+  // 틀깨기를 사용한 포켓몬의
+  // 현재 타입으로 피해
+  const attackType = source.type;
+
+  const dealt = applyTypedAbilityDamage(game, t, 2, attackType);
+
+  log(
+    game,
+    `${source.name}의 틀깨기! ${t.name}의 도발을 없애고 ${attackType} 타입 피해 ${dealt}!`,
+  );
+
   cleanupDeaths(game);
+
   return true;
 }
 
@@ -3680,7 +3723,7 @@ export function attack(game, side, attackerUid, target) {
   const atkBonus = atkUnit.ability === "serenegrace" ? 2 : 1;
   // 정전기: 공격/공격당할 때 40% 확률로 상대 마비
   if (defUnit.ability === "static" && atkUnit.hp > 0) {
-    applyDamage(game, atkUnit, 1, "전기");
+    applyTypedAbilityDamage(game, atkUnit, 1, "전기");
     if (Math.random() < 0.4) {
       applyStatus(game, atkUnit, "para");
       log(game, `${defUnit.name}의 정전기! ${atkUnit.name}에게 피해 1 + 마비!`);
