@@ -3,6 +3,8 @@ import {
   CARDS,
   CARD_MAP,
   MAX_COPIES,
+  MAX_LEGENDARY_POKEMON,
+  isLegendaryPokemon,
   TYPE_COLORS,
   RARITY_NAME,
   DEX,
@@ -49,6 +51,14 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     const c = {};
     save.deck.forEach((id) => (c[id] = (c[id] || 0) + 1));
     return c;
+  }, [save.deck]);
+
+  const legendaryPokemonCount = useMemo(() => {
+    return save.deck.reduce((count, id) => {
+      const card = CARD_MAP[id];
+
+      return count + (isLegendaryPokemon(card) ? 1 : 0);
+    }, 0);
   }, [save.deck]);
 
   const ownedCards = useMemo(() => {
@@ -175,17 +185,34 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
   function addToDeck(cardId) {
     if (clickSuppressed()) return;
+
     const card = CARD_MAP[cardId];
-    const inDeck = save.deck.filter((id) => id === cardId).length; // 항상 실제 덱 기준
+
+    const inDeck = save.deck.filter((id) => id === cardId).length;
+
     const owned = save.collection[cardId] || 0;
+
     const max = Math.min(MAX_COPIES[card.rarity], owned);
+
     if (save.deck.length >= 30 || inDeck >= max) {
       playSfx("buzzer");
       return;
     }
-    save.deck = [...save.deck, cardId]; // 새 배열로 교체 -> 메모/리렌더 정상 갱신
+
+    // 전설/환상 포켓몬만 덱 전체 최대 3장
+    if (
+      isLegendaryPokemon(card) &&
+      legendaryPokemonCount >= MAX_LEGENDARY_POKEMON
+    ) {
+      playSfx("buzzer");
+      return;
+    }
+
+    save.deck = [...save.deck, cardId];
+
     syncActivePreset(save.deck);
     persist(save);
+
     playSfx("pickup");
     onSaveChange();
   }
@@ -290,7 +317,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           <div
             className={`deck-count ${save.deck.length === 30 ? "ok" : "warn"}`}
           >
-            덱 {save.deck.length}/30
+            덱 {save.deck.length}/30 · 전설 {legendaryPokemonCount}/3
           </div>
         </div>
         <div className="deck-search-row">
@@ -371,6 +398,9 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               const owned = save.collection[card.id];
               const inDeck = deckCounts[card.id] || 0;
               const max = Math.min(MAX_COPIES[card.rarity], owned);
+              const legendaryBlocked =
+                isLegendaryPokemon(card) &&
+                legendaryPokemonCount >= MAX_LEGENDARY_POKEMON;
               return (
                 <div
                   key={card.id}
@@ -379,7 +409,9 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                 >
                   <HandCard
                     cardId={card.id}
-                    playable={inDeck < max && save.deck.length < 30}
+                    playable={
+                      inDeck < max && save.deck.length < 30 && !legendaryBlocked
+                    }
                     onClick={() => addToDeck(card.id)}
                     onPointerDown={press({ cardId: card.id })}
                   />

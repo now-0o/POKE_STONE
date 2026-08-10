@@ -8,6 +8,41 @@ export const RARITY_NAME = { C: "커먼", R: "레어", E: "에픽", L: "레전�
 export const RARITY_REFUND = { C: 5, R: 20, E: 40, L: 100 };
 export const MAX_COPIES = { C: 2, R: 2, E: 2, L: 1 };
 
+export const MAX_LEGENDARY_POKEMON = 3;
+
+export const LEGENDARY_POKEMON_IDS = new Set([
+  // 1세대
+  "articuno",
+  "zapdos",
+  "moltres",
+  "mewtwo",
+  "mew",
+
+  // 2세대
+  "raikou",
+  "entei",
+  "suicune",
+  "lugia",
+  "hooh",
+  "celebi",
+
+  // 3세대
+  "regirock",
+  "regice",
+  "registeel",
+  "latias",
+  "latios",
+  "kyogre",
+  "groudon",
+  "rayquaza",
+  "jirachi",
+  "deoxys",
+]);
+
+export function isLegendaryPokemon(card) {
+  return card?.kind === "pokemon" && LEGENDARY_POKEMON_IDS.has(card.id);
+}
+
 export const TYPE_COLORS = {
   노말: "#A8A77A",
   불꽃: "#EE8130",
@@ -157,21 +192,21 @@ export const ABILITY_TEXT = {
   sandforce: "모래의힘: 모래바람 동안 공격력 +2",
   // 방어/생존
   originpulse:
-    "근원의파동: 나올 때 폭우 발동. 상대 전체 물 피해 3 + 무작위 1마리를 얼린다",
+    "근원의파동: 나올 때 폭우 발동. 상대 전체 물 피해 2 + 무작위 1마리를 얼린다",
   icebeamdance:
     "오로라빔: 나올 때 상대 전체 얼음 피해 2 + 1마리에게 얼음 상태이상",
   skydive: "불사르기: 나올 때 불꽃 피해 3을 무작위로 3회 입힌다",
-  burningfall: "분화: 나올 때 적 전체 불꽃 피해 3. 쾌청이면 피해 +2",
+  burningfall: "분화: 나올 때 적 전체 불꽃 피해 2. 쾌청이면 피해 +1",
   thunderwave:
-    "천둥차기: 나올 때 적 전체 전기 피해 3. 무작위 1마리에게 마비 상태이상",
+    "천둥차기: 나올 때 적 전체 전기 피해 2. 무작위 1마리에게 마비 상태이상",
   thunderfang:
     "와일드볼트: 나올 때 무작위 상대에게 전기 피해 4 + 마비 상태이상",
-  precipiceblades: "단애의칼: 나올 때 쾌청 발동. 상대 전체 땅 피해 4",
+  precipiceblades: "단애의칼: 나올 때 쾌청 발동. 상대 전체 땅 피해 3",
   frostedgale:
     "얼어붙는시선: 나올 때 상대 전체 얼음 피해 2 + 전부 얼음 상태이상",
   icelock: "눈보라: 나올 때 상대 전체에게 얼음 상태이상 + 얼음 피해 1",
-  leafstorm:
-    "리프스톰: 나올 때 상대 전체 풀 피해 2 + 아군 전체 회복 2 + 카드 1장 드로우",
+  timerecall:
+    "타임리콜: 나올 때 아군 전체 체력 +1. 가장 최근에 기절한 아군 포켓몬을 체력 1로 부활시킨다",
   aeroblast:
     "에어로블라스트: 나올 때 상대 전체 비행 피해 3. 멀티스케일(풀피 시 피해 절반) 유지",
   rockblast: "스톤에지: 나올 때 상대에게 바위 피해 2를 무작위로 4회 입힌다",
@@ -808,7 +843,7 @@ export const CARDS = [
     evolvesFrom: "kadabra",
     ability: "foresight",
   }),
-  P("celebi", "세레비", "에스퍼", 6, 5, 8, "L", { ability: "leafstorm" }),
+  P("celebi", "세레비", "에스퍼", 6, 3, 4, "L", { ability: "timerecall" }),
   P("mewtwo", "뮤츠", "에스퍼", 9, 10, 9, "L", { ability: "psystrike" }),
   P("drowzee", "슬리프", "에스퍼", 1, 1, 2, "C", {}),
   P("hypno", "슬리퍼", "에스퍼", 4, 5, 6, "R", {

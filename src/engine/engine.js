@@ -452,6 +452,7 @@ function makePlayer(deckIds, name, hp = 40) {
     deck: shuffle(deckIds),
     hand: [],
     field: [],
+    lastDeadPokemon: null,
     fatigue: 0,
     megaUsed: false,
     discardUsedThisTurn: false,
@@ -1269,6 +1270,16 @@ export function cleanupDeaths(game) {
       p.field = p.field.filter((u) => u.hp > 0);
       dead.forEach((u) => {
         log(game, `${u.name}이(가) 기절했다!`);
+        p.lastDeadPokemon = {
+          cardId: u.cardId,
+
+          // 테오키스 같은 특수 형태 보존
+          deoxysForm: u.deoxysForm || null,
+
+          ability: u.ability || null,
+
+          secondaryAbility: u.secondaryAbility || null,
+        };
         // 죽음의 메아리
         if (u.ability === "deathdraw") {
           drawCard(game, side);
@@ -1658,7 +1669,7 @@ function runBattlecry(game, side, unit) {
 
     case "originpulse": // 가이오가: 근원의파동
       setWeather(game, "rain");
-      foe.field.forEach((u) => applyDamage(game, u, 3, "물"));
+      foe.field.forEach((u) => applyDamage(game, u, 2, "물"));
       if (foe.field.length) {
         const alive = foe.field.filter((u) => u.hp > 0);
         if (alive.length) {
@@ -1668,7 +1679,7 @@ function runBattlecry(game, side, unit) {
       }
       log(
         game,
-        `${unit.name}의 근원의파동! 폭우 발동 + 상대 전체 물 피해 3 + 동결!`,
+        `${unit.name}의 근원의파동! 폭우 발동 + 상대 전체 물 피해 2 + 동결!`,
       );
       cleanupDeaths(game);
       break;
@@ -1687,7 +1698,7 @@ function runBattlecry(game, side, unit) {
       break;
 
     case "skydive": {
-      // 파이어: 하늘에서내리꽂기
+      // 파이어: 불사르기
       for (let i = 0; i < 3; i++) {
         const pool = foe.field.filter((u) => u.hp > 0);
         if (!pool.length) break;
@@ -1699,21 +1710,25 @@ function runBattlecry(game, side, unit) {
       break;
     }
 
-    case "burningfall": // 엔테이: 불꽃폭포
-      {
-        const bonus = game.weather === "sun" ? 2 : 0;
-        foe.field.forEach((u) => applyDamage(game, u, 3 + bonus, "불꽃"));
-        log(
-          game,
-          `${unit.name}의 분화! 적 전체 불꽃 피해 ${3 + bonus}${bonus ? "(쾌청 보너스!)" : ""}!`,
-        );
-        cleanupDeaths(game);
-      }
+    case "burningfall": {
+      const bonus = game.weather === "sun" ? 1 : 0;
+
+      foe.field.forEach((u) => applyDamage(game, u, 2 + bonus, "불꽃"));
+
+      log(
+        game,
+        `${unit.name}의 분화! 적 전체 불꽃 피해 ${2 + bonus}${
+          bonus ? "(쾌청 보너스!)" : ""
+        }!`,
+      );
+
+      cleanupDeaths(game);
       break;
+    }
 
     case "thunderwave": {
-      // 썬더: 번개파동
-      foe.field.forEach((u) => applyDamage(game, u, 3, "전기"));
+      // 썬더: 천둥차기
+      foe.field.forEach((u) => applyDamage(game, u, 2, "전기"));
       cleanupDeaths(game);
       const aliveTW = foe.field.filter((u) => u.hp > 0);
       if (aliveTW.length) {
@@ -1721,14 +1736,14 @@ function runBattlecry(game, side, unit) {
         applyStatus(game, t, "para");
         log(
           game,
-          `${unit.name}의 천둥차기! 전체 전기 피해 3 + ${t.name} 마비!`,
+          `${unit.name}의 천둥차기! 전체 전기 피해 2 + ${t.name} 마비!`,
         );
-      } else log(game, `${unit.name}의 천둥차기! 전체 전기 피해 3!`);
+      } else log(game, `${unit.name}의 천둥차기! 전체 전기 피해 2!`);
       break;
     }
 
     case "thunderfang": {
-      // 라이코: 번개이빨
+      // 라이코: 와일드볼트
       const pool = foe.field.filter((u) => u.hp > 0);
       if (pool.length) {
         const t = pool[Math.floor(Math.random() * pool.length)];
@@ -1743,14 +1758,14 @@ function runBattlecry(game, side, unit) {
       break;
     }
 
-    case "precipiceblades": // 그란돈: 절벽의칼날
+    case "precipiceblades": // 그란돈: 단애의칼
       setWeather(game, "sun");
-      foe.field.forEach((u) => applyDamage(game, u, 4, "땅"));
-      log(game, `${unit.name}의 단애의칼! 쾌청 발동 + 상대 전체 땅 피해 4!`);
+      foe.field.forEach((u) => applyDamage(game, u, 3, "땅"));
+      log(game, `${unit.name}의 단애의칼! 쾌청 발동 + 상대 전체 땅 피해 3!`);
       cleanupDeaths(game);
       break;
 
-    case "frostedgale": // 프리져: 냉동풍
+    case "frostedgale": // 프리져: 얼어붙는시선
       foe.field.forEach((u) => {
         applyDamage(game, u, 2, "얼음");
         if (u.hp > 0) applyStatus(game, u, "ice");
@@ -1762,7 +1777,7 @@ function runBattlecry(game, side, unit) {
       cleanupDeaths(game);
       break;
 
-    case "icelock": // 레지아이스: 냉동봉인
+    case "icelock": // 레지아이스: 눈보라
       foe.field.forEach((u) => {
         if (u.hp > 0) applyStatus(game, u, "ice");
         applyDamage(game, u, 1, "얼음");
@@ -1771,18 +1786,79 @@ function runBattlecry(game, side, unit) {
       cleanupDeaths(game);
       break;
 
-    case "leafstorm": // 세레비: 리프스톰
-      foe.field.forEach((u) => applyDamage(game, u, 2, "풀"));
-      cleanupDeaths(game);
+    case "timerecall": {
+      // 아군 전체 체력 +1
       me.field.forEach((u) => {
-        u.hp = Math.min(u.maxHp, u.hp + 2);
+        u.hp = Math.min(u.maxHp, u.hp + 1);
       });
-      drawCard(game, side);
-      log(
-        game,
-        `${unit.name}의 리프스톰! 상대 전체 풀 피해 2 + 아군 회복 + 드로우!`,
-      );
+
+      const dead = me.lastDeadPokemon;
+
+      let revived = false;
+
+      // 마지막으로 죽은 아군이 있고
+      // 필드에 빈 자리가 있으면 부활
+      if (dead && me.field.length < MAX_FIELD) {
+        const deadCard = CARD_MAP[dead.cardId];
+
+        if (deadCard && deadCard.kind === "pokemon") {
+          const revivedUnit = makeUnit(deadCard, game, side);
+
+          // 기본적으로 체력 1 부활
+          revivedUnit.hp = 1;
+
+          // 부활한 턴 공격 불가
+          revivedUnit.canAttack = false;
+
+          // =========================
+          // 테오키스 폼 복구
+          // =========================
+          if (dead.cardId === "deoxys" && dead.deoxysForm) {
+            applyDeoxysForm(game, revivedUnit, dead.deoxysForm);
+
+            // applyDeoxysForm이 체력을
+            // 해당 폼 최대체력으로 바꾸므로
+            // 다시 체력 1로 고정
+            revivedUnit.hp = 1;
+
+            // 어택폼 / 스피드폼은
+            // applyDeoxysForm에서 즉시 공격 가능해지므로
+            // 부활한 턴에는 다시 막음
+            revivedUnit.canAttack = false;
+
+            // 어택폼의 첫 공격 +5는
+            // 부활 후 재사용 불가
+            if (dead.deoxysForm === "attack") {
+              revivedUnit._deoxysAttackUsed = true;
+            }
+
+            // 스피드폼은 다음 턴부터
+            // 정상적으로 2회 공격 가능
+            if (dead.deoxysForm === "speed") {
+              revivedUnit.extraUsed = false;
+            }
+          }
+
+          me.field.push(revivedUnit);
+
+          // 같은 포켓몬 반복 부활 방지
+          me.lastDeadPokemon = null;
+
+          revived = true;
+
+          log(
+            game,
+            `${unit.name}의 타임리콜! 아군 전체 체력 +1, ${deadCard.name}이(가) 체력 1로 부활했다!`,
+          );
+        }
+      }
+
+      if (!revived) {
+        log(game, `${unit.name}의 타임리콜! 아군 전체 체력 +1!`);
+      }
+
       break;
+    }
 
     case "metronome": {
       // 뮤: 변신 (대상 선택형)
@@ -1820,7 +1896,7 @@ function runBattlecry(game, side, unit) {
       break;
 
     case "rockblast": {
-      // 레지락: 록블래스트
+      // 레지락: 스톤에지
       for (let i = 0; i < 4; i++) {
         const pool = foe.field.filter((u) => u.hp > 0);
         if (!pool.length) break;
@@ -1850,7 +1926,7 @@ function runBattlecry(game, side, unit) {
       break;
     }
 
-    case "dragonascent": // 레쿠쟈: 용승천
+    case "dragonascent": // 레쿠쟈: 화룡점정
       setWeather(game, null);
       foe.field.forEach((u) => applyDamage(game, u, 3, "드래곤"));
       log(
