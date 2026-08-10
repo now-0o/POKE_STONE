@@ -432,39 +432,31 @@ export const ABILITY_TEXT = {
   lance_outrage: "역린: 공격할 때 공격력 +2. 공격 후 자신이 피해 1을 받는다.",
 
   hiddenpower:
-  "잠재파워: 나올 때 무작위 타입으로 변하고 무작위 상대 포켓몬에게 그 타입 피해 2",
+    "잠재파워: 나올 때 무작위 타입으로 변하고 무작위 상대 포켓몬에게 그 타입 피해 2",
   present:
     "프레젠트: 나올 때 50% 확률로 무작위 상대에게 얼음 피해 3, 아니면 무작위 아군 체력 3 회복",
   sketch:
     "스케치: 나올 때 내가 마지막으로 사용한 기술 카드 1장을 복사해 손으로 가져온다",
 
   plusminus:
-  "플러스마이너스: 내 필드에 이 특성을 가진 다른 아군이 있으면 공격력 +2",
-  soundproof:
-    "방음: 잠듦 상태가 되지 않는다",
-  toxicboost:
-    "독폭주: 독 상태일 때 공격력 +2",
+    "플러스마이너스: 내 필드에 이 특성을 가진 다른 아군이 있으면 공격력 +2",
+  soundproof: "방음: 잠듦 상태가 되지 않는다",
+  toxicboost: "독폭주: 독 상태일 때 공격력 +2",
 
-  stormdrain:
-    "마중물: 물 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
-  motordrive:
-    "전기엔진: 전기 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
-  sharpness:
-    "예리함: 공격 피해 +1",
-  roaroftime:
-    "시간의포효: 나올 때 상대 포켓몬 전체에게 드래곤 타입 피해 2",
+  stormdrain: "마중물: 물 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
+  motordrive: "전기엔진: 전기 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
+  sharpness: "예리함: 공격 피해 +1",
+  roaroftime: "시간의포효: 나올 때 상대 포켓몬 전체에게 드래곤 타입 피해 2",
   spacialrend:
     "공간절단: 나올 때 체력이 가장 높은 상대 포켓몬에게 드래곤 타입 피해 5",
   shadowforce:
     "섀도다이브: 나올 때 무작위 상대 포켓몬에게 고스트 타입 피해 4, 살아남으면 공격력 -2",
   darkvoid:
     "다크홀: 나올 때 상대 포켓몬 전체에게 악 타입 피해 1을 주고 무작위 상대 하나를 잠들게 한다",
-  multitype:
-    "멀티타입: 나올 때 상대 필드에 가장 유리한 타입으로 변하고 +1/+1",
+  multitype: "멀티타입: 나올 때 상대 필드에 가장 유리한 타입으로 변하고 +1/+1",
   slowstart:
     "슬로스타트: 나온 뒤 다음 자신의 턴에는 공격할 수 없다. 그 다음 턴부터 정상적으로 공격할 수 있다",
-  crushgrip:
-    "묵사발: 최대 체력인 포켓몬을 공격하면 공격 피해 +4",
+  crushgrip: "묵사발: 최대 체력인 포켓몬을 공격하면 공격 피해 +4",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -4804,7 +4796,53 @@ export const PACKS = {
     ball: "premier",
     legendPool: ["celebi", "mewtwo", "mew", "lugia", "latias", "rayquaza"],
   },
+
+  // ── 세대별 포켓몬팩 ─────────────────────────────
+  gen1: {
+    id: "gen1",
+    name: "포스스톤 GEN I",
+    sub: "1세대팩 · 관동도감",
+    price: 150,
+    weights: { C: 81, R: 15, E: 2.5, L: 1.5 },
+    guarantee: "R",
+    ball: "poke",
+    generation: 1,
+  },
+
+  gen2: {
+    id: "gen2",
+    name: "포스스톤 GEN II",
+    sub: "2세대팩 · 성도도감",
+    price: 150,
+    weights: { C: 81, R: 15, E: 2.5, L: 1.5 },
+    guarantee: "R",
+    ball: "great",
+    generation: 2,
+  },
+
+  gen3: {
+    id: "gen3",
+    name: "포스스톤 GEN III",
+    sub: "3세대팩 · 호연도감",
+    price: 150,
+    weights: { C: 81, R: 15, E: 2.5, L: 1.5 },
+    guarantee: "R",
+    ball: "ultra",
+    generation: 3,
+  },
+
+  gen4: {
+    id: "gen4",
+    name: "포스스톤 GEN IV",
+    sub: "4세대팩 · 신오도감",
+    price: 150,
+    weights: { C: 81, R: 15, E: 2.5, L: 1.5 },
+    guarantee: "R",
+    ball: "premier",
+    generation: 4,
+  },
 };
+
 // 하위 호환
 export const PACK_PRICE = PACKS.basic.price;
 export const RARITY_WEIGHTS = PACKS.basic.weights;

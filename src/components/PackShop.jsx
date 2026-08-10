@@ -168,7 +168,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
           <div className="pack-section-label">기본 팩</div>
           <div className="pack-row">
             {Object.values(PACKS)
-              .filter((p) => !p.legendPool)
+              .filter((p) => !p.legendPool && !p.generation)
               .map((pack) => (
                 <div key={pack.id} className={`pack-column pack-${pack.id}`}>
                   <div
@@ -237,6 +237,57 @@ export default function PackShop({ save, onSaveChange, onBack }) {
                   </div>
                   <button
                     className={`btn-primary btn-legend-pack ${save.money < pack.price ? "btn-locked" : ""}`}
+                    onMouseEnter={() =>
+                      save.money >= pack.price && playSfx("cursor")
+                    }
+                    onClick={() => buyPack(pack.id)}
+                  >
+                    {save.money >= pack.price ? "팩 개봉!" : "돈이 부족하다..."}
+                  </button>
+                </div>
+              ))}
+          </div>
+          <div className="pack-section-label">세대별 포켓몬팩</div>
+
+          <div className="pack-row">
+            {Object.values(PACKS)
+              .filter((p) => !!p.generation)
+              .map((pack) => (
+                <div key={pack.id} className={`pack-column pack-${pack.id}`}>
+                  <div
+                    className={`pack-visual pack-generation ${
+                      save.money < pack.price ? "pack-locked" : ""
+                    }`}
+                    onMouseEnter={() => playSfx("cursor")}
+                    onClick={() => buyPack(pack.id)}
+                  >
+                    <div className="pack-foil-top" />
+
+                    <img
+                      className="pack-ball"
+                      src={BALL_SPRITES[pack.ball]}
+                      alt=""
+                      width={72}
+                      height={72}
+                      draggable={false}
+                    />
+
+                    <div className="pack-label">{pack.name}</div>
+
+                    <div className="pack-sublabel">{pack.sub}</div>
+
+                    <div className="pack-price">
+                      {pack.price} · 5장 · {RARITY_NAME[pack.guarantee]} 이상
+                      1장 보장
+                    </div>
+
+                    <div className="pack-foil-bottom" />
+                  </div>
+
+                  <button
+                    className={`btn-primary ${
+                      save.money < pack.price ? "btn-locked" : ""
+                    }`}
                     onMouseEnter={() =>
                       save.money >= pack.price && playSfx("cursor")
                     }
