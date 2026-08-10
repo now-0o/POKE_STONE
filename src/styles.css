@@ -208,181 +208,174 @@ img.res-icon.small {
    지방 선택
    ============================================================ */
 
-   .region-title {
-    margin: 4px 0 14px;
-    font-family: var(--display-font);
-    font-size: 15px;
-    color: var(--text-dim);
-    text-align: center;
-  }
-  
+.region-title {
+  margin: 4px 0 14px;
+  font-family: var(--display-font);
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.region-select {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+
+  width: min(1040px, 100%);
+  margin: 0 auto 24px;
+}
+
+.region-card {
+  min-height: 132px;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 20px 22px;
+
+  border: 1px solid var(--panel-border);
+
+  border-radius: 18px;
+
+  background: linear-gradient(
+    145deg,
+    rgba(40, 52, 85, 0.92),
+    rgba(20, 27, 48, 0.96)
+  );
+
+  color: var(--text);
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    filter 0.15s;
+}
+
+.region-card:hover:not(.region-locked) {
+  transform: translateY(-4px);
+
+  border-color: var(--accent);
+
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
+}
+
+.region-card.region-johto {
+  background: linear-gradient(
+    145deg,
+    rgba(72, 60, 28, 0.94),
+    rgba(28, 30, 44, 0.97)
+  );
+}
+
+.region-card.region-hoenn {
+  background: linear-gradient(
+    145deg,
+    rgba(28, 79, 71, 0.94),
+    rgba(20, 27, 48, 0.97)
+  );
+}
+
+.region-card.region-locked {
+  opacity: 0.48;
+  filter: grayscale(0.65);
+  cursor: not-allowed;
+}
+
+.region-info {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.region-name {
+  font-family: var(--display-font);
+  font-size: 21px;
+}
+
+.region-sub {
+  margin-top: 2px;
+
+  font-family: var(--display-font);
+  font-size: 11px;
+
+  letter-spacing: 2px;
+
+  color: var(--text-dim);
+}
+
+.region-desc {
+  margin-top: 9px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.region-lock-text {
+  margin-top: 6px;
+
+  font-size: 11px;
+
+  color: #c5c7d2;
+}
+
+.region-go {
+  flex-shrink: 0;
+
+  font-family: var(--display-font);
+  font-size: 13px;
+
+  color: var(--accent);
+}
+
+.trainer-region-header {
+  width: min(760px, 100%);
+
+  margin: 0 auto 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: var(--text);
+}
+
+.trainer-region-header strong {
+  font-family: var(--display-font);
+  font-size: 18px;
+}
+
+.trainer-region-sub {
+  margin-left: 5px;
+
+  font-family: var(--display-font);
+
+  color: var(--text-dim);
+
+  font-size: 10px;
+
+  letter-spacing: 1.5px;
+}
+
+@media (max-width: 900px) {
   .region-select {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-
-    width: min(1040px, 100%);
-    margin: 0 auto 24px;
+    grid-template-columns: repeat(2, 1fr);
   }
-  
+}
+
+@media (max-width: 640px) {
+  .region-select {
+    grid-template-columns: 1fr;
+  }
+
   .region-card {
-    min-height: 132px;
-  
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  
-    padding: 20px 22px;
-  
-    border:
-      1px solid var(--panel-border);
-  
-    border-radius: 18px;
-  
-    background:
-      linear-gradient(
-        145deg,
-        rgba(40, 52, 85, 0.92),
-        rgba(20, 27, 48, 0.96)
-      );
-  
-    color: var(--text);
-    text-align: left;
-  
-    cursor: pointer;
-  
-    transition:
-      transform 0.15s,
-      border-color 0.15s,
-      box-shadow 0.15s,
-      filter 0.15s;
+    min-height: 110px;
   }
-  
-  .region-card:hover:not(.region-locked) {
-    transform: translateY(-4px);
-  
-    border-color: var(--accent);
-  
-    box-shadow:
-      0 10px 26px
-        rgba(0, 0, 0, 0.42);
-  }
-  
-  .region-card.region-johto {
-    background:
-      linear-gradient(
-        145deg,
-        rgba(72, 60, 28, 0.94),
-        rgba(28, 30, 44, 0.97)
-      );
-  }
-
-  .region-card.region-hoenn {
-    background:
-      linear-gradient(
-        145deg,
-        rgba(28, 79, 71, 0.94),
-        rgba(20, 27, 48, 0.97)
-      );
-  }
-  
-  .region-card.region-locked {
-    opacity: 0.48;
-    filter: grayscale(0.65);
-    cursor: not-allowed;
-  }
-  
-  .region-info {
-    flex: 1;
-  
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .region-name {
-    font-family: var(--display-font);
-    font-size: 21px;
-  }
-  
-  .region-sub {
-    margin-top: 2px;
-  
-    font-family: var(--display-font);
-    font-size: 11px;
-  
-    letter-spacing: 2px;
-  
-    color: var(--text-dim);
-  }
-  
-  .region-desc {
-    margin-top: 9px;
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-  
-  .region-lock-text {
-    margin-top: 6px;
-  
-    font-size: 11px;
-  
-    color: #c5c7d2;
-  }
-  
-  .region-go {
-    flex-shrink: 0;
-  
-    font-family: var(--display-font);
-    font-size: 13px;
-  
-    color: var(--accent);
-  }
-  
-  .trainer-region-header {
-    width: min(760px, 100%);
-  
-    margin:
-      0 auto 14px;
-  
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  
-    color: var(--text);
-  }
-  
-  .trainer-region-header strong {
-    font-family: var(--display-font);
-    font-size: 18px;
-  }
-  
-  .trainer-region-sub {
-    margin-left: 5px;
-  
-    font-family: var(--display-font);
-  
-    color: var(--text-dim);
-  
-    font-size: 10px;
-  
-    letter-spacing: 1.5px;
-  }
-
-  @media (max-width: 900px) {
-    .region-select {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (max-width: 640px) {
-    .region-select {
-      grid-template-columns: 1fr;
-    }
-  
-    .region-card {
-      min-height: 110px;
-    }
-  }
+}
 
 .trainer-list {
   display: grid;
@@ -647,8 +640,7 @@ img.res-icon.small {
   line-height: 12px;
 
   color: #6b6252;
-  background:
-    rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.6);
 
   border-radius: 3px;
   padding: 1px 5px;
@@ -1784,11 +1776,43 @@ img.res-icon.small {
   border: 1px solid var(--panel-border);
   border-radius: 16px;
   padding: 14px;
+
   position: sticky;
   top: 12px;
+
   max-height: 88vh;
-  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
   backdrop-filter: blur(6px);
+}
+.deck-preset-panel {
+  flex: 0 0 auto;
+
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.deck-card-list {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 4px;
+
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.deck-card-list h3 {
+  margin-bottom: 8px;
 }
 .deck-pane h3 {
   font-family: var(--display-font);
@@ -2561,9 +2585,7 @@ img.res-icon.small {
   }
 
   body::before {
-    content:
-      "POKE STONE\A\A"
-      "포케스톤은 가로 모드 전용입니다.\A"
+    content: "POKE STONE\A\A" "포케스톤은 가로 모드 전용입니다.\A"
       "화면을 가로로 돌려주세요.";
     white-space: pre-line;
 
@@ -2578,12 +2600,7 @@ img.res-icon.small {
     box-sizing: border-box;
     padding: 32px;
 
-    background:
-      radial-gradient(
-        circle at 50% 40%,
-        #1d2d59,
-        #0b1020 65%
-      );
+    background: radial-gradient(circle at 50% 40%, #1d2d59, #0b1020 65%);
 
     color: #fff;
     text-align: center;
@@ -4444,10 +4461,7 @@ img.res-icon.small {
   }
 }
 
-@media (orientation: landscape)
-  and (pointer: coarse)
-  and (max-height: 520px) {
-
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .hand-card .card-stageline {
     height: 9px;
     min-height: 9px;
@@ -4493,10 +4507,9 @@ img.res-icon.small {
     padding: 8px;
   }
 
- .deck-editor .collection-grid {
+  .deck-editor .collection-grid {
     display: grid;
-    grid-template-columns:
-      repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -4504,30 +4517,22 @@ img.res-icon.small {
     min-width: 0;
   }
 
-  .deck-editor
-  .collection-item
-  .hand-card {
+  .deck-editor .collection-item .hand-card {
     width: 118px;
     height: 166px;
     min-height: 166px;
     margin: 0 auto;
   }
 
-  .deck-editor
-  .collection-item
-  .card-art {
+  .deck-editor .collection-item .card-art {
     height: 58px;
     min-height: 58px;
     flex: 0 0 58px;
   }
 
-  @media (orientation: landscape)
-    and (pointer: coarse)
-    and (max-width: 640px) {
-
+  @media (orientation: landscape) and (pointer: coarse) and (max-width: 640px) {
     .deck-editor .collection-grid {
-      grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
@@ -4542,10 +4547,7 @@ img.res-icon.small {
   }
 }
 
-@media (orientation: landscape)
-  and (pointer: coarse)
-  and (max-height: 520px) {
-
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .pack-buy-area {
     align-items: stretch;
     padding-top: 4px;
@@ -4609,10 +4611,7 @@ img.res-icon.small {
   }
 }
 
-@media (orientation: landscape)
-  and (pointer: coarse)
-  and (max-height: 520px) {
-
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .pack-open-area {
     overflow: hidden;
   }
@@ -4679,17 +4678,13 @@ img.res-icon.small {
 
 .battle-board {
   /* 배틀 UI 크기 */
-  --unit-w:
-    clamp(58px, 9vmin, 98px);
+  --unit-w: clamp(58px, 9vmin, 98px);
 
-  --unit-h:
-    clamp(66px, 10.3vmin, 112px);
+  --unit-h: clamp(66px, 10.3vmin, 112px);
 
-  --hand-w:
-    clamp(104px, 9vw, 134px);
+  --hand-w: clamp(104px, 9vw, 134px);
 
-  --hand-h:
-    clamp(146px, 12.6vw, 188px);
+  --hand-h: clamp(146px, 12.6vw, 188px);
 
   --battle-skin: none;
 
@@ -4697,17 +4692,9 @@ img.res-icon.small {
 
   width: 100%;
 
-  height:
-    min(
-      900px,
-      calc(100dvh - 24px)
-    );
+  height: min(900px, calc(100dvh - 24px));
 
-  min-height:
-    min(
-      520px,
-      calc(100dvh - 24px)
-    );
+  min-height: min(520px, calc(100dvh - 24px));
 
   margin: 0 auto;
 
@@ -4724,25 +4711,12 @@ img.res-icon.small {
       rgba(65, 94, 160, 0.24),
       transparent 70%
     ),
-    linear-gradient(
-      180deg,
-      #101936 0%,
-      #151e3c 48%,
-      #111936 52%,
-      #0c142d 100%
-    );
+    linear-gradient(180deg, #101936 0%, #151e3c 48%, #111936 52%, #0c142d 100%);
 
-  background-size:
-    cover,
-    auto,
-    auto;
+  background-size: cover, auto, auto;
 
-  background-position:
-    center,
-    center,
-    center;
+  background-position: center, center, center;
 }
-
 
 /* ============================================================
    영웅
@@ -4773,55 +4747,39 @@ img.res-icon.small {
 .battle-board .hero-bar {
   position: relative;
 
-  width:
-    clamp(170px, 21vw, 250px);
+  width: clamp(170px, 21vw, 250px);
 
-  min-height:
-    clamp(44px, 5vw, 62px);
+  min-height: clamp(44px, 5vw, 62px);
 
-  padding:
-    clamp(4px, 0.55vw, 8px)
-    clamp(8px, 0.9vw, 14px);
+  padding: clamp(4px, 0.55vw, 8px) clamp(8px, 0.9vw, 14px);
 
   display: flex;
   align-items: center;
 
-  gap:
-    clamp(5px, 0.7vw, 10px);
+  gap: clamp(5px, 0.7vw, 10px);
 
   border-radius: 999px;
 
-  background:
-    rgba(17, 26, 53, 0.94);
+  background: rgba(17, 26, 53, 0.94);
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 
-  box-shadow:
-    0 3px 10px
-    rgba(0, 0, 0, 0.4);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
 }
 
 .battle-board .hero-mana {
-  min-width:
-    clamp(110px, 13vw, 170px);
+  min-width: clamp(110px, 13vw, 170px);
 
   padding: 3px 8px;
 
   border-radius: 999px;
 
-  background:
-    rgba(8, 15, 34, 0.86);
+  background: rgba(8, 15, 34, 0.86);
 
-  border:
-    1px solid
-    rgba(77, 178, 255, 0.2);
+  border: 1px solid rgba(77, 178, 255, 0.2);
 }
 
-.battle-board
-.hero-mana
-.mana-display {
+.battle-board .hero-mana .mana-display {
   max-width: none;
 
   justify-content: center;
@@ -4835,7 +4793,6 @@ img.res-icon.small {
 .battle-board > .my-bar {
   bottom: 15%;
 }
-
 
 /* 영웅 초상화 */
 
@@ -4852,27 +4809,20 @@ img.res-icon.small {
 
   flex-direction: row;
 
-  gap:
-    clamp(2px, 0.5vmin, 5px);
+  gap: clamp(2px, 0.5vmin, 5px);
 }
 
-.battle-board
-.hero-portrait
-.trainer-sprite {
-  width:
-    clamp(27px, 5vmin, 44px) !important;
+.battle-board .hero-portrait .trainer-sprite {
+  width: clamp(27px, 5vmin, 44px) !important;
 
-  height:
-    clamp(27px, 5vmin, 44px) !important;
+  height: clamp(27px, 5vmin, 44px) !important;
 }
 
 .battle-board .hero-hp {
-  font-size:
-    clamp(8px, 1.4vmin, 14px);
+  font-size: clamp(8px, 1.4vmin, 14px);
 
   white-space: nowrap;
 }
-
 
 /* 이름 */
 
@@ -4883,47 +4833,38 @@ img.res-icon.small {
 }
 
 .battle-board .hero-name {
-  font-size:
-    clamp(8px, 1.5vmin, 15px);
+  font-size: clamp(8px, 1.5vmin, 15px);
 }
 
 .battle-board .hero-sub {
   margin-top: 0;
 
-  font-size:
-    clamp(6px, 1vmin, 10px);
+  font-size: clamp(6px, 1vmin, 10px);
 
   white-space: nowrap;
 }
 
-
 /* 마나 */
 
 .battle-board .mana-display {
-  max-width:
-    clamp(70px, 12vmin, 140px);
+  max-width: clamp(70px, 12vmin, 140px);
 
-  gap:
-    clamp(1px, 0.25vmin, 3px);
+  gap: clamp(1px, 0.25vmin, 3px);
 
   flex-wrap: nowrap;
 }
 
 .battle-board .mana-pip {
-  width:
-    clamp(7px, 1.25vmin, 12px);
+  width: clamp(7px, 1.25vmin, 12px);
 
-  height:
-    clamp(7px, 1.25vmin, 12px);
+  height: clamp(7px, 1.25vmin, 12px);
 }
 
 .battle-board .mana-num {
   margin-left: 3px;
 
-  font-size:
-    clamp(7px, 1.2vmin, 12px);
+  font-size: clamp(7px, 1.2vmin, 12px);
 }
-
 
 /* ============================================================
    필드
@@ -4939,38 +4880,31 @@ img.res-icon.small {
 
   min-height: 0;
 
-  padding:
-    clamp(4px, 1vmin, 10px);
+  padding: clamp(4px, 1vmin, 10px);
 
   display: flex;
 
   justify-content: center;
   align-items: center;
 
-  gap:
-    clamp(5px, 1.2vmin, 12px);
+  gap: clamp(5px, 1.2vmin, 12px);
 
   flex-wrap: nowrap;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
-  border-radius:
-    clamp(12px, 2vmin, 22px);
+  border-radius: clamp(12px, 2vmin, 22px);
 
-  background:
-    radial-gradient(
-      ellipse 70% 100% at 50% 50%,
-      rgba(120, 160, 255, 0.1),
-      rgba(20, 30, 60, 0.12)
-    );
+  background: radial-gradient(
+    ellipse 70% 100% at 50% 50%,
+    rgba(120, 160, 255, 0.1),
+    rgba(20, 30, 60, 0.12)
+  );
 
   backdrop-filter: none;
 
   overflow: visible;
 }
-
 
 /* 상대 */
 
@@ -4980,7 +4914,6 @@ img.res-icon.small {
   height: 34%;
 }
 
-
 /* 나 */
 
 .battle-board > .my-field {
@@ -4988,7 +4921,6 @@ img.res-icon.small {
 
   height: 34%;
 }
-
 
 /* ============================================================
    필드 포켓몬
@@ -4998,39 +4930,29 @@ img.res-icon.small {
   width: var(--unit-w);
   height: var(--unit-h);
 
-  padding:
-    clamp(3px, 0.7vmin, 5px)
-    clamp(2px, 0.5vmin, 4px)
+  padding: clamp(3px, 0.7vmin, 5px) clamp(2px, 0.5vmin, 4px)
     clamp(9px, 1.3vmin, 13px);
 
-  gap:
-    clamp(1px, 0.4vmin, 3px);
+  gap: clamp(1px, 0.4vmin, 3px);
 }
 
 .battle-board .unit-art {
-  height:
-    clamp(28px, 5.3vmin, 58px);
+  height: clamp(28px, 5.3vmin, 58px);
 }
 
 .battle-board .unit-name {
-  font-size:
-    clamp(7px, 1.05vmin, 10.5px);
+  font-size: clamp(7px, 1.05vmin, 10.5px);
 }
 
 .battle-board .unit-orb {
-  width:
-    clamp(20px, 2.7vmin, 27px);
+  width: clamp(20px, 2.7vmin, 27px);
 
-  height:
-    clamp(20px, 2.7vmin, 27px);
+  height: clamp(20px, 2.7vmin, 27px);
 
-  bottom:
-    clamp(-10px, -1vmin, -6px);
+  bottom: clamp(-10px, -1vmin, -6px);
 
-  font-size:
-    clamp(9px, 1.4vmin, 14px);
+  font-size: clamp(9px, 1.4vmin, 14px);
 }
-
 
 /* ============================================================
    중앙 컨트롤 레일
@@ -5047,12 +4969,9 @@ img.res-icon.small {
 
   transform: translateY(-50%);
 
-  height:
-    clamp(48px, 7vw, 70px);
+  height: clamp(48px, 7vw, 70px);
 
-  padding:
-    clamp(4px, 0.5vw, 7px)
-    clamp(7px, 1vw, 14px);
+  padding: clamp(4px, 0.5vw, 7px) clamp(7px, 1vw, 14px);
 
   display: grid;
 
@@ -5063,27 +4982,20 @@ img.res-icon.small {
 
   align-items: center;
 
-  gap:
-    clamp(6px, 1vw, 14px);
+  gap: clamp(6px, 1vw, 14px);
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(8, 14, 32, 0.2),
-      rgba(12, 20, 43, 0.88) 18%,
-      rgba(12, 20, 43, 0.88) 82%,
-      rgba(8, 14, 32, 0.2)
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(8, 14, 32, 0.2),
+    rgba(12, 20, 43, 0.88) 18%,
+    rgba(12, 20, 43, 0.88) 82%,
+    rgba(8, 14, 32, 0.2)
+  );
 
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 
 /* 날씨 = 왼쪽 고정 영역 */
 
@@ -5095,14 +5007,10 @@ img.res-icon.small {
 
   justify-content: center;
 
-  padding:
-    clamp(5px, 0.6vw, 9px)
-    clamp(6px, 0.9vw, 12px);
+  padding: clamp(5px, 0.6vw, 9px) clamp(6px, 0.9vw, 12px);
 
-  font-size:
-    clamp(8px, 0.8vw, 12px);
+  font-size: clamp(8px, 0.8vw, 12px);
 }
-
 
 /* 로그 = 정확히 맵 중앙 */
 
@@ -5116,27 +5024,20 @@ img.res-icon.small {
 
   min-width: 0;
 
-  padding:
-    clamp(4px, 0.5vw, 7px)
-    clamp(7px, 0.8vw, 12px);
+  padding: clamp(4px, 0.5vw, 7px) clamp(7px, 0.8vw, 12px);
 
   overflow-y: auto;
 
-  background:
-    rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.3);
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 
   border-radius: 10px;
 
-  font-size:
-    clamp(8px, 0.8vw, 11px);
+  font-size: clamp(8px, 0.8vw, 11px);
 
   line-height: 1.35;
 }
-
 
 /* 오른쪽 버튼 영역 */
 
@@ -5148,10 +5049,8 @@ img.res-icon.small {
   align-items: center;
   justify-content: flex-end;
 
-  gap:
-    clamp(4px, 0.6vw, 8px);
+  gap: clamp(4px, 0.6vw, 8px);
 }
-
 
 /* 이전 스타일처럼 금색 pill */
 
@@ -5165,31 +5064,23 @@ img.res-icon.small {
 
   border-radius: 999px;
 
-  padding:
-    clamp(8px, 0.8vw, 13px)
-    clamp(13px, 1.4vw, 24px);
+  padding: clamp(8px, 0.8vw, 13px) clamp(13px, 1.4vw, 24px);
 
-  font-size:
-    clamp(9px, 0.9vw, 15px);
+  font-size: clamp(9px, 0.9vw, 15px);
 
   white-space: nowrap;
   line-height: normal;
 }
-
 
 /* 항복 */
 
 .battle-board .btn-surrender {
   position: static;
 
-  padding:
-    clamp(5px, 0.6vw, 8px)
-    clamp(7px, 0.8vw, 12px);
+  padding: clamp(5px, 0.6vw, 8px) clamp(7px, 0.8vw, 12px);
 
-  font-size:
-    clamp(8px, 0.75vw, 11px);
+  font-size: clamp(8px, 0.75vw, 11px);
 }
-
 
 /* 항복 확인창 */
 
@@ -5203,20 +5094,14 @@ img.res-icon.small {
 
   padding: 7px 10px;
 
-  background:
-    rgba(10, 15, 32, 0.97);
+  background: rgba(10, 15, 32, 0.97);
 
-  border:
-    1px solid
-    var(--panel-border);
+  border: 1px solid var(--panel-border);
 
   border-radius: 10px;
 
-  box-shadow:
-    0 6px 18px
-    rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
-
 
 /* ============================================================
    손패
@@ -5230,8 +5115,7 @@ img.res-icon.small {
   left: 50%;
   bottom: -2%;
 
-  transform:
-    translateX(-50%);
+  transform: translateX(-50%);
 
   width: 96%;
 
@@ -5251,21 +5135,16 @@ img.res-icon.small {
   pointer-events: none;
 }
 
-
 /* 카드 wrapper */
 
 .battle-board .hand-card-wrap {
   flex: 0 0 auto;
 
-  margin-left:
-    clamp(-30px, -2.5vmin, -14px);
+  margin-left: clamp(-30px, -2.5vmin, -14px);
 
-  transform:
-    translateY(var(--fan-y, 0))
-    rotate(var(--fan-angle, 0deg));
+  transform: translateY(var(--fan-y, 0)) rotate(var(--fan-angle, 0deg));
 
-  transform-origin:
-    50% 145%;
+  transform-origin: 50% 145%;
 
   transition:
     transform 0.14s ease,
@@ -5274,11 +5153,9 @@ img.res-icon.small {
   pointer-events: auto;
 }
 
-.battle-board
-.hand-card-wrap:first-child {
+.battle-board .hand-card-wrap:first-child {
   margin-left: 0;
 }
-
 
 /* 카드 자체 */
 
@@ -5288,93 +5165,59 @@ img.res-icon.small {
   min-height: var(--hand-h);
 }
 
-
 /* 기존 카드 내부도 같이 비례 */
 
-.battle-board
-.hand-card
-.card-art {
-  height:
-    clamp(27px, 5.6vmin, 66px);
+.battle-board .hand-card .card-art {
+  height: clamp(27px, 5.6vmin, 66px);
 
-  min-height:
-    clamp(27px, 5.6vmin, 66px);
+  min-height: clamp(27px, 5.6vmin, 66px);
 
-  flex-basis:
-    clamp(27px, 5.6vmin, 66px);
+  flex-basis: clamp(27px, 5.6vmin, 66px);
 }
 
-.battle-board
-.hand-card
-.card-name {
-  font-size:
-    clamp(7px, 1.15vmin, 13px);
+.battle-board .hand-card .card-name {
+  font-size: clamp(7px, 1.15vmin, 13px);
 }
 
-.battle-board
-.hand-card
-.card-stageline {
-  height:
-    clamp(7px, 1.2vmin, 14px);
+.battle-board .hand-card .card-stageline {
+  height: clamp(7px, 1.2vmin, 14px);
 
-  min-height:
-    clamp(7px, 1.2vmin, 14px);
+  min-height: clamp(7px, 1.2vmin, 14px);
 
-  font-size:
-    clamp(5.5px, 0.8vmin, 8.5px);
+  font-size: clamp(5.5px, 0.8vmin, 8.5px);
 
-  line-height:
-    clamp(6px, 1vmin, 12px);
+  line-height: clamp(6px, 1vmin, 12px);
 }
 
-.battle-board
-.hand-card
-.card-typebadge {
-  font-size:
-    clamp(5.5px, 0.85vmin, 9px);
+.battle-board .hand-card .card-typebadge {
+  font-size: clamp(5.5px, 0.85vmin, 9px);
 
-  padding:
-    1px
-    clamp(3px, 0.7vmin, 9px);
+  padding: 1px clamp(3px, 0.7vmin, 9px);
 }
 
-.battle-board
-.hand-card
-.card-text {
-  font-size:
-    clamp(5.5px, 0.85vmin, 9px);
+.battle-board .hand-card .card-text {
+  font-size: clamp(5.5px, 0.85vmin, 9px);
 
   line-height: 1.25;
 
-  padding:
-    clamp(1px, 0.4vmin, 3px)
-    clamp(2px, 0.6vmin, 5px);
+  padding: clamp(1px, 0.4vmin, 3px) clamp(2px, 0.6vmin, 5px);
 }
 
-.battle-board
-.hand-card
-.card-cost {
-  width:
-    clamp(24px, 3.3vmin, 34px);
+.battle-board .hand-card .card-cost {
+  width: clamp(24px, 3.3vmin, 34px);
 
-  height:
-    clamp(24px, 3.3vmin, 34px);
+  height: clamp(24px, 3.3vmin, 34px);
 
-  font-size:
-    clamp(11px, 1.7vmin, 18px);
+  font-size: clamp(11px, 1.7vmin, 18px);
 }
 
 .battle-board .hcard-orb {
-  width:
-    clamp(20px, 2.8vmin, 28px);
+  width: clamp(20px, 2.8vmin, 28px);
 
-  height:
-    clamp(20px, 2.8vmin, 28px);
+  height: clamp(20px, 2.8vmin, 28px);
 
-  font-size:
-    clamp(9px, 1.4vmin, 14px);
+  font-size: clamp(9px, 1.4vmin, 14px);
 }
-
 
 /* ============================================================
    타겟 안내
@@ -5383,34 +5226,22 @@ img.res-icon.small {
 .battle-board .target-hint {
   bottom: 21%;
 
-  padding:
-    clamp(5px, 0.9vmin, 10px)
-    clamp(10px, 1.6vmin, 20px);
+  padding: clamp(5px, 0.9vmin, 10px) clamp(10px, 1.6vmin, 20px);
 
-  font-size:
-    clamp(7px, 1.1vmin, 12px);
+  font-size: clamp(7px, 1.1vmin, 12px);
 }
-
 
 /* ============================================================
    터치
    ============================================================ */
 
 @media (pointer: coarse) {
-
-  .battle-board
-  .hand-card.playable:hover {
-    transform:
-      perspective(700px)
-      rotateX(0)
-      rotateY(0);
+  .battle-board .hand-card.playable:hover {
+    transform: perspective(700px) rotateX(0) rotateY(0);
   }
 
-  .battle-board
-  .drag-ghost {
-    transform:
-      translate(-50%, -62%)
-      scale(1.05);
+  .battle-board .drag-ghost {
+    transform: translate(-50%, -62%) scale(1.05);
   }
 }
 
@@ -5419,15 +5250,12 @@ img.res-icon.small {
     margin-left: -52px;
   }
 
-  .battle-board
-  .hand-card-wrap:first-child {
+  .battle-board .hand-card-wrap:first-child {
     margin-left: 0;
   }
 }
 
-.hand-card
-.card-art
-img.card-sprite {
+.hand-card .card-art img.card-sprite {
   width: auto !important;
   height: 84% !important;
 
@@ -5442,7 +5270,6 @@ img.card-sprite {
    모바일은 건드리지 않음
    ============================================================ */
 @media (min-width: 901px) and (pointer: fine) {
-
   /* ------------------------------------------------------------
      1. PC에서는 화면 최하단까지 배틀판 사용
      기존 max 900px 제한 제거
@@ -5452,13 +5279,10 @@ img.card-sprite {
     min-height: 680px;
 
     /* PC 필드 포켓몬을 좀 더 크게 */
-    --unit-w:
-      clamp(104px, 10.5vmin, 126px);
+    --unit-w: clamp(104px, 10.5vmin, 126px);
 
-    --unit-h:
-      clamp(118px, 12.3vmin, 148px);
+    --unit-h: clamp(118px, 12.3vmin, 148px);
   }
-
 
   /* ------------------------------------------------------------
      2. 중앙 UI는 뷰포트 중앙이 아니라
@@ -5474,7 +5298,6 @@ img.card-sprite {
     top: 45%;
   }
 
-
   /* ------------------------------------------------------------
      3. 손패를 화면 최하단까지 내림
      ------------------------------------------------------------ */
@@ -5486,50 +5309,39 @@ img.card-sprite {
     align-items: flex-end;
   }
 
-
   /* 내 트레이너는 손패 바로 위쪽으로 */
   .battle-board .my-hero-cluster {
     bottom: 22%;
   }
 
-
   /* ------------------------------------------------------------
      4. 넓어진 PC 필드에 맞춰 포켓몬 확대
      ------------------------------------------------------------ */
   .battle-board > .field {
-    gap:
-      clamp(12px, 1.6vw, 24px);
+    gap: clamp(12px, 1.6vw, 24px);
   }
 
   .battle-board .field-unit {
     width: var(--unit-w);
     height: var(--unit-h);
 
-    padding:
-      6px
-      6px
-      15px;
+    padding: 6px 6px 15px;
   }
 
   .battle-board .unit-art {
-    height:
-      clamp(62px, 6.6vmin, 78px);
+    height: clamp(62px, 6.6vmin, 78px);
   }
 
   .battle-board .unit-name {
-    font-size:
-      clamp(11px, 1.1vmin, 13px);
+    font-size: clamp(11px, 1.1vmin, 13px);
   }
 
   .battle-board .unit-orb {
-    width:
-      clamp(29px, 3vmin, 33px);
+    width: clamp(29px, 3vmin, 33px);
 
-    height:
-      clamp(29px, 3vmin, 33px);
+    height: clamp(29px, 3vmin, 33px);
 
-    font-size:
-      clamp(14px, 1.5vmin, 17px);
+    font-size: clamp(14px, 1.5vmin, 17px);
 
     bottom: -11px;
   }
@@ -5582,18 +5394,14 @@ img.card-sprite {
    - 내 마나는 프로필 위
    ============================================================ */
 @media (min-width: 901px) and (pointer: fine) {
-
   /* ------------------------------------------------------------
      필드 포켓몬 크기
      ------------------------------------------------------------ */
   .battle-board {
-    --unit-w:
-      clamp(116px, 9.8vw, 138px);
+    --unit-w: clamp(116px, 9.8vw, 138px);
 
-    --unit-h:
-      clamp(134px, 11.5vw, 160px);
+    --unit-h: clamp(134px, 11.5vw, 160px);
   }
-
 
   /* ------------------------------------------------------------
      상대 필드
@@ -5605,7 +5413,6 @@ img.card-sprite {
     height: 24%;
   }
 
-
   /* ------------------------------------------------------------
      내 필드
      bottom 방식 대신 위치를 확실하게 지정
@@ -5616,7 +5423,6 @@ img.card-sprite {
 
     height: 24%;
   }
-
 
   /* ------------------------------------------------------------
      중앙 UI
@@ -5634,51 +5440,39 @@ img.card-sprite {
     top: 39%;
   }
 
-
   /* ------------------------------------------------------------
      필드 포켓몬 확대
      ------------------------------------------------------------ */
   .battle-board > .field {
-    gap:
-      clamp(14px, 1.5vw, 22px);
+    gap: clamp(14px, 1.5vw, 22px);
 
-    padding:
-      8px 12px;
+    padding: 8px 12px;
   }
 
   .battle-board .field-unit {
     width: var(--unit-w);
     height: var(--unit-h);
 
-    padding:
-      6px
-      6px
-      16px;
+    padding: 6px 6px 16px;
   }
 
   .battle-board .unit-art {
-    height:
-      clamp(70px, 6.8vw, 84px);
+    height: clamp(70px, 6.8vw, 84px);
   }
 
   .battle-board .unit-name {
-    font-size:
-      clamp(11px, 1vw, 13px);
+    font-size: clamp(11px, 1vw, 13px);
   }
 
   .battle-board .unit-orb {
-    width:
-      clamp(30px, 2.5vw, 34px);
+    width: clamp(30px, 2.5vw, 34px);
 
-    height:
-      clamp(30px, 2.5vw, 34px);
+    height: clamp(30px, 2.5vw, 34px);
 
-    font-size:
-      clamp(14px, 1.3vw, 17px);
+    font-size: clamp(14px, 1.3vw, 17px);
 
     bottom: -11px;
   }
-
 
   /* ------------------------------------------------------------
      상대 프로필
@@ -5690,7 +5484,6 @@ img.card-sprite {
   .battle-board .enemy-hero-cluster {
     top: 1.5%;
   }
-
 
   /* ------------------------------------------------------------
      내 프로필을 필드 밖 아래쪽으로 이동
@@ -5704,7 +5497,6 @@ img.card-sprite {
     bottom: auto;
   }
 
-
   /* ------------------------------------------------------------
      내 마나만 프로필 위로
 
@@ -5715,19 +5507,14 @@ img.card-sprite {
        프로필
        마나
      ------------------------------------------------------------ */
-  .battle-board
-  .my-hero-cluster
-  .hero-mana {
+  .battle-board .my-hero-cluster .hero-mana {
     order: -1;
   }
 
-
   /* 내 마나와 프로필 간격 약간 확보 */
-  .battle-board
-  .my-hero-cluster {
+  .battle-board .my-hero-cluster {
     gap: 5px;
   }
-
 
   /* ------------------------------------------------------------
      손패는 화면 최하단 유지
@@ -5740,7 +5527,6 @@ img.card-sprite {
 }
 
 @media (min-width: 901px) and (pointer: fine) {
-
   /* 진화 불가 카드 - 버리고 뽑기 버튼을 카드 위로 */
   .battle-board .btn-discard-redraw {
     top: -34px;
@@ -5748,9 +5534,7 @@ img.card-sprite {
 
     left: 50%;
 
-    transform:
-      translateX(-50%)
-      rotate(calc(var(--fan-angle, 0deg) * -1));
+    transform: translateX(-50%) rotate(calc(var(--fan-angle, 0deg) * -1));
 
     z-index: 60;
 
@@ -5758,9 +5542,7 @@ img.card-sprite {
 
     font-size: 11px;
 
-    box-shadow:
-      0 3px 8px
-      rgba(0, 0, 0, 0.55);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
   }
 }
 
@@ -5783,20 +5565,13 @@ img.card-sprite {
 
   box-sizing: border-box;
 
-  padding:
-    0
-    36px
-    0
-    36px;
+  padding: 0 36px 0 36px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 
   border-radius: 999px;
 
-  background:
-    rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.28);
 
   color: var(--text);
 
@@ -5811,20 +5586,15 @@ img.card-sprite {
 }
 
 .deck-search-input::placeholder {
-  color:
-    rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .deck-search-input:focus {
-  border-color:
-    var(--accent);
+  border-color: var(--accent);
 
-  background:
-    rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.4);
 
-  box-shadow:
-    0 0 0 2px
-    rgba(245, 197, 66, 0.08);
+  box-shadow: 0 0 0 2px rgba(245, 197, 66, 0.08);
 }
 
 .deck-search-icon {
@@ -5833,8 +5603,7 @@ img.card-sprite {
   left: 12px;
   top: 50%;
 
-  transform:
-    translateY(-50%);
+  transform: translateY(-50%);
 
   font-size: 13px;
 
@@ -5849,8 +5618,7 @@ img.card-sprite {
   right: 7px;
   top: 50%;
 
-  transform:
-    translateY(-50%);
+  transform: translateY(-50%);
 
   width: 24px;
   height: 24px;
@@ -5864,11 +5632,9 @@ img.card-sprite {
   border: 0;
   border-radius: 50%;
 
-  background:
-    rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 
-  color:
-    rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.75);
 
   font-size: 16px;
   line-height: 1;
@@ -5877,20 +5643,17 @@ img.card-sprite {
 }
 
 .deck-search-clear:hover {
-  background:
-    rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.16);
 
   color: #fff;
 }
-
 
 /* ---------- 덱 프리셋 ---------- */
 
 .deck-preset-tabs {
   display: grid;
 
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
   gap: 6px;
 
@@ -5910,14 +5673,11 @@ img.card-sprite {
 
   gap: 3px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 
   border-radius: 9px;
 
-  background:
-    rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.045);
 
   color: var(--text);
 
@@ -5931,25 +5691,19 @@ img.card-sprite {
 }
 
 .deck-preset-btn:hover {
-  background:
-    rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.09);
 
-  transform:
-    translateY(-1px);
+  transform: translateY(-1px);
 }
 
 .deck-preset-btn.active {
-  border-color:
-    var(--accent);
+  border-color: var(--accent);
 
-  background:
-    rgba(245, 197, 66, 0.13);
+  background: rgba(245, 197, 66, 0.13);
 
   box-shadow:
-    inset 0 0 0 1px
-    rgba(245, 197, 66, 0.12),
-    0 0 10px
-    rgba(245, 197, 66, 0.08);
+    inset 0 0 0 1px rgba(245, 197, 66, 0.12),
+    0 0 10px rgba(245, 197, 66, 0.08);
 }
 
 .deck-preset-name {
@@ -5962,24 +5716,20 @@ img.card-sprite {
 
   text-align: center;
 
-  font-family:
-    var(--display-font);
+  font-family: var(--display-font);
 
   font-size: 10px;
 }
 
-.deck-preset-btn.active
-.deck-preset-name {
+.deck-preset-btn.active .deck-preset-name {
   color: var(--accent);
 }
 
 .deck-preset-count {
   font-size: 9px;
 
-  color:
-    var(--text-dim);
+  color: var(--text-dim);
 }
-
 
 /* ---------- 덱 이름 변경 ---------- */
 
@@ -5992,8 +5742,7 @@ img.card-sprite {
 
   margin-bottom: 12px;
 
-  color:
-    var(--text-dim);
+  color: var(--text-dim);
 
   font-size: 10px;
 }
@@ -6012,14 +5761,11 @@ img.card-sprite {
 
   padding: 0 8px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 
   border-radius: 7px;
 
-  background:
-    rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.25);
 
   color: var(--text);
 
@@ -6029,18 +5775,18 @@ img.card-sprite {
 }
 
 .deck-name-editor input:focus {
-  border-color:
-    var(--accent);
+  border-color: var(--accent);
 }
-
 
 /* 검색창 추가로 상단바가 더 높아졌으므로
    우측 덱 패널 sticky 위치도 조금 내림 */
 @media (min-width: 761px) {
   .deck-editor .deck-pane {
     top: 170px;
-    max-height:
-      calc(100vh - 186px);
+
+    height: calc(100vh - 186px);
+
+    max-height: calc(100vh - 186px);
   }
 }
 
@@ -6049,15 +5795,11 @@ img.card-sprite {
    ============================================================ */
 
 .deck-editor .collection-item {
-  will-change:
-    transform,
-    opacity;
+  will-change: transform, opacity;
 
-  transform-origin:
-    center center;
+  transform-origin: center center;
 
-  backface-visibility:
-    hidden;
+  backface-visibility: hidden;
 }
 
 .deck-editor .collection-grid {

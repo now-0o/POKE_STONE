@@ -236,7 +236,6 @@ export const ABILITY_TEXT = {
     "사이코브레이크: 나왔을 때 상대 포켓몬 전체에게 에스퍼 타입 피해 3",
   flamesiege: "불대문자: 나왔을 때 무작위 상대 포켓몬에게 불꽃 타입 피해 3",
   earthpower: "대지의힘: 나왔을 때 무작위 상대 포켓몬에게 땅 타입 피해 3",
-  eruption: "분화: 나왔을 때 상대 포켓몬 전체에게 불꽃 타입 피해 2",
   muddywater: "탁류: 나왔을 때 상대 포켓몬 전체에게 물 타입 피해 1",
   blizzard:
     "눈보라: 나왔을 때 상대 전체에게 얼음 타입 피해 1, 무작위 하나에게 얼음 상태이상",
@@ -1330,7 +1329,7 @@ export const CARDS = [
   P("typhlosion", "블레이범", "불꽃", 5, 7, 6, "E", {
     stage: 2,
     evolvesFrom: "quilava",
-    ability: "burningfall",
+    ability: "flashfire",
   }),
 
   P("totodile", "리아코", "물", 1, 2, 2, "C", {

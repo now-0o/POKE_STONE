@@ -1418,7 +1418,11 @@ function runBattlecry(game, side, unit) {
   switch (unit.ability) {
     case "moldbreaker": {
       const targets = foe.field.filter(
-        (u) => (u.ability === "taunt" || u.ability === "fortress") && u.hp > 0,
+        (u) =>
+          (u.ability === "taunt" ||
+            u.secondaryAbility === "taunt" ||
+            u.ability === "fortress") &&
+          u.hp > 0,
       );
       if (targets.length) {
         game.pendingBattlecry = {
@@ -1463,11 +1467,6 @@ function runBattlecry(game, side, unit) {
     case "muddywater":
       foe.field.forEach((u) => applyDamage(game, u, 1, "물"));
       log(game, `${unit.name}의 탁류! 적 전체에게 물 피해 1!`);
-      cleanupDeaths(game);
-      break;
-    case "eruption":
-      foe.field.forEach((u) => applyDamage(game, u, 2, "불꽃"));
-      log(game, `${unit.name}의 분화! 적 전체에게 불꽃 피해 2!`);
       cleanupDeaths(game);
       break;
     case "earthpower": {
@@ -1850,14 +1849,13 @@ function runBattlecry(game, side, unit) {
 
     case "irondefense": // 레지스틸: 철벽
       {
-        const alive3 = foe.field.filter((u) => u.hp > 0);
-        alive3.forEach((u) => {
-          if (u.ability !== "taunt" && u.ability !== "fortress")
-            u._taunted = true;
-        });
-        unit.ability = "taunt"; // 도발 효과 활성화
-        unit.hp = Math.min(unit.maxHp + 3, unit.hp + 3);
+        // 원래 철벽 특성은 유지하고
+        // 도발 효과를 보조 특성으로 부여
+        unit.secondaryAbility = "taunt";
+
         unit.maxHp += 3;
+        unit.hp += 3;
+
         log(
           game,
           `${unit.name}의 철벽! 도발로 모든 공격을 끌어당기고 체력 +3!`,

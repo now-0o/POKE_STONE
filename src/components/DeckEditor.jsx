@@ -392,67 +392,83 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           </div>
         </div>
 
-        {/* 덱 리스트 */}
+        {/* 덱 영역 */}
         <div className="deck-pane">
-          <div className="deck-preset-tabs">
-            {presets.map((preset, index) => (
-              <button
-                key={index}
-                className={`deck-preset-btn ${
-                  activePreset === index ? "active" : ""
-                }`}
-                onClick={() => selectPreset(index)}
-              >
-                <span className="deck-preset-name">{preset.name}</span>
+          {/* 프리셋 영역 - 스크롤되지 않음 */}
+          <div className="deck-preset-panel">
+            <div className="deck-preset-tabs">
+              {presets.map((preset, index) => (
+                <button
+                  key={index}
+                  className={`deck-preset-btn ${
+                    activePreset === index ? "active" : ""
+                  }`}
+                  onClick={() => selectPreset(index)}
+                >
+                  <span className="deck-preset-name">{preset.name}</span>
 
-                <span className="deck-preset-count">
-                  {activePreset === index
-                    ? save.deck.length
-                    : preset.deck.length}
-                  /30
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="deck-name-editor">
-            <span>덱 이름</span>
-
-            <input
-              key={`${activePreset}-${presets[activePreset]?.name}`}
-              type="text"
-              maxLength={16}
-              defaultValue={
-                presets[activePreset]?.name || `덱 ${activePreset + 1}`
-              }
-              onBlur={(e) => renamePreset(activePreset, e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.currentTarget.blur();
-                }
-              }}
-            />
-          </div>
-          <h3>내 덱</h3>
-          {deckList.map(({ card, count }) => (
-            <div
-              key={card.id}
-              className="deck-row"
-              style={{ "--type-color": TYPE_COLORS[card.type] }}
-              onClick={() => removeFromDeck(card.id)}
-              title="클릭하면 1장 제거"
-            >
-              <span className="deck-row-cost">{card.cost}</span>
-              <span className="deck-row-emoji">
-                <Sprite cardId={card.id} emoji={card.emoji} size={22} />
-              </span>
-              <span className="deck-row-name">{card.name}</span>
-              <span className="deck-row-count">×{count}</span>
+                  <span className="deck-preset-count">
+                    {activePreset === index
+                      ? save.deck.length
+                      : preset.deck.length}
+                    /30
+                  </span>
+                </button>
+              ))}
             </div>
-          ))}
-          {save.deck.length < 30 && (
-            <p className="deck-warning">덱이 30장이 되어야 배틀할 수 있어요.</p>
-          )}
+
+            <div className="deck-name-editor">
+              <span>덱 이름</span>
+
+              <input
+                key={`${activePreset}-${presets[activePreset]?.name}`}
+                type="text"
+                maxLength={16}
+                defaultValue={
+                  presets[activePreset]?.name || `덱 ${activePreset + 1}`
+                }
+                onBlur={(e) => renamePreset(activePreset, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.currentTarget.blur();
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 카드 리스트 - 여기만 스크롤 */}
+          <div className="deck-card-list">
+            <h3>내 덱</h3>
+
+            {deckList.map(({ card, count }) => (
+              <div
+                key={card.id}
+                className="deck-row"
+                style={{
+                  "--type-color": TYPE_COLORS[card.type],
+                }}
+                onClick={() => removeFromDeck(card.id)}
+                title="클릭하면 1장 제거"
+              >
+                <span className="deck-row-cost">{card.cost}</span>
+
+                <span className="deck-row-emoji">
+                  <Sprite cardId={card.id} emoji={card.emoji} size={22} />
+                </span>
+
+                <span className="deck-row-name">{card.name}</span>
+
+                <span className="deck-row-count">×{count}</span>
+              </div>
+            ))}
+
+            {save.deck.length < 30 && (
+              <p className="deck-warning">
+                덱이 30장이 되어야 배틀할 수 있어요.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
