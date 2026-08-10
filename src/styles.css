@@ -2207,8 +2207,14 @@ img.res-icon.small {
   animation: inspect-in 0.14s ease-out;
 }
 .inspect-overlay .hand-card {
+  height: 220px;
+  min-height: 220px;
   scale: 1.8;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+}
+
+.inspect-overlay .card-text {
+  min-height: 48px;
 }
 @keyframes inspect-in {
   from {
