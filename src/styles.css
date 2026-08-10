@@ -1603,6 +1603,11 @@ img.res-icon.small {
   padding-top: 4vh;
   text-align: center;
 }
+
+.pack-card-wrap .card-text {
+  text-align: left;
+}
+
 .pack-cards {
   display: flex;
   gap: 16px;
