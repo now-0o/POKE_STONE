@@ -457,7 +457,7 @@ export const CARDS = [
     evolvesFrom: "eevee",
     ability: "waterabsorb",
   }),
-  P("politoed", "왕구리", "물", 4, 3, 6, "R", {
+  P("politoed", "왕구리", "물", 4, 4, 7, "R", {
     stage: 2,
     evolvesFrom: "poliwhirl",
     ability: "drizzle",
@@ -547,7 +547,7 @@ export const CARDS = [
   }),
   P("chikorita", "치코리타", "풀", 1, 1, 2, "C", { ability: "overgrow" }),
   P("exeggutor", "나시", "풀", 4, 4, 5, "R", { ability: "chlorophyll" }),
-  P("bellsprout", "모다피", "풀", 1, 0, 1, "C", { ability: "chlorophyll" }),
+  P("bellsprout", "모다피", "풀", 1, 1, 1, "C", { ability: "chlorophyll" }),
   P("weepinbell", "우츠동", "풀", 2, 2, 4, "C", {
     stage: 1,
     evolvesFrom: "bellsprout",
@@ -599,7 +599,7 @@ export const CARDS = [
     ability: "static",
   }),
   P("voltorb", "붐볼", "전기", 2, 2, 3, "C", { ability: "explode" }),
-  P("mareep", "메리프", "전기", 1, 0, 1, "C", { ability: "static" }),
+  P("mareep", "메리프", "전기", 1, 1, 1, "C", { ability: "static" }),
   P("flaaffy", "보송송", "전기", 2, 2, 4, "C", {
     stage: 1,
     evolvesFrom: "mareep",
@@ -615,7 +615,7 @@ export const CARDS = [
 
   // ============ 땅 (9) ============
   P("diglett", "디그다", "땅", 1, 1, 1, "C", { ability: "rush" }),
-  P("dugtrio", "닥트리오", "땅", 3, 5, 3, "R", {
+  P("dugtrio", "닥트리오", "땅", 3, 4, 3, "R", {
     stage: 1,
     evolvesFrom: "diglett",
     ability: "skilllink",
@@ -687,7 +687,7 @@ export const CARDS = [
   P("snorlax", "잠만보", "노말", 6, 3, 10, "E", { ability: "taunt" }),
   P("chansey", "럭키", "노말", 3, 1, 6, "R", { ability: "healer" }),
   P("kangaskhan", "캥카", "노말", 4, 4, 6, "R", {}),
-  P("slakoth", "게을로", "노말", 1, 0, 1, "C", { ability: "truant" }),
+  P("slakoth", "게을로", "노말", 1, 2, 2, "C", { ability: "truant" }),
   P("vigoroth", "발바로", "노말", 3, 5, 4, "R", {
     stage: 1,
     evolvesFrom: "slakoth",
@@ -708,7 +708,7 @@ export const CARDS = [
     evolvesFrom: "caterpie",
     ability: "sleeppowder",
   }),
-  P("scyther", "스라크", "벌레", 4, 5, 3, "R", { ability: "rush" }),
+  P("scyther", "스라크", "벌레", 4, 5, 4, "R", { ability: "rush" }),
   P("weedle", "뿔충이", "벌레", 1, 1, 1, "C", {}),
   P("kakuna", "딱충이", "벌레", 2, 0, 4, "C", {
     stage: 1,
@@ -797,7 +797,7 @@ export const CARDS = [
     evolvesFrom: "grimer",
     ability: "poisonbarb",
   }),
-  P("weezing", "또도가스", "독", 3, 3, 4, "R", { ability: "poisonbarb" }),
+  P("weezing", "또도가스", "독", 3, 3, 5, "R", { ability: "poisonbarb" }),
   P("ekans", "아보", "독", 1, 2, 1, "C", {}),
   P("arbok", "아보크", "독", 3, 5, 4, "R", {
     stage: 1,
@@ -843,7 +843,7 @@ export const CARDS = [
     evolvesFrom: "kadabra",
     ability: "foresight",
   }),
-  P("celebi", "세레비", "에스퍼", 6, 3, 4, "L", { ability: "timerecall" }),
+  P("celebi", "세레비", "에스퍼", 6, 3, 5, "L", { ability: "timerecall" }),
   P("mewtwo", "뮤츠", "에스퍼", 9, 10, 9, "L", { ability: "psystrike" }),
   P("drowzee", "슬리프", "에스퍼", 1, 1, 2, "C", {}),
   P("hypno", "슬리퍼", "에스퍼", 4, 5, 6, "R", {
@@ -877,9 +877,9 @@ export const CARDS = [
   P("lugia", "루기아", "에스퍼", 9, 8, 11, "L", { ability: "aeroblast" }),
 
   // ============ 바위 (10) ============
-  P("onix", "롱스톤", "바위", 3, 2, 4, "C", { ability: "taunt" }),
+  P("onix", "롱스톤", "바위", 3, 2, 5, "C", { ability: "taunt" }),
   P("aerodactyl", "프테라", "바위", 5, 6, 5, "R", { ability: "rush" }),
-  P("larvitar", "애버라스", "바위", 2, 2, 2, "C", {}),
+  P("larvitar", "애버라스", "바위", 2, 2, 3, "C", {}),
   P("pupitar", "데기라스", "바위", 3, 3, 5, "R", {
     stage: 1,
     evolvesFrom: "larvitar",
@@ -907,7 +907,7 @@ export const CARDS = [
   P("regirock", "레지락", "바위", 7, 6, 9, "L", { ability: "rockblast" }),
 
   // ============ 고스트 (5) ============
-  P("gastly", "고오스", "고스트", 1, 0, 1, "C", { ability: "levitate" }),
+  P("gastly", "고오스", "고스트", 1, 1, 1, "C", { ability: "levitate" }),
   P("haunter", "고우스트", "고스트", 3, 5, 3, "R", {
     stage: 1,
     evolvesFrom: "gastly",
@@ -1259,7 +1259,7 @@ export const CARDS = [
     ability: "pickup",
   }),
 
-  P("persian", "페르시온", "노말", 3, 4, 4, "R", {
+  P("persian", "페르시온", "노말", 3, 3, 5, "R", {
     stage: 1,
     evolvesFrom: "meowth",
     ability: "technician",
@@ -1327,7 +1327,7 @@ export const CARDS = [
     ability: "voltabsorb",
   }),
 
-  P("omanyte", "암나이트", "바위", 2, 2, 4, "C", {
+  P("omanyte", "암나이트", "바위", 2, 2, 3, "C", {
     ability: "shellarmor",
   }),
 
@@ -1367,11 +1367,11 @@ export const CARDS = [
     ability: "flashfire",
   }),
 
-  P("totodile", "리아코", "물", 1, 2, 2, "C", {
+  P("totodile", "리아코", "물", 1, 1, 2, "C", {
     ability: "torrent",
   }),
 
-  P("croconaw", "엘리게이", "물", 3, 4, 5, "R", {
+  P("croconaw", "엘리게이", "물", 3, 4, 4, "R", {
     stage: 1,
     evolvesFrom: "totodile",
     ability: "torrent",
@@ -1393,18 +1393,18 @@ export const CARDS = [
     ability: "webtrap",
   }),
 
-  P("chinchou", "초라기", "전기", 1, 1, 3, "C", {
+  P("chinchou", "초라기", "전기", 1, 1, 2, "C", {
     ability: "voltabsorb",
   }),
 
-  P("lanturn", "랜턴", "전기", 4, 3, 8, "R", {
+  P("lanturn", "랜턴", "전기", 4, 3, 7, "R", {
     stage: 1,
     evolvesFrom: "chinchou",
     ability: "voltabsorb",
     secondaryAbility: "waterabsorb",
   }),
 
-  P("sudowoodo", "꼬지모", "바위", 4, 4, 7, "R", {
+  P("sudowoodo", "꼬지모", "바위", 4, 3, 7, "R", {
     stage: 1,
     evolvesFrom: "bonsly",
     ability: "sturdy",
@@ -1419,7 +1419,7 @@ export const CARDS = [
     ability: "counter",
   }),
 
-  P("pineco", "피콘", "벌레", 1, 0, 3, "C", {
+  P("pineco", "피콘", "벌레", 1, 0, 2, "C", {
     ability: "sturdy",
   }),
 
@@ -1464,7 +1464,7 @@ export const CARDS = [
     ability: "raindish",
   }),
 
-  P("ludicolo", "로파파", "물", 5, 5, 7, "E", {
+  P("ludicolo", "로파파", "물", 5, 6, 8, "E", {
     stage: 2,
     evolvesFrom: "lombre",
     ability: "raindish",
@@ -1499,7 +1499,7 @@ export const CARDS = [
     ability: "intimidate",
   }),
 
-  P("aron", "가보리", "강철", 1, 1, 3, "C", {
+  P("aron", "가보리", "강철", 1, 1, 2, "C", {
     ability: "sturdy",
   }),
 
@@ -1529,7 +1529,7 @@ export const CARDS = [
     ability: "waterveil",
   }),
 
-  P("wailord", "고래왕", "물", 6, 4, 12, "E", {
+  P("wailord", "고래왕", "물", 6, 5, 12, "E", {
     stage: 1,
     evolvesFrom: "wailmer",
     ability: "waterveil",
@@ -1545,7 +1545,7 @@ export const CARDS = [
     ability: "sandveil",
   }),
 
-  P("feebas", "빈티나", "물", 1, 0, 2, "C", {}),
+  P("feebas", "빈티나", "물", 1, 1, 2, "C", {}),
 
   P("milotic", "밀로틱", "물", 5, 4, 9, "E", {
     stage: 1,
@@ -1553,7 +1553,7 @@ export const CARDS = [
     ability: "marvelscale",
   }),
 
-  P("castform", "캐스퐁", "노말", 4, 4, 5, "R", {
+  P("castform", "캐스퐁", "노말", 4, 5, 5, "R", {
     ability: "forecast",
   }),
 
