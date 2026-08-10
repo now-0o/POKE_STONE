@@ -159,10 +159,27 @@ function AutoScrollCardText({ text }) {
 
     if (!box || !inner) return;
 
+    const card = box.closest(".hand-card");
+
+    const isInspect = !!box.closest(".inspect-overlay");
+
     let animation = null;
     let cancelled = false;
     let frame1 = null;
     let frame2 = null;
+
+    const play = () => {
+      if (!animation) return;
+
+      animation.play();
+    };
+
+    const stopAndReset = () => {
+      if (!animation) return;
+
+      animation.pause();
+      animation.currentTime = 0;
+    };
 
     const start = () => {
       if (cancelled) return;
@@ -175,11 +192,6 @@ function AutoScrollCardText({ text }) {
         return;
       }
 
-      /*
-       * 초당 약 8px 이동.
-       * 뮤처럼 28px 넘치면
-       * 한쪽 이동에 약 3.5초.
-       */
       const SPEED = 8;
 
       const moveTime = Math.max(1800, (distance / SPEED) * 1000);
@@ -226,7 +238,42 @@ function AutoScrollCardText({ text }) {
           easing: "linear",
         },
       );
+
+      if (isInspect) {
+        // 꾹 눌러 크게 보기
+        // → 자동으로 계속 재생
+        animation.play();
+      } else {
+        // 일반 카드
+        // → 기본은 정지
+        animation.pause();
+        animation.currentTime = 0;
+
+        // 이미 커서가 카드 위에 있으면 바로 재생
+        if (card?.matches(":hover")) {
+          animation.play();
+        }
+      }
     };
+
+    const onMouseEnter = () => {
+      if (isInspect) return;
+
+      play();
+    };
+
+    const onMouseLeave = () => {
+      if (isInspect) return;
+
+      stopAndReset();
+    };
+
+    // 일반 카드만 hover 이벤트 등록
+    if (card && !isInspect) {
+      card.addEventListener("mouseenter", onMouseEnter);
+
+      card.addEventListener("mouseleave", onMouseLeave);
+    }
 
     const boot = () => {
       frame1 = requestAnimationFrame(() => {
@@ -234,7 +281,6 @@ function AutoScrollCardText({ text }) {
       });
     };
 
-    // 폰트 로딩이 끝난 뒤 실제 글 높이로 시작
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => {
         if (!cancelled) {
@@ -254,6 +300,12 @@ function AutoScrollCardText({ text }) {
 
       if (frame2 !== null) {
         cancelAnimationFrame(frame2);
+      }
+
+      if (card && !isInspect) {
+        card.removeEventListener("mouseenter", onMouseEnter);
+
+        card.removeEventListener("mouseleave", onMouseLeave);
       }
 
       animation?.cancel();
