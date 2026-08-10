@@ -151,13 +151,10 @@ export function useInspect(delay = 250) {
 
 function AutoScrollCardText({ text }) {
   const boxRef = useRef(null);
-  const innerRef = useRef(null);
 
   useEffect(() => {
     const box = boxRef.current;
-    const inner = innerRef.current;
-
-    if (!box || !inner) return;
+    if (!box) return;
 
     let animationId = null;
     let timeoutId = null;
@@ -186,16 +183,7 @@ function AutoScrollCardText({ text }) {
 
       const maxScroll = box.scrollHeight - box.clientHeight;
 
-      console.log("[CARD SCROLL]", text, {
-        scrollHeight: box.scrollHeight,
-        clientHeight: box.clientHeight,
-        maxScroll,
-      });
-
-      if (maxScroll <= 1) {
-        box.scrollTop = 0;
-        return;
-      }
+      if (maxScroll <= 1) return;
 
       if (lastTime === null) {
         lastTime = time;
@@ -207,9 +195,9 @@ function AutoScrollCardText({ text }) {
 
       box.scrollTop += direction * SPEED * delta;
 
+      // 맨 아래
       if (direction === 1 && box.scrollTop >= maxScroll - 0.5) {
         box.scrollTop = maxScroll;
-
         direction = -1;
         lastTime = null;
 
@@ -220,9 +208,9 @@ function AutoScrollCardText({ text }) {
         return;
       }
 
+      // 맨 위
       if (direction === -1 && box.scrollTop <= 0.5) {
         box.scrollTop = 0;
-
         direction = 1;
         lastTime = null;
 
@@ -247,48 +235,36 @@ function AutoScrollCardText({ text }) {
 
       const maxScroll = box.scrollHeight - box.clientHeight;
 
-      if (maxScroll <= 1) {
-        return;
-      }
+      if (maxScroll <= 1) return;
 
       timeoutId = setTimeout(() => {
         animationId = requestAnimationFrame(animate);
       }, TOP_WAIT);
     };
 
-    // 최초 렌더 후 측정
-    const startFrame = requestAnimationFrame(start);
+    // 렌더 완료 후 딱 한 번 시작
+    const frameId = requestAnimationFrame(() => {
+      requestAnimationFrame(start);
+    });
 
-    // 박스 크기 + 실제 글 높이 둘 다 감시
-    const observer = new ResizeObserver(start);
-
-    observer.observe(box);
-    observer.observe(inner);
-
-    // 커스텀 폰트 로딩 완료 후 다시 측정
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(() => {
-        if (!disposed) {
-          start();
-        }
-      });
-    }
+    // 폰트 로딩 때문에 높이가 바뀔 경우 한 번만 재시작
+    document.fonts?.ready.then(() => {
+      if (!disposed) {
+        start();
+      }
+    });
 
     return () => {
       disposed = true;
 
-      cancelAnimationFrame(startFrame);
-
-      observer.disconnect();
+      cancelAnimationFrame(frameId);
       stop();
     };
   }, [text]);
 
   return (
     <div ref={boxRef} className="card-text">
-      <div ref={innerRef} className="card-text-inner">
-        {text}
-      </div>
+      <div className="card-text-inner">{text}</div>
     </div>
   );
 }
