@@ -459,6 +459,7 @@ function makePlayer(deckIds, name, hp = 40) {
     hand: [],
     field: [],
     lastDeadPokemon: null,
+    lastSpellCardId: null,
     fatigue: 0,
     megaUsed: false,
     discardUsedThisTurn: false,
@@ -528,6 +529,12 @@ export function applyStatus(game, unit, statusType, sourceUnit = null) {
   if (hasAbility(unit, "oblivious") && statusType === "sleep") {
     log(game, `${unit.name}의 둔감! 잠듦을 막았다!`);
 
+    return false;
+  }
+
+  // 방음
+  if (hasAbility(unit, "soundproof") && statusType === "sleep") {
+    log(game, `${unit.name}의 방음! 잠듦을 막았다!`);
     return false;
   }
 
@@ -864,6 +871,11 @@ export function effectiveAtk(unit, game) {
     atk += 2;
   }
 
+  // 예리함
+  if (hasAbility(unit, "sharpness")) {
+    atk += 1;
+  }
+
   // 페어리스킨
   if (hasAbility(unit, "pixilate")) {
     atk += 1;
@@ -877,6 +889,14 @@ export function effectiveAtk(unit, game) {
   // 천하장사
   if (hasAbility(unit, "hugepower")) {
     atk *= 2;
+  }
+
+  // 독폭주
+  if (
+    hasAbility(unit, "toxicboost") &&
+    unit.status === "poison"
+  ) {
+    atk += 2;
   }
 
   // 화상
@@ -905,6 +925,20 @@ export function effectiveAtk(unit, game) {
   }
 
   const owner = game.players[unit.side];
+
+  // 플러스마이너스
+  if (
+    owner &&
+    hasAbility(unit, "plusminus") &&
+    owner.field.some(
+      (ally) =>
+        ally.uid !== unit.uid &&
+        ally.hp > 0 &&
+        hasAbility(ally, "plusminus"),
+    )
+  ) {
+    atk += 2;
+  }
 
   if (owner) {
     owner.field.forEach((u) => {
@@ -1097,6 +1131,32 @@ function applyDamage(
     return finishImpact(0);
   }
 
+  // 전기엔진
+  if (
+    !typedIgnore &&
+    sourceType === "전기" &&
+    hasAbility(unit, "motordrive")
+  ) {
+    if ((unit._motorDriveStacks || 0) < 3) {
+      unit._motorDriveStacks =
+        (unit._motorDriveStacks || 0) + 1;
+
+      unit.atk += 1;
+
+      log(
+        game,
+        `${unit.name}의 전기엔진! 전기 피해를 무효화하고 공격력 +1!`,
+      );
+    } else {
+      log(
+        game,
+        `${unit.name}의 전기엔진! 전기 피해를 무효화했다!`,
+      );
+    }
+
+    return finishImpact(0);
+  }
+
   // 축전
   if (!typedIgnore && sourceType === "전기" && hasAbility(unit, "voltabsorb")) {
     const heal = Math.min(1, unit.maxHp - unit.hp);
@@ -1104,6 +1164,32 @@ function applyDamage(
     unit.hp += heal;
 
     log(game, `${unit.name}의 축전! 전기를 흡수해 체력을 회복했다!`);
+
+    return finishImpact(0);
+  }
+
+  // 마중물
+  if (
+    !typedIgnore &&
+    sourceType === "물" &&
+    hasAbility(unit, "stormdrain")
+  ) {
+    if ((unit._stormDrainStacks || 0) < 3) {
+      unit._stormDrainStacks =
+        (unit._stormDrainStacks || 0) + 1;
+
+      unit.atk += 1;
+
+      log(
+        game,
+        `${unit.name}의 마중물! 물 피해를 무효화하고 공격력 +1!`,
+      );
+    } else {
+      log(
+        game,
+        `${unit.name}의 마중물! 물 피해를 무효화했다!`,
+      );
+    }
 
     return finishImpact(0);
   }
@@ -1460,6 +1546,166 @@ function runBattlecry(game, side, unit) {
         };
 
         log(game, `${unit.name}의 틀깨기! 상대 도발 포켓몬을 선택하세요.`);
+      }
+
+      break;
+    }
+    // ============================================================
+    // 2세대 신규 특성
+    // ============================================================
+
+    // 안농 - 잠재파워
+    case "hiddenpower": {
+      const types = Object.keys(TYPE_CHART);
+
+      if (types.length > 0) {
+        const hiddenType =
+          types[Math.floor(Math.random() * types.length)];
+
+        unit.type = hiddenType;
+
+        const targets =
+          foe.field.filter((u) => u.hp > 0);
+
+        if (targets.length > 0) {
+          const target =
+            targets[Math.floor(Math.random() * targets.length)];
+
+          const dealt =
+            applyTypedAbilityDamage(
+              game,
+              target,
+              2,
+              hiddenType,
+            );
+
+          log(
+            game,
+            `${unit.name}의 잠재파워! ${hiddenType} 타입으로 변하고 ${target.name}에게 ${hiddenType} 피해 ${dealt}!`,
+          );
+
+          cleanupDeaths(game);
+        } else {
+          log(
+            game,
+            `${unit.name}의 잠재파워! ${hiddenType} 타입으로 변했다!`,
+          );
+        }
+      }
+
+      break;
+    }
+
+    // 딜리버드 - 프레젠트
+    case "present": {
+      if (Math.random() < 0.5) {
+        const targets =
+          foe.field.filter((u) => u.hp > 0);
+
+        if (targets.length > 0) {
+          const target =
+            targets[Math.floor(Math.random() * targets.length)];
+
+          const dealt =
+            applyTypedAbilityDamage(
+              game,
+              target,
+              3,
+              "얼음",
+            );
+
+          log(
+            game,
+            `${unit.name}의 프레젠트! ${target.name}에게 얼음 피해 ${dealt}!`,
+          );
+
+          cleanupDeaths(game);
+        } else {
+          log(
+            game,
+            `${unit.name}의 프레젠트! 하지만 공격할 상대가 없었다!`,
+          );
+        }
+      } else {
+        const wounded =
+          me.field.filter(
+            (u) =>
+              u.hp > 0 &&
+              u.hp < u.maxHp,
+          );
+
+        if (wounded.length > 0) {
+          const target =
+            wounded[Math.floor(Math.random() * wounded.length)];
+
+          const before =
+            target.hp;
+
+          target.hp =
+            Math.min(
+              target.maxHp,
+              target.hp + 3,
+            );
+
+          const healed =
+            target.hp - before;
+
+          recordImpact(game, {
+            type: "heal",
+            side,
+            targetUid: target.uid,
+            amount: healed,
+          });
+
+          log(
+            game,
+            `${unit.name}의 프레젠트! ${target.name}의 체력이 ${healed} 회복됐다!`,
+          );
+        } else {
+          log(
+            game,
+            `${unit.name}의 프레젠트! 하지만 회복할 아군이 없었다!`,
+          );
+        }
+      }
+
+      break;
+    }
+
+    // 루브도 - 스케치
+    case "sketch": {
+      const spellId =
+        me.lastSpellCardId;
+
+      const spell =
+        spellId
+          ? CARD_MAP[spellId]
+          : null;
+
+      if (
+        spell &&
+        spell.kind === "spell" &&
+        me.hand.length < MAX_HAND
+      ) {
+        me.hand.push({
+          uid: nextUid(),
+          cardId: spellId,
+        });
+
+        log(
+          game,
+          `${unit.name}의 스케치! ${spell.name}을(를) 베껴 손으로 가져왔다!`,
+        );
+      } else if (!spell) {
+        log(
+          game,
+          `${unit.name}의 스케치! 아직 베낄 기술이 없다!`,
+        );
+      } else {
+        log(
+          game,
+          `${unit.name}의 스케치! 하지만 손패가 가득 찼다!`,
+        );
       }
 
       break;
@@ -1964,6 +2210,219 @@ function runBattlecry(game, side, unit) {
         );
       }
       break;
+
+          // ============================================================
+    // 4세대 전설 / 환상 전용 특성
+    // ============================================================
+
+    // 디아루가 - 시간의포효
+    case "roaroftime": {
+      foe.field.forEach((target) => {
+        applyTypedAbilityDamage(
+          game,
+          target,
+          2,
+          "드래곤",
+        );
+      });
+
+      log(
+        game,
+        `${unit.name}의 시간의포효! 상대 전체에게 드래곤 피해 2!`,
+      );
+
+      cleanupDeaths(game);
+      break;
+    }
+
+    // 펄기아 - 공간절단
+    case "spacialrend": {
+      const targets =
+        foe.field.filter((target) => target.hp > 0);
+
+      if (targets.length > 0) {
+        const target =
+          [...targets].sort(
+            (a, b) => b.hp - a.hp,
+          )[0];
+
+        const dealt =
+          applyTypedAbilityDamage(
+            game,
+            target,
+            5,
+            "드래곤",
+          );
+
+        log(
+          game,
+          `${unit.name}의 공간절단! ${target.name}에게 드래곤 피해 ${dealt}!`,
+        );
+
+        cleanupDeaths(game);
+      }
+
+      break;
+    }
+
+    // 기라티나 - 섀도다이브
+    case "shadowforce": {
+      const targets =
+        foe.field.filter((target) => target.hp > 0);
+
+      if (targets.length > 0) {
+        const target =
+          targets[
+            Math.floor(
+              Math.random() *
+                targets.length,
+            )
+          ];
+
+        const dealt =
+          applyTypedAbilityDamage(
+            game,
+            target,
+            4,
+            "고스트",
+          );
+
+        if (target.hp > 0) {
+          const lowered =
+            lowerAttack(
+              game,
+              target,
+              2,
+              "섀도다이브",
+            );
+
+          log(
+            game,
+            `${unit.name}의 섀도다이브! ${target.name}에게 고스트 피해 ${dealt}, 공격력 -${lowered}!`,
+          );
+        } else {
+          log(
+            game,
+            `${unit.name}의 섀도다이브! ${target.name}에게 고스트 피해 ${dealt}!`,
+          );
+        }
+
+        cleanupDeaths(game);
+      }
+
+      break;
+    }
+
+    // 다크라이 - 다크홀
+    case "darkvoid": {
+      foe.field.forEach((target) => {
+        applyTypedAbilityDamage(
+          game,
+          target,
+          1,
+          "악",
+        );
+      });
+
+      cleanupDeaths(game);
+
+      const alive =
+        foe.field.filter((target) => target.hp > 0);
+
+      if (alive.length > 0) {
+        const target =
+          alive[
+            Math.floor(
+              Math.random() *
+                alive.length,
+            )
+          ];
+
+        const slept =
+          applyStatus(
+            game,
+            target,
+            "sleep",
+            unit,
+          );
+
+        if (slept) {
+          log(
+            game,
+            `${unit.name}의 다크홀! 상대 전체에게 악 피해 1, ${target.name}이(가) 잠들었다!`,
+          );
+        } else {
+          log(
+            game,
+            `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`,
+          );
+        }
+      } else {
+        log(
+          game,
+          `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`,
+        );
+      }
+
+      break;
+    }
+
+    // 아르세우스 - 멀티타입
+    case "multitype": {
+      const availableTypes =
+        Object.keys(TYPE_CHART);
+
+      let bestType = "노말";
+
+      if (
+        foe.field.length > 0 &&
+        availableTypes.length > 0
+      ) {
+        let bestScore = -Infinity;
+
+        availableTypes.forEach(
+          (attackType) => {
+            const score =
+              foe.field.reduce(
+                (sum, target) =>
+                  sum +
+                  typeMult(
+                    attackType,
+                    target.type,
+                  ),
+                0,
+              );
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestType = attackType;
+            }
+          },
+        );
+      }
+
+      unit.type = bestType;
+
+      unit.atk += 1;
+      unit.baseAtk += 1;
+      unit.hp += 1;
+      unit.maxHp += 1;
+
+      recordImpact(game, {
+        type: "buff",
+        side,
+        targetUid: unit.uid,
+        amount: 1,
+      });
+
+      log(
+        game,
+        `${unit.name}의 멀티타입! ${bestType} 타입으로 변하고 +1/+1!`,
+      );
+
+      break;
+    }
+
     case "surge_overdrive": {
       const targets = foe.field.filter((u) => u.hp > 0);
 
@@ -2290,6 +2749,12 @@ export function canPlayCard(game, side, handIdx) {
 // 카드 사용 이벤트 기록 (UI 연출용)
 function markPlay(game, side, card, extra = null) {
   markProductiveAction(game, side);
+
+  // 루브도 - 스케치용
+  // 성공적으로 사용한 가장 최근 기술 카드 기록
+  if (card.kind === "spell") {
+    game.players[side].lastSpellCardId = card.id;
+  }
 
   game.animSeq = (game.animSeq || 0) + 1;
 

@@ -37,6 +37,22 @@ export const LEGENDARY_POKEMON_IDS = new Set([
   "rayquaza",
   "jirachi",
   "deoxys",
+
+  // 4세대
+  "uxie",
+  "mesprit",
+  "azelf",
+  "dialga",
+  "palkia",
+  "heatran",
+  "regigigas",
+  "giratina",
+  "cresselia",
+  "phione",
+  "manaphy",
+  "darkrai",
+  "shaymin",
+  "arceus",
 ]);
 
 export function isLegendaryPokemon(card) {
@@ -414,6 +430,37 @@ export const ABILITY_TEXT = {
   lance_extremespeed:
     "신속: 소환된 턴에도 즉시 공격할 수 있다. 소환된 턴 첫 공격은 상대의 전투 반격 피해를 받지 않는다.",
   lance_outrage: "역린: 공격할 때 공격력 +2. 공격 후 자신이 피해 1을 받는다.",
+
+  hiddenpower:
+  "잠재파워: 나올 때 무작위 타입으로 변하고 무작위 상대 포켓몬에게 그 타입 피해 2",
+  present:
+    "프레젠트: 나올 때 50% 확률로 무작위 상대에게 얼음 피해 3, 아니면 무작위 아군 체력 3 회복",
+  sketch:
+    "스케치: 나올 때 내가 마지막으로 사용한 기술 카드 1장을 복사해 손으로 가져온다",
+
+  plusminus:
+  "플러스마이너스: 내 필드에 이 특성을 가진 다른 아군이 있으면 공격력 +2",
+  soundproof:
+    "방음: 잠듦 상태가 되지 않는다",
+  toxicboost:
+    "독폭주: 독 상태일 때 공격력 +2",
+
+  stormdrain:
+    "마중물: 물 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
+  motordrive:
+    "전기엔진: 전기 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
+  sharpness:
+    "예리함: 공격 피해 +1",
+  roaroftime:
+    "시간의포효: 나올 때 상대 포켓몬 전체에게 드래곤 타입 피해 2",
+  spacialrend:
+    "공간절단: 나올 때 체력이 가장 높은 상대 포켓몬에게 드래곤 타입 피해 5",
+  shadowforce:
+    "섀도다이브: 나올 때 무작위 상대 포켓몬에게 고스트 타입 피해 4, 살아남으면 공격력 -2",
+  darkvoid:
+    "다크홀: 나올 때 상대 포켓몬 전체에게 악 타입 피해 1을 주고 무작위 상대 하나를 잠들게 한다",
+  multitype:
+    "멀티타입: 나올 때 상대 필드에 가장 유리한 타입으로 변하고 +1/+1",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -528,7 +575,11 @@ export const CARDS = [
     evolvesFrom: "ponyta",
     ability: "flamebody",
   }),
-  P("magmar", "마그마", "불꽃", 4, 4, 5, "R", { ability: "flamebody" }),
+  P("magmar", "마그마", "불꽃", 4, 4, 6, "R", {
+    stage: 1,
+    evolvesFrom: "magby",
+    ability: "flamebody",
+  }),
   P("moltres", "파이어", "불꽃", 8, 9, 8, "L", { ability: "skydive" }),
   P("entei", "앤테이", "불꽃", 7, 7, 8, "L", { ability: "burningfall" }),
   P("hooh", "칠색조", "불꽃", 8, 8, 9, "L", { ability: "sacredflame" }),
@@ -546,7 +597,11 @@ export const CARDS = [
     ability: "aura_grass",
   }),
   P("chikorita", "치코리타", "풀", 1, 1, 2, "C", { ability: "overgrow" }),
-  P("exeggutor", "나시", "풀", 4, 4, 5, "R", { ability: "chlorophyll" }),
+  P("exeggutor", "나시", "풀", 4, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "exeggcute",
+    ability: "chlorophyll",
+  }),
   P("bellsprout", "모다피", "풀", 1, 1, 1, "C", { ability: "chlorophyll" }),
   P("weepinbell", "우츠동", "풀", 2, 2, 4, "C", {
     stage: 1,
@@ -577,12 +632,20 @@ export const CARDS = [
     ability: "chlorophyll",
   }),
   P("tropius", "트로피우스", "풀", 4, 2, 7, "R", { ability: "taunt" }),
-  P("parasect", "파라섹트", "벌레", 3, 2, 5, "C", { ability: "taunt" }),
+  P("parasect", "파라섹트", "벌레", 3, 3, 5, "R", {
+    stage: 1,
+    evolvesFrom: "paras",
+    ability: "effectspore",
+  }),
 
   // ============ 전기 (12) ============
-  P("pikachu", "피카츄", "전기", 1, 1, 1, "C", { ability: "static" }),
-  P("raichu", "라이츄", "전기", 3, 6, 3, "R", {
+  P("pikachu", "피카츄", "전기", 2, 2, 2, "C", {
     stage: 1,
+    evolvesFrom: "pichu",
+    ability: "static",
+  }),
+  P("raichu", "라이츄", "전기", 4, 6, 5, "R", {
+    stage: 2,
     evolvesFrom: "pikachu",
     ability: "static",
   }),
@@ -598,7 +661,9 @@ export const CARDS = [
     evolvesFrom: "elekid",
     ability: "static",
   }),
-  P("voltorb", "붐볼", "전기", 2, 2, 3, "C", { ability: "explode" }),
+  P("voltorb", "찌리리공", "전기", 2, 2, 3, "C", {
+    ability: "explode",
+  }),
   P("mareep", "메리프", "전기", 1, 1, 1, "C", { ability: "static" }),
   P("flaaffy", "보송송", "전기", 2, 2, 4, "C", {
     stage: 1,
@@ -620,7 +685,11 @@ export const CARDS = [
     evolvesFrom: "diglett",
     ability: "skilllink",
   }),
-  P("sandslash", "고지", "땅", 3, 3, 5, "C", {}),
+  P("sandslash", "고지", "땅", 3, 3, 5, "R", {
+    stage: 1,
+    evolvesFrom: "sandshrew",
+    ability: "sandveil",
+  }),
   P("rhyhorn", "뿔카노", "땅", 1, 1, 1, "C", {}),
   P("rhydon", "코뿌리", "땅", 4, 2, 8, "R", {
     stage: 1,
@@ -684,8 +753,16 @@ export const CARDS = [
     flavor:
       "샤미드, 쥬피썬더, 부스터, 블래키, 에브이, 님피아, 리피아, 글레이시아로 진화할 수 있다.",
   }),
-  P("snorlax", "잠만보", "노말", 6, 3, 10, "E", { ability: "taunt" }),
-  P("chansey", "럭키", "노말", 3, 1, 6, "R", { ability: "healer" }),
+  P("snorlax", "잠만보", "노말", 6, 3, 10, "E", {
+    stage: 1,
+    evolvesFrom: "munchlax",
+    ability: "taunt",
+  }),
+  P("chansey", "럭키", "노말", 3, 1, 6, "R", {
+    stage: 1,
+    evolvesFrom: "happiny",
+    ability: "healer",
+  }),
   P("kangaskhan", "캥카", "노말", 4, 4, 6, "R", {}),
   P("slakoth", "게을로", "노말", 1, 2, 2, "C", { ability: "truant" }),
   P("vigoroth", "발바로", "노말", 3, 5, 4, "R", {
@@ -705,7 +782,7 @@ export const CARDS = [
   P("caterpie", "캐터피", "벌레", 1, 1, 2, "C", {}),
   P("butterfree", "버터플", "벌레", 3, 4, 5, "R", {
     stage: 1,
-    evolvesFrom: "caterpie",
+    evolvesFrom: "metapod",
     ability: "sleeppowder",
   }),
   P("scyther", "스라크", "벌레", 4, 5, 4, "R", { ability: "rush" }),
@@ -737,7 +814,11 @@ export const CARDS = [
     ability: "thickfat",
   }),
   P("articuno", "프리져", "얼음", 8, 7, 10, "L", { ability: "frostedgale" }),
-  P("jynx", "루주라", "얼음", 4, 4, 5, "R", { ability: "lovelykiss" }),
+  P("jynx", "루주라", "얼음", 4, 4, 6, "R", {
+    stage: 1,
+    evolvesFrom: "smoochum",
+    ability: "lovelykiss",
+  }),
   P("shellder", "셀러", "얼음", 1, 1, 1, "C", { ability: "icebody" }),
   P("cloyster", "파르셀", "얼음", 4, 5, 6, "R", {
     stage: 1,
@@ -770,8 +851,17 @@ export const CARDS = [
     evolvesFrom: "mankey",
     ability: "moldbreaker",
   }),
-  P("hitmonlee", "시라소몬", "격투", 4, 6, 3, "R", { ability: "rush" }),
-  P("hitmonchan", "홍수몬", "격투", 4, 4, 5, "R", { ability: "skilllink" }),
+  P("hitmonlee", "시라소몬", "격투", 4, 6, 4, "R", {
+    stage: 1,
+    evolvesFrom: "tyrogue",
+    ability: "rush",
+  }),
+
+  P("hitmonchan", "홍수몬", "격투", 4, 4, 6, "R", {
+    stage: 1,
+    evolvesFrom: "tyrogue",
+    ability: "skilllink",
+  }),
   P("makuhita", "마크탕", "격투", 1, 1, 2, "C", { ability: "guts" }),
   P("hariyama", "하리뭉", "격투", 4, 4, 7, "R", {
     stage: 1,
@@ -797,7 +887,11 @@ export const CARDS = [
     evolvesFrom: "grimer",
     ability: "poisonbarb",
   }),
-  P("weezing", "또도가스", "독", 3, 3, 5, "R", { ability: "poisonbarb" }),
+  P("weezing", "또도가스", "독", 3, 3, 4, "R", {
+    stage: 1,
+    evolvesFrom: "koffing",
+    ability: "poisonbarb",
+  }),
   P("ekans", "아보", "독", 1, 2, 1, "C", {}),
   P("arbok", "아보크", "독", 3, 5, 4, "R", {
     stage: 1,
@@ -1024,21 +1118,34 @@ export const CARDS = [
   }),
 
   // ============ 페어리 (10) ============
-  P("clefairy", "삐삐", "페어리", 2, 2, 3, "C", {}),
-  P("clefable", "픽시", "페어리", 4, 4, 7, "R", {
+  P("clefairy", "삐삐", "페어리", 2, 2, 3, "C", {
     stage: 1,
+    evolvesFrom: "cleffa",
+  }),
+
+  P("clefable", "픽시", "페어리", 4, 4, 7, "R", {
+    stage: 2,
     evolvesFrom: "clefairy",
     ability: "moonlight",
   }),
-  P("marill", "마릴", "페어리", 1, 1, 1, "C", { ability: "thickfat" }),
-  P("azumarill", "마릴리", "페어리", 3, 4, 5, "R", {
+  P("marill", "마릴", "페어리", 1, 1, 1, "C", {
     stage: 1,
+    evolvesFrom: "azurill",
+    ability: "thickfat",
+  }),
+  P("azumarill", "마릴리", "페어리", 3, 4, 5, "R", {
+    stage: 2,
     evolvesFrom: "marill",
     ability: "thickfat",
   }),
-  P("jigglypuff", "푸린", "페어리", 2, 1, 3, "C", { ability: "sing" }),
-  P("wigglytuff", "푸크린", "페어리", 4, 4, 7, "R", {
+  P("jigglypuff", "푸린", "페어리", 2, 1, 3, "C", {
     stage: 1,
+    evolvesFrom: "igglybuff",
+    ability: "sing",
+  }),
+
+  P("wigglytuff", "푸크린", "페어리", 4, 4, 7, "R", {
+    stage: 2,
     evolvesFrom: "jigglypuff",
     ability: "sing",
   }),
@@ -1048,7 +1155,11 @@ export const CARDS = [
     evolvesFrom: "togepi",
     ability: "healer",
   }),
-  P("granbull", "그랑블루", "페어리", 4, 5, 4, "R", { ability: "intimidate" }),
+  P("granbull", "그랑블루", "페어리", 4, 5, 6, "R", {
+    stage: 1,
+    evolvesFrom: "snubbull",
+    ability: "intimidate",
+  }),
   P("sylveon", "님피아", "페어리", 3, 3, 6, "R", {
     stage: 1,
     evolvesFrom: "eevee",
@@ -1416,6 +1527,8 @@ export const CARDS = [
   }),
 
   P("wobbuffet", "마자용", "에스퍼", 4, 0, 10, "R", {
+    stage: 1,
+    evolvesFrom: "wynaut",
     ability: "counter",
   }),
 
@@ -1582,6 +1695,701 @@ export const CARDS = [
   P("deoxys", "테오키스", "에스퍼", 8, 8, 8, "L", {
     ability: "formchange",
     flavor: "소환할 때 4가지 폼 중 하나를 선택한다.",
+  }),
+
+  // ============================================================
+  // v7: 1세대 누락 포켓몬 보강
+  // ============================================================
+
+  // 캐터피 계열
+  P("metapod", "단데기", "벌레", 2, 0, 4, "C", {
+    stage: 1,
+    evolvesFrom: "caterpie",
+    ability: "sturdy",
+  }),
+
+  // 모래두지 계열
+  P("sandshrew", "모래두지", "땅", 1, 2, 1, "C", {
+    ability: "sandveil",
+  }),
+
+  // 파라스 계열
+  P("paras", "파라스", "벌레", 1, 1, 2, "C", {
+    ability: "effectspore",
+  }),
+
+  // 콘팡 계열
+  P("venonat", "콘팡", "벌레", 1, 1, 2, "C", {
+    ability: "keeneye",
+  }),
+
+  P("venomoth", "도나리", "벌레", 3, 4, 4, "R", {
+    stage: 1,
+    evolvesFrom: "venonat",
+    ability: "sleeppowder",
+  }),
+
+  // 찌리리공 계열
+  P("electrode", "붐볼", "전기", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "voltorb",
+    ability: "explode",
+  }),
+
+  // 아라리 계열
+  P("exeggcute", "아라리", "풀", 1, 1, 2, "C", {
+    ability: "chlorophyll",
+  }),
+
+  // 내루미
+  P("lickitung", "내루미", "노말", 2, 2, 3, "C", {
+    ability: "oblivious",
+  }),
+
+  // 또가스 계열
+  P("koffing", "또가스", "독", 1, 1, 2, "C", {
+    ability: "levitate",
+  }),
+
+  // 콘치 계열
+  P("goldeen", "콘치", "물", 1, 2, 1, "C", {
+    ability: "swiftswim",
+  }),
+
+  P("seaking", "왕콘치", "물", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "goldeen",
+    ability: "swiftswim",
+  }),
+
+  // 마임맨
+  P("mrmime", "마임맨", "에스퍼", 3, 5, 4, "R", {
+    stage: 1,
+    evolvesFrom: "mimejr",
+    ability: "technician",
+  }),
+
+  // 메타몽
+  P("ditto", "메타몽", "노말", 3, 1, 1, "R", {
+    ability: "transform",
+  }),
+
+  // 투구 계열
+  P("kabuto", "투구", "바위", 1, 2, 1, "C", {
+    ability: "swiftswim",
+  }),
+
+  P("kabutops", "투구푸스", "바위", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "kabuto",
+    ability: "swiftswim",
+  }),
+
+  // ============================================================
+  // v7: 2세대 누락 포켓몬 보강
+  // ============================================================
+
+  // 피츄 → 피카츄 → 라이츄
+  P("pichu", "피츄", "전기", 1, 1, 1, "C", {
+    ability: "static",
+  }),
+
+  // 삐 → 삐삐 → 픽시
+  P("cleffa", "삐", "페어리", 1, 1, 2, "C", {}),
+
+  // 푸푸린 → 푸린 → 푸크린
+  P("igglybuff", "푸푸린", "페어리", 1, 1, 2, "C", {}),
+
+  // 뚜벅쵸 → 냄새꼬 → 아르코
+  P("bellossom", "아르코", "풀", 5, 6, 8, "E", {
+    stage: 2,
+    evolvesFrom: "gloom",
+    ability: "aromatherapy",
+  }),
+
+  // 왕자리 → 메가자리(4세대)
+  P("yanma", "왕자리", "벌레", 2, 3, 2, "C", {
+    ability: "speedboost",
+  }),
+
+  // 니로우 → 돈크로우(4세대)
+  P("murkrow", "니로우", "악", 2, 3, 2, "C", {
+    ability: "bigchance",
+  }),
+
+  // 야돈 분기진화
+  P("slowking", "야도킹", "물", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "slowpoke",
+    ability: "regenerator",
+  }),
+
+  // 안농
+  P("unown", "안농", "에스퍼", 2, 2, 3, "C", {
+    ability: "hiddenpower",
+  }),
+
+  // 키링키
+  P("girafarig", "키링키", "노말", 3, 4, 5, "R", {
+    ability: "oblivious",
+  }),
+
+  // 블루 → 그랑블루
+  P("snubbull", "블루", "페어리", 2, 2, 3, "C", {
+    ability: "intimidate",
+  }),
+
+  // 침바루
+  P("qwilfish", "침바루", "물", 3, 4, 4, "R", {
+    ability: "poisonpoint",
+  }),
+
+  // 단단지
+  P("shuckle", "단단지", "벌레", 4, 1, 9, "R", {
+    ability: "sturdy",
+  }),
+
+  // 마그마그 → 마그카르고
+  P("slugma", "마그마그", "불꽃", 1, 1, 2, "C", {
+    ability: "flamebody",
+  }),
+
+  P("magcargo", "마그카르고", "불꽃", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "slugma",
+    ability: "flamebody",
+  }),
+
+  // 코산호
+  P("corsola", "코산호", "물", 3, 2, 6, "R", {
+    ability: "regenerator",
+  }),
+
+  // 총어 → 대포무노
+  P("remoraid", "총어", "물", 1, 2, 1, "C", {}),
+
+  P("octillery", "대포무노", "물", 4, 6, 6, "R", {
+    stage: 1,
+    evolvesFrom: "remoraid",
+  }),
+
+  // 딜리버드
+  P("delibird", "딜리버드", "얼음", 2, 3, 2, "C", {
+    ability: "present",
+  }),
+
+  // 노라키
+  P("stantler", "노라키", "노말", 3, 4, 4, "R", {
+    ability: "intimidate",
+  }),
+
+  // 루브도
+  P("smeargle", "루브도", "노말", 2, 2, 3, "C", {
+    ability: "sketch",
+  }),
+
+  // 배루키 → 시라소몬 / 홍수몬 / 카포에라
+  P("tyrogue", "배루키", "격투", 1, 1, 2, "C", {
+    ability: "guts",
+  }),
+
+  P("hitmontop", "카포에라", "격투", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "tyrogue",
+    ability: "intimidate",
+  }),
+
+  // 뽀뽀라 → 루주라
+  P("smoochum", "뽀뽀라", "얼음", 1, 1, 2, "C", {
+    ability: "oblivious",
+  }),
+
+  // 마그비 → 마그마 → 마그마번(4세대)
+  P("magby", "마그비", "불꽃", 1, 2, 1, "C", {
+    ability: "flamebody",
+  }),
+
+  // 럭키 → 해피너스
+  // 4세대 핑복 추가할 때 럭키/해피너스 stage를 한 단계씩 올릴 예정
+  P("blissey", "해피너스", "노말", 5, 2, 12, "E", {
+    stage: 2,
+    evolvesFrom: "chansey",
+    ability: "healer",
+  }),
+
+  // ============================================================
+  // v7: 3세대 누락 포켓몬 보강
+  // ============================================================
+
+  // 지그제구리 → 직구리
+  P("zigzagoon", "지그제구리", "노말", 1, 1, 2, "C", {
+    ability: "pickup",
+  }),
+
+  P("linoone", "직구리", "노말", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "zigzagoon",
+    ability: "pickup",
+  }),
+
+  // 개무소 분기진화
+  P("wurmple", "개무소", "벌레", 1, 1, 2, "C", {}),
+
+  P("silcoon", "실쿤", "벌레", 2, 0, 5, "C", {
+    stage: 1,
+    evolvesFrom: "wurmple",
+    ability: "sturdy",
+  }),
+
+  P("beautifly", "뷰티플라이", "벌레", 5, 8, 7, "E", {
+    stage: 2,
+    evolvesFrom: "silcoon",
+    ability: "keeneye",
+  }),
+
+  P("cascoon", "카스쿤", "벌레", 2, 0, 5, "C", {
+    stage: 1,
+    evolvesFrom: "wurmple",
+    ability: "sturdy",
+  }),
+
+  P("dustox", "독케일", "벌레", 5, 5, 9, "E", {
+    stage: 2,
+    evolvesFrom: "cascoon",
+    ability: "poisonbarb",
+  }),
+
+  // 도토링 → 잎새코 → 다탱구
+  P("seedot", "도토링", "풀", 1, 1, 2, "C", {
+    ability: "chlorophyll",
+  }),
+
+  P("nuzleaf", "잎새코", "풀", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "seedot",
+    ability: "chlorophyll",
+  }),
+
+  P("shiftry", "다탱구", "풀", 5, 7, 8, "E", {
+    stage: 2,
+    evolvesFrom: "nuzleaf",
+    ability: "chlorophyll",
+  }),
+
+  // 비구술 → 비나방
+  P("surskit", "비구술", "벌레", 1, 1, 2, "C", {
+    ability: "swiftswim",
+  }),
+
+  P("masquerain", "비나방", "벌레", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "surskit",
+    ability: "intimidate",
+  }),
+
+  // 소곤룡 → 노공룡 → 폭음룡
+  P("whismur", "소곤룡", "노말", 1, 1, 2, "C", {
+    ability: "soundproof",
+  }),
+
+  P("loudred", "노공룡", "노말", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "whismur",
+    ability: "soundproof",
+  }),
+
+  P("exploud", "폭음룡", "노말", 5, 7, 8, "E", {
+    stage: 2,
+    evolvesFrom: "loudred",
+    ability: "soundproof",
+  }),
+
+  // 루리리 → 마릴 → 마릴리
+  P("azurill", "루리리", "페어리", 1, 1, 2, "C", {
+    ability: "thickfat",
+  }),
+
+  // 에나비 → 델케티
+  P("skitty", "에나비", "노말", 1, 2, 2, "C", {}),
+
+  P("delcatty", "델케티", "노말", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "skitty",
+  }),
+
+  // 플러시 / 마이농
+  P("plusle", "플러시", "전기", 3, 3, 4, "R", {
+    ability: "plusminus",
+  }),
+
+  P("minun", "마이농", "전기", 3, 3, 4, "R", {
+    ability: "plusminus",
+  }),
+
+  // 볼비트 / 네오비트
+  P("volbeat", "볼비트", "벌레", 3, 4, 4, "R", {
+    ability: "keeneye",
+  }),
+
+  P("illumise", "네오비트", "벌레", 3, 3, 5, "R", {
+    ability: "keeneye",
+  }),
+
+  // 꼬몽울 → 로젤리아 → 로즈레이드
+  P("roselia", "로젤리아", "풀", 3, 4, 4, "R", {
+    stage: 1,
+    evolvesFrom: "budew",
+    ability: "poisonpoint",
+  }),
+
+  // 꼴깍몬 → 꿀꺽몬
+  P("gulpin", "꼴깍몬", "독", 1, 1, 3, "C", {
+    ability: "poisonpoint",
+  }),
+
+  P("swalot", "꿀꺽몬", "독", 3, 3, 6, "R", {
+    stage: 1,
+    evolvesFrom: "gulpin",
+    ability: "poisonbarb",
+  }),
+
+  // 코터스
+  P("torkoal", "코터스", "불꽃", 4, 4, 6, "R", {
+    ability: "drought",
+  }),
+
+  // 피그점프 → 피그킹
+  P("spoink", "피그점프", "에스퍼", 1, 1, 2, "C", {
+    ability: "thickfat",
+  }),
+
+  P("grumpig", "피그킹", "에스퍼", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "spoink",
+    ability: "thickfat",
+  }),
+
+  // 얼루기
+  P("spinda", "얼루기", "노말", 2, 3, 3, "C", {
+    ability: "oblivious",
+  }),
+
+  // 쟝고
+  P("zangoose", "쟝고", "노말", 3, 4, 4, "R", {
+    ability: "toxicboost",
+  }),
+
+  // 세비퍼
+  P("seviper", "세비퍼", "독", 3, 4, 4, "R", {
+    ability: "poisonbarb",
+  }),
+
+  // 솔록
+  P("solrock", "솔록", "바위", 3, 4, 4, "R", {
+    ability: "levitate",
+  }),
+
+  // 가재군 → 가재장군
+  P("corphish", "가재군", "물", 1, 2, 1, "C", {
+    ability: "hypercutter",
+  }),
+
+  P("crawdaunt", "가재장군", "물", 3, 5, 4, "R", {
+    stage: 1,
+    evolvesFrom: "corphish",
+    ability: "hypercutter",
+  }),
+
+  // 오뚝군 → 점토도리
+  P("baltoy", "오뚝군", "땅", 1, 1, 2, "C", {
+    ability: "levitate",
+  }),
+
+  P("claydol", "점토도리", "땅", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "baltoy",
+    ability: "levitate",
+  }),
+
+  // 릴링 → 릴리요
+  P("lileep", "릴링", "바위", 1, 1, 3, "C", {}),
+
+  P("cradily", "릴리요", "바위", 4, 5, 7, "R", {
+    stage: 1,
+    evolvesFrom: "lileep",
+  }),
+
+  // 아노딥스 → 아말도
+  P("anorith", "아노딥스", "바위", 1, 2, 1, "C", {
+    ability: "shellarmor",
+  }),
+
+  P("armaldo", "아말도", "바위", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "anorith",
+    ability: "shellarmor",
+  }),
+
+  // 치렁
+  // 4세대 랑딸랑 추가 전까지는 기본 포켓몬으로 운용
+  P("chimecho", "치렁", "에스퍼", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "chingling",
+    ability: "levitate",
+  }),
+
+  // 마자 → 마자용
+  P("wynaut", "마자", "에스퍼", 1, 0, 3, "C", {
+    ability: "counter",
+  }),
+
+  // 대굴레오 → 씨레오 → 씨카이저
+  P("spheal", "대굴레오", "얼음", 1, 1, 2, "C", {
+    ability: "thickfat",
+  }),
+
+  P("sealeo", "씨레오", "얼음", 3, 3, 6, "R", {
+    stage: 1,
+    evolvesFrom: "spheal",
+    ability: "thickfat",
+  }),
+
+  P("walrein", "씨카이저", "얼음", 5, 6, 9, "E", {
+    stage: 2,
+    evolvesFrom: "sealeo",
+    ability: "thickfat",
+  }),
+
+  // 진주몽 분기진화
+  P("clamperl", "진주몽", "물", 1, 1, 3, "C", {
+    ability: "shellarmor",
+  }),
+
+  P("huntail", "헌테일", "물", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "clamperl",
+    ability: "swiftswim",
+  }),
+
+  P("gorebyss", "분홍장이", "물", 4, 5, 6, "R", {
+    stage: 1,
+    evolvesFrom: "clamperl",
+    ability: "swiftswim",
+  }),
+
+  // 시라칸
+  P("relicanth", "시라칸", "물", 4, 4, 6, "R", {
+    ability: "rockhead",
+  }),
+
+  // 사랑동이
+  P("luvdisc", "사랑동이", "물", 2, 2, 3, "C", {
+    ability: "swiftswim",
+  }),
+
+  // ============================================================
+  // v7: 4세대 누락 포켓몬 보강
+  // ============================================================
+
+  // 귀뚤뚜기 → 귀뚤톡크
+  P("kricketot", "귀뚤뚜기", "벌레", 1, 1, 2, "C", {}),
+
+  P("kricketune", "귀뚤톡크", "벌레", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "kricketot",
+    ability: "technician",
+  }),
+
+  // 깝질무 → 트리토돈
+  P("shellos", "깝질무", "물", 1, 1, 2, "C", {
+    ability: "stormdrain",
+  }),
+
+  // 무우마 → 무우마직
+  P("mismagius", "무우마직", "고스트", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "misdreavus",
+    ability: "levitate",
+  }),
+
+  // 니로우 → 돈크로우
+  P("honchkrow", "돈크로우", "악", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "murkrow",
+    ability: "moxie",
+  }),
+
+  // 랑딸랑 → 치렁
+  P("chingling", "랑딸랑", "에스퍼", 1, 1, 2, "C", {
+    ability: "levitate",
+  }),
+
+  // 핑복 → 럭키 → 해피너스
+  P("happiny", "핑복", "노말", 1, 1, 2, "C", {
+    ability: "serenegrace",
+  }),
+
+  // 페라페
+  P("chatot", "페라페", "노말", 3, 4, 3, "R", {
+    ability: "keeneye",
+  }),
+
+  // 화강돌
+  P("spiritomb", "화강돌", "고스트", 4, 4, 6, "R", {
+    ability: "pressure",
+  }),
+
+  // 먹고자 → 잠만보
+  P("munchlax", "먹고자", "노말", 1, 1, 3, "C", {
+    ability: "thickfat",
+  }),
+
+  // 형광어 → 네오라이트
+  P("finneon", "형광어", "물", 1, 1, 2, "C", {
+    ability: "swiftswim",
+  }),
+
+  P("lumineon", "네오라이트", "물", 3, 4, 5, "R", {
+    stage: 1,
+    evolvesFrom: "finneon",
+    ability: "swiftswim",
+  }),
+
+  // 내루미 → 내룸벨트
+  P("lickilicky", "내룸벨트", "노말", 4, 4, 7, "R", {
+    stage: 1,
+    evolvesFrom: "lickitung",
+    ability: "oblivious",
+  }),
+
+  // 덩쿠리 → 덩쿠림보
+  P("tangrowth", "덩쿠림보", "풀", 5, 6, 8, "E", {
+    stage: 1,
+    evolvesFrom: "tangela",
+    ability: "regenerator",
+  }),
+
+  // 에레키드 → 에레브 → 에레키블
+  P("electivire", "에레키블", "전기", 5, 8, 7, "E", {
+    stage: 2,
+    evolvesFrom: "electabuzz",
+    ability: "motordrive",
+  }),
+
+  // 마그비 → 마그마 → 마그마번
+  P("magmortar", "마그마번", "불꽃", 5, 8, 7, "E", {
+    stage: 2,
+    evolvesFrom: "magmar",
+    ability: "flamebody",
+  }),
+
+  // 왕자리 → 메가자리
+  P("yanmega", "메가자리", "벌레", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "yanma",
+    ability: "speedboost",
+  }),
+
+  // 글라이거 → 글라이온
+  P("gliscor", "글라이온", "땅", 4, 5, 7, "R", {
+    stage: 1,
+    evolvesFrom: "gligar",
+    ability: "hypercutter",
+  }),
+
+  // 꾸꾸리 → 메꾸리 → 맘모꾸리
+  P("mamoswine", "맘모꾸리", "얼음", 5, 8, 8, "E", {
+    stage: 2,
+    evolvesFrom: "piloswine",
+    ability: "thickfat",
+  }),
+
+  // 폴리곤 → 폴리곤2 → 폴리곤Z
+  P("porygonz", "폴리곤Z", "노말", 5, 8, 7, "E", {
+    stage: 2,
+    evolvesFrom: "porygon2",
+    ability: "download",
+  }),
+
+  // 랄토스 → 킬리아 → 엘레이드
+  P("gallade", "엘레이드", "에스퍼", 5, 8, 7, "E", {
+    stage: 2,
+    evolvesFrom: "kirlia",
+    ability: "sharpness",
+  }),
+
+  // 코코파스 → 대코파스
+  P("probopass", "대코파스", "바위", 4, 3, 8, "R", {
+    stage: 1,
+    evolvesFrom: "nosepass",
+    ability: "sturdy",
+  }),
+
+  // 눈꼬마 분기 → 눈여아
+  P("froslass", "눈여아", "얼음", 4, 6, 5, "R", {
+    stage: 1,
+    evolvesFrom: "snorunt",
+    ability: "cursedbody",
+  }),
+
+  // ============================================================
+  // 4세대 전설 / 환상
+  // ============================================================
+
+  P("uxie", "유크시", "에스퍼", 7, 5, 9, "L", {
+    ability: "foresight",
+  }),
+
+  P("mesprit", "엠라이트", "에스퍼", 7, 6, 9, "L", {
+    ability: "moonlight",
+  }),
+
+  P("azelf", "아그놈", "에스퍼", 7, 8, 6, "L", {
+    ability: "moxie",
+  }),
+
+  P("dialga", "디아루가", "강철", 9, 9, 9, "L", {
+    ability: "roaroftime",
+  }),
+
+  P("palkia", "펄기아", "물", 9, 9, 9, "L", {
+    ability: "spacialrend",
+  }),
+
+  P("heatran", "히드런", "불꽃", 8, 8, 9, "L", {
+    ability: "flashfire",
+  }),
+
+  P("regigigas", "레지기가스", "노말", 8, 10, 9, "L", {
+    ability: "truant",
+  }),
+
+  P("giratina", "기라티나", "고스트", 9, 7, 12, "L", {
+    ability: "shadowforce",
+  }),
+
+  P("cresselia", "크레세리아", "에스퍼", 7, 5, 10, "L", {
+    ability: "moonlight",
+  }),
+
+  P("phione", "피오네", "물", 7, 6, 8, "L", {
+    ability: "waterabsorb",
+  }),
+
+  P("manaphy", "마나피", "물", 8, 7, 9, "L", {
+    ability: "waterabsorb",
+  }),
+
+  P("darkrai", "다크라이", "악", 8, 9, 7, "L", {
+    ability: "darkvoid",
+  }),
+
+  P("shaymin", "쉐이미", "풀", 8, 7, 9, "L", {
+    ability: "regenerator",
+  }),
+
+  P("arceus", "아르세우스", "노말", 9, 9, 10, "L", {
+    ability: "multitype",
   }),
 
   // ============ 기술 카드 (22) ============
@@ -2261,8 +3069,8 @@ export const CARDS = [
   // 풀
   P("budew", "꼬몽울", "풀", 1, 1, 1, "C", { ability: "sleeppowder" }),
   P("roserade", "로즈레이드", "풀", 4, 5, 7, "R", {
-    stage: 1,
-    evolvesFrom: "budew",
+    stage: 2,
+    evolvesFrom: "roselia",
     ability: "poisonpoint",
   }),
   P("cherubi", "체리버", "풀", 1, 1, 1, "C", {}),
@@ -2284,7 +3092,11 @@ export const CARDS = [
     evolvesFrom: "buizel",
     ability: "rush",
   }),
-  P("gastrodon", "트리토돈", "물", 4, 4, 6, "R", { ability: "waterabsorb" }),
+  P("gastrodon", "트리토돈", "물", 4, 4, 6, "R", {
+    stage: 1,
+    evolvesFrom: "shellos",
+    ability: "stormdrain",
+  }),
   // 전기
   P("pachirisu", "파치리스", "전기", 2, 2, 4, "C", { ability: "static" }),
   // 얼음
@@ -2862,6 +3674,7 @@ export const CARDS = [
 // CARDS에는 넣지 않는다.
 // → 팩 / 컬렉션 / 관리자 지급 대상에서 제외
 // ============================================================
+
 export const TRAINER_CARDS = [
   P("surge_raichu", "마티스의 라이츄", "전기", 3, 4, 4, "L", {
     ability: "surge_overdrive",
@@ -3578,6 +4391,159 @@ export const DEX = {
   latios: 381,
   jirachi: 385,
   deoxys: 386,
+
+  // 1세대 누락 보강
+  metapod: 11,
+  sandshrew: 27,
+  paras: 46,
+  venonat: 48,
+  venomoth: 49,
+  electrode: 101,
+  exeggcute: 102,
+  lickitung: 108,
+  koffing: 109,
+  goldeen: 118,
+  seaking: 119,
+  mrmime: 122,
+  ditto: 132,
+  kabuto: 140,
+  kabutops: 141,
+
+  // 2세대 누락 보강
+  pichu: 172,
+  cleffa: 173,
+  igglybuff: 174,
+  bellossom: 182,
+  yanma: 193,
+  murkrow: 198,
+  slowking: 199,
+  unown: 201,
+  girafarig: 203,
+  snubbull: 209,
+  qwilfish: 211,
+  shuckle: 213,
+  slugma: 218,
+  magcargo: 219,
+  corsola: 222,
+  remoraid: 223,
+  octillery: 224,
+  delibird: 225,
+  stantler: 234,
+  smeargle: 235,
+  tyrogue: 236,
+  hitmontop: 237,
+  smoochum: 238,
+  magby: 240,
+  blissey: 242,
+
+  // 3세대 누락 보강
+  zigzagoon: 263,
+  linoone: 264,
+  wurmple: 265,
+  silcoon: 266,
+  beautifly: 267,
+  cascoon: 268,
+  dustox: 269,
+
+  seedot: 273,
+  nuzleaf: 274,
+  shiftry: 275,
+
+  surskit: 283,
+  masquerain: 284,
+
+  whismur: 293,
+  loudred: 294,
+  exploud: 295,
+
+  azurill: 298,
+  skitty: 300,
+  delcatty: 301,
+
+  plusle: 311,
+  minun: 312,
+  volbeat: 313,
+  illumise: 314,
+  roselia: 315,
+  gulpin: 316,
+  swalot: 317,
+
+  torkoal: 324,
+  spoink: 325,
+  grumpig: 326,
+  spinda: 327,
+
+  zangoose: 335,
+  seviper: 336,
+  solrock: 338,
+
+  corphish: 341,
+  crawdaunt: 342,
+  baltoy: 343,
+  claydol: 344,
+  lileep: 345,
+  cradily: 346,
+  anorith: 347,
+  armaldo: 348,
+
+  chimecho: 358,
+  wynaut: 360,
+
+  spheal: 363,
+  sealeo: 364,
+  walrein: 365,
+  clamperl: 366,
+  huntail: 367,
+  gorebyss: 368,
+  relicanth: 369,
+  luvdisc: 370,
+
+  // 4세대 누락 보강
+  kricketot: 401,
+  kricketune: 402,
+
+  shellos: 422,
+
+  mismagius: 429,
+  honchkrow: 430,
+
+  chingling: 433,
+
+  happiny: 440,
+  chatot: 441,
+  spiritomb: 442,
+
+  munchlax: 446,
+
+  finneon: 456,
+  lumineon: 457,
+
+  lickilicky: 463,
+  tangrowth: 465,
+  electivire: 466,
+  magmortar: 467,
+  yanmega: 469,
+  gliscor: 472,
+  mamoswine: 473,
+  porygonz: 474,
+  gallade: 475,
+  probopass: 476,
+  froslass: 478,
+
+  uxie: 480,
+  mesprit: 481,
+  azelf: 482,
+  dialga: 483,
+  palkia: 484,
+  heatran: 485,
+  regigigas: 486,
+  giratina: 487,
+  cresselia: 488,
+  phione: 489,
+  manaphy: 490,
+  darkrai: 491,
+  shaymin: 492,
+  arceus: 493,
 };
 
 export const MEGA_DEX = {
