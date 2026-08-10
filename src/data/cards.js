@@ -838,7 +838,7 @@ export const CARDS = [
     evolvesFrom: "eevee",
     ability: "teleport",
   }),
-  P("mew", "뮤", "에스퍼", 7, 7, 8, "L", { ability: "metronome" }),
+  P("mew", "뮤", "에스퍼", 7, 0, 8, "L", { ability: "metronome" }),
   P("lugia", "루기아", "에스퍼", 9, 8, 11, "L", { ability: "aeroblast" }),
 
   // ============ 바위 (10) ============

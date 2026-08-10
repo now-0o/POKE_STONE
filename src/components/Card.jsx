@@ -186,6 +186,12 @@ function AutoScrollCardText({ text }) {
 
       const maxScroll = box.scrollHeight - box.clientHeight;
 
+      console.log("[CARD SCROLL]", text, {
+        scrollHeight: box.scrollHeight,
+        clientHeight: box.clientHeight,
+        maxScroll,
+      });
+
       if (maxScroll <= 1) {
         box.scrollTop = 0;
         return;
