@@ -16,6 +16,32 @@ const AURA_TYPES = {
 };
 const SLEEP_BATTLECRIES = ["sleeppowder", "hypnosis", "sing", "lovelykiss"];
 
+// ============================================================
+// 이브이 Z - 나인이볼부스트
+// 이브이 진화체 8종의 특성을 모두 가진다.
+// ============================================================
+const EEVEE_Z_ABILITIES = new Set([
+  "waterabsorb", // 샤미드 - 저수
+  "voltabsorb", // 쥬피썬더 - 축전
+  "guts", // 부스터 - 근성
+  "teleport", // 에브이 - 텔레포트
+  "taunt", // 블래키 - 도발
+  "rush", // 리피아 - 돌진
+  "freezedry", // 글레이시아 - 프리즈드라이
+  "moonlight", // 님피아 - 달빛
+]);
+
+const EEVEE_EVOLUTIONS = [
+  "vaporeon",
+  "jolteon",
+  "flareon",
+  "espeon",
+  "umbreon",
+  "leafeon",
+  "glaceon",
+  "sylveon",
+];
+
 let uidCounter = 1;
 const nextUid = () => `u${uidCounter++}`;
 
@@ -61,7 +87,25 @@ function hasTaunt(unit) {
 }
 
 function hasAbility(unit, ability) {
-  return unit?.ability === ability || unit?.secondaryAbility === ability;
+  if (!unit) {
+    return false;
+  }
+
+  // 일반 주특성 / 보조특성
+  if (unit.ability === ability || unit.secondaryAbility === ability) {
+    return true;
+  }
+
+  // 이브이 Z - 나인이볼부스트
+  const hasNineEvolBoost =
+    unit.ability === "nineevolboost" ||
+    unit.secondaryAbility === "nineevolboost";
+
+  if (hasNineEvolBoost && EEVEE_Z_ABILITIES.has(ability)) {
+    return true;
+  }
+
+  return false;
 }
 
 function lowerAttack(game, unit, amount, sourceName = null) {
@@ -420,6 +464,14 @@ export function createGame(playerDeckIds, trainer) {
     [second]: 4,
   };
 
+  // ============================================================
+  // 퀘스트 시작 카드
+  // 레츠고! 이브이가 덱에 있으면 반드시 첫 손패에 포함
+  // ============================================================
+  if (putStartingCard(game.players.player, "letsgo_eevee")) {
+    openingDraws.player = Math.max(0, openingDraws.player - 1);
+  }
+
   if (
     trainer.startingCard &&
     putStartingCard(game.players.enemy, trainer.startingCard)
@@ -460,6 +512,7 @@ function makePlayer(deckIds, name, hp = 40) {
     field: [],
     lastDeadPokemon: null,
     lastSpellCardId: null,
+    eeveeQuest: null,
     fatigue: 0,
     megaUsed: false,
     discardUsedThisTurn: false,
@@ -467,6 +520,52 @@ function makePlayer(deckIds, name, hp = 40) {
     _productiveActionsThisTurn: 0,
     _brickTurns: 0,
   };
+}
+
+function trackEeveeQuest(game, side, cardId) {
+  const p = game.players[side];
+  const quest = p.eeveeQuest;
+
+  if (!quest || !quest.active || quest.complete) {
+    return;
+  }
+
+  // 이브이 진화체가 아니면 무시
+  if (!EEVEE_EVOLUTIONS.includes(cardId)) {
+    return;
+  }
+
+  // 이미 기록한 진화체면 중복 진행 X
+  if (quest.seen.includes(cardId)) {
+    return;
+  }
+
+  quest.seen.push(cardId);
+
+  const cardName = CARD_MAP[cardId]?.name || cardId;
+
+  log(game, `레츠고! 이브이 진행도 ${quest.seen.length}/8 - ${cardName}!`);
+
+  // 아직 8종 전부 못 냈으면 종료
+  if (quest.seen.length < EEVEE_EVOLUTIONS.length) {
+    return;
+  }
+
+  // =========================
+  // 퀘스트 완료
+  // =========================
+  quest.active = false;
+  quest.complete = true;
+
+  p.hand.push({
+    uid: nextUid(),
+    cardId: "eevee_z",
+  });
+
+  log(
+    game,
+    "퀘스트 완료! 모든 이브이 진화체를 필드에 냈다! 이브이 Z를 손에 넣었다!",
+  );
 }
 
 // ---------- 드로우 ----------
@@ -643,26 +742,16 @@ function startTurn(game, side) {
     if (u.resting) {
       u.canAttack = false;
       u.resting = false;
-      log(
-        game,
-        `${u.name}은(는) 게으름을 피우고 있다...`,
-      );
+      log(game, `${u.name}은(는) 게으름을 피우고 있다...`);
       if (u.frozen > 0) {
         u.frozen -= 1;
       }
-      resolveStatusAtTurnStart(
-        game,
-        side,
-        u,
-      );
+      resolveStatusAtTurnStart(game, side, u);
       return;
     }
     // 레지기가스 - 슬로스타트
     // 소환 후 처음 맞는 자신의 턴은 공격 불가
-    if (
-      hasAbility(u, "slowstart") &&
-      u._slowStartPending
-    ) {
+    if (hasAbility(u, "slowstart") && u._slowStartPending) {
       u.canAttack = false;
       u._slowStartPending = false;
       log(
@@ -672,22 +761,14 @@ function startTurn(game, side) {
       if (u.frozen > 0) {
         u.frozen -= 1;
       }
-      resolveStatusAtTurnStart(
-        game,
-        side,
-        u,
-      );
+      resolveStatusAtTurnStart(game, side, u);
       return;
     }
     u.canAttack = true;
     if (u.frozen > 0) {
       u.frozen -= 1;
     }
-    resolveStatusAtTurnStart(
-      game,
-      side,
-      u,
-    );
+    resolveStatusAtTurnStart(game, side, u);
   });
   // 새 턴 행동 카운터 초기화
   p._productiveActionsThisTurn = 0;
@@ -930,10 +1011,7 @@ export function effectiveAtk(unit, game) {
   }
 
   // 독폭주
-  if (
-    hasAbility(unit, "toxicboost") &&
-    unit.status === "poison"
-  ) {
+  if (hasAbility(unit, "toxicboost") && unit.status === "poison") {
     atk += 2;
   }
 
@@ -970,9 +1048,7 @@ export function effectiveAtk(unit, game) {
     hasAbility(unit, "plusminus") &&
     owner.field.some(
       (ally) =>
-        ally.uid !== unit.uid &&
-        ally.hp > 0 &&
-        hasAbility(ally, "plusminus"),
+        ally.uid !== unit.uid && ally.hp > 0 && hasAbility(ally, "plusminus"),
     )
   ) {
     atk += 2;
@@ -1170,26 +1246,15 @@ function applyDamage(
   }
 
   // 전기엔진
-  if (
-    !typedIgnore &&
-    sourceType === "전기" &&
-    hasAbility(unit, "motordrive")
-  ) {
+  if (!typedIgnore && sourceType === "전기" && hasAbility(unit, "motordrive")) {
     if ((unit._motorDriveStacks || 0) < 3) {
-      unit._motorDriveStacks =
-        (unit._motorDriveStacks || 0) + 1;
+      unit._motorDriveStacks = (unit._motorDriveStacks || 0) + 1;
 
       unit.atk += 1;
 
-      log(
-        game,
-        `${unit.name}의 전기엔진! 전기 피해를 무효화하고 공격력 +1!`,
-      );
+      log(game, `${unit.name}의 전기엔진! 전기 피해를 무효화하고 공격력 +1!`);
     } else {
-      log(
-        game,
-        `${unit.name}의 전기엔진! 전기 피해를 무효화했다!`,
-      );
+      log(game, `${unit.name}의 전기엔진! 전기 피해를 무효화했다!`);
     }
 
     return finishImpact(0);
@@ -1207,26 +1272,15 @@ function applyDamage(
   }
 
   // 마중물
-  if (
-    !typedIgnore &&
-    sourceType === "물" &&
-    hasAbility(unit, "stormdrain")
-  ) {
+  if (!typedIgnore && sourceType === "물" && hasAbility(unit, "stormdrain")) {
     if ((unit._stormDrainStacks || 0) < 3) {
-      unit._stormDrainStacks =
-        (unit._stormDrainStacks || 0) + 1;
+      unit._stormDrainStacks = (unit._stormDrainStacks || 0) + 1;
 
       unit.atk += 1;
 
-      log(
-        game,
-        `${unit.name}의 마중물! 물 피해를 무효화하고 공격력 +1!`,
-      );
+      log(game, `${unit.name}의 마중물! 물 피해를 무효화하고 공격력 +1!`);
     } else {
-      log(
-        game,
-        `${unit.name}의 마중물! 물 피해를 무효화했다!`,
-      );
+      log(game, `${unit.name}의 마중물! 물 피해를 무효화했다!`);
     }
 
     return finishImpact(0);
@@ -1458,9 +1512,8 @@ function makeUnit(card, game, side) {
     canAttack: false,
     summonedTurn: game.turnCount,
     // 레지기가스 - 슬로스타트
-  _slowStartPending:
-    card.ability === "slowstart" ||
-    card.secondaryAbility === "slowstart",
+    _slowStartPending:
+      card.ability === "slowstart" || card.secondaryAbility === "slowstart",
     frozen: 0, // DEPRECATED (하위호환 잔류, 신규 코드에서는 status 사용)
     status: null, // null | 'ice' | 'sleep' | 'para'
     statusTurns: 0, // ice: 남은 얼림 최소턴 / sleep: 잠든 총 턴 수 누적 / para: 미사용
@@ -1601,25 +1654,16 @@ function runBattlecry(game, side, unit) {
       const types = Object.keys(TYPE_CHART);
 
       if (types.length > 0) {
-        const hiddenType =
-          types[Math.floor(Math.random() * types.length)];
+        const hiddenType = types[Math.floor(Math.random() * types.length)];
 
         unit.type = hiddenType;
 
-        const targets =
-          foe.field.filter((u) => u.hp > 0);
+        const targets = foe.field.filter((u) => u.hp > 0);
 
         if (targets.length > 0) {
-          const target =
-            targets[Math.floor(Math.random() * targets.length)];
+          const target = targets[Math.floor(Math.random() * targets.length)];
 
-          const dealt =
-            applyTypedAbilityDamage(
-              game,
-              target,
-              2,
-              hiddenType,
-            );
+          const dealt = applyTypedAbilityDamage(game, target, 2, hiddenType);
 
           log(
             game,
@@ -1628,10 +1672,7 @@ function runBattlecry(game, side, unit) {
 
           cleanupDeaths(game);
         } else {
-          log(
-            game,
-            `${unit.name}의 잠재파워! ${hiddenType} 타입으로 변했다!`,
-          );
+          log(game, `${unit.name}의 잠재파워! ${hiddenType} 타입으로 변했다!`);
         }
       }
 
@@ -1641,20 +1682,12 @@ function runBattlecry(game, side, unit) {
     // 딜리버드 - 프레젠트
     case "present": {
       if (Math.random() < 0.5) {
-        const targets =
-          foe.field.filter((u) => u.hp > 0);
+        const targets = foe.field.filter((u) => u.hp > 0);
 
         if (targets.length > 0) {
-          const target =
-            targets[Math.floor(Math.random() * targets.length)];
+          const target = targets[Math.floor(Math.random() * targets.length)];
 
-          const dealt =
-            applyTypedAbilityDamage(
-              game,
-              target,
-              3,
-              "얼음",
-            );
+          const dealt = applyTypedAbilityDamage(game, target, 3, "얼음");
 
           log(
             game,
@@ -1663,34 +1696,19 @@ function runBattlecry(game, side, unit) {
 
           cleanupDeaths(game);
         } else {
-          log(
-            game,
-            `${unit.name}의 프레젠트! 하지만 공격할 상대가 없었다!`,
-          );
+          log(game, `${unit.name}의 프레젠트! 하지만 공격할 상대가 없었다!`);
         }
       } else {
-        const wounded =
-          me.field.filter(
-            (u) =>
-              u.hp > 0 &&
-              u.hp < u.maxHp,
-          );
+        const wounded = me.field.filter((u) => u.hp > 0 && u.hp < u.maxHp);
 
         if (wounded.length > 0) {
-          const target =
-            wounded[Math.floor(Math.random() * wounded.length)];
+          const target = wounded[Math.floor(Math.random() * wounded.length)];
 
-          const before =
-            target.hp;
+          const before = target.hp;
 
-          target.hp =
-            Math.min(
-              target.maxHp,
-              target.hp + 3,
-            );
+          target.hp = Math.min(target.maxHp, target.hp + 3);
 
-          const healed =
-            target.hp - before;
+          const healed = target.hp - before;
 
           recordImpact(game, {
             type: "heal",
@@ -1704,10 +1722,7 @@ function runBattlecry(game, side, unit) {
             `${unit.name}의 프레젠트! ${target.name}의 체력이 ${healed} 회복됐다!`,
           );
         } else {
-          log(
-            game,
-            `${unit.name}의 프레젠트! 하지만 회복할 아군이 없었다!`,
-          );
+          log(game, `${unit.name}의 프레젠트! 하지만 회복할 아군이 없었다!`);
         }
       }
 
@@ -1716,19 +1731,11 @@ function runBattlecry(game, side, unit) {
 
     // 루브도 - 스케치
     case "sketch": {
-      const spellId =
-        me.lastSpellCardId;
+      const spellId = me.lastSpellCardId;
 
-      const spell =
-        spellId
-          ? CARD_MAP[spellId]
-          : null;
+      const spell = spellId ? CARD_MAP[spellId] : null;
 
-      if (
-        spell &&
-        spell.kind === "spell" &&
-        me.hand.length < MAX_HAND
-      ) {
+      if (spell && spell.kind === "spell" && me.hand.length < MAX_HAND) {
         me.hand.push({
           uid: nextUid(),
           cardId: spellId,
@@ -1739,15 +1746,9 @@ function runBattlecry(game, side, unit) {
           `${unit.name}의 스케치! ${spell.name}을(를) 베껴 손으로 가져왔다!`,
         );
       } else if (!spell) {
-        log(
-          game,
-          `${unit.name}의 스케치! 아직 베낄 기술이 없다!`,
-        );
+        log(game, `${unit.name}의 스케치! 아직 베낄 기술이 없다!`);
       } else {
-        log(
-          game,
-          `${unit.name}의 스케치! 하지만 손패가 가득 찼다!`,
-        );
+        log(game, `${unit.name}의 스케치! 하지만 손패가 가득 찼다!`);
       }
 
       break;
@@ -2253,25 +2254,17 @@ function runBattlecry(game, side, unit) {
       }
       break;
 
-          // ============================================================
+    // ============================================================
     // 4세대 전설 / 환상 전용 특성
     // ============================================================
 
     // 디아루가 - 시간의포효
     case "roaroftime": {
       foe.field.forEach((target) => {
-        applyTypedAbilityDamage(
-          game,
-          target,
-          2,
-          "드래곤",
-        );
+        applyTypedAbilityDamage(game, target, 2, "드래곤");
       });
 
-      log(
-        game,
-        `${unit.name}의 시간의포효! 상대 전체에게 드래곤 피해 2!`,
-      );
+      log(game, `${unit.name}의 시간의포효! 상대 전체에게 드래곤 피해 2!`);
 
       cleanupDeaths(game);
       break;
@@ -2279,22 +2272,12 @@ function runBattlecry(game, side, unit) {
 
     // 펄기아 - 공간절단
     case "spacialrend": {
-      const targets =
-        foe.field.filter((target) => target.hp > 0);
+      const targets = foe.field.filter((target) => target.hp > 0);
 
       if (targets.length > 0) {
-        const target =
-          [...targets].sort(
-            (a, b) => b.hp - a.hp,
-          )[0];
+        const target = [...targets].sort((a, b) => b.hp - a.hp)[0];
 
-        const dealt =
-          applyTypedAbilityDamage(
-            game,
-            target,
-            5,
-            "드래곤",
-          );
+        const dealt = applyTypedAbilityDamage(game, target, 5, "드래곤");
 
         log(
           game,
@@ -2309,34 +2292,15 @@ function runBattlecry(game, side, unit) {
 
     // 기라티나 - 섀도다이브
     case "shadowforce": {
-      const targets =
-        foe.field.filter((target) => target.hp > 0);
+      const targets = foe.field.filter((target) => target.hp > 0);
 
       if (targets.length > 0) {
-        const target =
-          targets[
-            Math.floor(
-              Math.random() *
-                targets.length,
-            )
-          ];
+        const target = targets[Math.floor(Math.random() * targets.length)];
 
-        const dealt =
-          applyTypedAbilityDamage(
-            game,
-            target,
-            4,
-            "고스트",
-          );
+        const dealt = applyTypedAbilityDamage(game, target, 4, "고스트");
 
         if (target.hp > 0) {
-          const lowered =
-            lowerAttack(
-              game,
-              target,
-              2,
-              "섀도다이브",
-            );
+          const lowered = lowerAttack(game, target, 2, "섀도다이브");
 
           log(
             game,
@@ -2358,35 +2322,17 @@ function runBattlecry(game, side, unit) {
     // 다크라이 - 다크홀
     case "darkvoid": {
       foe.field.forEach((target) => {
-        applyTypedAbilityDamage(
-          game,
-          target,
-          1,
-          "악",
-        );
+        applyTypedAbilityDamage(game, target, 1, "악");
       });
 
       cleanupDeaths(game);
 
-      const alive =
-        foe.field.filter((target) => target.hp > 0);
+      const alive = foe.field.filter((target) => target.hp > 0);
 
       if (alive.length > 0) {
-        const target =
-          alive[
-            Math.floor(
-              Math.random() *
-                alive.length,
-            )
-          ];
+        const target = alive[Math.floor(Math.random() * alive.length)];
 
-        const slept =
-          applyStatus(
-            game,
-            target,
-            "sleep",
-            unit,
-          );
+        const slept = applyStatus(game, target, "sleep", unit);
 
         if (slept) {
           log(
@@ -2394,16 +2340,10 @@ function runBattlecry(game, side, unit) {
             `${unit.name}의 다크홀! 상대 전체에게 악 피해 1, ${target.name}이(가) 잠들었다!`,
           );
         } else {
-          log(
-            game,
-            `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`,
-          );
+          log(game, `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`);
         }
       } else {
-        log(
-          game,
-          `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`,
-        );
+        log(game, `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`);
       }
 
       break;
@@ -2411,36 +2351,24 @@ function runBattlecry(game, side, unit) {
 
     // 아르세우스 - 멀티타입
     case "multitype": {
-      const availableTypes =
-        Object.keys(TYPE_CHART);
+      const availableTypes = Object.keys(TYPE_CHART);
 
       let bestType = "노말";
 
-      if (
-        foe.field.length > 0 &&
-        availableTypes.length > 0
-      ) {
+      if (foe.field.length > 0 && availableTypes.length > 0) {
         let bestScore = -Infinity;
 
-        availableTypes.forEach(
-          (attackType) => {
-            const score =
-              foe.field.reduce(
-                (sum, target) =>
-                  sum +
-                  typeMult(
-                    attackType,
-                    target.type,
-                  ),
-                0,
-              );
+        availableTypes.forEach((attackType) => {
+          const score = foe.field.reduce(
+            (sum, target) => sum + typeMult(attackType, target.type),
+            0,
+          );
 
-            if (score > bestScore) {
-              bestScore = score;
-              bestType = attackType;
-            }
-          },
-        );
+          if (score > bestScore) {
+            bestScore = score;
+            bestType = attackType;
+          }
+        });
       }
 
       unit.type = bestType;
@@ -2457,10 +2385,7 @@ function runBattlecry(game, side, unit) {
         amount: 1,
       });
 
-      log(
-        game,
-        `${unit.name}의 멀티타입! ${bestType} 타입으로 변하고 +1/+1!`,
-      );
+      log(game, `${unit.name}의 멀티타입! ${bestType} 타입으로 변하고 +1/+1!`);
 
       break;
     }
@@ -2728,6 +2653,26 @@ function runBattlecry(game, side, unit) {
     default:
       break;
   }
+
+  // ============================================================
+  // 이브이 Z - 나인이볼부스트
+  // 에브이의 텔레포트 + 님피아의 달빛
+  // ============================================================
+  if (hasAbility(unit, "nineevolboost")) {
+    // 에브이 - 텔레포트
+    drawCard(game, side);
+
+    // 님피아 - 달빛
+    me.field.forEach((ally) => {
+      ally.hp = Math.min(ally.maxHp, ally.hp + 2);
+    });
+
+    log(
+      game,
+      `${unit.name}의 나인이볼부스트! 텔레포트로 카드 1장을 뽑고 달빛으로 아군 전체 체력을 2 회복했다!`,
+    );
+  }
+
   // 캐스퐁 타입 동기화
   refreshForecastUnit(game, unit);
 
@@ -2877,6 +2822,7 @@ export function playCard(
     base.summonedTurn = game.turnCount;
     // canAttack 상태는 유지 (진화해도 소환멀미 그대로)
     log(game, `${base.name}(으)로 진화했다!`);
+    trackEeveeQuest(game, side, card.id);
     runBattlecry(game, side, base);
     cleanupDeaths(game);
     markPlay(game, side, card, { anim: "evolve", uid: base.uid });
@@ -2998,6 +2944,42 @@ export function playCard(
     });
 
     return true;
+  }
+
+  // ============================================================
+  // 퀘스트 카드
+  // ============================================================
+  if (card.kind === "quest") {
+    const q = card.quest;
+
+    // 레츠고! 이브이
+    if (q?.effect === "start_eevee_quest") {
+      // 이미 퀘스트를 시작한 경우
+      if (p.eeveeQuest) {
+        return false;
+      }
+
+      p.mana -= cost;
+      p.hand.splice(handIdx, 1);
+
+      // 퀘스트 활성화
+      p.eeveeQuest = {
+        active: true,
+        complete: false,
+        seen: [],
+      };
+
+      // 이브이 6장을 덱에 추가하고 다시 섞음
+      p.deck = shuffle([...p.deck, ...Array(6).fill("eevee")]);
+
+      log(game, `${card.name}! 퀘스트 시작! 이브이 6장을 덱에 섞어 넣었다!`);
+
+      markPlay(game, side, card);
+
+      return true;
+    }
+
+    return false;
   }
 
   // ----- 도구 -----
@@ -4065,10 +4047,7 @@ export function attack(game, side, attackerUid, target) {
     atkDmg += expansion.bonusDamage;
 
     // 레지기가스 - 묵사발
-    if (
-      hasAbility(atkUnit, "crushgrip") &&
-      defUnit.hp === defUnit.maxHp
-    ) {
+    if (hasAbility(atkUnit, "crushgrip") && defUnit.hp === defUnit.maxHp) {
       atkDmg += 4;
 
       log(
@@ -4292,11 +4271,12 @@ export function attack(game, side, attackerUid, target) {
   }
   // 프리즈드라이: 공격할 때 25% 얼음
   if (
-    atkUnit.ability === "freezedry" &&
+    hasAbility(atkUnit, "freezedry") &&
     defUnit.hp > 0 &&
     Math.random() < 0.25 * atkBonus
   ) {
     applyStatus(game, defUnit, "ice");
+
     log(
       game,
       `${atkUnit.name}의 프리즈드라이! ${defUnit.name}에게 얼음 상태이상!`,

@@ -1821,6 +1821,20 @@ export default function Battle({ trainer, deck, onFinish }) {
             <div className="hero-name">나</div>
 
             <div className="hero-sub">덱 {me.deck.length}장</div>
+            {me.eeveeQuest && (
+              <div
+                className={[
+                  "eevee-quest-progress",
+                  me.eeveeQuest.complete ? "complete" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {me.eeveeQuest.complete
+                  ? "레츠고! 이브이 완료!"
+                  : `레츠고! 이브이 ${me.eeveeQuest.seen.length}/8`}
+              </div>
+            )}
           </div>
         </div>
 

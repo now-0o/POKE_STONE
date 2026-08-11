@@ -411,11 +411,13 @@ export function HandCard({
             ? "메가스톤"
             : card.kind === "item"
               ? "도구"
-              : card.kind === "spell" && card.type === "도구"
-                ? "도구"
-                : card.kind === "spell"
-                  ? `기술 · ${card.moveType || "보조"}`
-                  : `${card.type} 포켓몬`}
+              : card.kind === "quest"
+                ? "퀘스트"
+                : card.kind === "spell" && card.type === "도구"
+                  ? "도구"
+                  : card.kind === "spell"
+                    ? `기술 · ${card.moveType || "보조"}`
+                    : `${card.type} 포켓몬`}
         </span>
       </div>
 

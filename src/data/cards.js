@@ -80,6 +80,7 @@ export const TYPE_COLORS = {
   페어리: "#D685AD",
   기술: "#7a5ea8",
   도구: "#4a9b8e",
+  퀘스트: "#f5c542",
 };
 
 export const TYPE_CHART = {
@@ -457,6 +458,9 @@ export const ABILITY_TEXT = {
   slowstart:
     "슬로스타트: 나온 뒤 다음 자신의 턴에는 공격할 수 없다. 그 다음 턴부터 정상적으로 공격할 수 있다",
   crushgrip: "묵사발: 최대 체력인 포켓몬을 공격하면 공격 피해 +4",
+
+  nineevolboost:
+    "나인이볼부스트: 샤미드, 쥬피썬더, 부스터, 에브이, 블래키, 리피아, 글레이시아, 님피아의 특성을 모두 가진다.",
 };
 
 const P = (id, name, type, cost, atk, hp, rarity, opts = {}) => ({
@@ -3935,10 +3939,39 @@ export const TRAINER_CARDS = [
 
     trainerOnly: true,
   },
+
+  // 퀘스트
+  {
+    id: "letsgo_eevee",
+    name: "레츠고! 이브이",
+    kind: "quest",
+    type: "퀘스트",
+    cost: 1,
+    rarity: "L",
+    emoji: "✨",
+
+    quest: {
+      effect: "start_eevee_quest",
+      targetCount: 8,
+    },
+
+    text: "퀘스트: 이브이 6장을 덱에 섞어 넣는다. 서로 다른 이브이 진화체 8종을 모두 필드에 내면 이브이 Z를 손에 넣는다.",
+  },
+];
+
+// ============================================================
+// 특수 생성 카드
+// 팩 / 컬렉션 / 덱 편집에는 등장하지 않음
+// ============================================================
+export const SPECIAL_CARDS = [
+  P("eevee_z", "이브이 Z", "노말", 4, 5, 6, "L", {
+    ability: "nineevolboost",
+    rewardOnly: true,
+  }),
 ];
 
 export const CARD_MAP = Object.fromEntries(
-  [...CARDS, ...TRAINER_CARDS].map((c) => [c.id, c]),
+  [...CARDS, ...TRAINER_CARDS, ...SPECIAL_CARDS].map((c) => [c.id, c]),
 );
 
 const SPRITE_BASE =
@@ -4541,6 +4574,8 @@ export const DEX = {
   darkrai: 491,
   shaymin: 492,
   arceus: 493,
+
+  eevee_z: 133,
 };
 
 export const MEGA_DEX = {

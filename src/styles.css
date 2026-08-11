@@ -5984,3 +5984,29 @@ img.res-icon.small {
   justify-content: flex-start !important;
   box-sizing: border-box;
 }
+
+/* ============================================================
+   레츠고! 이브이 - 퀘스트 진행도
+   ============================================================ */
+
+.battle-board .eevee-quest-progress {
+  margin-top: 2px;
+
+  font-size: clamp(6px, 0.95vmin, 9px);
+  line-height: 1.1;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  color: #f5c542;
+
+  text-shadow: 0 0 4px rgba(245, 197, 66, 0.65);
+}
+
+.battle-board .eevee-quest-progress.complete {
+  color: #fff3a6;
+
+  text-shadow:
+    0 0 5px rgba(245, 197, 66, 0.9),
+    0 0 10px rgba(245, 197, 66, 0.55);
+}
