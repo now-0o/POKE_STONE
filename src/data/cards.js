@@ -3668,6 +3668,24 @@ export const CARDS = [
     },
     text: "앱솔 전용. +4/+1, 매직미러를 얻는다. (게임당 메가진화 1회)",
   },
+
+  // 퀘스트
+  {
+    id: "letsgo_eevee",
+    name: "레츠고! 이브이",
+    kind: "quest",
+    type: "퀘스트",
+    cost: 1,
+    rarity: "L",
+    emoji: "✨",
+
+    quest: {
+      effect: "start_eevee_quest",
+      targetCount: 8,
+    },
+
+    text: "퀘스트: 이브이 6장을 덱에 섞어 넣는다. 서로 다른 이브이 진화체 8종을 모두 필드에 내면 이브이 Z를 손에 넣는다.",
+  },
 ];
 
 // ============================================================
@@ -3938,24 +3956,6 @@ export const TRAINER_CARDS = [
     text: "성호의 메타그로스 전용. +4/+4, 단단한발톱과 클리어바디를 얻는다. (게임당 메가진화 1회)",
 
     trainerOnly: true,
-  },
-
-  // 퀘스트
-  {
-    id: "letsgo_eevee",
-    name: "레츠고! 이브이",
-    kind: "quest",
-    type: "퀘스트",
-    cost: 1,
-    rarity: "L",
-    emoji: "✨",
-
-    quest: {
-      effect: "start_eevee_quest",
-      targetCount: 8,
-    },
-
-    text: "퀘스트: 이브이 6장을 덱에 섞어 넣는다. 서로 다른 이브이 진화체 8종을 모두 필드에 내면 이브이 Z를 손에 넣는다.",
   },
 ];
 
