@@ -5962,3 +5962,25 @@ img.res-icon.small {
 .ability-filter-reset:hover {
   color: var(--accent);
 }
+
+/* ============================================================
+   카드팩 상점 - 전체 왼쪽 정렬
+   ============================================================ */
+
+.pack-buy-area {
+  width: 100%;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.pack-section-label {
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.pack-row {
+  width: 100%;
+  justify-content: flex-start !important;
+  box-sizing: border-box;
+}
