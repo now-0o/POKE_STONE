@@ -2463,12 +2463,12 @@ export const CARDS = [
     cost: 3,
     rarity: "R",
     emoji: "❄️",
-      animation: {
-    type: "beam",
-    theme: "ice",
-    duration: 620,
-    impactDelay: 360,
-  },
+    animation: {
+      type: "beam",
+      theme: "ice",
+      duration: 460,
+      impactDelay: 210,
+    },
     spell: { effect: "damage_freeze", amount: 3, target: "enemy-any" },
     text: "피해 3을 입히고, 포켓몬이라면 얼음 상태이상. (얼음 타입, 상성 적용)",
   },
