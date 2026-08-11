@@ -39,6 +39,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const [signatureFx, setSignatureFx] = useState(null); // 트레이너 시그니처
   const [atkFx, setAtkFx] = useState(null); // 공격 돌진/피격 연출
   const [impactFx, setImpactFx] = useState([]); // 공격 타격감 추가
+  const [moveFx, setMoveFx] = useState(null);
   const [intro, setIntro] = useState("vs"); // 'vs' -> 'coin' -> false
   const [confirmSurrender, setConfirmSurrender] = useState(false);
   const aiTimer = useRef(null);
@@ -60,6 +61,8 @@ export default function Battle({ trainer, deck, onFinish }) {
   const battleRectsRef = useRef(new Map());
   const impactDelayTimer = useRef(null);
   const impactClearTimer = useRef(null);
+  const moveFxTimer = useRef(null);
+  const moveImpactTimer = useRef(null);
 
   if (!gameRef.current) {
     gameRef.current = createGame(deck, trainer);
@@ -356,6 +359,62 @@ export default function Battle({ trainer, deck, onFinish }) {
         easing: "ease-out",
       },
     );
+  }
+
+  function showMoveAnimation(card, action) {
+    const animation = card?.animation;
+
+    if (!animation) return false;
+
+    const battleRect = battleRef.current?.getBoundingClientRect();
+
+    if (!battleRect) return false;
+
+    // 기술 피해를 실제로 받은 첫 대상
+    const targetImpact = action.impacts?.find(
+      (impact) => impact.type === "damage",
+    );
+
+    if (!targetImpact) return false;
+
+    const targetRect = getImpactRect(targetImpact);
+
+    if (!targetRect) return false;
+
+    // 기술 카드는 사용한 쪽 트레이너 위치에서 발사
+    const sourceRect = battleRectsRef.current.get(`hero-${action.side}`);
+
+    if (!sourceRect) return false;
+
+    const x1 = sourceRect.x - battleRect.left;
+    const y1 = sourceRect.y - battleRect.top;
+
+    const x2 = targetRect.x - battleRect.left;
+    const y2 = targetRect.y - battleRect.top;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    const distance = Math.hypot(dx, dy);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    setMoveFx({
+      key: action.seq,
+      type: animation.type,
+      theme: animation.theme,
+      x: x1,
+      y: y1,
+      distance,
+      angle,
+    });
+
+    clearTimeout(moveFxTimer.current);
+
+    moveFxTimer.current = setTimeout(() => {
+      setMoveFx(null);
+    }, animation.duration || 620);
+
+    return true;
   }
 
   // impact 배열을 화면용 데이터로 변환
@@ -740,7 +799,17 @@ export default function Battle({ trainer, deck, onFinish }) {
     // 일반 공격이 아닌
     // 기술 / 전투의 함성 / 도구 / 회복 효과
     if (la.kind === "play" && la.impacts?.length) {
-      showImpacts(la.impacts, la.seq);
+      const hasMoveAnimation = showMoveAnimation(playedCard, la);
+
+      if (hasMoveAnimation) {
+        clearTimeout(moveImpactTimer.current);
+
+        moveImpactTimer.current = setTimeout(() => {
+          showImpacts(la.impacts, la.seq);
+        }, playedCard.animation?.impactDelay || 300);
+      } else {
+        showImpacts(la.impacts, la.seq);
+      }
     }
   });
 
@@ -753,6 +822,9 @@ export default function Battle({ trainer, deck, onFinish }) {
       clearTimeout(signatureFxTimer.current);
       clearTimeout(impactDelayTimer.current);
       clearTimeout(impactClearTimer.current);
+
+      clearTimeout(moveFxTimer.current);
+      clearTimeout(moveImpactTimer.current);
     },
     [],
   );
@@ -1466,6 +1538,43 @@ export default function Battle({ trainer, deck, onFinish }) {
           </div>
         </div>
       )}
+
+      {/* 기술 애니메이션 */}
+      <div className="move-fx-layer">
+        {moveFx && (
+          <div
+            key={moveFx.key}
+            className={[
+              "move-fx",
+              `move-${moveFx.type}`,
+              `move-${moveFx.theme}`,
+            ].join(" ")}
+            style={{
+              left: `${moveFx.x}px`,
+              top: `${moveFx.y}px`,
+              width: `${moveFx.distance}px`,
+              transform: `rotate(${moveFx.angle}deg)`,
+            }}
+          >
+            <div className="move-beam-glow" />
+            <div className="move-beam-core" />
+
+            {moveFx.theme === "ice" && (
+              <div className="move-ice-impact">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 전투 피격 / 회복 / 버프 연출 */}
+      <div className="combat-impact-layer"></div>
 
       {/* 전투 피격 / 회복 / 버프 연출 */}
       <div className="combat-impact-layer">

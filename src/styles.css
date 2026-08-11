@@ -6010,3 +6010,214 @@ img.res-icon.small {
     0 0 5px rgba(245, 197, 66, 0.9),
     0 0 10px rgba(245, 197, 66, 0.55);
 }
+
+/* ============================================================
+   기술 애니메이션
+   ============================================================ */
+
+.move-fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 410;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.move-fx {
+  position: absolute;
+  height: 0;
+
+  transform-origin: 0 50%;
+
+  pointer-events: none;
+}
+
+/* ============================================================
+   BEAM
+   ============================================================ */
+
+.move-beam-glow,
+.move-beam-core {
+  position: absolute;
+
+  left: 0;
+  top: 50%;
+
+  width: 100%;
+
+  transform-origin: 0 50%;
+
+  border-radius: 999px;
+}
+
+/* 얼음 빔 외곽 광 */
+.move-beam.move-ice .move-beam-glow {
+  height: 18px;
+
+  transform: translateY(-50%) scaleX(0);
+
+  background: rgba(120, 225, 255, 0.26);
+
+  box-shadow:
+    0 0 12px rgba(130, 225, 255, 0.9),
+    0 0 24px rgba(100, 190, 255, 0.7);
+
+  animation: ice-beam-shoot 620ms ease-out forwards;
+}
+
+/* 얼음 빔 중심 */
+.move-beam.move-ice .move-beam-core {
+  height: 6px;
+
+  transform: translateY(-50%) scaleX(0);
+
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(160, 240, 255, 1),
+    rgba(235, 255, 255, 1)
+  );
+
+  box-shadow:
+    0 0 5px #fff,
+    0 0 9px rgba(130, 230, 255, 1);
+
+  animation: ice-beam-shoot 620ms ease-out forwards;
+}
+
+@keyframes ice-beam-shoot {
+  0% {
+    transform: translateY(-50%) scaleX(0);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  58% {
+    transform: translateY(-50%) scaleX(1);
+    opacity: 1;
+  }
+
+  82% {
+    transform: translateY(-50%) scaleX(1);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translateY(-50%) scaleX(1);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   냉동빔 명중 시 얼음 파편
+   ============================================================ */
+
+.move-ice-impact {
+  position: absolute;
+
+  right: 0;
+  top: 0;
+
+  width: 0;
+  height: 0;
+
+  animation: ice-impact-pop 620ms ease-out forwards;
+}
+
+.move-ice-impact span {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 5px;
+  height: 15px;
+
+  border-radius: 70% 15% 70% 15%;
+
+  background: rgba(210, 250, 255, 0.95);
+
+  box-shadow:
+    0 0 5px rgba(160, 235, 255, 1),
+    0 0 9px rgba(120, 210, 255, 0.8);
+
+  opacity: 0;
+}
+
+.move-ice-impact span:nth-child(1) {
+  --tx: 25px;
+  --ty: -26px;
+  --rot: 35deg;
+}
+
+.move-ice-impact span:nth-child(2) {
+  --tx: 34px;
+  --ty: -5px;
+  --rot: 78deg;
+}
+
+.move-ice-impact span:nth-child(3) {
+  --tx: 24px;
+  --ty: 23px;
+  --rot: 125deg;
+}
+
+.move-ice-impact span:nth-child(4) {
+  --tx: -18px;
+  --ty: -27px;
+  --rot: -35deg;
+}
+
+.move-ice-impact span:nth-child(5) {
+  --tx: -29px;
+  --ty: 2px;
+  --rot: -75deg;
+}
+
+.move-ice-impact span:nth-child(6) {
+  --tx: -17px;
+  --ty: 25px;
+  --rot: -125deg;
+}
+
+.move-ice-impact span {
+  animation: ice-shard-fly 380ms 300ms ease-out forwards;
+}
+
+@keyframes ice-shard-fly {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.2);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(var(--tx), var(--ty))
+      rotate(var(--rot))
+      scale(1);
+
+    opacity: 0;
+  }
+}
+
+@keyframes ice-impact-pop {
+  0%,
+  48% {
+    filter: brightness(1);
+  }
+
+  58% {
+    filter: brightness(2);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
