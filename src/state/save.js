@@ -276,6 +276,18 @@ export function activateAdminMode(save) {
     save.collection[c.id] = MAX_COPIES[c.rarity] ?? 2;
   });
 
+  // 퀘스트 카드 강제 지급
+  if (CARD_MAP["letsgo_eevee"]) {
+    save.collection["letsgo_eevee"] = 1;
+  }
+
+  console.log("[ADMIN] letsgo_eevee CARD_MAP:", CARD_MAP["letsgo_eevee"]);
+
+  console.log(
+    "[ADMIN] letsgo_eevee collection:",
+    save.collection["letsgo_eevee"],
+  );
+
   persist(save);
 }
 
