@@ -2459,7 +2459,7 @@ img.res-icon.small {
 .pack-row {
   display: flex;
   gap: 26px;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 .pack-column {

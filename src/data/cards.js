@@ -4667,6 +4667,9 @@ export const BALL_SPRITES = {
   premier: `${SPRITE_BASE}/items/premier-ball.png`,
   great: `${SPRITE_BASE}/items/great-ball.png`,
   poke: `${SPRITE_BASE}/items/poke-ball.png`,
+  sport: `${SPRITE_BASE}/items/sport-ball.png`,
+  repeat: `${SPRITE_BASE}/items/repeat-ball.png`,
+  quick: `${SPRITE_BASE}/items/quick-ball.png`,
 };
 
 export const RARITY_BALL = { C: "poke", R: "great", E: "ultra", L: "master" };
