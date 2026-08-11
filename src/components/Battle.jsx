@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { CARD_MAP, UI_SPRITES, spriteUrl } from "../data/cards.js";
 import {
   createGame,
@@ -432,6 +438,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const [atkFx, setAtkFx] = useState(null); // 공격 돌진/피격 연출
   const [impactFx, setImpactFx] = useState([]); // 공격 타격감 추가
   const [moveFx, setMoveFx] = useState(null);
+  const [movePendingHp, setMovePendingHp] = useState(null);
   const [intro, setIntro] = useState("vs"); // 'vs' -> 'coin' -> false
   const [confirmSurrender, setConfirmSurrender] = useState(false);
   const aiTimer = useRef(null);
@@ -456,6 +463,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const moveFxTimer = useRef(null);
   const moveImpactTimer = useRef(null);
   const moveStartTimer = useRef(null);
+  const moveDeathTimer = useRef(null);
 
   if (!gameRef.current) {
     gameRef.current = createGame(deck, trainer);
@@ -852,6 +860,70 @@ export default function Battle({ trainer, deck, onFinish }) {
     return null;
   }
 
+  function getPendingHpOffset(side, targetUid) {
+  if (!movePendingHp?.impacts?.length) {
+    return 0;
+  }
+
+  return movePendingHp.impacts.reduce((sum, impact) => {
+    if (
+      impact.side !== side ||
+      impact.targetUid !== targetUid
+    ) {
+      return sum;
+    }
+
+    if (impact.type === "damage") {
+      return sum + (impact.amount || 0);
+    }
+
+    if (impact.type === "heal") {
+      return sum - (impact.amount || 0);
+    }
+
+    return sum;
+  }, 0);
+}
+
+function getVisualUnit(unit) {
+  const offset = getPendingHpOffset(
+    unit.side,
+    unit.uid,
+  );
+
+  const visualHp = Math.max(
+    0,
+    Math.min(
+      unit.maxHp,
+      unit.hp + offset,
+    ),
+  );
+
+  if (visualHp === unit.hp) {
+    return unit;
+  }
+
+  return {
+    ...unit,
+    hp: visualHp,
+  };
+}
+
+function getVisualHeroHp(side, hp, maxHp) {
+  const offset = getPendingHpOffset(
+    side,
+    "hero",
+  );
+
+  return Math.max(
+    0,
+    Math.min(
+      maxHp,
+      hp + offset,
+    ),
+  );
+}
+
   function showMoveAnimation(card, action) {
     const preset =
       MOVE_FX_PRESETS[card?.id] ||
@@ -972,6 +1044,20 @@ export default function Battle({ trainer, deck, onFinish }) {
       phase: "charge",
     };
 
+    const hpImpacts =
+      (action.impacts || []).filter(
+        (impact) =>
+          impact.type === "damage" ||
+          impact.type === "heal",
+      );
+
+    if (hpImpacts.length > 0) {
+      setMovePendingHp({
+        key: action.seq,
+        impacts: hpImpacts,
+      });
+    }
+
     // 1. 기 모으기
     setMoveFx(fx);
 
@@ -1002,6 +1088,9 @@ export default function Battle({ trainer, deck, onFinish }) {
         startup +
         (animation.impactDelay ??
           Math.round(duration * 0.5)),
+
+      totalDuration:
+        startup + duration,
     };
   }
 
@@ -1277,7 +1366,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   });
 
   // ---- 상대 카드 공개 + 소환/진화/공격 이펙트 ----
-  useEffect(() => {
+  useLayoutEffect(() => {
     const la = game.lastAction;
 
     if (!la || la.seq === lastSeenSeq.current) return;
@@ -1407,22 +1496,46 @@ export default function Battle({ trainer, deck, onFinish }) {
             moveImpactTimer.current,
           );
 
+          // 실제 기술이 명중하는 순간
           moveImpactTimer.current =
             setTimeout(() => {
+              // 이제 실제 HP를 화면에 반영
+              setMovePendingHp(null);
+
               showImpacts(
                 la.impacts,
                 la.seq,
               );
+
+              rerender();
             }, moveTiming.impactDelay);
+
+          clearTimeout(
+            moveDeathTimer.current,
+          );
+
+          // 기술 연출이 다 끝난 뒤
+          // 죽은 포켓몬 실제 제거
+          moveDeathTimer.current =
+            setTimeout(() => {
+              cleanupDeaths(game);
+
+              setMovePendingHp(null);
+              rerender();
+            }, moveTiming.totalDuration + 80);
         } else {
+          setMovePendingHp(null);
+
           showImpacts(
             la.impacts,
             la.seq,
           );
+
+          cleanupDeaths(game);
+          rerender();
         }
       }
     }
-  });
 
   useEffect(
     () => () => {
@@ -1436,6 +1549,8 @@ export default function Battle({ trainer, deck, onFinish }) {
 
       clearTimeout(moveFxTimer.current);
       clearTimeout(moveImpactTimer.current);
+      clearTimeout(moveStartTimer.current);
+      clearTimeout(moveDeathTimer.current);
     },
     [],
   );
@@ -1446,7 +1561,11 @@ export default function Battle({ trainer, deck, onFinish }) {
 
   const me = game.players.player;
   const foe = game.players.enemy;
-  const myTurn = game.turn === "player" && !game.winner && !atkFx;
+  const myTurn =
+    game.turn === "player" &&
+    !game.winner &&
+    !atkFx &&
+    !moveFx;
 
   // ============================================================
   // 꾹 눌러 카드 크게 보기 (움직이면 취소)
@@ -2549,7 +2668,9 @@ export default function Battle({ trainer, deck, onFinish }) {
               emoji={trainer.emoji}
               size={44}
             />
-            <span className="hero-hp">HP {foe.hp}</span>
+            <span className="hero-hp">
+              HP {getVisualHeroHp("enemy", foe.hp, foe.maxHp)}
+            </span>
           </div>
 
           <div className="hero-info">
@@ -2570,7 +2691,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         {foe.field.map((u) => (
           <FieldUnit
             key={u.uid}
-            unit={u}
+            unit={getVisualUnit(u)}
             game={game}
             targetable={isEnemyTargetable(u)}
             onClick={() => onUnitClick("enemy", u)}
@@ -2656,7 +2777,7 @@ export default function Battle({ trainer, deck, onFinish }) {
         {me.field.map((u) => (
           <FieldUnit
             key={u.uid}
-            unit={u}
+            unit={getVisualUnit(u)}
             game={game}
             canAct={myTurn && canAttack(game, "player", u.uid)}
             selected={aimUid === u.uid}
@@ -2685,7 +2806,9 @@ export default function Battle({ trainer, deck, onFinish }) {
           <div className="hero-portrait">
             <TrainerSprite spriteKey={PLAYER_SPRITE} emoji="🧢" size={44} />
 
-            <span className="hero-hp">HP {me.hp}</span>
+            <span className="hero-hp">
+              HP {getVisualHeroHp("player", me.hp, me.maxHp)}
+            </span>
           </div>
 
           <div className="hero-info">

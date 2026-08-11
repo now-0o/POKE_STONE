@@ -1508,7 +1508,9 @@ export function cleanupDeaths(game, deferRemoval = false) {
     }
   }
 
-  checkWinner(game);
+  if (!deferRemoval) {
+    checkWinner(game);
+  }
 }
 
 function checkWinner(game) {
@@ -3228,7 +3230,7 @@ export function playCard(
 
       log(game, `${card.name}! ${u.name}이(가) 일격에 쓰러졌다!`);
 
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
 
       markPlay(game, side, card, {
         targetUid: u.uid,
@@ -3264,7 +3266,7 @@ export function playCard(
 
       log(game, `${card.name}! ${u.name}에게 피해 ${dealt}!`);
 
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
 
       markPlay(game, side, card, {
         targetUid: u.uid,
@@ -3292,7 +3294,7 @@ export function playCard(
 
       log(game, `${card.name}! 상대 전체를 공격했다!`);
 
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
 
       markPlay(game, side, card);
 
@@ -3318,7 +3320,7 @@ export function playCard(
 
       log(game, `${card.name}! 상대 전체 공격 후 내 포켓몬 공격력 -1!`);
 
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
 
       markPlay(game, side, card);
 
@@ -3338,7 +3340,7 @@ export function playCard(
 
       log(game, `${card.name}! 양쪽 필드 전체에 피해 ${s.amount}!`);
 
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
 
       markPlay(game, side, card);
 
@@ -3390,7 +3392,7 @@ export function playCard(
         log(game, `${card.name}! 하지만 효과가 없었다!`);
       }
 
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
 
       markPlay(game, side, card, {
         targetUid: u.uid,
@@ -3490,7 +3492,7 @@ export function playCard(
         if (mult === 0 || dealt > 0)
           log(game, `- ${u.name}에게 피해 ${dealt}.${note}`);
       });
-      cleanupDeaths(game);
+      cleanupDeaths(game, true);
       markPlay(game, side, card);
       return true;
     }
