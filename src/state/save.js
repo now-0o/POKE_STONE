@@ -278,7 +278,8 @@ export function activateAdminMode(save) {
       c.kind === "pokemon" ||
       c.kind === "spell" ||
       c.kind === "item" ||
-      c.kind === "mega"
+      c.kind === "mega" ||
+      c.kind === "quest"
     ) {
       save.collection[c.id] = MAX_COPIES[c.rarity] ?? 2;
     }
