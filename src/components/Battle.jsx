@@ -429,7 +429,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
     const distance = Math.hypot(dx, dy);
     const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-    
+
     setMoveFx({
       key: action.seq,
       type: animation.type,
@@ -765,7 +765,12 @@ export default function Battle({ trainer, deck, onFinish }) {
     // ----------------------------------------------------------
     // 기존 레전드 소환
     // ----------------------------------------------------------
-    if (la.kind === "play" && la.cardId && isLegend(la.cardId)) {
+    if (
+      la.kind === "play" &&
+      la.cardId &&
+      la.cardId !== "deoxys" &&
+      isLegend(la.cardId)
+    ) {
       playCry(la.cardId);
 
       setLegendFx({
@@ -1297,6 +1302,20 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (ok) {
       setSelectedHand(null);
       setAimUid(null);
+
+      // 테오키스는 폼 선택이 끝난 뒤 전설 소환 연출
+      playCry("deoxys");
+
+      setLegendFx({
+        cardId: "deoxys",
+        side: "player",
+        form,
+        key: `${game.animSeq}-deoxys-${form}`,
+      });
+
+      setTimeout(() => {
+        setLegendFx(null);
+      }, 2000);
     }
 
     rerender();
@@ -1756,7 +1775,35 @@ export default function Battle({ trainer, deck, onFinish }) {
           <div className="legend-rings" />
           <img
             className="legend-sprite"
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${{ kyogre: 382, suicune: 245, moltres: 146, entei: 244, hooh: 250, zapdos: 145, raikou: 243, groudon: 383, articuno: 144, regice: 378, celebi: 251, mewtwo: 150, mew: 151, lugia: 249, regirock: 377, latias: 380, rayquaza: 384, registeel: 379 }[legendFx.cardId]}.png`}
+            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${
+              legendFx.cardId === "deoxys"
+                ? {
+                    normal: 386,
+                    attack: 10001,
+                    defense: 10002,
+                    speed: 10003,
+                  }[legendFx.form || "normal"]
+                : {
+                    kyogre: 382,
+                    suicune: 245,
+                    moltres: 146,
+                    entei: 244,
+                    hooh: 250,
+                    zapdos: 145,
+                    raikou: 243,
+                    groudon: 383,
+                    articuno: 144,
+                    regice: 378,
+                    celebi: 251,
+                    mewtwo: 150,
+                    mew: 151,
+                    lugia: 249,
+                    regirock: 377,
+                    latias: 380,
+                    rayquaza: 384,
+                    registeel: 379,
+                  }[legendFx.cardId]
+            }.png`}
             alt=""
           />
           <div className="legend-name">
@@ -1780,6 +1827,7 @@ export default function Battle({ trainer, deck, onFinish }) {
                 latias: "라티아스",
                 rayquaza: "레쿠쟈",
                 registeel: "레지스틸",
+                deoxys: "테오키스",
               }[legendFx.cardId]
             }
           </div>

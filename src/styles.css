@@ -6012,6 +6012,28 @@ img.res-icon.small {
 }
 
 /* ============================================================
+   기술 애니메이션 공통 레이어
+   ============================================================ */
+
+.move-fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 410;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.move-fx {
+  position: absolute;
+
+  height: 0;
+
+  transform-origin: 0 50%;
+
+  pointer-events: none;
+}
+
+/* ============================================================
    냉동빔 - ICE BEAM
    ============================================================ */
 
