@@ -4889,7 +4889,7 @@ export const PACKS = {
     price: 150,
     weights: { C: 81, R: 15, E: 2.5, L: 1.5 },
     guarantee: "R",
-    ball: "cherish ",
+    ball: "cherish",
     generation: 4,
   },
 };
