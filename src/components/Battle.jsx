@@ -214,8 +214,8 @@ const MOVE_FX_PRESETS = {
     theme: "poison",
     scope: "enemy-field",
     startup: 320,
-    duration: 620,
-    impactDelay: 300,
+    duration: 720,
+    impactDelay: 430,
   },
 
   discharge: {
@@ -1536,6 +1536,7 @@ function getVisualHeroHp(side, hp, maxHp) {
         }
       }
     }
+  });
 
   useEffect(
     () => () => {
