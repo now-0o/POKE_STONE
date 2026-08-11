@@ -3977,6 +3977,16 @@ export const CARD_MAP = Object.fromEntries(
 const SPRITE_BASE =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites";
 
+const SPECIAL_POKEMON_SPRITE = {
+  // 이브이 Z
+  eevee_z:
+    "https://img.pokemondb.net/sprites/black-white/anim/normal/eevee.gif",
+
+  // 레츠고! 이브이
+  letsgo_eevee:
+    "https://img.pokemondb.net/sprites/lets-go-pikachu-eevee/normal/eevee-lets-go.png",
+};
+
 export const DEX = {
   // 트레이너 전용 시그니처
   surge_raichu: 26, // 라이츄
@@ -4574,9 +4584,6 @@ export const DEX = {
   darkrai: 491,
   shaymin: 492,
   arceus: 493,
-
-  letsgo_eevee: 10240,
-  eevee_z: 10240,
 };
 
 export const MEGA_DEX = {
@@ -4722,6 +4729,11 @@ export function spriteUrl(
 ) {
   if (cardId === "mimikyu" && busted) {
     return `${SPRITE_BASE}/pokemon/10143.png`;
+  }
+
+  // 특수 카드 전용 스프라이트
+  if (SPECIAL_POKEMON_SPRITE[cardId]) {
+    return SPECIAL_POKEMON_SPRITE[cardId];
   }
 
   if (spriteId) {
