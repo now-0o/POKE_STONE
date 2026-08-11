@@ -4575,7 +4575,8 @@ export const DEX = {
   shaymin: 492,
   arceus: 493,
 
-  eevee_z: 133,
+  letsgo_eevee: 10240,
+  eevee_z: 10240,
 };
 
 export const MEGA_DEX = {
