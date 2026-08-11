@@ -1442,18 +1442,35 @@ function applyDamage(
   return finishImpact(dmg);
 }
 
-export function cleanupDeaths(game) {
-  // 대폭발 연쇄를 위해 시체가 없어질 때까지 반복 (최대 20회 안전장치)
+export function cleanupDeaths(game, deferRemoval = false) {
+  // 대폭발 연쇄를 위해 새로 죽은 포켓몬이 없어질 때까지 반복
   for (let pass = 0; pass < 20; pass++) {
-    let anyDead = false;
+    let anyNewDead = false;
+
     ["player", "enemy"].forEach((side) => {
       const p = game.players[side];
-      const dead = p.field.filter((u) => u.hp <= 0);
-      if (dead.length === 0) return;
-      anyDead = true;
-      p.field = p.field.filter((u) => u.hp > 0);
-      dead.forEach((u) => {
+
+      const allDead = p.field.filter((u) => u.hp <= 0);
+
+      // 이미 죽음 효과를 처리한 포켓몬은 다시 처리하지 않음
+      const newlyDead = allDead.filter((u) => !u._deathProcessed);
+
+      // 실제 제거는 공격 애니메이션 종료 후에만
+      if (!deferRemoval && allDead.length > 0) {
+        p.field = p.field.filter((u) => u.hp > 0);
+      }
+
+      if (newlyDead.length === 0) {
+        return;
+      }
+
+      anyNewDead = true;
+
+      newlyDead.forEach((u) => {
+        u._deathProcessed = true;
+
         log(game, `${u.name}이(가) 기절했다!`);
+
         p.lastDeadPokemon = {
           cardId: u.cardId,
 
@@ -1464,23 +1481,33 @@ export function cleanupDeaths(game) {
 
           secondaryAbility: u.secondaryAbility || null,
         };
+
         // 죽음의 메아리
         if (u.ability === "deathdraw") {
           drawCard(game, side);
+
           log(game, `${u.name}의 예지몽! 카드를 1장 뽑았다.`);
         }
+
         if (hasAbility(u, "explode")) {
           const foes = game.players[other(side)].field.filter((f) => f.hp > 0);
+
           if (foes.length > 0) {
             const t = foes[Math.floor(Math.random() * foes.length)];
+
             applyTypedAbilityDamage(game, t, 2, "전기");
+
             log(game, `${u.name}의 대폭발! ${t.name}에게 피해 2!`);
           }
         }
       });
     });
-    if (!anyDead) break;
+
+    if (!anyNewDead) {
+      break;
+    }
   }
+
   checkWinner(game);
 }
 
@@ -3999,7 +4026,7 @@ export function attack(game, side, attackerUid, target) {
       `${atkUnit.name}이(가) ${foe.name}을(를) 직접 공격! 피해 ${dmg}!`,
     );
 
-    cleanupDeaths(game);
+    cleanupDeaths(game, true);
 
     game.animSeq = (game.animSeq || 0) + 1;
 
@@ -4306,7 +4333,7 @@ export function attack(game, side, attackerUid, target) {
     log(game, `${atkUnit.name}의 조개껍질방울! 체력을 ${healed} 회복했다.`);
   }
 
-  cleanupDeaths(game);
+  cleanupDeaths(game, true);
 
   game.animSeq = (game.animSeq || 0) + 1;
 

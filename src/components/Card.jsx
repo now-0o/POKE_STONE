@@ -459,6 +459,8 @@ export function FieldUnit({
     !unit._tauntDisabled &&
     (unit.ability === "taunt" ||
       unit.secondaryAbility === "taunt" ||
+      unit.ability === "nineevolboost" ||
+      unit.secondaryAbility === "nineevolboost" ||
       unit.ability === "deoxys_defense" ||
       unit.secondaryAbility === "deoxys_defense" ||
       unit.ability === "fortress" ||
