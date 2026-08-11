@@ -2816,9 +2816,9 @@ export function playCard(
     log(game, `${p.name}이(가) ${card.name}을(를) 냈다!`);
     runBattlecry(game, side, unit);
     cleanupDeaths(game);
-    markPlay(game, side, card, {
-      targetUid: u.uid,
-    });
+
+    markPlay(game, side, card);
+
     return true;
   }
 
@@ -3230,7 +3230,9 @@ export function playCard(
 
       cleanupDeaths(game);
 
-      markPlay(game, side, card);
+      markPlay(game, side, card, {
+        targetUid: u.uid,
+      });
 
       return true;
     }
