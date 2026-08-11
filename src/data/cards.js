@@ -2403,6 +2403,14 @@ export const CARDS = [
     cost: 3,
     rarity: "R",
     emoji: "🌊",
+    // 하이드로펌프
+    animation: {
+      type: "stream",
+      theme: "water",
+      startup: 260,
+      duration: 430,
+      impactDelay: 220,
+    },
     spell: { effect: "damage", amount: 4, target: "enemy-any" },
     text: "피해 4를 입힌다. (물 타입, 상성 적용 / 비: +1, 쾌청: -1)",
   },
@@ -2415,6 +2423,14 @@ export const CARDS = [
     cost: 3,
     rarity: "R",
     emoji: "🔥",
+    // 화염방사
+    animation: {
+      type: "stream",
+      theme: "fire",
+      startup: 280,
+      duration: 440,
+      impactDelay: 220,
+    },
     spell: { effect: "damage", amount: 4, target: "enemy-any" },
     text: "피해 4를 입힌다. (불꽃 타입, 상성 적용 / 쾌청: +1, 비: -1)",
   },
@@ -2427,6 +2443,14 @@ export const CARDS = [
     cost: 4,
     rarity: "R",
     emoji: "☀️",
+    // 솔라빔
+    animation: {
+      type: "beam",
+      theme: "solar",
+      startup: 340,
+      duration: 500,
+      impactDelay: 260,
+    },
     spell: { effect: "damage", amount: 5, target: "enemy-any" },
     text: "피해 5를 입힌다. (풀 타입, 상성 적용 / 쾌청이면 비용 -2)",
   },
@@ -2439,6 +2463,14 @@ export const CARDS = [
     cost: 3,
     rarity: "R",
     emoji: "⚡",
+    // 10만볼트
+    animation: {
+      type: "bolt",
+      theme: "electric",
+      startup: 240,
+      duration: 360,
+      impactDelay: 180,
+    },
     spell: { effect: "damage", amount: 4, target: "enemy-any" },
     text: "피해 4를 입힌다. (전기 타입, 상성 적용 / 땅 타입에겐 무효)",
   },
@@ -2463,9 +2495,11 @@ export const CARDS = [
     cost: 3,
     rarity: "R",
     emoji: "❄️",
+    // 냉동빔
     animation: {
       type: "beam",
       theme: "ice",
+      startup: 260,
       duration: 460,
       impactDelay: 210,
     },

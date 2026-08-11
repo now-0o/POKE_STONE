@@ -26,6 +26,398 @@ const DRAG_THRESHOLD = 8;
 const INSPECT_DELAY = 200;
 const PLAYER_SPRITE = "ethan"; // HGSS 주인공 (성도!)
 
+const MOVE_FX_PRESETS = {
+  // ============================================================
+  // 기존 5개
+  // ============================================================
+
+  hydropump: {
+    type: "stream",
+    theme: "water",
+    scope: "target",
+    startup: 260,
+    duration: 430,
+    impactDelay: 220,
+  },
+
+  flamethrower: {
+    type: "stream",
+    theme: "fire",
+    scope: "target",
+    startup: 280,
+    duration: 440,
+    impactDelay: 220,
+  },
+
+  solarbeam: {
+    type: "beam",
+    theme: "solar",
+    scope: "target",
+    startup: 340,
+    duration: 500,
+    impactDelay: 260,
+  },
+
+  thunderbolt: {
+    type: "bolt",
+    theme: "electric",
+    scope: "target",
+    startup: 240,
+    duration: 360,
+    impactDelay: 180,
+  },
+
+  icebeam: {
+    type: "beam",
+    theme: "ice",
+    scope: "target",
+    startup: 260,
+    duration: 460,
+    impactDelay: 210,
+  },
+
+  // ============================================================
+  // 단일 공격
+  // ============================================================
+
+  psychic: {
+    type: "projectile",
+    theme: "psychic",
+    scope: "target",
+    startup: 270,
+    duration: 420,
+    impactDelay: 220,
+  },
+
+  stoneedge: {
+    type: "strike",
+    theme: "rock",
+    scope: "target",
+    variant: "stone",
+    startup: 260,
+    duration: 420,
+    impactDelay: 240,
+  },
+
+  moonblast: {
+    type: "projectile",
+    theme: "fairy",
+    scope: "target",
+    startup: 300,
+    duration: 450,
+    impactDelay: 240,
+  },
+
+  infight: {
+    type: "strike",
+    theme: "fighting",
+    scope: "target",
+    startup: 170,
+    duration: 340,
+    impactDelay: 170,
+  },
+
+  shadowball: {
+    type: "projectile",
+    theme: "ghost",
+    scope: "target",
+    startup: 280,
+    duration: 430,
+    impactDelay: 220,
+  },
+
+  darkpulse: {
+    type: "projectile",
+    theme: "dark",
+    scope: "target",
+    startup: 250,
+    duration: 420,
+    impactDelay: 220,
+  },
+
+  ironhead: {
+    type: "strike",
+    theme: "steel",
+    scope: "target",
+    startup: 180,
+    duration: 330,
+    impactDelay: 160,
+  },
+
+  dragonclaw: {
+    type: "slash",
+    theme: "dragon",
+    scope: "target",
+    startup: 200,
+    duration: 350,
+    impactDelay: 180,
+  },
+
+  quickattack: {
+    type: "strike",
+    theme: "normal",
+    scope: "target",
+    variant: "quick",
+    startup: 120,
+    duration: 260,
+    impactDelay: 120,
+  },
+
+  // ============================================================
+  // 광역
+  // ============================================================
+
+  earthquake: {
+    type: "ground",
+    theme: "ground",
+    scope: "enemy-field",
+    startup: 300,
+    duration: 560,
+    impactDelay: 280,
+  },
+
+  surf: {
+    type: "wave",
+    theme: "water",
+    scope: "enemy-field",
+    startup: 300,
+    duration: 580,
+    impactDelay: 300,
+  },
+
+  blizzardmove: {
+    type: "area",
+    theme: "ice",
+    scope: "enemy-field",
+    startup: 340,
+    duration: 700,
+    impactDelay: 320,
+  },
+
+  heatwave: {
+    type: "area",
+    theme: "fire",
+    scope: "enemy-field",
+    startup: 320,
+    duration: 650,
+    impactDelay: 300,
+  },
+
+  sludgewave: {
+    type: "wave",
+    theme: "poison",
+    scope: "enemy-field",
+    startup: 320,
+    duration: 620,
+    impactDelay: 300,
+  },
+
+  discharge: {
+    type: "area",
+    theme: "electric",
+    scope: "enemy-field",
+    startup: 260,
+    duration: 520,
+    impactDelay: 250,
+  },
+
+  dracometeor: {
+    type: "meteor",
+    theme: "dragon",
+    scope: "enemy-field",
+    startup: 420,
+    duration: 820,
+    impactDelay: 420,
+  },
+
+  explosionmove: {
+    type: "explosion",
+    theme: "normal",
+    scope: "board",
+    startup: 500,
+    duration: 850,
+    impactDelay: 440,
+  },
+
+  // ============================================================
+  // 일격기
+  // ============================================================
+
+  sheercold: {
+    type: "execute",
+    theme: "ice",
+    scope: "target",
+    variant: "freeze",
+    startup: 450,
+    duration: 650,
+    impactDelay: 380,
+  },
+
+  fissure: {
+    type: "execute",
+    theme: "ground",
+    scope: "target",
+    variant: "fissure",
+    startup: 420,
+    duration: 620,
+    impactDelay: 360,
+  },
+
+  horndrill: {
+    type: "execute",
+    theme: "normal",
+    scope: "target",
+    variant: "drill",
+    startup: 380,
+    duration: 600,
+    impactDelay: 340,
+  },
+
+  guillotine: {
+    type: "execute",
+    theme: "steel",
+    scope: "target",
+    variant: "guillotine",
+    startup: 380,
+    duration: 600,
+    impactDelay: 340,
+  },
+
+  // ============================================================
+  // 강력 단일기
+  // ============================================================
+
+  hyperbeam: {
+    type: "beam",
+    theme: "normal",
+    scope: "target",
+    variant: "hyper",
+    startup: 500,
+    duration: 620,
+    impactDelay: 360,
+  },
+
+  fireblast: {
+    type: "projectile",
+    theme: "fire",
+    scope: "target",
+    variant: "fireblast",
+    startup: 350,
+    duration: 520,
+    impactDelay: 290,
+  },
+
+  // ============================================================
+  // 날씨
+  // ============================================================
+
+  raindance: {
+    type: "weather",
+    theme: "water",
+    scope: "board",
+    startup: 300,
+    duration: 700,
+  },
+
+  sunnyday: {
+    type: "weather",
+    theme: "solar",
+    scope: "board",
+    startup: 300,
+    duration: 700,
+  },
+
+  sandstorm: {
+    type: "weather",
+    theme: "ground",
+    scope: "board",
+    startup: 300,
+    duration: 720,
+  },
+
+  // ============================================================
+  // 상태이상
+  // ============================================================
+
+  spore: {
+    type: "status",
+    theme: "grass",
+    scope: "target",
+    startup: 250,
+    duration: 520,
+  },
+
+  willowisp: {
+    type: "status",
+    theme: "fire",
+    scope: "target",
+    startup: 250,
+    duration: 480,
+  },
+
+  thunderwave_move: {
+    type: "status",
+    theme: "electric",
+    scope: "target",
+    startup: 220,
+    duration: 450,
+  },
+
+  toxic: {
+    type: "status",
+    theme: "poison",
+    scope: "target",
+    startup: 280,
+    duration: 500,
+    impactDelay: 260,
+  },
+
+  // ============================================================
+  // 기타 특수 기술
+  // ============================================================
+
+  recover: {
+    type: "heal",
+    theme: "normal",
+    scope: "target",
+    startup: 260,
+    duration: 560,
+  },
+
+  roar: {
+    type: "sound",
+    theme: "normal",
+    scope: "target",
+    startup: 220,
+    duration: 520,
+  },
+
+  safeguard: {
+    type: "shield",
+    theme: "fairy",
+    scope: "self-field",
+    startup: 300,
+    duration: 700,
+  },
+
+  haze: {
+    type: "haze",
+    theme: "ice",
+    scope: "board",
+    startup: 300,
+    duration: 720,
+  },
+
+  perishsong: {
+    type: "sound",
+    theme: "ghost",
+    scope: "board",
+    variant: "perish",
+    startup: 400,
+    duration: 900,
+  },
+};
+
 export default function Battle({ trainer, deck, onFinish }) {
   const gameRef = useRef(null);
   const [, forceRender] = useState(0);
@@ -63,6 +455,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   const impactClearTimer = useRef(null);
   const moveFxTimer = useRef(null);
   const moveImpactTimer = useRef(null);
+  const moveStartTimer = useRef(null);
 
   if (!gameRef.current) {
     gameRef.current = createGame(deck, trainer);
@@ -361,92 +754,255 @@ export default function Battle({ trainer, deck, onFinish }) {
     );
   }
 
+  function rectOfElement(el) {
+    if (!el) return null;
+
+    const rect = el.getBoundingClientRect();
+
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  }
+
+  function resolveMoveTargetRect(animation, action) {
+    if (typeof document === "undefined") {
+      return null;
+    }
+
+    // 전체 보드
+    if (animation.scope === "board") {
+      return rectOfElement(battleRef.current);
+    }
+
+    // 상대 필드
+    if (animation.scope === "enemy-field") {
+      return rectOfElement(
+        document.querySelector(
+          action.side === "player"
+            ? '[data-drop="enemy-field"]'
+            : '[data-drop="my-field"]',
+        ),
+      );
+    }
+
+    // 내 필드
+    if (animation.scope === "self-field") {
+      return rectOfElement(
+        document.querySelector(
+          action.side === "player"
+            ? '[data-drop="my-field"]'
+            : '[data-drop="enemy-field"]',
+        ),
+      );
+    }
+
+    // 명시적인 대상 UID
+    if (
+      action.targetUid &&
+      action.targetUid !== "hero"
+    ) {
+      const el = document.querySelector(
+        `[data-uid="${action.targetUid}"]`,
+      );
+
+      if (el) {
+        return rectOfElement(el);
+      }
+
+      // 울부짖기 / 즉사처럼 이미 DOM에서 사라졌다면
+      // 직전 저장 좌표 사용
+      const saved =
+        battleRectsRef.current.get(
+          action.targetUid,
+        );
+
+      if (saved) {
+        return saved;
+      }
+    }
+
+    if (action.targetUid === "hero") {
+      return rectOfElement(
+        document.querySelector(
+          action.side === "player"
+            ? '[data-drop="enemy-hero"] .hero-portrait'
+            : '[data-drop="my-hero"] .hero-portrait',
+        ),
+      );
+    }
+
+    // 기존 impact 타겟 fallback
+    const impact =
+      action.impacts?.find(
+        (x) =>
+          x.type === "damage" ||
+          x.type === "heal" ||
+          x.type === "cleanse",
+      );
+
+    if (impact) {
+      return getImpactRect(impact);
+    }
+
+    return null;
+  }
+
   function showMoveAnimation(card, action) {
-    const animation = card?.animation;
+    const preset =
+      MOVE_FX_PRESETS[card?.id] ||
+      null;
 
-    if (!animation) return false;
+    if (!preset && !card?.animation) {
+      return null;
+    }
 
-    const battleRect = battleRef.current?.getBoundingClientRect();
+    const animation = {
+      ...(preset || {}),
+      ...(card?.animation || {}),
+    };
 
-    if (!battleRect) return false;
+    const battleRect =
+      battleRef.current?.getBoundingClientRect();
 
-    // 기술 피해를 실제로 받은 첫 대상
-    const targetImpact = action.impacts?.find(
-      (impact) => impact.type === "damage",
-    );
+    if (!battleRect) {
+      return null;
+    }
 
-    if (!targetImpact) return false;
+    const sourceEl =
+      document.querySelector(
+        action.side === "player"
+          ? '[data-drop="my-hero"] .trainer-sprite'
+          : '[data-drop="enemy-hero"] .trainer-sprite',
+      );
 
-    const targetRect = getImpactRect(targetImpact);
+    if (!sourceEl) {
+      return null;
+    }
 
-    if (!targetRect) return false;
+    const sourceRect =
+      sourceEl.getBoundingClientRect();
 
-    // 기술 카드는 사용한 쪽 트레이너 위치에서 발사
-    const sourceEl = document.querySelector(
-      action.side === "player"
-        ? '[data-drop="my-hero"] .trainer-sprite'
-        : '[data-drop="enemy-hero"] .trainer-sprite',
-    );
+    const targetRect =
+      resolveMoveTargetRect(
+        animation,
+        action,
+      );
 
-    if (!sourceEl) return false;
+    if (!targetRect) {
+      return null;
+    }
 
-    const sourceRect = sourceEl.getBoundingClientRect();
+    // 트레이너 바로 위에 기 모으기
+    const sourceCx =
+      sourceRect.left +
+      sourceRect.width / 2;
 
-    const sourceCx = sourceRect.left + sourceRect.width / 2;
-    const sourceCy = sourceRect.top + sourceRect.height / 2;
+    const sourceCy =
+      sourceRect.top - 14;
 
-    const targetCx = targetRect.x;
-    const targetCy = targetRect.y;
+    const targetCx =
+      targetRect.x ??
+      targetRect.left +
+        targetRect.width / 2;
 
-    // 트레이너 중심 → 대상 방향
-    const sourceDx = targetCx - sourceCx;
-    const sourceDy = targetCy - sourceCy;
-    const sourceDistance = Math.hypot(sourceDx, sourceDy) || 1;
-
-    const ux = sourceDx / sourceDistance;
-    const uy = sourceDy / sourceDistance;
-
-    // 이미지 정중앙이 아니라
-    // 대상 쪽을 향한 이미지 가장자리에서 발사
-    const sourceOffset =
-      Math.min(sourceRect.width, sourceRect.height) * 0.38;
+    const targetCy =
+      targetRect.y ??
+      targetRect.top +
+        targetRect.height / 2;
 
     const x1 =
-      sourceCx +
-      ux * sourceOffset -
+      sourceCx -
       battleRect.left;
 
     const y1 =
-      sourceCy +
-      uy * sourceOffset -
+      sourceCy -
       battleRect.top;
 
-    const x2 = targetCx - battleRect.left;
-    const y2 = targetCy - battleRect.top;
+    const x2 =
+      targetCx -
+      battleRect.left;
+
+    const y2 =
+      targetCy -
+      battleRect.top;
 
     const dx = x2 - x1;
     const dy = y2 - y1;
 
-    const distance = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    const distance =
+      Math.hypot(dx, dy);
 
-    setMoveFx({
+    const angle =
+      Math.atan2(dy, dx) *
+      (180 / Math.PI);
+
+    const startup =
+      animation.startup ?? 260;
+
+    const duration =
+      animation.duration ?? 450;
+
+    const fx = {
       key: action.seq,
+
+      cardId: card.id,
+
       type: animation.type,
       theme: animation.theme,
+
+      variant:
+        animation.variant || null,
+
       x: x1,
       y: y1,
+
+      targetX: x2,
+      targetY: y2,
+
       distance,
       angle,
-    });
 
-    clearTimeout(moveFxTimer.current);
+      duration,
 
-    moveFxTimer.current = setTimeout(() => {
-      setMoveFx(null);
-    }, animation.duration || 620);
+      phase: "charge",
+    };
 
-    return true;
+    // 1. 기 모으기
+    setMoveFx(fx);
+
+    clearTimeout(
+      moveStartTimer.current,
+    );
+
+    // 2. 발사
+    moveStartTimer.current =
+      setTimeout(() => {
+        setMoveFx({
+          ...fx,
+          phase: "fire",
+        });
+      }, startup);
+
+    clearTimeout(
+      moveFxTimer.current,
+    );
+
+    moveFxTimer.current =
+      setTimeout(() => {
+        setMoveFx(null);
+      }, startup + duration);
+
+    return {
+      impactDelay:
+        startup +
+        (animation.impactDelay ??
+          Math.round(duration * 0.5)),
+    };
   }
 
   // impact 배열을 화면용 데이터로 변환
@@ -835,17 +1391,35 @@ export default function Battle({ trainer, deck, onFinish }) {
 
     // 일반 공격이 아닌
     // 기술 / 전투의 함성 / 도구 / 회복 효과
-    if (la.kind === "play" && la.impacts?.length) {
-      const hasMoveAnimation = showMoveAnimation(playedCard, la);
+    if (
+      la.kind === "play" &&
+      playedCard
+    ) {
+      const moveTiming =
+        showMoveAnimation(
+          playedCard,
+          la,
+        );
 
-      if (hasMoveAnimation) {
-        clearTimeout(moveImpactTimer.current);
+      if (la.impacts?.length) {
+        if (moveTiming) {
+          clearTimeout(
+            moveImpactTimer.current,
+          );
 
-        moveImpactTimer.current = setTimeout(() => {
-          showImpacts(la.impacts, la.seq);
-        }, playedCard.animation?.impactDelay || 300);
-      } else {
-        showImpacts(la.impacts, la.seq);
+          moveImpactTimer.current =
+            setTimeout(() => {
+              showImpacts(
+                la.impacts,
+                la.seq,
+              );
+            }, moveTiming.impactDelay);
+        } else {
+          showImpacts(
+            la.impacts,
+            la.seq,
+          );
+        }
       }
     }
   });
@@ -1592,36 +2166,144 @@ export default function Battle({ trainer, deck, onFinish }) {
 
       {/* 기술 애니메이션 */}
       <div className="move-fx-layer">
-        {moveFx && (
+        {/* ========================================================
+            기술 사용 전 에너지 응축
+            ======================================================== */}
+        {moveFx?.phase === "charge" && (
           <div
-            key={moveFx.key}
             className={[
-              "move-fx",
-              `move-${moveFx.type}`,
+              "move-charge",
+              `move-charge-${moveFx.theme}`,
               `move-${moveFx.theme}`,
             ].join(" ")}
             style={{
               left: `${moveFx.x}px`,
               top: `${moveFx.y}px`,
-              width: `${moveFx.distance}px`,
-              transform: `rotate(${moveFx.angle}deg)`,
             }}
           >
-            <div className="move-beam-glow" />
-            <div className="move-beam-core" />
+            <div className="move-charge-ring" />
+            <div className="move-charge-orb" />
 
-            {moveFx.theme === "ice" && (
-              <div className="move-ice-impact">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-            )}
+            <span className="move-charge-particle p1" />
+            <span className="move-charge-particle p2" />
+            <span className="move-charge-particle p3" />
+            <span className="move-charge-particle p4" />
           </div>
         )}
+
+        {/* ========================================================
+            날아가는 계열
+            ======================================================== */}
+        {moveFx?.phase === "fire" &&
+          ["beam", "stream", "bolt", "projectile"].includes(
+            moveFx.type,
+          ) && (
+            <div
+              key={`${moveFx.key}-fire`}
+              className={[
+                "move-fx",
+                `move-${moveFx.type}`,
+                `move-${moveFx.theme}`,
+                moveFx.variant
+                  ? `move-${moveFx.variant}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={{
+                left: `${moveFx.x}px`,
+                top: `${moveFx.y}px`,
+                width: `${moveFx.distance}px`,
+                transform:
+                  `rotate(${moveFx.angle}deg)`,
+                "--move-duration":
+                  `${moveFx.duration}ms`,
+              }}
+            >
+              {moveFx.type === "bolt" && (
+                <svg
+                  className="move-bolt-svg"
+                  viewBox="0 0 100 20"
+                  preserveAspectRatio="none"
+                >
+                  <polyline
+                    className="move-bolt-glow"
+                    points="0,10 12,4 20,14 32,5 43,15 55,4 67,14 78,5 89,13 100,10"
+                  />
+
+                  <polyline
+                    className="move-bolt-core"
+                    points="0,10 12,4 20,14 32,5 43,15 55,4 67,14 78,5 89,13 100,10"
+                  />
+                </svg>
+              )}
+
+              {moveFx.type === "projectile" && (
+                <>
+                  <div className="move-projectile-trail" />
+                  <div className="move-projectile-core" />
+                </>
+              )}
+
+              {(moveFx.type === "beam" ||
+                moveFx.type === "stream") && (
+                <>
+                  <div className="move-beam-glow" />
+                  <div className="move-beam-core" />
+                </>
+              )}
+
+              {moveFx.theme === "ice" && (
+                <div className="move-ice-impact">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              )}
+
+              <div className="move-travel-impact" />
+            </div>
+          )}
+
+        {/* ========================================================
+            대상 / 필드에서 직접 터지는 계열
+            ======================================================== */}
+        {moveFx?.phase === "fire" &&
+          !["beam", "stream", "bolt", "projectile"].includes(
+            moveFx.type,
+          ) && (
+            <div
+              key={`${moveFx.key}-zone`}
+              className={[
+                "move-zone-fx",
+                `move-${moveFx.type}`,
+                `move-${moveFx.theme}`,
+                moveFx.variant
+                  ? `move-${moveFx.variant}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={{
+                left: `${moveFx.targetX}px`,
+                top: `${moveFx.targetY}px`,
+                "--move-duration":
+                  `${moveFx.duration}ms`,
+              }}
+            >
+              <div className="move-zone-core" />
+
+              <span className="move-zp z1" />
+              <span className="move-zp z2" />
+              <span className="move-zp z3" />
+              <span className="move-zp z4" />
+              <span className="move-zp z5" />
+              <span className="move-zp z6" />
+            </div>
+          )}
       </div>
 
       {/* 전투 피격 / 회복 / 버프 연출 */}

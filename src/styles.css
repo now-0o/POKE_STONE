@@ -6034,6 +6034,318 @@ img.res-icon.small {
 }
 
 /* ============================================================
+   기술 사용 전 에너지 응축
+   ============================================================ */
+
+.move-charge {
+  position: absolute;
+
+  width: 0;
+  height: 0;
+
+  z-index: 420;
+
+  pointer-events: none;
+}
+
+.move-charge-orb {
+  position: absolute;
+
+  left: -11px;
+  top: -11px;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 50%;
+
+  animation:
+    move-charge-orb-in
+    260ms
+    cubic-bezier(.15,.8,.25,1)
+    forwards;
+}
+
+.move-charge-ring {
+  position: absolute;
+
+  left: -18px;
+  top: -18px;
+
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+
+  border: 2px solid
+    rgba(255,255,255,.7);
+
+  opacity: 0;
+
+  animation:
+    move-charge-ring-in
+    260ms
+    ease-out
+    forwards;
+}
+
+.move-charge-particle {
+  position: absolute;
+
+  left: -2px;
+  top: -2px;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: #fff;
+
+  opacity: 0;
+
+  box-shadow:
+    0 0 5px currentColor;
+}
+
+.move-charge-particle.p1 {
+  --px: -22px;
+  --py: -14px;
+}
+
+.move-charge-particle.p2 {
+  --px: 20px;
+  --py: -12px;
+}
+
+.move-charge-particle.p3 {
+  --px: -20px;
+  --py: 15px;
+}
+
+.move-charge-particle.p4 {
+  --px: 21px;
+  --py: 14px;
+}
+
+.move-charge-particle {
+  animation:
+    move-charge-particle-in
+    260ms
+    ease-in
+    forwards;
+}
+
+
+/* 얼음 */
+
+.move-charge-ice {
+  color: #8eeaff;
+}
+
+.move-charge-ice
+.move-charge-orb {
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #fff,
+      #bdf5ff 32%,
+      #57cfff 68%,
+      rgba(30,130,255,.3)
+    );
+
+  box-shadow:
+    0 0 7px #fff,
+    0 0 15px rgba(90,220,255,.95),
+    0 0 25px rgba(80,160,255,.55);
+}
+
+.move-charge-ice
+.move-charge-ring {
+  border-color:
+    rgba(150,235,255,.85);
+}
+
+
+/* 불꽃 */
+
+.move-charge-fire {
+  color: #ff7b30;
+}
+
+.move-charge-fire
+.move-charge-orb {
+  background:
+    radial-gradient(
+      circle at 38% 32%,
+      #fff8c6,
+      #ffd24a 25%,
+      #ff6b21 60%,
+      #d51c10 100%
+    );
+
+  box-shadow:
+    0 0 8px #ffe26e,
+    0 0 17px rgba(255,95,25,.95),
+    0 0 28px rgba(255,45,10,.5);
+}
+
+.move-charge-fire
+.move-charge-ring {
+  border-color:
+    rgba(255,135,40,.85);
+}
+
+
+/* 물 */
+
+.move-charge-water {
+  color: #5ebcff;
+}
+
+.move-charge-water
+.move-charge-orb {
+  background:
+    radial-gradient(
+      circle at 35% 28%,
+      #fff,
+      #9eeeff 28%,
+      #279bff 65%,
+      #1652c2 100%
+    );
+
+  box-shadow:
+    0 0 8px #d9faff,
+    0 0 17px rgba(55,175,255,.9),
+    0 0 26px rgba(20,90,255,.45);
+}
+
+.move-charge-water
+.move-charge-ring {
+  border-color:
+    rgba(100,205,255,.85);
+}
+
+
+/* 전기 */
+
+.move-charge-electric {
+  color: #ffe652;
+}
+
+.move-charge-electric
+.move-charge-orb {
+  background:
+    radial-gradient(
+      circle,
+      #fff 0%,
+      #fff990 30%,
+      #ffd21f 65%,
+      #ff9d00 100%
+    );
+
+  box-shadow:
+    0 0 7px #fff,
+    0 0 16px #ffe12d,
+    0 0 27px rgba(255,185,0,.65);
+}
+
+.move-charge-electric
+.move-charge-ring {
+  border-color:
+    rgba(255,230,70,.9);
+}
+
+
+/* 솔라빔 */
+
+.move-charge-solar {
+  color: #9cff76;
+}
+
+.move-charge-solar
+.move-charge-orb {
+  background:
+    radial-gradient(
+      circle,
+      #fff 0%,
+      #eaff9e 28%,
+      #83e95d 62%,
+      #2f9c3d 100%
+    );
+
+  box-shadow:
+    0 0 8px #fff,
+    0 0 18px rgba(155,255,100,.95),
+    0 0 30px rgba(70,210,70,.5);
+}
+
+.move-charge-solar
+.move-charge-ring {
+  border-color:
+    rgba(160,255,110,.85);
+}
+
+
+@keyframes move-charge-orb-in {
+  0% {
+    transform: scale(.15);
+    opacity: 0;
+  }
+
+  55% {
+    transform: scale(.75);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes move-charge-ring-in {
+  0% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: .8;
+  }
+
+  100% {
+    transform: scale(.7);
+    opacity: 0;
+  }
+}
+
+@keyframes move-charge-particle-in {
+  0% {
+    transform:
+      translate(
+        var(--px),
+        var(--py)
+      )
+      scale(.3);
+
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(0, 0)
+      scale(.8);
+
+    opacity: 0;
+  }
+}
+
+/* ============================================================
    냉동빔 - ICE BEAM
    ============================================================ */
 
@@ -6317,6 +6629,2085 @@ img.res-icon.small {
       translate(var(--tx), var(--ty))
       rotate(var(--rot))
       scale(0.85);
+
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   화염방사
+   ============================================================ */
+
+.move-stream.move-fire
+.move-beam-glow {
+  height: 16px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,210,60,.25),
+      rgba(255,110,20,.85),
+      rgba(255,45,10,.7)
+    );
+
+  filter: blur(3px);
+
+  box-shadow:
+    0 0 10px rgba(255,80,20,.85);
+
+  animation:
+    move-stream-fast
+    440ms
+    ease-out
+    forwards;
+}
+
+.move-stream.move-fire
+.move-beam-core {
+  height: 5px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    linear-gradient(
+      90deg,
+      #fff7a0,
+      #ffcf33,
+      #ff5c15,
+      #d51f0b
+    );
+
+  box-shadow:
+    0 0 7px #ff9c32;
+
+  animation:
+    move-stream-fast
+    440ms
+    ease-out
+    forwards;
+}
+
+
+/* ============================================================
+   하이드로펌프
+   ============================================================ */
+
+.move-stream.move-water
+.move-beam-glow {
+  height: 11px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    rgba(65,180,255,.4);
+
+  box-shadow:
+    0 0 12px rgba(70,190,255,.9);
+
+  animation:
+    move-stream-fast
+    430ms
+    ease-out
+    forwards;
+}
+
+.move-stream.move-water
+.move-beam-core {
+  height: 4px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    linear-gradient(
+      90deg,
+      #dffcff,
+      #67ceff,
+      #198cff
+    );
+
+  box-shadow:
+    0 0 6px rgba(110,220,255,1);
+
+  animation:
+    move-stream-fast
+    430ms
+    ease-out
+    forwards;
+}
+
+
+/* ============================================================
+   솔라빔
+   ============================================================ */
+
+.move-beam.move-solar
+.move-beam-glow {
+  height: 12px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    rgba(140,255,95,.32);
+
+  box-shadow:
+    0 0 9px rgba(150,255,100,.85),
+    0 0 18px rgba(90,220,75,.55);
+
+  animation:
+    solar-beam-shoot
+    500ms
+    ease-out
+    forwards;
+}
+
+.move-beam.move-solar
+.move-beam-core {
+  height: 4px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    linear-gradient(
+      90deg,
+      #efffd2,
+      #ffffff,
+      #adff78,
+      #65d952
+    );
+
+  box-shadow:
+    0 0 6px #fff,
+    0 0 10px rgba(130,255,85,.9);
+
+  animation:
+    solar-beam-shoot
+    500ms
+    ease-out
+    forwards;
+}
+
+
+/* ============================================================
+   10만볼트
+   ============================================================ */
+
+.move-bolt-svg {
+  position: absolute;
+
+  left: 0;
+  top: -16px;
+
+  width: 100%;
+  height: 32px;
+
+  overflow: visible;
+
+  opacity: 0;
+
+  animation:
+    electric-bolt-fire
+    360ms
+    ease-out
+    forwards;
+}
+
+.move-bolt-glow,
+.move-bolt-core {
+  fill: none;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  vector-effect:
+    non-scaling-stroke;
+}
+
+.move-bolt-glow {
+  stroke:
+    rgba(255,225,45,.55);
+
+  stroke-width: 8;
+
+  filter:
+    drop-shadow(
+      0 0 6px
+      rgba(255,215,20,.9)
+    );
+}
+
+.move-bolt-core {
+  stroke: #fffbd0;
+
+  stroke-width: 2.5;
+
+  filter:
+    drop-shadow(
+      0 0 3px #fff
+    );
+}
+
+
+@keyframes move-stream-fast {
+  0% {
+    transform:
+      translateY(-50%)
+      scaleX(0);
+
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  55% {
+    transform:
+      translateY(-50%)
+      scaleX(1);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translateY(-50%)
+      scaleX(1);
+
+    opacity: 0;
+  }
+}
+
+@keyframes solar-beam-shoot {
+  0% {
+    transform:
+      translateY(-50%)
+      scaleX(0);
+
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  48% {
+    transform:
+      translateY(-50%)
+      scaleX(1);
+
+    opacity: 1;
+  }
+
+  82% {
+    opacity: .9;
+  }
+
+  100% {
+    transform:
+      translateY(-50%)
+      scaleX(1);
+
+    opacity: 0;
+  }
+}
+
+@keyframes electric-bolt-fire {
+  0% {
+    opacity: 0;
+    filter: brightness(2);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  35% {
+    opacity: .35;
+  }
+
+  48% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: .8;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   공통 명중광
+   ============================================================ */
+
+.move-element-impact {
+  position: absolute;
+
+  right: -10px;
+  top: -10px;
+
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  transform: scale(0);
+
+  animation:
+    move-element-hit
+    260ms
+    180ms
+    ease-out
+    forwards;
+}
+
+.impact-fire {
+  background: #ffb52e;
+
+  box-shadow:
+    0 0 10px #ff6a18,
+    0 0 22px rgba(255,50,10,.8);
+}
+
+.impact-water {
+  background: #d9faff;
+
+  box-shadow:
+    0 0 10px #56c9ff,
+    0 0 22px rgba(30,130,255,.75);
+}
+
+.impact-electric {
+  background: #fff;
+
+  box-shadow:
+    0 0 10px #fff43b,
+    0 0 24px rgba(255,210,0,.9);
+}
+
+.impact-solar {
+  background: #efffd1;
+
+  box-shadow:
+    0 0 10px #aaff72,
+    0 0 24px rgba(75,220,70,.8);
+}
+
+@keyframes move-element-hit {
+  0% {
+    transform: scale(.2);
+    opacity: 0;
+  }
+
+  40% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   MOVE FX - 공통 속성 컬러
+   ============================================================ */
+
+.move-fx,
+.move-zone-fx,
+.move-charge {
+  --move-light: #ffffff;
+  --move-main: #eeeeee;
+  --move-deep: #888888;
+}
+
+.move-water {
+  --move-light: #e6fbff;
+  --move-main: #54c9ff;
+  --move-deep: #176fe0;
+}
+
+.move-fire {
+  --move-light: #fff3a0;
+  --move-main: #ff7127;
+  --move-deep: #d51d0c;
+}
+
+.move-electric {
+  --move-light: #fffbd4;
+  --move-main: #ffe12e;
+  --move-deep: #f39b00;
+}
+
+.move-ice {
+  --move-light: #efffff;
+  --move-main: #83e8ff;
+  --move-deep: #4299e8;
+}
+
+.move-solar,
+.move-grass {
+  --move-light: #f2ffd8;
+  --move-main: #8ef064;
+  --move-deep: #319c45;
+}
+
+.move-psychic {
+  --move-light: #ffe8ff;
+  --move-main: #e06cff;
+  --move-deep: #8534d5;
+}
+
+.move-fairy {
+  --move-light: #fff0ff;
+  --move-main: #ff9de8;
+  --move-deep: #c849a3;
+}
+
+.move-ghost {
+  --move-light: #d8c6ff;
+  --move-main: #8656d6;
+  --move-deep: #35166e;
+}
+
+.move-dark {
+  --move-light: #b89ad0;
+  --move-main: #583c73;
+  --move-deep: #160d25;
+}
+
+.move-rock {
+  --move-light: #f3dfad;
+  --move-main: #ad8a49;
+  --move-deep: #59421d;
+}
+
+.move-ground {
+  --move-light: #f4c982;
+  --move-main: #b86e31;
+  --move-deep: #623117;
+}
+
+.move-steel {
+  --move-light: #ffffff;
+  --move-main: #b8c7d4;
+  --move-deep: #667580;
+}
+
+.move-fighting {
+  --move-light: #ffd1bd;
+  --move-main: #ef5c3c;
+  --move-deep: #9d2318;
+}
+
+.move-dragon {
+  --move-light: #dcd6ff;
+  --move-main: #8269ff;
+  --move-deep: #3923b5;
+}
+
+.move-poison {
+  --move-light: #f0b8ff;
+  --move-main: #ae48c9;
+  --move-deep: #60146f;
+}
+
+.move-normal {
+  --move-light: #ffffff;
+  --move-main: #e9e7cf;
+  --move-deep: #9e9b83;
+}
+
+
+/* ============================================================
+   모든 기술 공통 차징 오브
+   기존 속성별 orb CSS보다 아래에 있으므로 최종 적용
+   ============================================================ */
+
+.move-charge .move-charge-orb {
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      var(--move-light) 0%,
+      var(--move-light) 18%,
+      var(--move-main) 55%,
+      var(--move-deep) 100%
+    );
+
+  box-shadow:
+    0 0 7px var(--move-light),
+    0 0 15px var(--move-main),
+    0 0 27px var(--move-deep);
+}
+
+.move-charge .move-charge-ring {
+  border-color: var(--move-main);
+  box-shadow:
+    0 0 8px var(--move-main);
+}
+
+.move-charge .move-charge-particle {
+  background: var(--move-light);
+
+  box-shadow:
+    0 0 7px var(--move-main);
+}
+
+
+/* ============================================================
+   투사체 - 사이코키네시스 / 섀도볼 / 문포스 등
+   ============================================================ */
+
+.move-projectile-trail {
+  position: absolute;
+
+  left: 0;
+  top: -2px;
+
+  width: 100%;
+  height: 4px;
+
+  transform-origin: left center;
+  transform: scaleX(0);
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--move-deep),
+      var(--move-main)
+    );
+
+  filter: blur(2px);
+
+  opacity: 0;
+
+  animation:
+    move-projectile-trail
+    var(--move-duration, 420ms)
+    ease-out
+    forwards;
+}
+
+.move-projectile-core {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 15px;
+  height: 15px;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%)
+    scale(.4);
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      var(--move-light),
+      var(--move-main) 45%,
+      var(--move-deep)
+    );
+
+  box-shadow:
+    0 0 7px var(--move-light),
+    0 0 14px var(--move-main),
+    0 0 24px var(--move-deep);
+
+  animation:
+    move-projectile-fly
+    var(--move-duration, 420ms)
+    cubic-bezier(.12,.78,.18,1)
+    forwards;
+}
+
+.move-fireblast .move-projectile-core {
+  width: 26px;
+  height: 26px;
+
+  box-shadow:
+    0 0 10px #fff1a0,
+    0 0 22px #ff651d,
+    0 0 36px #d71808;
+}
+
+@keyframes move-projectile-fly {
+  0% {
+    left: 0%;
+    opacity: 0;
+    transform:
+      translate(-50%, -50%)
+      scale(.35);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  82% {
+    opacity: 1;
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+  }
+
+  100% {
+    left: 100%;
+    opacity: 0;
+    transform:
+      translate(-50%, -50%)
+      scale(1.2);
+  }
+}
+
+@keyframes move-projectile-trail {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  25% {
+    opacity: .8;
+  }
+
+  70% {
+    transform: scaleX(1);
+    opacity: .55;
+  }
+
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   파괴광선
+   ============================================================ */
+
+.move-beam.move-normal .move-beam-glow {
+  height: 18px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.15),
+      var(--move-main),
+      rgba(255,255,255,.95)
+    );
+
+  filter: blur(3px);
+
+  box-shadow:
+    0 0 12px var(--move-main),
+    0 0 25px var(--move-light);
+
+  animation:
+    hyper-beam-fire
+    var(--move-duration, 620ms)
+    ease-out
+    forwards;
+}
+
+.move-beam.move-normal .move-beam-core {
+  height: 5px;
+
+  transform:
+    translateY(-50%)
+    scaleX(0);
+
+  background: #fff;
+
+  box-shadow:
+    0 0 7px #fff,
+    0 0 15px var(--move-main);
+
+  animation:
+    hyper-beam-fire
+    var(--move-duration, 620ms)
+    ease-out
+    forwards;
+}
+
+@keyframes hyper-beam-fire {
+  0% {
+    transform:
+      translateY(-50%)
+      scaleX(0);
+
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  45% {
+    transform:
+      translateY(-50%)
+      scaleX(1);
+
+    opacity: 1;
+  }
+
+  80% {
+    opacity: .9;
+  }
+
+  100% {
+    transform:
+      translateY(-50%)
+      scaleX(1);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   날아가는 기술 공통 명중
+   ============================================================ */
+
+.move-travel-impact {
+  position: absolute;
+
+  right: -10px;
+  top: -10px;
+
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      var(--move-light),
+      var(--move-main),
+      transparent 70%
+    );
+
+  transform: scale(.2);
+  opacity: 0;
+
+  box-shadow:
+    0 0 12px var(--move-main),
+    0 0 24px var(--move-deep);
+
+  animation:
+    move-travel-hit
+    260ms
+    180ms
+    ease-out
+    forwards;
+}
+
+@keyframes move-travel-hit {
+  0% {
+    transform: scale(.2);
+    opacity: 0;
+  }
+
+  35% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   타겟/필드형 공통
+   ============================================================ */
+
+.move-zone-fx {
+  position: absolute;
+
+  width: 0;
+  height: 0;
+
+  z-index: 420;
+
+  pointer-events: none;
+}
+
+.move-zone-core {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  transform: translate(-50%, -50%);
+
+  pointer-events: none;
+}
+
+.move-zp {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   물리 타격 - 인파이트 / 아이언헤드 / 전광석화 / 스톤에지
+   ============================================================ */
+
+.move-strike .move-zone-core {
+  width: 68px;
+  height: 68px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      var(--move-light) 0%,
+      var(--move-main) 20%,
+      transparent 68%
+    );
+
+  box-shadow:
+    0 0 12px var(--move-main);
+
+  animation:
+    move-strike-hit
+    340ms
+    ease-out
+    forwards;
+}
+
+.move-strike .move-zp {
+  width: 42px;
+  height: 3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--move-light),
+      var(--move-main),
+      transparent
+    );
+
+  transform-origin: left center;
+
+  animation:
+    move-strike-line
+    340ms
+    ease-out
+    forwards;
+}
+
+.move-strike .z1 {
+  transform: rotate(0deg);
+}
+
+.move-strike .z2 {
+  transform: rotate(60deg);
+}
+
+.move-strike .z3 {
+  transform: rotate(120deg);
+}
+
+.move-strike .z4 {
+  transform: rotate(180deg);
+}
+
+.move-strike .z5 {
+  transform: rotate(240deg);
+}
+
+.move-strike .z6 {
+  transform: rotate(300deg);
+}
+
+.move-quick .move-zone-core {
+  animation-duration: 230ms;
+}
+
+@keyframes move-strike-hit {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.1);
+
+    opacity: 0;
+  }
+
+  35% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.25);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.7);
+
+    opacity: 0;
+  }
+}
+
+@keyframes move-strike-line {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    width: 60px;
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   드래곤크루
+   ============================================================ */
+
+.move-slash .move-zp {
+  width: 6px;
+  height: 80px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      var(--move-light),
+      var(--move-main),
+      transparent
+    );
+
+  box-shadow:
+    0 0 7px var(--move-main);
+
+  opacity: 0;
+
+  animation:
+    move-claw-slash
+    360ms
+    ease-out
+    forwards;
+}
+
+.move-slash .z1 {
+  left: -25px;
+  transform: rotate(28deg);
+}
+
+.move-slash .z2 {
+  left: -5px;
+  transform: rotate(28deg);
+  animation-delay: 45ms;
+}
+
+.move-slash .z3 {
+  left: 15px;
+  transform: rotate(28deg);
+  animation-delay: 90ms;
+}
+
+.move-slash .z4,
+.move-slash .z5,
+.move-slash .z6 {
+  display: none;
+}
+
+@keyframes move-claw-slash {
+  0% {
+    transform:
+      translateY(-45px)
+      rotate(28deg)
+      scaleY(.2);
+
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translateY(20px)
+      rotate(28deg)
+      scaleY(1);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   지진
+   ============================================================ */
+
+.move-ground .move-zone-core {
+  width: 220px;
+  height: 70px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(210,135,65,.45),
+      rgba(95,45,20,.18) 55%,
+      transparent 72%
+    );
+
+  border-bottom:
+    3px solid var(--move-main);
+
+  animation:
+    move-ground-hit
+    var(--move-duration, 560ms)
+    ease-out
+    forwards;
+}
+
+.move-ground .move-zp {
+  width: 70px;
+  height: 3px;
+
+  background:
+    var(--move-main);
+
+  box-shadow:
+    0 0 4px var(--move-deep);
+
+  transform-origin: left center;
+
+  opacity: 0;
+
+  animation:
+    move-ground-crack
+    450ms
+    ease-out
+    forwards;
+}
+
+.move-ground .z1 {
+  transform: rotate(15deg);
+}
+
+.move-ground .z2 {
+  transform: rotate(165deg);
+}
+
+.move-ground .z3 {
+  transform: rotate(45deg);
+}
+
+.move-ground .z4 {
+  transform: rotate(135deg);
+}
+
+@keyframes move-ground-hit {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.4);
+
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  55% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.05);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.15);
+
+    opacity: 0;
+  }
+}
+
+@keyframes move-ground-crack {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    width: 100px;
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   파도타기 / 오물웨이브
+   ============================================================ */
+
+.move-wave .move-zone-core {
+  width: 250px;
+  height: 95px;
+
+  border-radius:
+    55% 55% 45% 45%;
+
+  background:
+    linear-gradient(
+      180deg,
+      transparent 5%,
+      var(--move-light) 20%,
+      var(--move-main) 50%,
+      var(--move-deep) 100%
+    );
+
+  opacity: 0;
+
+  filter:
+    drop-shadow(
+      0 0 10px
+      var(--move-main)
+    );
+
+  animation:
+    move-wave-rise
+    var(--move-duration, 580ms)
+    ease-out
+    forwards;
+}
+
+@keyframes move-wave-rise {
+  0% {
+    transform:
+      translate(-50%, 30%)
+      scaleX(.35)
+      scaleY(.2);
+
+    opacity: 0;
+  }
+
+  30% {
+    opacity: .9;
+  }
+
+  70% {
+    transform:
+      translate(-50%, -55%)
+      scaleX(1)
+      scaleY(1);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -90%)
+      scaleX(1.15)
+      scaleY(.75);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   눈보라 / 열풍 / 방전
+   ============================================================ */
+
+.move-area .move-zone-core {
+  width: 240px;
+  height: 130px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      var(--move-light) 0%,
+      var(--move-main) 23%,
+      transparent 70%
+    );
+
+  filter:
+    blur(3px);
+
+  opacity: 0;
+
+  animation:
+    move-area-pulse
+    var(--move-duration, 620ms)
+    ease-out
+    forwards;
+}
+
+.move-area .move-zp {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background:
+    var(--move-light);
+
+  box-shadow:
+    0 0 7px var(--move-main);
+
+  animation:
+    move-area-particle
+    500ms
+    ease-out
+    forwards;
+}
+
+.move-area .z1 {
+  --ax: -100px;
+  --ay: -45px;
+}
+
+.move-area .z2 {
+  --ax: -70px;
+  --ay: 40px;
+}
+
+.move-area .z3 {
+  --ax: 0px;
+  --ay: -60px;
+}
+
+.move-area .z4 {
+  --ax: 65px;
+  --ay: 42px;
+}
+
+.move-area .z5 {
+  --ax: 105px;
+  --ay: -25px;
+}
+
+.move-area .z6 {
+  --ax: 15px;
+  --ay: 55px;
+}
+
+@keyframes move-area-pulse {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.25);
+
+    opacity: 0;
+  }
+
+  30% {
+    opacity: .8;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.25);
+
+    opacity: 0;
+  }
+}
+
+@keyframes move-area-particle {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(
+        var(--ax),
+        var(--ay)
+      );
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   날씨
+   ============================================================ */
+
+.move-weather .move-zone-core {
+  width: 310px;
+  height: 190px;
+
+  border-radius: 50%;
+
+  border:
+    2px solid
+    var(--move-main);
+
+  box-shadow:
+    inset 0 0 35px var(--move-deep),
+    0 0 25px var(--move-main);
+
+  opacity: 0;
+
+  animation:
+    move-weather-open
+    var(--move-duration, 700ms)
+    ease-out
+    forwards;
+}
+
+@keyframes move-weather-open {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.15);
+
+    opacity: 0;
+  }
+
+  35% {
+    opacity: .75;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.25);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   상태이상
+   ============================================================ */
+
+.move-status .move-zone-core {
+  width: 60px;
+  height: 60px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      var(--move-light),
+      var(--move-main) 35%,
+      transparent 70%
+    );
+
+  opacity: 0;
+
+  animation:
+    move-status-bloom
+    480ms
+    ease-out
+    forwards;
+}
+
+.move-status .move-zp {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background:
+    var(--move-main);
+
+  box-shadow:
+    0 0 6px var(--move-main);
+
+  animation:
+    move-status-dot
+    500ms
+    ease-out
+    forwards;
+}
+
+.move-status .z1 {
+  --sx: -35px;
+  --sy: -25px;
+}
+
+.move-status .z2 {
+  --sx: 35px;
+  --sy: -20px;
+}
+
+.move-status .z3 {
+  --sx: -28px;
+  --sy: 28px;
+}
+
+.move-status .z4 {
+  --sx: 31px;
+  --sy: 30px;
+}
+
+@keyframes move-status-bloom {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.15);
+
+    opacity: 0;
+  }
+
+  40% {
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+
+    opacity: .9;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.35);
+
+    opacity: 0;
+  }
+}
+
+@keyframes move-status-dot {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(
+        var(--sx),
+        var(--sy)
+      );
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   회복
+   ============================================================ */
+
+.move-heal .move-zone-core {
+  width: 80px;
+  height: 80px;
+
+  border-radius: 50%;
+
+  border:
+    3px solid #b6ffb7;
+
+  box-shadow:
+    0 0 12px #8aff99,
+    inset 0 0 22px rgba(120,255,150,.4);
+
+  animation:
+    move-heal-ring
+    560ms
+    ease-out
+    forwards;
+}
+
+.move-heal::before,
+.move-heal::after {
+  content: "";
+
+  position: absolute;
+
+  width: 42px;
+  height: 8px;
+
+  left: -21px;
+  top: -4px;
+
+  border-radius: 999px;
+
+  background: #d8ffdf;
+
+  box-shadow:
+    0 0 8px #7aff92;
+
+  animation:
+    move-heal-cross
+    560ms
+    ease-out
+    forwards;
+}
+
+.move-heal::after {
+  transform: rotate(90deg);
+}
+
+@keyframes move-heal-ring {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.2);
+
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.25);
+
+    opacity: 0;
+  }
+}
+
+@keyframes move-heal-cross {
+  0% {
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   신비의부적
+   ============================================================ */
+
+.move-shield .move-zone-core {
+  width: 240px;
+  height: 115px;
+
+  border:
+    3px solid
+    var(--move-light);
+
+  border-bottom: none;
+
+  border-radius:
+    130px 130px 20px 20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.25),
+      transparent
+    );
+
+  box-shadow:
+    inset 0 0 25px var(--move-main),
+    0 0 18px var(--move-main);
+
+  animation:
+    move-shield-open
+    650ms
+    ease-out
+    forwards;
+}
+
+@keyframes move-shield-open {
+  0% {
+    transform:
+      translate(-50%, -20%)
+      scale(.2);
+
+    opacity: 0;
+  }
+
+  35% {
+    opacity: .9;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -70%)
+      scale(1);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   울부짖기 / 멸망의노래
+   ============================================================ */
+
+.move-sound .move-zone-core::before {
+  content: "♪";
+
+  position: absolute;
+
+  left: -22px;
+  top: -34px;
+
+  font-size: 52px;
+
+  color: var(--move-light);
+
+  text-shadow:
+    0 0 9px var(--move-main),
+    0 0 18px var(--move-deep);
+
+  animation:
+    move-note-rise
+    650ms
+    ease-out
+    forwards;
+}
+
+.move-sound .move-zone-core::after {
+  content: "♫";
+
+  position: absolute;
+
+  left: 16px;
+  top: -18px;
+
+  font-size: 38px;
+
+  color: var(--move-main);
+
+  text-shadow:
+    0 0 8px var(--move-deep);
+
+  animation:
+    move-note-rise
+    700ms
+    80ms
+    ease-out
+    forwards;
+}
+
+.move-perish .move-zone-core {
+  filter:
+    drop-shadow(
+      0 0 18px
+      #67258f
+    );
+}
+
+@keyframes move-note-rise {
+  0% {
+    transform:
+      translateY(20px)
+      scale(.4);
+
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translateY(-65px)
+      scale(1.2);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   흑안개
+   ============================================================ */
+
+.move-haze .move-zone-core {
+  width: 320px;
+  height: 150px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(160,190,220,.5),
+      rgba(55,65,90,.7) 48%,
+      transparent 75%
+    );
+
+  filter: blur(9px);
+
+  animation:
+    move-haze-spread
+    720ms
+    ease-out
+    forwards;
+}
+
+@keyframes move-haze-spread {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.25);
+
+    opacity: 0;
+  }
+
+  35% {
+    opacity: .85;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.4);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   용성군
+   ============================================================ */
+
+.move-meteor .move-zp {
+  width: 13px;
+  height: 13px;
+
+  border-radius: 50%;
+
+  background:
+    var(--move-light);
+
+  box-shadow:
+    -18px -18px 12px var(--move-main),
+    -32px -32px 18px var(--move-deep);
+
+  opacity: 0;
+
+  animation:
+    move-meteor-fall
+    620ms
+    ease-in
+    forwards;
+}
+
+.move-meteor .z1 {
+  left: -100px;
+  animation-delay: 0ms;
+}
+
+.move-meteor .z2 {
+  left: -50px;
+  animation-delay: 80ms;
+}
+
+.move-meteor .z3 {
+  left: 5px;
+  animation-delay: 140ms;
+}
+
+.move-meteor .z4 {
+  left: 65px;
+  animation-delay: 210ms;
+}
+
+.move-meteor .z5 {
+  left: 105px;
+  animation-delay: 280ms;
+}
+
+@keyframes move-meteor-fall {
+  0% {
+    transform:
+      translate(-80px, -170px);
+
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(30px, 35px);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   대폭발
+   ============================================================ */
+
+.move-explosion .move-zone-core {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      #ffffff 0%,
+      #fff27a 18%,
+      #ff861f 40%,
+      #e82f0c 58%,
+      transparent 72%
+    );
+
+  box-shadow:
+    0 0 25px #ffbb37,
+    0 0 55px rgba(255,55,10,.8);
+
+  animation:
+    move-explosion-boom
+    820ms
+    ease-out
+    forwards;
+}
+
+@keyframes move-explosion-boom {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.1);
+
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  48% {
+    transform:
+      translate(-50%, -50%)
+      scale(5);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(8);
+
+    opacity: 0;
+  }
+}
+
+
+/* ============================================================
+   일격기 공통
+   ============================================================ */
+
+.move-execute .move-zone-core {
+  width: 110px;
+  height: 110px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      var(--move-light),
+      var(--move-main) 30%,
+      transparent 68%
+    );
+
+  box-shadow:
+    0 0 18px var(--move-main);
+
+  animation:
+    move-execute-hit
+    620ms
+    ease-out
+    forwards;
+}
+
+.move-freeze .move-zone-core {
+  box-shadow:
+    0 0 18px #b7f5ff,
+    inset 0 0 35px #62d8ff;
+}
+
+.move-fissure .move-zone-core {
+  width: 170px;
+  height: 18px;
+
+  border-radius: 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #3b1d0c,
+      #d59142,
+      #35170a,
+      transparent
+    );
+}
+
+.move-drill .move-zone-core {
+  width: 90px;
+  height: 90px;
+
+  background: transparent;
+
+  border:
+    7px double
+    var(--move-main);
+
+  animation:
+    move-drill-hit
+    600ms
+    ease-in
+    forwards;
+}
+
+.move-guillotine .move-zp.z1,
+.move-guillotine .move-zp.z2 {
+  width: 100px;
+  height: 7px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #fff,
+      var(--move-main),
+      transparent
+    );
+
+  transform-origin: center;
+}
+
+.move-guillotine .z1 {
+  transform: rotate(35deg);
+}
+
+.move-guillotine .z2 {
+  transform: rotate(-35deg);
+}
+
+@keyframes move-execute-hit {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scale(.1);
+
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  65% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.2);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scale(1.5);
+
+    opacity: 0;
+  }
+}
+
+@keyframes move-drill-hit {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      rotate(0deg)
+      scale(.15);
+
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      rotate(520deg)
+      scale(1.15);
 
     opacity: 0;
   }
