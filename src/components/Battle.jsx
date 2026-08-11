@@ -382,22 +382,54 @@ export default function Battle({ trainer, deck, onFinish }) {
     if (!targetRect) return false;
 
     // 기술 카드는 사용한 쪽 트레이너 위치에서 발사
-    const sourceRect = battleRectsRef.current.get(`hero-${action.side}`);
+    const sourceEl = document.querySelector(
+      action.side === "player"
+        ? '[data-drop="my-hero"] .trainer-sprite'
+        : '[data-drop="enemy-hero"] .trainer-sprite',
+    );
 
-    if (!sourceRect) return false;
+    if (!sourceEl) return false;
 
-    const x1 = sourceRect.x - battleRect.left;
-    const y1 = sourceRect.y - battleRect.top;
+    const sourceRect = sourceEl.getBoundingClientRect();
 
-    const x2 = targetRect.x - battleRect.left;
-    const y2 = targetRect.y - battleRect.top;
+    const sourceCx = sourceRect.left + sourceRect.width / 2;
+    const sourceCy = sourceRect.top + sourceRect.height / 2;
+
+    const targetCx = targetRect.x;
+    const targetCy = targetRect.y;
+
+    // 트레이너 중심 → 대상 방향
+    const sourceDx = targetCx - sourceCx;
+    const sourceDy = targetCy - sourceCy;
+    const sourceDistance = Math.hypot(sourceDx, sourceDy) || 1;
+
+    const ux = sourceDx / sourceDistance;
+    const uy = sourceDy / sourceDistance;
+
+    // 이미지 정중앙이 아니라
+    // 대상 쪽을 향한 이미지 가장자리에서 발사
+    const sourceOffset =
+      Math.min(sourceRect.width, sourceRect.height) * 0.38;
+
+    const x1 =
+      sourceCx +
+      ux * sourceOffset -
+      battleRect.left;
+
+    const y1 =
+      sourceCy +
+      uy * sourceOffset -
+      battleRect.top;
+
+    const x2 = targetCx - battleRect.left;
+    const y2 = targetCy - battleRect.top;
 
     const dx = x2 - x1;
     const dy = y2 - y1;
 
     const distance = Math.hypot(dx, dy);
     const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
+    
     setMoveFx({
       key: action.seq,
       type: animation.type,
