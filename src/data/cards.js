@@ -3964,7 +3964,7 @@ export const TRAINER_CARDS = [
 // 팩 / 컬렉션 / 덱 편집에는 등장하지 않음
 // ============================================================
 export const SPECIAL_CARDS = [
-  P("eevee_z", "이브이 Z", "노말", 4, 5, 6, "L", {
+  P("eevee_z", "이브이 Z", "노말", 6, 12, 12, "L", {
     ability: "nineevolboost",
     rewardOnly: true,
   }),
