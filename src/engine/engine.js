@@ -49,6 +49,25 @@ export const MAX_FIELD = 6;
 export const MAX_HAND = 10;
 export const MAX_MANA = 10;
 
+// ============================================================
+// 필드 자리 계산
+// ============================================================
+function getFieldUsedCount(player) {
+  return (
+    player.field.length +
+    (player._shadowForceExile ? 1 : 0) +
+    (player.fieldObstacles?.length || 0)
+  );
+}
+
+function getFieldCapacity(player) {
+  return player.fieldCapacity ?? MAX_FIELD;
+}
+
+function hasOpenFieldSlot(player) {
+  return getFieldUsedCount(player) < getFieldCapacity(player);
+}
+
 export const WEATHER_NAME = { rain: "비", sun: "쾌청", sand: "모래바람" };
 
 // ---------- 유틸 ----------
@@ -324,7 +343,7 @@ function canStableDrawCard(game, side, cardId) {
 
   // 기본 포켓몬
   if (card.kind === "pokemon" && !card.evolvesFrom) {
-    return p.field.length + (p._shadowForceExile ? 1 : 0) < MAX_FIELD;
+    return hasOpenFieldSlot(p);
   }
 
   // 진화
@@ -510,6 +529,9 @@ function makePlayer(deckIds, name, hp = 40) {
     deck: shuffle(deckIds),
     hand: [],
     field: [],
+    // 신오 이후 필드 기믹
+    fieldCapacity: MAX_FIELD,
+    fieldObstacles: [],
     lastDeadPokemon: null,
     lastSpellCardId: null,
     eeveeQuest: null,
@@ -2930,10 +2952,7 @@ function runBattlecry(game, side, unit) {
 
       // 마지막으로 죽은 아군이 있고
       // 필드에 빈 자리가 있으면 부활
-      if (
-        dead &&
-        me.field.length + (me._shadowForceExile ? 1 : 0) < MAX_FIELD
-      ) {
+      if (dead && hasOpenFieldSlot(me)) {
         const deadCard = CARD_MAP[dead.cardId];
 
         if (deadCard && deadCard.kind === "pokemon") {
@@ -3708,11 +3727,7 @@ export function canPlayCard(game, side, handIdx) {
   if (effectiveCost(card, game, side, h) > p.mana) {
     return false;
   }
-  if (
-    card.kind === "pokemon" &&
-    !card.evolvesFrom &&
-    p.field.length + (p._shadowForceExile ? 1 : 0) >= MAX_FIELD
-  ) {
+  if (card.kind === "pokemon" && !card.evolvesFrom && !hasOpenFieldSlot(p)) {
     return false;
   }
   if (card.kind === "pokemon" && card.evolvesFrom) {

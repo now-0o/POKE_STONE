@@ -23,6 +23,10 @@ const REGION_LABELS = {
     name: "호연지방",
     sub: "HOENN",
   },
+  sinnoh: {
+    name: "신오지방",
+    sub: "SINNOH",
+  },
 };
 
 export default function MainMenu({
@@ -46,6 +50,14 @@ export default function MainMenu({
 
   // 목호 격파 후 호연 해금
   const hoennUnlocked = save.adminMode || (save.wins?.johto_lance || 0) > 0;
+
+  const hoennTrainers = TRAINERS_BY_REGION.hoenn || [];
+
+  const hoennLastTrainer = hoennTrainers[hoennTrainers.length - 1];
+
+  const sinnohUnlocked =
+    save.adminMode ||
+    (hoennLastTrainer && (save.wins?.[hoennLastTrainer.id] || 0) > 0);
 
   async function goFullscreen() {
     const el = document.documentElement;
@@ -80,6 +92,11 @@ export default function MainMenu({
     }
 
     if (region === "hoenn" && !hoennUnlocked) {
+      playSfx("buzzer");
+      return;
+    }
+
+    if (region === "sinnoh" && !sinnohUnlocked) {
       playSfx("buzzer");
       return;
     }
@@ -223,6 +240,32 @@ export default function MainMenu({
 
               <span className="region-go">
                 {hoennUnlocked ? "선택 ▶" : "LOCK"}
+              </span>
+            </button>
+            <button
+              className={[
+                "region-card",
+                !sinnohUnlocked ? "region-locked" : "region-sinnoh",
+              ].join(" ")}
+              onMouseEnter={() => sinnohUnlocked && playSfx("cursor")}
+              onClick={() => selectRegion("sinnoh")}
+            >
+              <span className="region-info">
+                <span className="region-name">신오지방</span>
+
+                <span className="region-sub">SINNOH</span>
+
+                <span className="region-desc">특수 배틀 · 체육관 기믹</span>
+
+                {!sinnohUnlocked && (
+                  <span className="region-lock-text">
+                    🔒 호연지방 클리어 후 해금
+                  </span>
+                )}
+              </span>
+
+              <span className="region-go">
+                {sinnohUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
           </div>

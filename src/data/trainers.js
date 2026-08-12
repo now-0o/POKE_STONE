@@ -1899,6 +1899,92 @@ export const HOENN_TRAINERS = [
 ];
 
 // ============================================================
+// 신오지방
+// 체육관 기믹형 배틀
+// ============================================================
+
+export const SINNOH_TRAINERS = [
+  {
+    id: "sinnoh_roark",
+    name: "무쇠시티 관장 강석",
+    sprite: "roark",
+    title: "체육관 관장",
+    emoji: "🪨",
+
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.9,
+
+    reward: 350,
+    hp: 50,
+
+    // 지역 자체의 해금은 MainMenu에서 처리.
+    // 신오 첫 관장이므로 지역 내부 선행 조건 없음.
+    requires: null,
+
+    // 이후 추가할 신오 전용 데이터
+    region: "sinnoh",
+    gymType: "바위",
+
+    battlefield: "oreburgh_mine",
+    gimmick: "mine_collapse",
+
+    introLines: [
+      "여기가 바로 무쇠시티 체육관이다!",
+      "바위처럼 단단한 승부를 보여주지!",
+    ],
+
+    winLines: ["무쇠탄갱에선 내가 훨씬 유리하지!"],
+
+    loseLines: ["굉장한데! 이 바위를 뚫고 지나가다니!"],
+
+    // 시그니처 램펄드는 다음 작업에서 교체
+    deck: [
+      "geodude",
+      "geodude",
+      "graveler",
+      "graveler",
+      "golem",
+
+      "onix",
+      "onix",
+
+      "rhyhorn",
+      "rhyhorn",
+      "rhydon",
+
+      "nosepass",
+      "nosepass",
+
+      "cranidos",
+      "cranidos",
+      "rampardos",
+
+      "aron",
+      "aron",
+      "lairon",
+      "lairon",
+      "aggron",
+
+      "stoneedge",
+      "stoneedge",
+
+      "earthquake",
+      "earthquake",
+
+      "sandstorm",
+      "sandstorm",
+
+      "potion",
+      "potion",
+
+      "pokeball",
+      "pokeball",
+    ],
+  },
+];
+
+// ============================================================
 // 지역별 트레이너
 // ============================================================
 
@@ -1906,12 +1992,14 @@ export const TRAINERS_BY_REGION = {
   kanto: KANTO_TRAINERS,
   johto: JOHTO_TRAINERS,
   hoenn: HOENN_TRAINERS,
+  sinnoh: SINNOH_TRAINERS,
 };
 
 export const TRAINERS = [
   ...KANTO_TRAINERS,
   ...JOHTO_TRAINERS,
   ...HOENN_TRAINERS,
+  ...SINNOH_TRAINERS,
 ];
 
 export const TRAINER_MAP = Object.fromEntries(TRAINERS.map((t) => [t.id, t]));

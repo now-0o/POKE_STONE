@@ -436,6 +436,96 @@ const MOVE_FX_PRESETS = {
   },
 };
 
+function FieldObstacle({ obstacle }) {
+  if (!obstacle) {
+    return null;
+  }
+
+  const src =
+    obstacle.type === "rock"
+      ? "/gimmicks/rock_block.png"
+      : obstacle.type === "vine"
+        ? "/gimmicks/vine_block.png"
+        : null;
+
+  if (!src) {
+    return null;
+  }
+
+  return (
+    <div
+      className={["field-obstacle", `field-obstacle-${obstacle.type}`].join(
+        " ",
+      )}
+      data-obstacle-id={obstacle.id}
+    >
+      <img src={src} alt="" draggable={false} />
+
+      {obstacle.type === "vine" && obstacle.hp != null && (
+        <div className="field-obstacle-hp">{obstacle.hp}</div>
+      )}
+    </div>
+  );
+}
+
+function buildVisualField(player) {
+  const entries = player.field.map((unit) => ({
+    kind: "unit",
+    unit,
+  }));
+
+  // 기라티나 - 섀도다이브 잔상
+  if (player._shadowForceExile) {
+    entries.splice(player._shadowForceExile.index, 0, {
+      kind: "ghost",
+      unit: {
+        ...player._shadowForceExile.unit,
+        _shadowForceGhost: true,
+      },
+    });
+  }
+
+  const obstacles = player.fieldObstacles || [];
+
+  obstacles
+    .filter((obstacle) => obstacle.position === "start")
+    .forEach((obstacle) => {
+      entries.unshift({
+        kind: "obstacle",
+        obstacle,
+      });
+    });
+
+  obstacles
+    .filter(
+      (obstacle) =>
+        obstacle.position !== "start" && obstacle.position !== "end",
+    )
+    .forEach((obstacle) => {
+      const position = Number.isInteger(obstacle.position)
+        ? obstacle.position
+        : entries.length;
+
+      const at = Math.max(0, Math.min(position, entries.length));
+
+      entries.splice(at, 0, {
+        kind: "obstacle",
+        obstacle,
+      });
+    });
+
+  obstacles
+    .filter((obstacle) => obstacle.position === "end")
+    .forEach((obstacle) => {
+      entries.push({
+        kind: "obstacle",
+        obstacle,
+      });
+    });
+
+  return entries;
+}
+
 export default function Battle({ trainer, deck, onFinish }) {
   const gameRef = useRef(null);
   const [, forceRender] = useState(0);
@@ -2704,45 +2794,47 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       <div className="field enemy-field" data-drop="enemy-field">
-        {(() => {
-          const fieldSlots = [...foe.field];
-
-          if (foe._shadowForceExile) {
-            fieldSlots.splice(foe._shadowForceExile.index, 0, {
-              ...foe._shadowForceExile.unit,
-              _shadowForceGhost: true,
-            });
-          }
-
-          return fieldSlots.map((u) => {
-            if (u._shadowForceGhost) {
-              return (
-                <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
-                  <FieldUnit unit={u} game={game} />
-
-                  <div className="shadowforce-ghost-label">섀도다이브</div>
-                </div>
-              );
-            }
-
+        {buildVisualField(foe).map((entry) => {
+          if (entry.kind === "obstacle") {
             return (
-              <FieldUnit
-                key={u.uid}
-                unit={getVisualUnit(u)}
-                game={game}
-                targetable={isEnemyTargetable(u)}
-                onClick={() => onUnitClick("enemy", u)}
-                onPointerDown={(e) => onEnemyUnitPointerDown(u, e)}
-                dropZone="unit-enemy"
-                fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
-                fxKey={unitFx ? unitFx.key : 0}
+              <FieldObstacle
+                key={entry.obstacle.id}
+                obstacle={entry.obstacle}
               />
             );
-          });
-        })()}
-        {foe.field.length === 0 && !foe._shadowForceExile && (
-          <div className="field-empty">필드가 비어 있다</div>
-        )}
+          }
+
+          const u = entry.unit;
+
+          if (entry.kind === "ghost") {
+            return (
+              <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
+                <FieldUnit unit={u} game={game} />
+
+                <div className="shadowforce-ghost-label">섀도다이브</div>
+              </div>
+            );
+          }
+
+          return (
+            <FieldUnit
+              key={u.uid}
+              unit={getVisualUnit(u)}
+              game={game}
+              targetable={isEnemyTargetable(u)}
+              onClick={() => onUnitClick("enemy", u)}
+              onPointerDown={(e) => onEnemyUnitPointerDown(u, e)}
+              dropZone="unit-enemy"
+              fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
+              fxKey={unitFx ? unitFx.key : 0}
+            />
+          );
+        })}
+        {foe.field.length === 0 &&
+          !foe._shadowForceExile &&
+          (foe.fieldObstacles?.length || 0) === 0 && (
+            <div className="field-empty">필드가 비어 있다</div>
+          )}
       </div>
 
       {/* 중앙: 날씨 + 로그 */}
@@ -2813,46 +2905,47 @@ export default function Battle({ trainer, deck, onFinish }) {
         ref={myFieldRef}
       >
         <div className="insert-marker" ref={markerRef} />
-        {(() => {
-          const fieldSlots = [...me.field];
-
-          if (me._shadowForceExile) {
-            fieldSlots.splice(me._shadowForceExile.index, 0, {
-              ...me._shadowForceExile.unit,
-              _shadowForceGhost: true,
-            });
-          }
-
-          return fieldSlots.map((u) => {
-            if (u._shadowForceGhost) {
-              return (
-                <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
-                  <FieldUnit unit={u} game={game} />
-
-                  <div className="shadowforce-ghost-label">섀도다이브</div>
-                </div>
-              );
-            }
-
+        {buildVisualField(me).map((entry) => {
+          if (entry.kind === "obstacle") {
             return (
-              <FieldUnit
-                key={u.uid}
-                unit={getVisualUnit(u)}
-                game={game}
-                canAct={myTurn && canAttack(game, "player", u.uid)}
-                selected={aimUid === u.uid}
-                targetable={isFriendlyTargetable(u)}
-                onClick={() => onUnitClick("player", u)}
-                onPointerDown={(e) => onMyUnitPointerDown(u, e)}
-                dropZone="unit-player"
-                fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
-                fxKey={unitFx ? unitFx.key : 0}
+              <FieldObstacle
+                key={entry.obstacle.id}
+                obstacle={entry.obstacle}
               />
             );
-          });
-        })()}
+          }
+
+          const u = entry.unit;
+
+          if (entry.kind === "ghost") {
+            return (
+              <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
+                <FieldUnit unit={u} game={game} />
+
+                <div className="shadowforce-ghost-label">섀도다이브</div>
+              </div>
+            );
+          }
+
+          return (
+            <FieldUnit
+              key={u.uid}
+              unit={getVisualUnit(u)}
+              game={game}
+              canAct={myTurn && canAttack(game, "player", u.uid)}
+              selected={aimUid === u.uid}
+              targetable={isFriendlyTargetable(u)}
+              onClick={() => onUnitClick("player", u)}
+              onPointerDown={(e) => onMyUnitPointerDown(u, e)}
+              dropZone="unit-player"
+              fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
+              fxKey={unitFx ? unitFx.key : 0}
+            />
+          );
+        })}
         {me.field.length === 0 &&
           !me._shadowForceExile &&
+          (me.fieldObstacles?.length || 0) === 0 &&
           !draggingBasicPokemon && (
             <div className="field-empty">포켓몬을 끌어다 놓자!</div>
           )}

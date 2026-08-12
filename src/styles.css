@@ -280,6 +280,14 @@ img.res-icon.small {
   );
 }
 
+.region-card.region-sinnoh {
+  background: linear-gradient(
+    145deg,
+    rgba(55, 62, 110, 0.95),
+    rgba(25, 28, 55, 0.98)
+  );
+}
+
 .region-card.region-locked {
   opacity: 0.48;
   filter: grayscale(0.65);
@@ -8332,4 +8340,74 @@ img.res-icon.small {
     opacity: 0.38;
     transform: scale(1);
   }
+}
+
+/* ============================================================
+   신오 - 필드 장애물
+   ============================================================ */
+
+.field-obstacle {
+  position: relative;
+
+  width: var(--unit-w, 98px);
+  height: var(--unit-h, 112px);
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+.field-obstacle img {
+  display: block;
+
+  width: 92%;
+  height: 92%;
+
+  object-fit: contain;
+
+  image-rendering: pixelated;
+
+  user-select: none;
+  pointer-events: none;
+}
+
+.field-obstacle-rock img {
+  width: 96%;
+  height: 96%;
+}
+
+.field-obstacle-vine img {
+  width: 90%;
+  height: 90%;
+}
+
+.field-obstacle-hp {
+  position: absolute;
+
+  right: 5px;
+  bottom: 4px;
+
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #c74444;
+  border: 2px solid #fff;
+
+  color: #fff;
+
+  font-family: var(--display-font);
+  font-size: 12px;
+  font-weight: 900;
+
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
