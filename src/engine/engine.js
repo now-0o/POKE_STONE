@@ -482,11 +482,13 @@ function setupTrainerGimmick(game) {
           id: "roark-rock-left",
           type: "rock",
           slot: 0,
+          removeAtPlayerTurn: 5,
         },
         {
           id: "roark-rock-right",
           type: "rock",
           slot: 5,
+          removeAtPlayerTurn: 10,
         },
       ];
 
@@ -828,22 +830,20 @@ function runTrainerGimmickTurnStart(game, side) {
 
       player._roarkPlayerTurns = (player._roarkPlayerTurns || 0) + 1;
 
-      let rockId = null;
+      const expiredRock = (player.fieldObstacles || []).find(
+        (obstacle) =>
+          obstacle.type === "rock" &&
+          obstacle.removeAtPlayerTurn === player._roarkPlayerTurns,
+      );
 
-      if (player._roarkPlayerTurns === 5) {
-        rockId = "roark-rock-left";
-      } else if (player._roarkPlayerTurns === 10) {
-        rockId = "roark-rock-right";
-      }
-
-      if (!rockId) {
+      if (!expiredRock) {
         return;
       }
 
-      const before = player.fieldObstacles?.length || 0;
+      const before = player.fieldObstacles.length;
 
-      player.fieldObstacles = (player.fieldObstacles || []).filter(
-        (obstacle) => obstacle.id !== rockId,
+      player.fieldObstacles = player.fieldObstacles.filter(
+        (obstacle) => obstacle.id !== expiredRock.id,
       );
 
       if (player.fieldObstacles.length < before) {

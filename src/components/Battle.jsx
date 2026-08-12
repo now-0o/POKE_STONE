@@ -436,7 +436,7 @@ const MOVE_FX_PRESETS = {
   },
 };
 
-function FieldObstacle({ obstacle }) {
+function FieldObstacle({ obstacle, currentPlayerTurn = 0 }) {
   if (!obstacle) {
     return null;
   }
@@ -452,6 +452,11 @@ function FieldObstacle({ obstacle }) {
     return null;
   }
 
+  const remainingTurns =
+    obstacle.type === "rock" && Number.isInteger(obstacle.removeAtPlayerTurn)
+      ? Math.max(0, obstacle.removeAtPlayerTurn - currentPlayerTurn)
+      : null;
+
   return (
     <div
       className={["field-obstacle", `field-obstacle-${obstacle.type}`].join(
@@ -460,6 +465,10 @@ function FieldObstacle({ obstacle }) {
       data-obstacle-id={obstacle.id}
     >
       <img src={src} alt="" draggable={false} />
+
+      {remainingTurns !== null && (
+        <div className="field-obstacle-turn">{remainingTurns}턴 후 해제</div>
+      )}
 
       {obstacle.type === "vine" && obstacle.hp != null && (
         <div className="field-obstacle-hp">{obstacle.hp}</div>
@@ -2860,7 +2869,7 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       <div className="field enemy-field" data-drop="enemy-field">
-        {buildVisualField(me).map((entry, index) => {
+        {buildVisualField(foe).map((entry, index) => {
           let content = null;
 
           if (entry.kind === "obstacle") {
@@ -2882,19 +2891,17 @@ export default function Battle({ trainer, deck, onFinish }) {
               <FieldUnit
                 unit={getVisualUnit(u)}
                 game={game}
-                canAct={myTurn && canAttack(game, "player", u.uid)}
-                selected={aimUid === u.uid}
-                targetable={isFriendlyTargetable(u)}
-                onClick={() => onUnitClick("player", u)}
-                onPointerDown={(e) => onMyUnitPointerDown(u, e)}
-                dropZone="unit-player"
+                targetable={isEnemyTargetable(u)}
+                onClick={() => onUnitClick("enemy", u)}
+                onPointerDown={(e) => onEnemyUnitPointerDown(u, e)}
+                dropZone="unit-enemy"
                 fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
                 fxKey={unitFx ? unitFx.key : 0}
               />
             );
           }
 
-          // 장애물 없는 일반 배틀
+          // 일반 필드
           if (!entry.fixedSlot) {
             return (
               <React.Fragment key={entry.unit?.uid || index}>
@@ -2903,10 +2910,10 @@ export default function Battle({ trainer, deck, onFinish }) {
             );
           }
 
-          // 신오 기믹 필드
+          // 기믹 고정 슬롯
           return (
             <div
-              key={`player-slot-${entry.slotIndex}`}
+              key={`enemy-slot-${entry.slotIndex}`}
               className={[
                 "field-fixed-slot",
                 entry.kind === "empty" ? "is-empty" : "",
@@ -2917,6 +2924,7 @@ export default function Battle({ trainer, deck, onFinish }) {
             </div>
           );
         })}
+
         {foe.field.length === 0 &&
           !foe._shadowForceExile &&
           (foe.fieldObstacles?.length || 0) === 0 && (
@@ -2996,7 +3004,12 @@ export default function Battle({ trainer, deck, onFinish }) {
           let content = null;
 
           if (entry.kind === "obstacle") {
-            content = <FieldObstacle obstacle={entry.obstacle} />;
+            content = (
+              <FieldObstacle
+                obstacle={entry.obstacle}
+                currentPlayerTurn={me._roarkPlayerTurns || 0}
+              />
+            );
           } else if (entry.kind === "ghost") {
             const u = entry.unit;
 
