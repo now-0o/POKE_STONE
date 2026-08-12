@@ -4047,7 +4047,7 @@ export const TRAINER_CARDS = [
   // 신오지방 시그니처
   // ============================================================
 
-  P("sinnoh_roark_rampardos", "강석의 램펄드", "바위", 5, 7, 4, "L", {
+  P("sinnoh_roark_rampardos", "강석의 램펄드", "바위", 5, 7, 6, "L", {
     ability: "roark_headsmash",
     signature: true,
     trainerOnly: true,
