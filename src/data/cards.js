@@ -277,7 +277,8 @@ export const ABILITY_TEXT = {
   lovelykiss: "악마의키스: 나왔을 때 무작위 상대에게 잠듦 상태이상",
   moonlight: "달빛: 나왔을 때 아군 포켓몬 전체의 체력을 2 회복한다",
   purify: "정화: 나왔을 때 아군 전체의 체력을 2 회복하고 상태이상을 해제한다",
-  sacredflame: "성스러운불꽃: 나왔을 때 아군 포켓몬 전체의 체력을 3 회복한다",
+  sacredflame:
+    "성스러운불꽃: 게임당 1회, 기절하면 체력 5로 부활하고 상태이상을 모두 해제한다",
   healer: "치유의마음: 내 턴 종료 시 양옆 아군 포켓몬의 체력을 1 회복한다",
   timetravel: "자연회복: 나왔을 때 아군 전체 체력 2 회복, 카드 1장 뽑기",
   supremeoverlord:
@@ -285,7 +286,7 @@ export const ABILITY_TEXT = {
   // 등장 피해
   thunderstrike: "번개: 나왔을 때 상대 포켓몬 전체에게 전기 타입 피해 2",
   psystrike:
-    "사이코브레이크: 나왔을 때 상대 포켓몬 전체에게 에스퍼 타입 피해 3",
+    "사이코브레이크: 이 포켓몬의 공격은 상대의 피해 감소·피해 방지 효과를 무시한다",
   flamesiege: "불대문자: 나왔을 때 무작위 상대 포켓몬에게 불꽃 타입 피해 3",
   earthpower: "대지의힘: 나왔을 때 무작위 상대 포켓몬에게 땅 타입 피해 3",
   muddywater: "탁류: 나왔을 때 상대 포켓몬 전체에게 물 타입 피해 1",
@@ -358,7 +359,8 @@ export const ABILITY_TEXT = {
   lusterpurge:
     "라스터퍼지: 나왔을 때 공격력이 가장 높은 상대 포켓몬에게 에스퍼 피해 4를 주고 공격력 -1",
 
-  wishmaker: "소원메이커: 나왔을 때 아군 전체 체력 2 회복. 카드 1장 드로우",
+  wishmaker:
+    "소원메이커: 나왔을 때 소원을 하나 선택한다 - 아군 전체 체력 3 회복 / 카드 2장 드로우 / 아군 전체 +1/+1",
 
   formchange:
     "폼체인지: 소환할 때 노말·어택·디펜스·스피드 폼 중 하나를 선택한다. 선택한 폼은 배틀 동안 고정된다",
@@ -371,6 +373,27 @@ export const ABILITY_TEXT = {
   deoxys_defense: "디펜스폼: 도발. 받는 피해 2 감소",
 
   deoxys_speed: "스피드폼: 소환 즉시 공격 가능. 한 턴에 두 번 공격할 수 있다",
+
+  mysticpower_uxie:
+    "신비의힘·유크시: 나왔을 때 덱 위 3장 중 1장을 선택해 손으로 가져온다. 선택한 카드의 비용이 2 감소한다",
+
+  mysticpower_mesprit:
+    "신비의힘·엠라이트: 필드에 있는 동안 각 아군 포켓몬은 턴마다 처음 피해를 받을 때 공격력 +1",
+
+  mysticpower_azelf:
+    "신비의힘·아그놈: 필드에 있는 동안 게임당 1회, 아군 포켓몬이 치명적인 피해를 받으면 체력 1로 버틴다",
+
+  magmastorm:
+    "마그마스톰: 나왔을 때 상대 포켓몬 하나를 선택한다. 그 포켓몬과 양옆은 상대 턴 종료마다 피해 2",
+
+  lunarblessing:
+    "초승달의기도: 이 포켓몬이 필드에 있는 동안 아군 포켓몬은 상태이상에 걸리지 않는다",
+
+  bravecharge_phione:
+    "브레이브차지·피오네: 나왔을 때 다른 아군 1마리를 선택한다. 이번 턴 공격력 +2, 즉시 공격 가능",
+
+  bravecharge_manaphy:
+    "브레이브차지·마나피: 나왔을 때 다른 아군 전체가 이번 턴 공격력 +1. 아직 공격하지 않은 아군 1마리를 선택해 이번 턴 2회 공격할 수 있다",
 
   // 메가진화 전용
   megalauncher: "메가런처: 공격할 때 대상 양옆의 상대 포켓몬에게도 피해 1",
@@ -447,14 +470,16 @@ export const ABILITY_TEXT = {
   stormdrain: "마중물: 물 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
   motordrive: "전기엔진: 전기 타입 피해를 무효화하고 공격력 +1 (최대 +3)",
   sharpness: "예리함: 공격 피해 +1",
-  roaroftime: "시간의포효: 나올 때 상대 포켓몬 전체에게 드래곤 타입 피해 2",
+  roaroftime:
+    "시간의포효: 나왔을 때 상대는 다음 턴 동안 포켓몬으로 공격할 수 없다",
   spacialrend:
-    "공간절단: 나올 때 체력이 가장 높은 상대 포켓몬에게 드래곤 타입 피해 5",
+    "공간절단: 나왔을 때 상대 포켓몬 하나를 선택한다. 대상과 양옆에 드래곤 피해 4, 빈 양옆 하나당 대상에게 추가 피해 2",
   shadowforce:
-    "섀도다이브: 나올 때 무작위 상대 포켓몬에게 고스트 타입 피해 4, 살아남으면 공격력 -2",
+    "섀도다이브: 나왔을 때 필드에서 사라진다. 다음 자신의 턴 시작에 돌아와 가장 강한 상대 포켓몬에게 고스트 타입 피해 6",
   darkvoid:
     "다크홀: 나올 때 상대 포켓몬 전체에게 악 타입 피해 1을 주고 무작위 상대 하나를 잠들게 한다",
-  multitype: "멀티타입: 나올 때 상대 필드에 가장 유리한 타입으로 변하고 +1/+1",
+  multitype:
+    "멀티타입: 공격할 때 대상에게 가장 유리한 타입으로 변한다. 이번 게임에서 처음 변하는 타입이라면 +1/+1을 얻는다",
   slowstart:
     "슬로스타트: 나온 뒤 다음 자신의 턴에는 공격할 수 없다. 그 다음 턴부터 정상적으로 공격할 수 있다",
   crushgrip: "묵사발: 최대 체력인 포켓몬을 공격하면 공격 피해 +4",
@@ -2337,15 +2362,15 @@ export const CARDS = [
   // ============================================================
 
   P("uxie", "유크시", "에스퍼", 7, 5, 9, "L", {
-    ability: "foresight",
+    ability: "mysticpower_uxie",
   }),
 
   P("mesprit", "엠라이트", "에스퍼", 7, 6, 9, "L", {
-    ability: "moonlight",
+    ability: "mysticpower_mesprit",
   }),
 
   P("azelf", "아그놈", "에스퍼", 7, 8, 6, "L", {
-    ability: "moxie",
+    ability: "mysticpower_azelf",
   }),
 
   P("dialga", "디아루가", "강철", 9, 9, 9, "L", {
@@ -2357,7 +2382,7 @@ export const CARDS = [
   }),
 
   P("heatran", "히드런", "불꽃", 8, 8, 9, "L", {
-    ability: "flashfire",
+    ability: "magmastorm",
   }),
 
   P("regigigas", "레지기가스", "노말", 8, 10, 12, "L", {
@@ -2370,15 +2395,15 @@ export const CARDS = [
   }),
 
   P("cresselia", "크레세리아", "에스퍼", 7, 5, 10, "L", {
-    ability: "moonlight",
+    ability: "lunarblessing",
   }),
 
   P("phione", "피오네", "물", 7, 6, 8, "L", {
-    ability: "waterabsorb",
+    ability: "bravecharge_phione",
   }),
 
   P("manaphy", "마나피", "물", 8, 7, 9, "L", {
-    ability: "waterabsorb",
+    ability: "bravecharge_manaphy",
   }),
 
   P("darkrai", "다크라이", "악", 8, 9, 7, "L", {

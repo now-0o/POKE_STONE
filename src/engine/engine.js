@@ -324,7 +324,7 @@ function canStableDrawCard(game, side, cardId) {
 
   // 기본 포켓몬
   if (card.kind === "pokemon" && !card.evolvesFrom) {
-    return p.field.length < MAX_FIELD;
+    return p.field.length + (p._shadowForceExile ? 1 : 0) < MAX_FIELD;
   }
 
   // 진화
@@ -610,6 +610,20 @@ export function applyStatus(game, unit, statusType, sourceUnit = null) {
 
   const owner = game.players[unit.side];
 
+  // 크레세리아 - 초승달의기도
+  const cresseliaAlive = owner?.field.some(
+    (ally) => ally.hp > 0 && hasAbility(ally, "lunarblessing"),
+  );
+
+  if (cresseliaAlive) {
+    log(
+      game,
+      `${unit.name}은(는) 크레세리아의 초승달의기도로 상태이상을 막았다!`,
+    );
+
+    return false;
+  }
+
   // 신비의부적
   if (owner?._statusGuardTurns > 0) {
     log(game, `${unit.name}은(는) 신비의부적으로 상태이상을 막았다!`);
@@ -729,6 +743,12 @@ function startTurn(game, side) {
   p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
   p.mana = p.maxMana;
   p.discardUsedThisTurn = false;
+
+  // 기라티나 - 섀도다이브
+  if (p._shadowForceExile) {
+    resolveShadowForceReturn(game, side);
+  }
+
   if (p._statusGuardTurns > 0) {
     p._statusGuardTurns -= 1;
 
@@ -836,18 +856,35 @@ export function endTurn(game) {
     // 생명의 구슬: 턴 종료 시 반동 피해 1
     if (u.item === "lifeorb" && !hasAbility(u, "rockhead")) {
       u.hp -= 1;
+
+      tryAzelfMysticPower(game, u);
+
+      triggerMespritMysticPower(game, u);
+
       log(game, `${u.name}의 생명의구슬 반동! 체력이 1 줄었다.`);
     }
     // 화상: 턴 종료 시 1 피해
     if (u.status === "burn") {
       u.hp -= 1;
+
+      tryAzelfMysticPower(game, u);
+
+      triggerMespritMysticPower(game, u);
+
       log(game, `${u.name}은(는) 화상으로 체력이 1 줄었다!`);
     }
     // 독: 턴 종료 시 누적 피해 (1→2→3→...)
     if (u.status === "poison") {
       u.statusTurns += 1;
+
       const dmg = u.statusTurns;
+
       u.hp -= dmg;
+
+      tryAzelfMysticPower(game, u);
+
+      triggerMespritMysticPower(game, u);
+
       log(game, `${u.name}은(는) 독으로 체력이 ${dmg} 줄었다!`);
     }
     // 멸망의노래
@@ -920,6 +957,55 @@ export function endTurn(game) {
 
   cleanupDeaths(game);
 
+  // ============================================================
+  // 히드런 - 마그마스톰
+  // 마그마스톰에 갇힌 플레이어의 턴 종료마다 피해 2
+  // ============================================================
+  if (p._magmaStormTargets?.length) {
+    const stormTargets = p._magmaStormTargets
+      .map((uid) => p.field.find((u) => u.uid === uid && u.hp > 0))
+      .filter(Boolean);
+
+    if (stormTargets.length > 0) {
+      beginImpactCapture(game);
+
+      stormTargets.forEach((u) => {
+        applyDamage(game, u, 2, "불꽃");
+      });
+
+      log(
+        game,
+        `마그마스톰이 휘몰아친다! 갇힌 포켓몬들이 불꽃 타입 피해 2를 받았다!`,
+      );
+
+      cleanupDeaths(game);
+
+      const impacts = takeImpacts(game);
+
+      if (impacts.length > 0) {
+        game.animSeq = (game.animSeq || 0) + 1;
+
+        game.lastAction = {
+          seq: game.animSeq,
+          kind: "ability",
+          side,
+          cardId: "heatran",
+          impacts,
+        };
+      }
+    }
+
+    // 죽거나 필드에서 사라진 포켓몬은
+    // 마그마스톰 대상에서 제거
+    p._magmaStormTargets = p._magmaStormTargets.filter((uid) =>
+      p.field.some((u) => u.uid === uid && u.hp > 0),
+    );
+
+    if (p._magmaStormTargets.length === 0) {
+      p._magmaStormTargets = null;
+    }
+  }
+
   // 모래바람: 턴 종료 시 땅 타입이 아닌 모든 포켓몬 피해 1 (부유 포함 피해)
   if (game.weather === "sand") {
     ["player", "enemy"].forEach((s) => {
@@ -932,6 +1018,19 @@ export function endTurn(game) {
     cleanupDeaths(game);
   }
 
+  // 디아루가 - 시간의포효
+  // 공격이 봉인된 자신의 턴을 마쳤으면 해제
+  if ((p._roarOfTimeBlockTurns || 0) > 0) {
+    p._roarOfTimeBlockTurns -= 1;
+  }
+
+  // 피오네 / 마나피 - 브레이브차지
+  // 이번 턴 한정 효과 제거
+  p.field.forEach((u) => {
+    u._braveChargeAtkBonus = 0;
+    u._braveChargeDouble = false;
+  });
+
   if (game.winner) return;
 
   const next = other(side);
@@ -943,8 +1042,12 @@ export function endTurn(game) {
 }
 
 // ---------- 계산 ----------
-export function effectiveCost(card, game, side = null) {
+export function effectiveCost(card, game, side = null, handCard = null) {
   let cost = card.cost;
+
+  if (handCard?.costReduction) {
+    cost -= handCard.costReduction;
+  }
 
   if (game.weather === "sun") {
     if (card.ability === "chlorophyll") {
@@ -972,6 +1075,11 @@ export function effectiveCost(card, game, side = null) {
 
 export function effectiveAtk(unit, game) {
   let atk = unit.atk;
+
+  // 피오네 / 마나피 - 브레이브차지
+  if (unit._braveChargeAtkBonus) {
+    atk += unit._braveChargeAtkBonus;
+  }
 
   if (
     PINCH_ABILITIES.some((ability) => hasAbility(unit, ability)) &&
@@ -1138,6 +1246,80 @@ function takeImpacts(game) {
   return impacts;
 }
 
+function triggerMespritMysticPower(game, unit) {
+  if (!unit || unit.hp <= 0) {
+    return;
+  }
+
+  const p = game.players[unit.side];
+
+  if (!p) {
+    return;
+  }
+
+  const mespritAlive = p.field.some(
+    (ally) => ally.hp > 0 && hasAbility(ally, "mysticpower_mesprit"),
+  );
+
+  if (!mespritAlive) {
+    return;
+  }
+
+  // turnCount만 쓰면 플레이어/상대 턴이
+  // 같은 번호를 공유하므로 현재 턴 주체까지 같이 저장
+  const turnKey = `${game.turnCount}:${game.turn}`;
+
+  if (unit._mespritMysticTurn === turnKey) {
+    return;
+  }
+
+  unit._mespritMysticTurn = turnKey;
+
+  unit.atk += 1;
+
+  recordImpact(game, {
+    type: "buff",
+    side: unit.side,
+    targetUid: unit.uid,
+    amount: 1,
+  });
+
+  log(game, `엠라이트의 신비의힘! ${unit.name}의 공격력 +1!`);
+}
+
+function tryAzelfMysticPower(game, unit, ignoreDefense = false) {
+  if (!unit || unit.hp > 0 || ignoreDefense) {
+    return false;
+  }
+
+  const p = game.players[unit.side];
+
+  if (!p || p._azelfMysticUsed) {
+    return false;
+  }
+
+  const azelf = p.field.find(
+    (ally) =>
+      hasAbility(ally, "mysticpower_azelf") &&
+      (ally.hp > 0 || ally.uid === unit.uid),
+  );
+
+  if (!azelf) {
+    return false;
+  }
+
+  p._azelfMysticUsed = true;
+
+  unit.hp = 1;
+
+  log(
+    game,
+    `${azelf.name}의 신비의힘·아그놈! ${unit.name}이(가) 체력 1로 버텼다!`,
+  );
+
+  return true;
+}
+
 // ---------- 피해 처리 ----------
 function applyDamage(
   game,
@@ -1145,6 +1327,7 @@ function applyDamage(
   amount,
   sourceType = null,
   typedIgnore = false,
+  ignoreDefense = false,
 ) {
   const hpBefore = unit.hp;
 
@@ -1160,6 +1343,8 @@ function applyDamage(
         targetUid: unit.uid,
         amount: actualDamage,
       });
+
+      triggerMespritMysticPower(game, unit);
 
       // 꼭두의 밀탱크 - 구르기
       // 피해를 받으면 누적 초기화
@@ -1206,7 +1391,12 @@ function applyDamage(
 
   // 불가사의부적
   // 약점 타입의 직접 피해만 통과
-  if (!typedIgnore && sourceType && hasAbility(unit, "wonderguard")) {
+  if (
+    !ignoreDefense &&
+    !typedIgnore &&
+    sourceType &&
+    hasAbility(unit, "wonderguard")
+  ) {
     const mult = typeMultAgainstUnit(sourceType, unit);
 
     if (mult <= 1) {
@@ -1217,7 +1407,7 @@ function applyDamage(
   }
 
   // 웅의 롱스톤 - 스톤에지
-  if (unit.ability === "brock_rockwall") {
+  if (!ignoreDefense && unit.ability === "brock_rockwall") {
     const before = dmg;
 
     dmg = Math.max(0, dmg - 2);
@@ -1311,7 +1501,12 @@ function applyDamage(
   }
 
   // 모래숨기
-  if (!typedIgnore && game.weather === "sand" && hasAbility(unit, "sandveil")) {
+  if (
+    !ignoreDefense &&
+    !typedIgnore &&
+    game.weather === "sand" &&
+    hasAbility(unit, "sandveil")
+  ) {
     dmg = Math.max(0, dmg - 1);
 
     if (dmg < amount) {
@@ -1321,6 +1516,7 @@ function applyDamage(
 
   // 멀티스케일
   if (
+    !ignoreDefense &&
     (hasAbility(unit, "multiscale") || hasAbility(unit, "aeroblast")) &&
     unit.hp === unit.maxHp &&
     dmg > 1
@@ -1331,14 +1527,19 @@ function applyDamage(
   }
 
   // 조가비갑옷
-  if (!typedIgnore && hasAbility(unit, "shellarmor") && dmg > 4) {
+  if (
+    !ignoreDefense &&
+    !typedIgnore &&
+    hasAbility(unit, "shellarmor") &&
+    dmg > 4
+  ) {
     dmg = 4;
 
     log(game, `${unit.name}의 조가비갑옷! 피해를 4로 줄였다!`);
   }
 
   // 이상한비늘
-  if (unit.status && hasAbility(unit, "marvelscale")) {
+  if (!ignoreDefense && unit.status && hasAbility(unit, "marvelscale")) {
     const before = dmg;
 
     dmg = Math.max(0, dmg - 2);
@@ -1350,6 +1551,7 @@ function applyDamage(
 
   // 필터
   if (
+    !ignoreDefense &&
     !typedIgnore &&
     sourceType &&
     hasAbility(unit, "filter") &&
@@ -1365,7 +1567,7 @@ function applyDamage(
   }
 
   // 테오키스 디펜스폼
-  if (hasAbility(unit, "deoxys_defense")) {
+  if (!ignoreDefense && hasAbility(unit, "deoxys_defense")) {
     const before = dmg;
 
     dmg = Math.max(0, dmg - 2);
@@ -1380,7 +1582,7 @@ function applyDamage(
   }
 
   // 따라큐 탈
-  if (hasAbility(unit, "disguise") && !unit.sturdyUsed) {
+  if (!ignoreDefense && hasAbility(unit, "disguise") && !unit.sturdyUsed) {
     unit.hp -= 1;
     unit.sturdyUsed = true;
 
@@ -1391,6 +1593,7 @@ function applyDamage(
 
   // 옹골참
   if (
+    !ignoreDefense &&
     hasAbility(unit, "sturdy") &&
     unit.maxHp > 1 &&
     unit.hp === unit.maxHp &&
@@ -1405,6 +1608,7 @@ function applyDamage(
 
   // 기합의띠
   if (
+    !ignoreDefense &&
     unit.item === "focussash" &&
     !unit.focusSashUsed &&
     unit.hp === unit.maxHp &&
@@ -1419,6 +1623,8 @@ function applyDamage(
   }
 
   unit.hp -= dmg;
+
+  tryAzelfMysticPower(game, unit, ignoreDefense);
 
   // 켈리몬 - 변색
   if (
@@ -1452,11 +1658,60 @@ export function cleanupDeaths(game, deferRemoval = false) {
 
       const allDead = p.field.filter((u) => u.hp <= 0);
 
-      // 이미 죽음 효과를 처리한 포켓몬은 다시 처리하지 않음
-      const newlyDead = allDead.filter((u) => !u._deathProcessed);
+      // ============================================================
+      // 칠색조 - 성스러운불꽃
+      //
+      // deferRemoval === true일 때는
+      // 공격/기술 애니메이션이 아직 끝나지 않았으므로 부활하지 않는다.
+      //
+      // 실제 사망 처리 시점에 게임당 1회 부활.
+      // 플레이어 단위 플래그를 사용하므로
+      // 세레비 등으로 다시 살아나도 두 번째 부활은 불가능.
+      // ============================================================
+      if (!deferRemoval && !p._sacredFlameUsed) {
+        const hooh = allDead.find((u) => hasAbility(u, "sacredflame"));
 
-      // 실제 제거는 공격 애니메이션 종료 후에만
-      if (!deferRemoval && allDead.length > 0) {
+        if (hooh) {
+          p._sacredFlameUsed = true;
+
+          hooh.hp = Math.min(5, hooh.maxHp);
+
+          hooh.frozen = 0;
+          hooh.status = null;
+          hooh.statusTurns = 0;
+
+          // 부활한 순간 다시 공격하는 것 방지
+          hooh.canAttack = false;
+
+          // 이후 다시 죽었을 때는
+          // 정상적인 사망 처리가 가능해야 함
+          hooh._deathProcessed = false;
+
+          log(
+            game,
+            `${hooh.name}의 성스러운불꽃! 칠색조가 체력 ${hooh.hp}로 부활했다!`,
+          );
+        }
+      }
+
+      // 성스러운불꽃으로 살아난 포켓몬은 제외하고
+      // 아직 체력이 0 이하인 포켓몬만 실제 사망 처리
+      const remainingDead = p.field.filter((u) => u.hp <= 0);
+
+      // 애니메이션 도중 칠색조가 죽은 경우에는
+      // 아직 기절 판정을 확정하지 않는다.
+      const newlyDead = remainingDead.filter(
+        (u) =>
+          !u._deathProcessed &&
+          !(
+            deferRemoval &&
+            hasAbility(u, "sacredflame") &&
+            !p._sacredFlameUsed
+          ),
+      );
+
+      // 실제 제거는 공격/기술 애니메이션 종료 후
+      if (!deferRemoval && remainingDead.length > 0) {
         p.field = p.field.filter((u) => u.hp > 0);
       }
 
@@ -1627,6 +1882,86 @@ function applyDeoxysForm(game, unit, form) {
   return true;
 }
 
+function applyWishmakerChoice(game, side, choice) {
+  const p = game.players[side];
+
+  if (choice === "heal") {
+    p.field.forEach((u) => {
+      const before = u.hp;
+
+      u.hp = Math.min(u.maxHp, u.hp + 3);
+
+      const healed = u.hp - before;
+
+      if (healed > 0) {
+        recordImpact(game, {
+          type: "heal",
+          side,
+          targetUid: u.uid,
+          amount: healed,
+        });
+      }
+    });
+
+    log(game, "지라치의 소원메이커! 아군 전체의 체력을 3 회복했다!");
+
+    return true;
+  }
+
+  if (choice === "draw") {
+    drawCard(game, side);
+    drawCard(game, side);
+
+    log(game, "지라치의 소원메이커! 카드 2장을 뽑았다!");
+
+    return true;
+  }
+
+  if (choice === "boost") {
+    p.field.forEach((u) => {
+      u.atk += 1;
+      u.hp += 1;
+      u.maxHp += 1;
+
+      recordImpact(game, {
+        type: "buff",
+        side,
+        targetUid: u.uid,
+        amount: 1,
+      });
+    });
+
+    log(game, "지라치의 소원메이커! 아군 전체가 +1/+1을 얻었다!");
+
+    return true;
+  }
+
+  return false;
+}
+
+export function resolveWishmaker(game, side, choice) {
+  const pending = game.pendingWishmaker;
+
+  if (!pending || pending.side !== side) {
+    return false;
+  }
+
+  const unit = game.players[side].field.find((u) => u.uid === pending.uid);
+
+  if (!unit || !hasAbility(unit, "wishmaker")) {
+    game.pendingWishmaker = null;
+    return false;
+  }
+
+  const result = applyWishmakerChoice(game, side, choice);
+
+  if (result) {
+    game.pendingWishmaker = null;
+  }
+
+  return result;
+}
+
 export function resolveDeoxysForm(game, side, form) {
   const pending = game.pendingDeoxysForm;
 
@@ -1653,6 +1988,216 @@ export function resolveDeoxysForm(game, side, form) {
   }
 
   return result;
+}
+
+function applySpacialRend(game, side, targetUid) {
+  const foe = game.players[other(side)];
+
+  const targetIndex = foe.field.findIndex(
+    (u) => u.uid === targetUid && u.hp > 0,
+  );
+
+  if (targetIndex === -1) {
+    return false;
+  }
+
+  const target = foe.field[targetIndex];
+
+  const left = targetIndex > 0 ? foe.field[targetIndex - 1] : null;
+
+  const right =
+    targetIndex < foe.field.length - 1 ? foe.field[targetIndex + 1] : null;
+
+  const emptyAdjacent = (left ? 0 : 1) + (right ? 0 : 1);
+
+  // 대상 기본 피해 4
+  // 빈 양옆 하나당 +2
+  const targetBaseDamage = 4 + emptyAdjacent * 2;
+
+  const targetDealt = applyTypedAbilityDamage(
+    game,
+    target,
+    targetBaseDamage,
+    "드래곤",
+  );
+
+  if (left && left.hp > 0) {
+    applyTypedAbilityDamage(game, left, 4, "드래곤");
+  }
+
+  if (right && right.hp > 0) {
+    applyTypedAbilityDamage(game, right, 4, "드래곤");
+  }
+
+  log(
+    game,
+    `펄기아의 공간절단! ${target.name}에게 드래곤 피해 ${targetDealt}!${
+      emptyAdjacent > 0
+        ? ` 빈 공간 ${emptyAdjacent}칸으로 위력이 증가했다!`
+        : ""
+    }`,
+  );
+
+  return true;
+}
+
+function applyMagmaStormMark(game, side, targetUid) {
+  const foe = game.players[other(side)];
+
+  const targetIndex = foe.field.findIndex(
+    (u) => u.uid === targetUid && u.hp > 0,
+  );
+
+  if (targetIndex === -1) {
+    return false;
+  }
+
+  const targets = [];
+
+  const left = targetIndex > 0 ? foe.field[targetIndex - 1] : null;
+
+  const target = foe.field[targetIndex];
+
+  const right =
+    targetIndex < foe.field.length - 1 ? foe.field[targetIndex + 1] : null;
+
+  if (left && left.hp > 0) {
+    targets.push(left.uid);
+  }
+
+  targets.push(target.uid);
+
+  if (right && right.hp > 0) {
+    targets.push(right.uid);
+  }
+
+  // 기존 마그마스톰이 있다면
+  // 새로 선택한 대상으로 교체
+  foe._magmaStormTargets = [...new Set(targets)];
+
+  log(
+    game,
+    `히드런의 마그마스톰! ${target.name}과(와) 주변이 마그마에 갇혔다!`,
+  );
+
+  return true;
+}
+
+function resolveShadowForceReturn(game, side) {
+  const p = game.players[side];
+
+  const exile = p._shadowForceExile;
+
+  if (!exile) {
+    return false;
+  }
+
+  const unit = exile.unit;
+
+  // 저장했던 위치에 최대한 가깝게 복귀
+  const returnIndex = Math.max(0, Math.min(exile.index, p.field.length));
+
+  p.field.splice(returnIndex, 0, unit);
+
+  p._shadowForceExile = null;
+
+  log(game, `${unit.name}이(가) 섀도다이브에서 돌아왔다!`);
+
+  const foe = game.players[other(side)];
+
+  const targets = foe.field.filter((target) => target.hp > 0);
+
+  if (targets.length === 0) {
+    return true;
+  }
+
+  // 현재 공격력이 가장 높은 상대
+  // 동률이면 체력이 높은 상대
+  const target = [...targets].sort((a, b) => {
+    const atkDiff = effectiveAtk(b, game) - effectiveAtk(a, game);
+
+    if (atkDiff !== 0) {
+      return atkDiff;
+    }
+
+    return b.hp - a.hp;
+  })[0];
+
+  beginImpactCapture(game);
+
+  const dealt = applyTypedAbilityDamage(game, target, 6, "고스트");
+
+  log(
+    game,
+    `${unit.name}의 섀도다이브! ${target.name}에게 고스트 타입 피해 ${dealt}!`,
+  );
+
+  cleanupDeaths(game);
+
+  const impacts = takeImpacts(game);
+
+  game.animSeq = (game.animSeq || 0) + 1;
+
+  game.lastAction = {
+    seq: game.animSeq,
+    kind: "ability",
+    side,
+    cardId: "giratina",
+    uid: unit.uid,
+    targetUid: target.uid,
+
+    ...(impacts.length > 0 ? { impacts } : {}),
+  };
+
+  return true;
+}
+
+function applyPhioneBraveCharge(game, side, target) {
+  if (!target || target.hp <= 0) {
+    return false;
+  }
+
+  target._braveChargeAtkBonus = (target._braveChargeAtkBonus || 0) + 2;
+
+  // 소환 멀미가 있어도 바로 공격 가능
+  // 얼음 / 수면 등의 상태이상은
+  // canAttack()에서 별도로 막힘
+  target.canAttack = true;
+
+  recordImpact(game, {
+    type: "buff",
+    side,
+    targetUid: target.uid,
+    amount: 2,
+  });
+
+  log(
+    game,
+    `피오네의 브레이브차지! ${target.name}의 공격력 +2! 바로 공격할 수 있다!`,
+  );
+
+  return true;
+}
+
+function applyManaphyBraveChargeBuff(game, side, manaphy) {
+  const p = game.players[side];
+
+  p.field.forEach((ally) => {
+    if (ally.uid === manaphy.uid || ally.hp <= 0) {
+      return;
+    }
+
+    ally._braveChargeAtkBonus = (ally._braveChargeAtkBonus || 0) + 1;
+
+    recordImpact(game, {
+      type: "buff",
+      side,
+      targetUid: ally.uid,
+      amount: 1,
+    });
+  });
+
+  log(game, `${manaphy.name}의 브레이브차지! 다른 아군 전체의 공격력 +1!`);
 }
 
 function runBattlecry(game, side, unit) {
@@ -1787,6 +2332,67 @@ function runBattlecry(game, side, unit) {
       drawCard(game, side);
       log(game, `${unit.name}의 예지! 카드를 2장 뽑았다.`);
       break;
+    case "mysticpower_uxie": {
+      if (me.deck.length === 0) {
+        log(game, `${unit.name}의 신비의힘·유크시! 하지만 덱에 카드가 없다.`);
+        break;
+      }
+
+      const count = Math.min(3, me.deck.length);
+
+      // drawCard가 pop()을 쓰므로
+      // 배열 뒤쪽이 덱 위
+      const start = me.deck.length - count;
+
+      const cardIds = me.deck.splice(start, count);
+
+      const picks = cardIds.map((cardId) => ({
+        uid: nextUid(),
+        cardId,
+      }));
+
+      if (side === "enemy") {
+        // AI는 비용이 가장 높은 카드를 우선 선택
+        const chosen = [...picks].sort(
+          (a, b) =>
+            (CARD_MAP[b.cardId]?.cost || 0) - (CARD_MAP[a.cardId]?.cost || 0),
+        )[0];
+
+        const returnedIds = picks
+          .filter((pick) => pick.uid !== chosen.uid)
+          .map((pick) => pick.cardId);
+
+        if (me.hand.length < MAX_HAND) {
+          me.hand.push({
+            ...chosen,
+            costReduction: 2,
+          });
+
+          log(
+            game,
+            `${unit.name}의 신비의힘·유크시! ${CARD_MAP[chosen.cardId]?.name}을(를) 손에 넣고 비용을 2 낮췄다!`,
+          );
+        } else {
+          returnedIds.push(chosen.cardId);
+        }
+
+        // 선택하지 않은 카드는 덱 아래로
+        me.deck = [...returnedIds, ...me.deck];
+      } else {
+        game.pendingChoose = {
+          side,
+          picks,
+          effect: "uxie",
+        };
+
+        log(
+          game,
+          `${unit.name}의 신비의힘·유크시! 덱 위 ${picks.length}장 중 하나를 선택하세요.`,
+        );
+      }
+
+      break;
+    }
     case "download":
       unit.atk += 1;
       unit.hp += 1;
@@ -1809,8 +2415,8 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 정화! 아군이 회복하고 상태이상이 풀렸다.`);
       break;
     case "sacredflame":
-      me.field.forEach((u) => (u.hp = Math.min(u.maxHp, u.hp + 3)));
-      log(game, `${unit.name}의 성스러운불꽃! 아군 전체가 크게 회복했다.`);
+      // 성스러운불꽃은 등장 효과가 아니라
+      // 기절할 때 cleanupDeaths에서 처리
       break;
     case "muddywater":
       foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 1, "물"));
@@ -1938,9 +2544,8 @@ function runBattlecry(game, side, unit) {
       log(game, `${unit.name}의 달빛! 아군 포켓몬이 회복했다.`);
       break;
     case "psystrike":
-      foe.field.forEach((u) => applyTypedAbilityDamage(game, u, 3, "에스퍼"));
-      log(game, `${unit.name}의 사이코브레이크! 적 전체에게 에스퍼 피해 3!`);
-      cleanupDeaths(game);
+      // 사이코브레이크는 등장 효과가 아니라
+      // 기본 공격 시 상대의 방어 효과를 관통한다.
       break;
     case "timetravel":
       me.field.forEach((u) => (u.hp = Math.min(u.maxHp, u.hp + 2)));
@@ -2129,7 +2734,10 @@ function runBattlecry(game, side, unit) {
 
       // 마지막으로 죽은 아군이 있고
       // 필드에 빈 자리가 있으면 부활
-      if (dead && me.field.length < MAX_FIELD) {
+      if (
+        dead &&
+        me.field.length + (me._shadowForceExile ? 1 : 0) < MAX_FIELD
+      ) {
         const deadCard = CARD_MAP[dead.cardId];
 
         if (deadCard && deadCard.kind === "pokemon") {
@@ -2289,13 +2897,15 @@ function runBattlecry(game, side, unit) {
 
     // 디아루가 - 시간의포효
     case "roaroftime": {
-      foe.field.forEach((target) => {
-        applyTypedAbilityDamage(game, target, 2, "드래곤");
-      });
+      // 다음 상대 턴 동안 모든 포켓몬 공격 불가
+      // 중복 발동해도 2턴으로 누적되지는 않는다.
+      foe._roarOfTimeBlockTurns = Math.max(foe._roarOfTimeBlockTurns || 0, 1);
 
-      log(game, `${unit.name}의 시간의포효! 상대 전체에게 드래곤 피해 2!`);
+      log(
+        game,
+        `${unit.name}의 시간의포효! 상대의 시간이 멈췄다! 다음 턴 동안 포켓몬으로 공격할 수 없다!`,
+      );
 
-      cleanupDeaths(game);
       break;
     }
 
@@ -2303,17 +2913,114 @@ function runBattlecry(game, side, unit) {
     case "spacialrend": {
       const targets = foe.field.filter((target) => target.hp > 0);
 
-      if (targets.length > 0) {
-        const target = [...targets].sort((a, b) => b.hp - a.hp)[0];
+      if (targets.length === 0) {
+        log(game, `${unit.name}의 공간절단! 하지만 상대 필드가 비어 있다!`);
 
-        const dealt = applyTypedAbilityDamage(game, target, 5, "드래곤");
+        break;
+      }
 
-        log(
-          game,
-          `${unit.name}의 공간절단! ${target.name}에게 드래곤 피해 ${dealt}!`,
-        );
+      if (side === "enemy") {
+        // AI는 공간절단의 기대 피해가
+        // 가장 높은 위치를 선택
+        let bestTarget = null;
+        let bestScore = -1;
 
-        cleanupDeaths(game);
+        targets.forEach((target) => {
+          const index = foe.field.indexOf(target);
+
+          const left = index > 0 ? foe.field[index - 1] : null;
+
+          const right =
+            index < foe.field.length - 1 ? foe.field[index + 1] : null;
+
+          const emptyAdjacent = (left ? 0 : 1) + (right ? 0 : 1);
+
+          let score = calcTypedDamageAgainstUnit(
+            4 + emptyAdjacent * 2,
+            "드래곤",
+            target,
+          );
+
+          if (left) {
+            score += calcTypedDamageAgainstUnit(4, "드래곤", left);
+          }
+
+          if (right) {
+            score += calcTypedDamageAgainstUnit(4, "드래곤", right);
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestTarget = target;
+          }
+        });
+
+        if (bestTarget) {
+          applySpacialRend(game, side, bestTarget.uid);
+
+          cleanupDeaths(game);
+        }
+      } else {
+        // 플레이어는 직접 대상 선택
+        game.pendingBattlecry = {
+          side,
+          uid: unit.uid,
+          ability: "spacialrend",
+          targets: targets.map((target) => target.uid),
+        };
+
+        log(game, `${unit.name}의 공간절단! 공격할 상대 포켓몬을 선택하세요.`);
+      }
+
+      break;
+    }
+
+    case "magmastorm": {
+      const targets = foe.field.filter((target) => target.hp > 0);
+
+      if (targets.length === 0) {
+        log(game, `${unit.name}의 마그마스톰! 하지만 상대 필드가 비어 있다!`);
+
+        break;
+      }
+
+      if (side === "enemy") {
+        // AI는 가장 많은 포켓몬을
+        // 마그마스톰에 가둘 수 있는 위치 선택
+        let bestTarget = null;
+        let bestCount = -1;
+
+        targets.forEach((target) => {
+          const index = foe.field.indexOf(target);
+
+          let count = 1;
+
+          if (index > 0 && foe.field[index - 1]?.hp > 0) {
+            count += 1;
+          }
+
+          if (index < foe.field.length - 1 && foe.field[index + 1]?.hp > 0) {
+            count += 1;
+          }
+
+          if (count > bestCount) {
+            bestCount = count;
+            bestTarget = target;
+          }
+        });
+
+        if (bestTarget) {
+          applyMagmaStormMark(game, side, bestTarget.uid);
+        }
+      } else {
+        game.pendingBattlecry = {
+          side,
+          uid: unit.uid,
+          ability: "magmastorm",
+          targets: targets.map((target) => target.uid),
+        };
+
+        log(game, `${unit.name}의 마그마스톰! 가둘 상대 포켓몬을 선택하세요.`);
       }
 
       break;
@@ -2321,28 +3028,111 @@ function runBattlecry(game, side, unit) {
 
     // 기라티나 - 섀도다이브
     case "shadowforce": {
-      const targets = foe.field.filter((target) => target.hp > 0);
+      const index = me.field.findIndex((ally) => ally.uid === unit.uid);
 
-      if (targets.length > 0) {
-        const target = targets[Math.floor(Math.random() * targets.length)];
+      if (index === -1) {
+        break;
+      }
 
-        const dealt = applyTypedAbilityDamage(game, target, 4, "고스트");
+      // 기라티나 자체를 필드에서 제거해서
+      // 공격/기술/상태이상 등의 대상이 될 수 없게 한다.
+      const [exiledUnit] = me.field.splice(index, 1);
 
-        if (target.hp > 0) {
-          const lowered = lowerAttack(game, target, 2, "섀도다이브");
+      me._shadowForceExile = {
+        unit: exiledUnit,
+        index,
+      };
 
-          log(
-            game,
-            `${unit.name}의 섀도다이브! ${target.name}에게 고스트 피해 ${dealt}, 공격력 -${lowered}!`,
-          );
-        } else {
-          log(
-            game,
-            `${unit.name}의 섀도다이브! ${target.name}에게 고스트 피해 ${dealt}!`,
-          );
-        }
+      log(
+        game,
+        `${unit.name}의 섀도다이브! 모습을 감추고 다른 차원으로 사라졌다!`,
+      );
 
-        cleanupDeaths(game);
+      break;
+    }
+
+    case "bravecharge_phione": {
+      const targets = me.field.filter(
+        (ally) => ally.uid !== unit.uid && ally.hp > 0,
+      );
+
+      if (targets.length === 0) {
+        log(game, `${unit.name}의 브레이브차지! 강화할 다른 아군이 없다.`);
+
+        break;
+      }
+
+      if (side === "enemy") {
+        const target = [...targets].sort(
+          (a, b) => effectiveAtk(b, game) - effectiveAtk(a, game),
+        )[0];
+
+        applyPhioneBraveCharge(game, side, target);
+      } else {
+        game.pendingBattlecry = {
+          side,
+          uid: unit.uid,
+          ability: "bravecharge_phione",
+          targetSide: side,
+          targets: targets.map((target) => target.uid),
+        };
+
+        log(
+          game,
+          `${unit.name}의 브레이브차지! 강화할 아군 포켓몬을 선택하세요.`,
+        );
+      }
+
+      break;
+    }
+
+    case "bravecharge_manaphy": {
+      // 먼저 다른 아군 전체 +1
+      applyManaphyBraveChargeBuff(game, side, unit);
+
+      // 아직 공격하지 않았고
+      // 현재 공격 가능한 아군만 선택 가능
+      const targets = me.field.filter(
+        (ally) =>
+          ally.uid !== unit.uid &&
+          ally.hp > 0 &&
+          canAttack(game, side, ally.uid) &&
+          !ally.extraUsed,
+      );
+
+      if (targets.length === 0) {
+        log(
+          game,
+          `${unit.name}의 브레이브차지! 2회 공격시킬 수 있는 아군은 없다.`,
+        );
+
+        break;
+      }
+
+      if (side === "enemy") {
+        const target = [...targets].sort(
+          (a, b) => effectiveAtk(b, game) - effectiveAtk(a, game),
+        )[0];
+
+        target._braveChargeDouble = true;
+
+        log(
+          game,
+          `${unit.name}의 브레이브차지! ${target.name}이(가) 이번 턴 2회 공격할 수 있다!`,
+        );
+      } else {
+        game.pendingBattlecry = {
+          side,
+          uid: unit.uid,
+          ability: "bravecharge_manaphy",
+          targetSide: side,
+          targets: targets.map((target) => target.uid),
+        };
+
+        log(
+          game,
+          `${unit.name}의 브레이브차지! 2회 공격시킬 아군을 선택하세요.`,
+        );
       }
 
       break;
@@ -2380,41 +3170,9 @@ function runBattlecry(game, side, unit) {
 
     // 아르세우스 - 멀티타입
     case "multitype": {
-      const availableTypes = Object.keys(TYPE_CHART);
-
-      let bestType = "노말";
-
-      if (foe.field.length > 0 && availableTypes.length > 0) {
-        let bestScore = -Infinity;
-
-        availableTypes.forEach((attackType) => {
-          const score = foe.field.reduce(
-            (sum, target) => sum + typeMult(attackType, target.type),
-            0,
-          );
-
-          if (score > bestScore) {
-            bestScore = score;
-            bestType = attackType;
-          }
-        });
-      }
-
-      unit.type = bestType;
-
-      unit.atk += 1;
-      unit.baseAtk += 1;
-      unit.hp += 1;
-      unit.maxHp += 1;
-
-      recordImpact(game, {
-        type: "buff",
-        side,
-        targetUid: unit.uid,
-        amount: 1,
-      });
-
-      log(game, `${unit.name}의 멀티타입! ${bestType} 타입으로 변하고 +1/+1!`);
+      // 공격할 때마다 발동한다.
+      // 이번 게임에서 사용한 타입을 기록한다.
+      unit._multitypeUsedTypes = [];
 
       break;
     }
@@ -2647,13 +3405,22 @@ function runBattlecry(game, side, unit) {
     }
 
     case "wishmaker": {
-      me.field.forEach((ally) => {
-        ally.hp = Math.min(ally.maxHp, ally.hp + 2);
-      });
+      if (side === "enemy") {
+        // AI 지라치는 3가지 소원 중 하나 선택
+        const choices = ["heal", "draw", "boost"];
 
-      drawCard(game, side);
+        const choice = choices[Math.floor(Math.random() * choices.length)];
 
-      log(game, `${unit.name}의 소원메이커! 아군 전체 회복 + 카드 1장 드로우!`);
+        applyWishmakerChoice(game, side, choice);
+      } else {
+        // 플레이어는 Battle.jsx에서 직접 선택
+        game.pendingWishmaker = {
+          side,
+          uid: unit.uid,
+        };
+
+        log(game, `${unit.name}의 소원메이커! 소원을 선택하세요.`);
+      }
 
       break;
     }
@@ -2725,13 +3492,16 @@ export function canPlayCard(game, side, handIdx) {
   const h = p.hand[handIdx];
   if (!h) return false;
   const card = CARD_MAP[h.cardId];
-  if (effectiveCost(card, game, side) > p.mana) return false;
+  if (effectiveCost(card, game, side, h) > p.mana) {
+    return false;
+  }
   if (
     card.kind === "pokemon" &&
     !card.evolvesFrom &&
-    p.field.length >= MAX_FIELD
-  )
+    p.field.length + (p._shadowForceExile ? 1 : 0) >= MAX_FIELD
+  ) {
     return false;
+  }
   if (card.kind === "pokemon" && card.evolvesFrom) {
     // 이번 턴에 나왔거나 진화한 포켓몬은 진화 불가 (메가진화는 예외)
     return p.field.some((u) => u.cardId === card.evolvesFrom && !u.noEvolve);
@@ -2800,7 +3570,7 @@ export function playCard(
   if (!canPlayCard(game, side, handIdx)) return false;
   const h = p.hand[handIdx];
   const card = CARD_MAP[h.cardId];
-  const cost = effectiveCost(card, game, side);
+  const cost = effectiveCost(card, game, side, h);
 
   beginImpactCapture(game);
 
@@ -3685,11 +4455,57 @@ export function resolveHyperball(game, side, pickUid) {
   return true;
 }
 
+export function resolveUxie(game, side, pickUid) {
+  const pending = game.pendingChoose;
+
+  if (!pending || pending.side !== side || pending.effect !== "uxie") {
+    return false;
+  }
+
+  const chosen = pending.picks.find((pick) => pick.uid === pickUid);
+
+  if (!chosen) {
+    return false;
+  }
+
+  const p = game.players[side];
+
+  const returnedIds = pending.picks
+    .filter((pick) => pick.uid !== pickUid)
+    .map((pick) => pick.cardId);
+
+  if (p.hand.length < MAX_HAND) {
+    p.hand.push({
+      ...chosen,
+      costReduction: 2,
+    });
+
+    log(
+      game,
+      `신비의힘·유크시! ${CARD_MAP[chosen.cardId]?.name}을(를) 손에 넣었다. 비용 -2!`,
+    );
+  } else {
+    returnedIds.push(chosen.cardId);
+
+    log(game, "손패가 가득 차 카드를 가져오지 못했다.");
+  }
+
+  // 선택하지 않은 카드는 덱 아래로
+  p.deck = [...returnedIds, ...p.deck];
+
+  game.pendingChoose = null;
+
+  return true;
+}
+
 // ---------- 공격 ----------
 export function canAttack(game, side, unitUid) {
   const p = game.players[side];
   const u = p.field.find((x) => x.uid === unitUid);
   if (!u) return false;
+  if ((p._roarOfTimeBlockTurns || 0) > 0) {
+    return false;
+  }
   if (u.ability === "fortress") return false;
   if (!u.canAttack) return false;
   if (u.status === "ice") return false;
@@ -3744,6 +4560,171 @@ export function resolveMew(game, side, targetUid) {
 
     log(game, `${CARD_MAP[pick.cardId]?.name}을(를) 손으로 가져왔다.`);
   }
+  return true;
+}
+
+export function resolveSpacialRend(game, side, targetUid) {
+  const pending = game.pendingBattlecry;
+
+  if (
+    !pending ||
+    pending.side !== side ||
+    pending.ability !== "spacialrend" ||
+    !pending.targets.includes(targetUid)
+  ) {
+    return false;
+  }
+
+  const source = game.players[side].field.find((u) => u.uid === pending.uid);
+
+  const target = game.players[other(side)].field.find(
+    (u) => u.uid === targetUid && u.hp > 0,
+  );
+
+  game.pendingBattlecry = null;
+
+  if (!source || !target) {
+    return false;
+  }
+
+  beginImpactCapture(game);
+
+  const result = applySpacialRend(game, side, targetUid);
+
+  if (!result) {
+    takeImpacts(game);
+    return false;
+  }
+
+  cleanupDeaths(game);
+
+  const impacts = takeImpacts(game);
+
+  // 선택형 전투의 함성이
+  // 카드 소환 이후에 실행되므로
+  // 별도 액션으로 기록
+  game.animSeq = (game.animSeq || 0) + 1;
+
+  game.lastAction = {
+    seq: game.animSeq,
+    kind: "ability",
+    side,
+    cardId: "palkia",
+    uid: source.uid,
+    targetUid,
+
+    ...(impacts.length > 0 ? { impacts } : {}),
+  };
+
+  return true;
+}
+
+export function resolveMagmaStorm(game, side, targetUid) {
+  const pending = game.pendingBattlecry;
+
+  if (
+    !pending ||
+    pending.side !== side ||
+    pending.ability !== "magmastorm" ||
+    !pending.targets.includes(targetUid)
+  ) {
+    return false;
+  }
+
+  const source = game.players[side].field.find((u) => u.uid === pending.uid);
+
+  const target = game.players[other(side)].field.find(
+    (u) => u.uid === targetUid && u.hp > 0,
+  );
+
+  game.pendingBattlecry = null;
+
+  if (!source || !target) {
+    return false;
+  }
+
+  return applyMagmaStormMark(game, side, targetUid);
+}
+
+export function resolvePhioneBraveCharge(game, side, targetUid) {
+  const pending = game.pendingBattlecry;
+
+  if (
+    !pending ||
+    pending.side !== side ||
+    pending.ability !== "bravecharge_phione" ||
+    !pending.targets.includes(targetUid)
+  ) {
+    return false;
+  }
+
+  const p = game.players[side];
+
+  const source = p.field.find((u) => u.uid === pending.uid);
+
+  const target = p.field.find((u) => u.uid === targetUid && u.hp > 0);
+
+  game.pendingBattlecry = null;
+
+  if (!source || !target || source.uid === target.uid) {
+    return false;
+  }
+
+  beginImpactCapture(game);
+
+  const result = applyPhioneBraveCharge(game, side, target);
+
+  const impacts = takeImpacts(game);
+
+  if (!result) {
+    return false;
+  }
+
+  game.animSeq = (game.animSeq || 0) + 1;
+
+  game.lastAction = {
+    seq: game.animSeq,
+    kind: "ability",
+    side,
+    cardId: "phione",
+    uid: source.uid,
+    targetUid,
+
+    ...(impacts.length > 0 ? { impacts } : {}),
+  };
+
+  return true;
+}
+
+export function resolveManaphyBraveCharge(game, side, targetUid) {
+  const pending = game.pendingBattlecry;
+
+  if (
+    !pending ||
+    pending.side !== side ||
+    pending.ability !== "bravecharge_manaphy" ||
+    !pending.targets.includes(targetUid)
+  ) {
+    return false;
+  }
+
+  const p = game.players[side];
+
+  const target = p.field.find((u) => u.uid === targetUid && u.hp > 0);
+
+  game.pendingBattlecry = null;
+
+  if (!target || !canAttack(game, side, target.uid) || target.extraUsed) {
+    return false;
+  }
+
+  target._braveChargeDouble = true;
+
+  log(
+    game,
+    `마나피의 브레이브차지! ${target.name}이(가) 이번 턴 2회 공격할 수 있다!`,
+  );
+
   return true;
 }
 
@@ -3947,7 +4928,10 @@ function finishExpansionAttack(game, unit) {
 }
 
 function spendAttack(game, unit) {
+  const braveChargeDouble = unit._braveChargeDouble === true;
+
   const canDouble =
+    braveChargeDouble ||
     hasAbility(unit, "skilllink") ||
     hasAbility(unit, "blue_hurricane") ||
     hasAbility(unit, "deoxys_speed");
@@ -3955,7 +4939,13 @@ function spendAttack(game, unit) {
   if (canDouble && !unit.extraUsed) {
     unit.extraUsed = true;
 
-    if (hasAbility(unit, "deoxys_speed")) {
+    if (braveChargeDouble) {
+      // 브레이브차지의 추가 공격은
+      // 이번 한 번만
+      unit._braveChargeDouble = false;
+
+      log(game, `${unit.name}의 브레이브차지! 한 번 더 공격할 수 있다!`);
+    } else if (hasAbility(unit, "deoxys_speed")) {
       log(game, `${unit.name}의 스피드폼! 한 번 더 공격할 수 있다!`);
     } else if (hasAbility(unit, "blue_hurricane")) {
       log(game, `${unit.name}의 폭풍! 한 번 더 공격할 수 있다!`);
@@ -4067,6 +5057,60 @@ export function attack(game, side, attackerUid, target) {
 
   const expansion = prepareExpansionAttack(game, atkUnit);
 
+  // ============================================================
+  // 아르세우스 - 멀티타입
+  // 공격할 때 대상에게 가장 유리한 타입으로 변화
+  // 처음 사용하는 타입이면 +1/+1
+  // ============================================================
+  if (hasAbility(atkUnit, "multitype")) {
+    const availableTypes = Object.keys(TYPE_CHART);
+
+    let bestType = atkUnit.type;
+    let bestMult = -Infinity;
+
+    availableTypes.forEach((attackType) => {
+      const mult = typeMultAgainstUnit(attackType, defUnit);
+
+      if (mult > bestMult) {
+        bestMult = mult;
+        bestType = attackType;
+      }
+    });
+
+    const previousType = atkUnit.type;
+
+    atkUnit.type = bestType;
+
+    if (!Array.isArray(atkUnit._multitypeUsedTypes)) {
+      atkUnit._multitypeUsedTypes = [];
+    }
+
+    const isFirstType = !atkUnit._multitypeUsedTypes.includes(bestType);
+
+    if (isFirstType) {
+      atkUnit._multitypeUsedTypes.push(bestType);
+
+      atkUnit.atk += 1;
+      atkUnit.baseAtk += 1;
+      atkUnit.hp += 1;
+      atkUnit.maxHp += 1;
+
+      recordImpact(game, {
+        type: "buff",
+        side,
+        targetUid: atkUnit.uid,
+        amount: 1,
+      });
+
+      log(
+        game,
+        `${atkUnit.name}의 멀티타입! ${bestType} 타입으로 변하고 +1/+1!`,
+      );
+    } else if (previousType !== bestType) {
+      log(game, `${atkUnit.name}의 멀티타입! ${bestType} 타입으로 변했다!`);
+    }
+  }
+
   const attackType = effectiveAttackType(atkUnit);
 
   const defenseAttackType = effectiveAttackType(defUnit);
@@ -4154,7 +5198,13 @@ export function attack(game, side, attackerUid, target) {
   const mult = typeMultAgainstUnit(attackType, defUnit);
   const defenderHpBefore = defUnit.hp;
 
-  applyDamage(game, defUnit, atkDmg, attackType);
+  const ignoreDefense = hasAbility(atkUnit, "psystrike");
+
+  if (ignoreDefense) {
+    log(game, `${atkUnit.name}의 사이코브레이크! 상대의 방어 효과를 무시한다!`);
+  }
+
+  applyDamage(game, defUnit, atkDmg, attackType, false, ignoreDefense);
 
   const damageDealt = Math.max(0, defenderHpBefore - defUnit.hp);
 

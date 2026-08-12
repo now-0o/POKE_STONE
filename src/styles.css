@@ -6059,11 +6059,7 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  animation:
-    move-charge-orb-in
-    260ms
-    cubic-bezier(.15,.8,.25,1)
-    forwards;
+  animation: move-charge-orb-in 260ms cubic-bezier(0.15, 0.8, 0.25, 1) forwards;
 }
 
 .move-charge-ring {
@@ -6077,16 +6073,11 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  border: 2px solid
-    rgba(255,255,255,.7);
+  border: 2px solid rgba(255, 255, 255, 0.7);
 
   opacity: 0;
 
-  animation:
-    move-charge-ring-in
-    260ms
-    ease-out
-    forwards;
+  animation: move-charge-ring-in 260ms ease-out forwards;
 }
 
 .move-charge-particle {
@@ -6104,8 +6095,7 @@ img.res-icon.small {
 
   opacity: 0;
 
-  box-shadow:
-    0 0 5px currentColor;
+  box-shadow: 0 0 5px currentColor;
 }
 
 .move-charge-particle.p1 {
@@ -6129,13 +6119,8 @@ img.res-icon.small {
 }
 
 .move-charge-particle {
-  animation:
-    move-charge-particle-in
-    260ms
-    ease-in
-    forwards;
+  animation: move-charge-particle-in 260ms ease-in forwards;
 }
-
 
 /* 얼음 */
 
@@ -6143,29 +6128,24 @@ img.res-icon.small {
   color: #8eeaff;
 }
 
-.move-charge-ice
-.move-charge-orb {
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      #fff,
-      #bdf5ff 32%,
-      #57cfff 68%,
-      rgba(30,130,255,.3)
-    );
+.move-charge-ice .move-charge-orb {
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff,
+    #bdf5ff 32%,
+    #57cfff 68%,
+    rgba(30, 130, 255, 0.3)
+  );
 
   box-shadow:
     0 0 7px #fff,
-    0 0 15px rgba(90,220,255,.95),
-    0 0 25px rgba(80,160,255,.55);
+    0 0 15px rgba(90, 220, 255, 0.95),
+    0 0 25px rgba(80, 160, 255, 0.55);
 }
 
-.move-charge-ice
-.move-charge-ring {
-  border-color:
-    rgba(150,235,255,.85);
+.move-charge-ice .move-charge-ring {
+  border-color: rgba(150, 235, 255, 0.85);
 }
-
 
 /* 불꽃 */
 
@@ -6173,29 +6153,24 @@ img.res-icon.small {
   color: #ff7b30;
 }
 
-.move-charge-fire
-.move-charge-orb {
-  background:
-    radial-gradient(
-      circle at 38% 32%,
-      #fff8c6,
-      #ffd24a 25%,
-      #ff6b21 60%,
-      #d51c10 100%
-    );
+.move-charge-fire .move-charge-orb {
+  background: radial-gradient(
+    circle at 38% 32%,
+    #fff8c6,
+    #ffd24a 25%,
+    #ff6b21 60%,
+    #d51c10 100%
+  );
 
   box-shadow:
     0 0 8px #ffe26e,
-    0 0 17px rgba(255,95,25,.95),
-    0 0 28px rgba(255,45,10,.5);
+    0 0 17px rgba(255, 95, 25, 0.95),
+    0 0 28px rgba(255, 45, 10, 0.5);
 }
 
-.move-charge-fire
-.move-charge-ring {
-  border-color:
-    rgba(255,135,40,.85);
+.move-charge-fire .move-charge-ring {
+  border-color: rgba(255, 135, 40, 0.85);
 }
-
 
 /* 물 */
 
@@ -6203,29 +6178,24 @@ img.res-icon.small {
   color: #5ebcff;
 }
 
-.move-charge-water
-.move-charge-orb {
-  background:
-    radial-gradient(
-      circle at 35% 28%,
-      #fff,
-      #9eeeff 28%,
-      #279bff 65%,
-      #1652c2 100%
-    );
+.move-charge-water .move-charge-orb {
+  background: radial-gradient(
+    circle at 35% 28%,
+    #fff,
+    #9eeeff 28%,
+    #279bff 65%,
+    #1652c2 100%
+  );
 
   box-shadow:
     0 0 8px #d9faff,
-    0 0 17px rgba(55,175,255,.9),
-    0 0 26px rgba(20,90,255,.45);
+    0 0 17px rgba(55, 175, 255, 0.9),
+    0 0 26px rgba(20, 90, 255, 0.45);
 }
 
-.move-charge-water
-.move-charge-ring {
-  border-color:
-    rgba(100,205,255,.85);
+.move-charge-water .move-charge-ring {
+  border-color: rgba(100, 205, 255, 0.85);
 }
-
 
 /* 전기 */
 
@@ -6233,29 +6203,24 @@ img.res-icon.small {
   color: #ffe652;
 }
 
-.move-charge-electric
-.move-charge-orb {
-  background:
-    radial-gradient(
-      circle,
-      #fff 0%,
-      #fff990 30%,
-      #ffd21f 65%,
-      #ff9d00 100%
-    );
+.move-charge-electric .move-charge-orb {
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    #fff990 30%,
+    #ffd21f 65%,
+    #ff9d00 100%
+  );
 
   box-shadow:
     0 0 7px #fff,
     0 0 16px #ffe12d,
-    0 0 27px rgba(255,185,0,.65);
+    0 0 27px rgba(255, 185, 0, 0.65);
 }
 
-.move-charge-electric
-.move-charge-ring {
-  border-color:
-    rgba(255,230,70,.9);
+.move-charge-electric .move-charge-ring {
+  border-color: rgba(255, 230, 70, 0.9);
 }
-
 
 /* 솔라빔 */
 
@@ -6263,38 +6228,33 @@ img.res-icon.small {
   color: #9cff76;
 }
 
-.move-charge-solar
-.move-charge-orb {
-  background:
-    radial-gradient(
-      circle,
-      #fff 0%,
-      #eaff9e 28%,
-      #83e95d 62%,
-      #2f9c3d 100%
-    );
+.move-charge-solar .move-charge-orb {
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    #eaff9e 28%,
+    #83e95d 62%,
+    #2f9c3d 100%
+  );
 
   box-shadow:
     0 0 8px #fff,
-    0 0 18px rgba(155,255,100,.95),
-    0 0 30px rgba(70,210,70,.5);
+    0 0 18px rgba(155, 255, 100, 0.95),
+    0 0 30px rgba(70, 210, 70, 0.5);
 }
 
-.move-charge-solar
-.move-charge-ring {
-  border-color:
-    rgba(160,255,110,.85);
+.move-charge-solar .move-charge-ring {
+  border-color: rgba(160, 255, 110, 0.85);
 }
-
 
 @keyframes move-charge-orb-in {
   0% {
-    transform: scale(.15);
+    transform: scale(0.15);
     opacity: 0;
   }
 
   55% {
-    transform: scale(.75);
+    transform: scale(0.75);
     opacity: 1;
   }
 
@@ -6311,23 +6271,18 @@ img.res-icon.small {
   }
 
   30% {
-    opacity: .8;
+    opacity: 0.8;
   }
 
   100% {
-    transform: scale(.7);
+    transform: scale(0.7);
     opacity: 0;
   }
 }
 
 @keyframes move-charge-particle-in {
   0% {
-    transform:
-      translate(
-        var(--px),
-        var(--py)
-      )
-      scale(.3);
+    transform: translate(var(--px), var(--py)) scale(0.3);
 
     opacity: 0;
   }
@@ -6337,9 +6292,7 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(0, 0)
-      scale(.8);
+    transform: translate(0, 0) scale(0.8);
 
     opacity: 0;
   }
@@ -6394,7 +6347,6 @@ img.res-icon.small {
   animation: ice-beam-fast 460ms cubic-bezier(0.12, 0.8, 0.2, 1) forwards;
 }
 
-
 /* ============================================================
    발사점 순간 섬광
    ============================================================ */
@@ -6422,7 +6374,6 @@ img.res-icon.small {
 
   animation: ice-beam-muzzle 220ms ease-out forwards;
 }
-
 
 /* ============================================================
    빔 선두 - 빠르게 날아가는 밝은 점
@@ -6455,7 +6406,6 @@ img.res-icon.small {
   animation: ice-beam-head 250ms cubic-bezier(0.1, 0.75, 0.2, 1) forwards;
 }
 
-
 /* ============================================================
    빔 본체
    ============================================================ */
@@ -6487,7 +6437,6 @@ img.res-icon.small {
   }
 }
 
-
 /* 발사 섬광 */
 
 @keyframes ice-beam-muzzle {
@@ -6506,7 +6455,6 @@ img.res-icon.small {
     opacity: 0;
   }
 }
-
 
 /* 빔 선두 */
 
@@ -6531,7 +6479,6 @@ img.res-icon.small {
     transform: translate(-50%, -50%) scaleX(1.4);
   }
 }
-
 
 /* ============================================================
    명중 얼음 파편
@@ -6558,11 +6505,7 @@ img.res-icon.small {
 
   border-radius: 80% 20% 80% 20%;
 
-  background: linear-gradient(
-    180deg,
-    #ffffff,
-    rgba(160, 235, 255, 0.95)
-  );
+  background: linear-gradient(180deg, #ffffff, rgba(160, 235, 255, 0.95));
 
   box-shadow:
     0 0 3px rgba(220, 255, 255, 1),
@@ -6609,13 +6552,9 @@ img.res-icon.small {
   --rot: -130deg;
 }
 
-
 @keyframes ice-shard-fast {
   0% {
-    transform:
-      translate(0, 0)
-      rotate(0deg)
-      scale(0.3);
+    transform: translate(0, 0) rotate(0deg) scale(0.3);
 
     opacity: 0;
   }
@@ -6625,10 +6564,7 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(var(--tx), var(--ty))
-      rotate(var(--rot))
-      scale(0.85);
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.85);
 
     opacity: 0;
   }
@@ -6638,168 +6574,96 @@ img.res-icon.small {
    화염방사
    ============================================================ */
 
-.move-stream.move-fire
-.move-beam-glow {
+.move-stream.move-fire .move-beam-glow {
   height: 16px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255,210,60,.25),
-      rgba(255,110,20,.85),
-      rgba(255,45,10,.7)
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(255, 210, 60, 0.25),
+    rgba(255, 110, 20, 0.85),
+    rgba(255, 45, 10, 0.7)
+  );
 
   filter: blur(3px);
 
-  box-shadow:
-    0 0 10px rgba(255,80,20,.85);
+  box-shadow: 0 0 10px rgba(255, 80, 20, 0.85);
 
-  animation:
-    move-stream-fast
-    440ms
-    ease-out
-    forwards;
+  animation: move-stream-fast 440ms ease-out forwards;
 }
 
-.move-stream.move-fire
-.move-beam-core {
+.move-stream.move-fire .move-beam-core {
   height: 5px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    linear-gradient(
-      90deg,
-      #fff7a0,
-      #ffcf33,
-      #ff5c15,
-      #d51f0b
-    );
+  background: linear-gradient(90deg, #fff7a0, #ffcf33, #ff5c15, #d51f0b);
 
-  box-shadow:
-    0 0 7px #ff9c32;
+  box-shadow: 0 0 7px #ff9c32;
 
-  animation:
-    move-stream-fast
-    440ms
-    ease-out
-    forwards;
+  animation: move-stream-fast 440ms ease-out forwards;
 }
-
 
 /* ============================================================
    하이드로펌프
    ============================================================ */
 
-.move-stream.move-water
-.move-beam-glow {
+.move-stream.move-water .move-beam-glow {
   height: 11px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    rgba(65,180,255,.4);
+  background: rgba(65, 180, 255, 0.4);
 
-  box-shadow:
-    0 0 12px rgba(70,190,255,.9);
+  box-shadow: 0 0 12px rgba(70, 190, 255, 0.9);
 
-  animation:
-    move-stream-fast
-    430ms
-    ease-out
-    forwards;
+  animation: move-stream-fast 430ms ease-out forwards;
 }
 
-.move-stream.move-water
-.move-beam-core {
+.move-stream.move-water .move-beam-core {
   height: 4px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    linear-gradient(
-      90deg,
-      #dffcff,
-      #67ceff,
-      #198cff
-    );
+  background: linear-gradient(90deg, #dffcff, #67ceff, #198cff);
 
-  box-shadow:
-    0 0 6px rgba(110,220,255,1);
+  box-shadow: 0 0 6px rgba(110, 220, 255, 1);
 
-  animation:
-    move-stream-fast
-    430ms
-    ease-out
-    forwards;
+  animation: move-stream-fast 430ms ease-out forwards;
 }
-
 
 /* ============================================================
    솔라빔
    ============================================================ */
 
-.move-beam.move-solar
-.move-beam-glow {
+.move-beam.move-solar .move-beam-glow {
   height: 12px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    rgba(140,255,95,.32);
+  background: rgba(140, 255, 95, 0.32);
 
   box-shadow:
-    0 0 9px rgba(150,255,100,.85),
-    0 0 18px rgba(90,220,75,.55);
+    0 0 9px rgba(150, 255, 100, 0.85),
+    0 0 18px rgba(90, 220, 75, 0.55);
 
-  animation:
-    solar-beam-shoot
-    500ms
-    ease-out
-    forwards;
+  animation: solar-beam-shoot 500ms ease-out forwards;
 }
 
-.move-beam.move-solar
-.move-beam-core {
+.move-beam.move-solar .move-beam-core {
   height: 4px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    linear-gradient(
-      90deg,
-      #efffd2,
-      #ffffff,
-      #adff78,
-      #65d952
-    );
+  background: linear-gradient(90deg, #efffd2, #ffffff, #adff78, #65d952);
 
   box-shadow:
     0 0 6px #fff,
-    0 0 10px rgba(130,255,85,.9);
+    0 0 10px rgba(130, 255, 85, 0.9);
 
-  animation:
-    solar-beam-shoot
-    500ms
-    ease-out
-    forwards;
+  animation: solar-beam-shoot 500ms ease-out forwards;
 }
-
 
 /* ============================================================
    10만볼트
@@ -6818,11 +6682,7 @@ img.res-icon.small {
 
   opacity: 0;
 
-  animation:
-    electric-bolt-fire
-    360ms
-    ease-out
-    forwards;
+  animation: electric-bolt-fire 360ms ease-out forwards;
 }
 
 .move-bolt-glow,
@@ -6832,21 +6692,15 @@ img.res-icon.small {
   stroke-linecap: round;
   stroke-linejoin: round;
 
-  vector-effect:
-    non-scaling-stroke;
+  vector-effect: non-scaling-stroke;
 }
 
 .move-bolt-glow {
-  stroke:
-    rgba(255,225,45,.55);
+  stroke: rgba(255, 225, 45, 0.55);
 
   stroke-width: 8;
 
-  filter:
-    drop-shadow(
-      0 0 6px
-      rgba(255,215,20,.9)
-    );
+  filter: drop-shadow(0 0 6px rgba(255, 215, 20, 0.9));
 }
 
 .move-bolt-core {
@@ -6854,18 +6708,12 @@ img.res-icon.small {
 
   stroke-width: 2.5;
 
-  filter:
-    drop-shadow(
-      0 0 3px #fff
-    );
+  filter: drop-shadow(0 0 3px #fff);
 }
-
 
 @keyframes move-stream-fast {
   0% {
-    transform:
-      translateY(-50%)
-      scaleX(0);
+    transform: translateY(-50%) scaleX(0);
 
     opacity: 0;
   }
@@ -6875,17 +6723,13 @@ img.res-icon.small {
   }
 
   55% {
-    transform:
-      translateY(-50%)
-      scaleX(1);
+    transform: translateY(-50%) scaleX(1);
 
     opacity: 1;
   }
 
   100% {
-    transform:
-      translateY(-50%)
-      scaleX(1);
+    transform: translateY(-50%) scaleX(1);
 
     opacity: 0;
   }
@@ -6893,9 +6737,7 @@ img.res-icon.small {
 
 @keyframes solar-beam-shoot {
   0% {
-    transform:
-      translateY(-50%)
-      scaleX(0);
+    transform: translateY(-50%) scaleX(0);
 
     opacity: 0;
   }
@@ -6905,21 +6747,17 @@ img.res-icon.small {
   }
 
   48% {
-    transform:
-      translateY(-50%)
-      scaleX(1);
+    transform: translateY(-50%) scaleX(1);
 
     opacity: 1;
   }
 
   82% {
-    opacity: .9;
+    opacity: 0.9;
   }
 
   100% {
-    transform:
-      translateY(-50%)
-      scaleX(1);
+    transform: translateY(-50%) scaleX(1);
 
     opacity: 0;
   }
@@ -6936,7 +6774,7 @@ img.res-icon.small {
   }
 
   35% {
-    opacity: .35;
+    opacity: 0.35;
   }
 
   48% {
@@ -6944,14 +6782,13 @@ img.res-icon.small {
   }
 
   72% {
-    opacity: .8;
+    opacity: 0.8;
   }
 
   100% {
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    공통 명중광
@@ -6970,12 +6807,7 @@ img.res-icon.small {
 
   transform: scale(0);
 
-  animation:
-    move-element-hit
-    260ms
-    180ms
-    ease-out
-    forwards;
+  animation: move-element-hit 260ms 180ms ease-out forwards;
 }
 
 .impact-fire {
@@ -6983,7 +6815,7 @@ img.res-icon.small {
 
   box-shadow:
     0 0 10px #ff6a18,
-    0 0 22px rgba(255,50,10,.8);
+    0 0 22px rgba(255, 50, 10, 0.8);
 }
 
 .impact-water {
@@ -6991,7 +6823,7 @@ img.res-icon.small {
 
   box-shadow:
     0 0 10px #56c9ff,
-    0 0 22px rgba(30,130,255,.75);
+    0 0 22px rgba(30, 130, 255, 0.75);
 }
 
 .impact-electric {
@@ -6999,7 +6831,7 @@ img.res-icon.small {
 
   box-shadow:
     0 0 10px #fff43b,
-    0 0 24px rgba(255,210,0,.9);
+    0 0 24px rgba(255, 210, 0, 0.9);
 }
 
 .impact-solar {
@@ -7007,12 +6839,12 @@ img.res-icon.small {
 
   box-shadow:
     0 0 10px #aaff72,
-    0 0 24px rgba(75,220,70,.8);
+    0 0 24px rgba(75, 220, 70, 0.8);
 }
 
 @keyframes move-element-hit {
   0% {
-    transform: scale(.2);
+    transform: scale(0.2);
     opacity: 0;
   }
 
@@ -7136,21 +6968,19 @@ img.res-icon.small {
   --move-deep: #9e9b83;
 }
 
-
 /* ============================================================
    모든 기술 공통 차징 오브
    기존 속성별 orb CSS보다 아래에 있으므로 최종 적용
    ============================================================ */
 
 .move-charge .move-charge-orb {
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      var(--move-light) 0%,
-      var(--move-light) 18%,
-      var(--move-main) 55%,
-      var(--move-deep) 100%
-    );
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--move-light) 0%,
+    var(--move-light) 18%,
+    var(--move-main) 55%,
+    var(--move-deep) 100%
+  );
 
   box-shadow:
     0 0 7px var(--move-light),
@@ -7160,17 +6990,14 @@ img.res-icon.small {
 
 .move-charge .move-charge-ring {
   border-color: var(--move-main);
-  box-shadow:
-    0 0 8px var(--move-main);
+  box-shadow: 0 0 8px var(--move-main);
 }
 
 .move-charge .move-charge-particle {
   background: var(--move-light);
 
-  box-shadow:
-    0 0 7px var(--move-main);
+  box-shadow: 0 0 7px var(--move-main);
 }
-
 
 /* ============================================================
    투사체 - 사이코키네시스 / 섀도볼 / 문포스 등
@@ -7190,23 +7017,18 @@ img.res-icon.small {
 
   border-radius: 999px;
 
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      var(--move-deep),
-      var(--move-main)
-    );
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--move-deep),
+    var(--move-main)
+  );
 
   filter: blur(2px);
 
   opacity: 0;
 
-  animation:
-    move-projectile-trail
-    var(--move-duration, 420ms)
-    ease-out
-    forwards;
+  animation: move-projectile-trail var(--move-duration, 420ms) ease-out forwards;
 }
 
 .move-projectile-core {
@@ -7220,28 +7042,22 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  transform:
-    translate(-50%, -50%)
-    scale(.4);
+  transform: translate(-50%, -50%) scale(0.4);
 
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      var(--move-light),
-      var(--move-main) 45%,
-      var(--move-deep)
-    );
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--move-light),
+    var(--move-main) 45%,
+    var(--move-deep)
+  );
 
   box-shadow:
     0 0 7px var(--move-light),
     0 0 14px var(--move-main),
     0 0 24px var(--move-deep);
 
-  animation:
-    move-projectile-fly
-    var(--move-duration, 420ms)
-    cubic-bezier(.12,.78,.18,1)
-    forwards;
+  animation: move-projectile-fly var(--move-duration, 420ms)
+    cubic-bezier(0.12, 0.78, 0.18, 1) forwards;
 }
 
 .move-fireblast .move-projectile-core {
@@ -7258,9 +7074,7 @@ img.res-icon.small {
   0% {
     left: 0%;
     opacity: 0;
-    transform:
-      translate(-50%, -50%)
-      scale(.35);
+    transform: translate(-50%, -50%) scale(0.35);
   }
 
   10% {
@@ -7269,17 +7083,13 @@ img.res-icon.small {
 
   82% {
     opacity: 1;
-    transform:
-      translate(-50%, -50%)
-      scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 
   100% {
     left: 100%;
     opacity: 0;
-    transform:
-      translate(-50%, -50%)
-      scale(1.2);
+    transform: translate(-50%, -50%) scale(1.2);
   }
 }
 
@@ -7290,12 +7100,12 @@ img.res-icon.small {
   }
 
   25% {
-    opacity: .8;
+    opacity: 0.8;
   }
 
   70% {
     transform: scaleX(1);
-    opacity: .55;
+    opacity: 0.55;
   }
 
   100% {
@@ -7304,7 +7114,6 @@ img.res-icon.small {
   }
 }
 
-
 /* ============================================================
    파괴광선
    ============================================================ */
@@ -7312,17 +7121,14 @@ img.res-icon.small {
 .move-beam.move-normal .move-beam-glow {
   height: 18px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,.15),
-      var(--move-main),
-      rgba(255,255,255,.95)
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.15),
+    var(--move-main),
+    rgba(255, 255, 255, 0.95)
+  );
 
   filter: blur(3px);
 
@@ -7330,19 +7136,13 @@ img.res-icon.small {
     0 0 12px var(--move-main),
     0 0 25px var(--move-light);
 
-  animation:
-    hyper-beam-fire
-    var(--move-duration, 620ms)
-    ease-out
-    forwards;
+  animation: hyper-beam-fire var(--move-duration, 620ms) ease-out forwards;
 }
 
 .move-beam.move-normal .move-beam-core {
   height: 5px;
 
-  transform:
-    translateY(-50%)
-    scaleX(0);
+  transform: translateY(-50%) scaleX(0);
 
   background: #fff;
 
@@ -7350,18 +7150,12 @@ img.res-icon.small {
     0 0 7px #fff,
     0 0 15px var(--move-main);
 
-  animation:
-    hyper-beam-fire
-    var(--move-duration, 620ms)
-    ease-out
-    forwards;
+  animation: hyper-beam-fire var(--move-duration, 620ms) ease-out forwards;
 }
 
 @keyframes hyper-beam-fire {
   0% {
-    transform:
-      translateY(-50%)
-      scaleX(0);
+    transform: translateY(-50%) scaleX(0);
 
     opacity: 0;
   }
@@ -7371,26 +7165,21 @@ img.res-icon.small {
   }
 
   45% {
-    transform:
-      translateY(-50%)
-      scaleX(1);
+    transform: translateY(-50%) scaleX(1);
 
     opacity: 1;
   }
 
   80% {
-    opacity: .9;
+    opacity: 0.9;
   }
 
   100% {
-    transform:
-      translateY(-50%)
-      scaleX(1);
+    transform: translateY(-50%) scaleX(1);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    날아가는 기술 공통 명중
@@ -7407,32 +7196,26 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      circle,
-      var(--move-light),
-      var(--move-main),
-      transparent 70%
-    );
+  background: radial-gradient(
+    circle,
+    var(--move-light),
+    var(--move-main),
+    transparent 70%
+  );
 
-  transform: scale(.2);
+  transform: scale(0.2);
   opacity: 0;
 
   box-shadow:
     0 0 12px var(--move-main),
     0 0 24px var(--move-deep);
 
-  animation:
-    move-travel-hit
-    260ms
-    180ms
-    ease-out
-    forwards;
+  animation: move-travel-hit 260ms 180ms ease-out forwards;
 }
 
 @keyframes move-travel-hit {
   0% {
-    transform: scale(.2);
+    transform: scale(0.2);
     opacity: 0;
   }
 
@@ -7446,7 +7229,6 @@ img.res-icon.small {
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    타겟/필드형 공통
@@ -7483,7 +7265,6 @@ img.res-icon.small {
   pointer-events: none;
 }
 
-
 /* ============================================================
    물리 타격 - 인파이트 / 아이언헤드 / 전광석화 / 스톤에지
    ============================================================ */
@@ -7494,44 +7275,33 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      circle,
-      var(--move-light) 0%,
-      var(--move-main) 20%,
-      transparent 68%
-    );
+  background: radial-gradient(
+    circle,
+    var(--move-light) 0%,
+    var(--move-main) 20%,
+    transparent 68%
+  );
 
-  box-shadow:
-    0 0 12px var(--move-main);
+  box-shadow: 0 0 12px var(--move-main);
 
-  animation:
-    move-strike-hit
-    340ms
-    ease-out
-    forwards;
+  animation: move-strike-hit 340ms ease-out forwards;
 }
 
 .move-strike .move-zp {
   width: 42px;
   height: 3px;
 
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      var(--move-light),
-      var(--move-main),
-      transparent
-    );
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--move-light),
+    var(--move-main),
+    transparent
+  );
 
   transform-origin: left center;
 
-  animation:
-    move-strike-line
-    340ms
-    ease-out
-    forwards;
+  animation: move-strike-line 340ms ease-out forwards;
 }
 
 .move-strike .z1 {
@@ -7564,25 +7334,19 @@ img.res-icon.small {
 
 @keyframes move-strike-hit {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.1);
+    transform: translate(-50%, -50%) scale(0.1);
 
     opacity: 0;
   }
 
   35% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.25);
+    transform: translate(-50%, -50%) scale(1.25);
 
     opacity: 1;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.7);
+    transform: translate(-50%, -50%) scale(1.7);
 
     opacity: 0;
   }
@@ -7604,7 +7368,6 @@ img.res-icon.small {
   }
 }
 
-
 /* ============================================================
    드래곤크루
    ============================================================ */
@@ -7615,25 +7378,19 @@ img.res-icon.small {
 
   border-radius: 999px;
 
-  background:
-    linear-gradient(
-      180deg,
-      transparent,
-      var(--move-light),
-      var(--move-main),
-      transparent
-    );
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--move-light),
+    var(--move-main),
+    transparent
+  );
 
-  box-shadow:
-    0 0 7px var(--move-main);
+  box-shadow: 0 0 7px var(--move-main);
 
   opacity: 0;
 
-  animation:
-    move-claw-slash
-    360ms
-    ease-out
-    forwards;
+  animation: move-claw-slash 360ms ease-out forwards;
 }
 
 .move-slash .z1 {
@@ -7661,10 +7418,7 @@ img.res-icon.small {
 
 @keyframes move-claw-slash {
   0% {
-    transform:
-      translateY(-45px)
-      rotate(28deg)
-      scaleY(.2);
+    transform: translateY(-45px) rotate(28deg) scaleY(0.2);
 
     opacity: 0;
   }
@@ -7674,15 +7428,11 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translateY(20px)
-      rotate(28deg)
-      scaleY(1);
+    transform: translateY(20px) rotate(28deg) scaleY(1);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    지진
@@ -7694,43 +7444,31 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      ellipse,
-      rgba(210,135,65,.45),
-      rgba(95,45,20,.18) 55%,
-      transparent 72%
-    );
+  background: radial-gradient(
+    ellipse,
+    rgba(210, 135, 65, 0.45),
+    rgba(95, 45, 20, 0.18) 55%,
+    transparent 72%
+  );
 
-  border-bottom:
-    3px solid var(--move-main);
+  border-bottom: 3px solid var(--move-main);
 
-  animation:
-    move-ground-hit
-    var(--move-duration, 560ms)
-    ease-out
-    forwards;
+  animation: move-ground-hit var(--move-duration, 560ms) ease-out forwards;
 }
 
 .move-ground .move-zp {
   width: 70px;
   height: 3px;
 
-  background:
-    var(--move-main);
+  background: var(--move-main);
 
-  box-shadow:
-    0 0 4px var(--move-deep);
+  box-shadow: 0 0 4px var(--move-deep);
 
   transform-origin: left center;
 
   opacity: 0;
 
-  animation:
-    move-ground-crack
-    450ms
-    ease-out
-    forwards;
+  animation: move-ground-crack 450ms ease-out forwards;
 }
 
 .move-ground .z1 {
@@ -7751,9 +7489,7 @@ img.res-icon.small {
 
 @keyframes move-ground-hit {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.4);
+    transform: translate(-50%, -50%) scale(0.4);
 
     opacity: 0;
   }
@@ -7763,15 +7499,11 @@ img.res-icon.small {
   }
 
   55% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.05);
+    transform: translate(-50%, -50%) scale(1.05);
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.15);
+    transform: translate(-50%, -50%) scale(1.15);
 
     opacity: 0;
   }
@@ -7793,7 +7525,6 @@ img.res-icon.small {
   }
 }
 
-
 /* ============================================================
    파도타기 / 오물웨이브
    ============================================================ */
@@ -7802,64 +7533,44 @@ img.res-icon.small {
   width: 250px;
   height: 95px;
 
-  border-radius:
-    55% 55% 45% 45%;
+  border-radius: 55% 55% 45% 45%;
 
-  background:
-    linear-gradient(
-      180deg,
-      transparent 5%,
-      var(--move-light) 20%,
-      var(--move-main) 50%,
-      var(--move-deep) 100%
-    );
+  background: linear-gradient(
+    180deg,
+    transparent 5%,
+    var(--move-light) 20%,
+    var(--move-main) 50%,
+    var(--move-deep) 100%
+  );
 
   opacity: 0;
 
-  filter:
-    drop-shadow(
-      0 0 10px
-      var(--move-main)
-    );
+  filter: drop-shadow(0 0 10px var(--move-main));
 
-  animation:
-    move-wave-rise
-    var(--move-duration, 580ms)
-    ease-out
-    forwards;
+  animation: move-wave-rise var(--move-duration, 580ms) ease-out forwards;
 }
 
 @keyframes move-wave-rise {
   0% {
-    transform:
-      translate(-50%, 30%)
-      scaleX(.35)
-      scaleY(.2);
+    transform: translate(-50%, 30%) scaleX(0.35) scaleY(0.2);
 
     opacity: 0;
   }
 
   30% {
-    opacity: .9;
+    opacity: 0.9;
   }
 
   70% {
-    transform:
-      translate(-50%, -55%)
-      scaleX(1)
-      scaleY(1);
+    transform: translate(-50%, -55%) scaleX(1) scaleY(1);
   }
 
   100% {
-    transform:
-      translate(-50%, -90%)
-      scaleX(1.15)
-      scaleY(.75);
+    transform: translate(-50%, -90%) scaleX(1.15) scaleY(0.75);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    눈보라 / 열풍 / 방전
@@ -7871,24 +7582,18 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      ellipse,
-      var(--move-light) 0%,
-      var(--move-main) 23%,
-      transparent 70%
-    );
+  background: radial-gradient(
+    ellipse,
+    var(--move-light) 0%,
+    var(--move-main) 23%,
+    transparent 70%
+  );
 
-  filter:
-    blur(3px);
+  filter: blur(3px);
 
   opacity: 0;
 
-  animation:
-    move-area-pulse
-    var(--move-duration, 620ms)
-    ease-out
-    forwards;
+  animation: move-area-pulse var(--move-duration, 620ms) ease-out forwards;
 }
 
 .move-area .move-zp {
@@ -7897,17 +7602,11 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    var(--move-light);
+  background: var(--move-light);
 
-  box-shadow:
-    0 0 7px var(--move-main);
+  box-shadow: 0 0 7px var(--move-main);
 
-  animation:
-    move-area-particle
-    500ms
-    ease-out
-    forwards;
+  animation: move-area-particle 500ms ease-out forwards;
 }
 
 .move-area .z1 {
@@ -7942,21 +7641,17 @@ img.res-icon.small {
 
 @keyframes move-area-pulse {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.25);
+    transform: translate(-50%, -50%) scale(0.25);
 
     opacity: 0;
   }
 
   30% {
-    opacity: .8;
+    opacity: 0.8;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.25);
+    transform: translate(-50%, -50%) scale(1.25);
 
     opacity: 0;
   }
@@ -7973,16 +7668,11 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(
-        var(--ax),
-        var(--ay)
-      );
+    transform: translate(var(--ax), var(--ay));
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    날씨
@@ -7994,9 +7684,7 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  border:
-    2px solid
-    var(--move-main);
+  border: 2px solid var(--move-main);
 
   box-shadow:
     inset 0 0 35px var(--move-deep),
@@ -8004,35 +7692,26 @@ img.res-icon.small {
 
   opacity: 0;
 
-  animation:
-    move-weather-open
-    var(--move-duration, 700ms)
-    ease-out
-    forwards;
+  animation: move-weather-open var(--move-duration, 700ms) ease-out forwards;
 }
 
 @keyframes move-weather-open {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.15);
+    transform: translate(-50%, -50%) scale(0.15);
 
     opacity: 0;
   }
 
   35% {
-    opacity: .75;
+    opacity: 0.75;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.25);
+    transform: translate(-50%, -50%) scale(1.25);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    상태이상
@@ -8044,21 +7723,16 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      circle,
-      var(--move-light),
-      var(--move-main) 35%,
-      transparent 70%
-    );
+  background: radial-gradient(
+    circle,
+    var(--move-light),
+    var(--move-main) 35%,
+    transparent 70%
+  );
 
   opacity: 0;
 
-  animation:
-    move-status-bloom
-    480ms
-    ease-out
-    forwards;
+  animation: move-status-bloom 480ms ease-out forwards;
 }
 
 .move-status .move-zp {
@@ -8067,17 +7741,11 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    var(--move-main);
+  background: var(--move-main);
 
-  box-shadow:
-    0 0 6px var(--move-main);
+  box-shadow: 0 0 6px var(--move-main);
 
-  animation:
-    move-status-dot
-    500ms
-    ease-out
-    forwards;
+  animation: move-status-dot 500ms ease-out forwards;
 }
 
 .move-status .z1 {
@@ -8102,25 +7770,19 @@ img.res-icon.small {
 
 @keyframes move-status-bloom {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.15);
+    transform: translate(-50%, -50%) scale(0.15);
 
     opacity: 0;
   }
 
   40% {
-    transform:
-      translate(-50%, -50%)
-      scale(1);
+    transform: translate(-50%, -50%) scale(1);
 
-    opacity: .9;
+    opacity: 0.9;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.35);
+    transform: translate(-50%, -50%) scale(1.35);
 
     opacity: 0;
   }
@@ -8137,16 +7799,11 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(
-        var(--sx),
-        var(--sy)
-      );
+    transform: translate(var(--sx), var(--sy));
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    회복
@@ -8158,18 +7815,13 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  border:
-    3px solid #b6ffb7;
+  border: 3px solid #b6ffb7;
 
   box-shadow:
     0 0 12px #8aff99,
-    inset 0 0 22px rgba(120,255,150,.4);
+    inset 0 0 22px rgba(120, 255, 150, 0.4);
 
-  animation:
-    move-heal-ring
-    560ms
-    ease-out
-    forwards;
+  animation: move-heal-ring 560ms ease-out forwards;
 }
 
 .move-heal::before,
@@ -8188,14 +7840,9 @@ img.res-icon.small {
 
   background: #d8ffdf;
 
-  box-shadow:
-    0 0 8px #7aff92;
+  box-shadow: 0 0 8px #7aff92;
 
-  animation:
-    move-heal-cross
-    560ms
-    ease-out
-    forwards;
+  animation: move-heal-cross 560ms ease-out forwards;
 }
 
 .move-heal::after {
@@ -8204,9 +7851,7 @@ img.res-icon.small {
 
 @keyframes move-heal-ring {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.2);
+    transform: translate(-50%, -50%) scale(0.2);
 
     opacity: 0;
   }
@@ -8216,9 +7861,7 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.25);
+    transform: translate(-50%, -50%) scale(1.25);
 
     opacity: 0;
   }
@@ -8238,7 +7881,6 @@ img.res-icon.small {
   }
 }
 
-
 /* ============================================================
    신비의부적
    ============================================================ */
@@ -8247,55 +7889,38 @@ img.res-icon.small {
   width: 240px;
   height: 115px;
 
-  border:
-    3px solid
-    var(--move-light);
+  border: 3px solid var(--move-light);
 
   border-bottom: none;
 
-  border-radius:
-    130px 130px 20px 20px;
+  border-radius: 130px 130px 20px 20px;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.25),
-      transparent
-    );
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent);
 
   box-shadow:
     inset 0 0 25px var(--move-main),
     0 0 18px var(--move-main);
 
-  animation:
-    move-shield-open
-    650ms
-    ease-out
-    forwards;
+  animation: move-shield-open 650ms ease-out forwards;
 }
 
 @keyframes move-shield-open {
   0% {
-    transform:
-      translate(-50%, -20%)
-      scale(.2);
+    transform: translate(-50%, -20%) scale(0.2);
 
     opacity: 0;
   }
 
   35% {
-    opacity: .9;
+    opacity: 0.9;
   }
 
   100% {
-    transform:
-      translate(-50%, -70%)
-      scale(1);
+    transform: translate(-50%, -70%) scale(1);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    울부짖기 / 멸망의노래
@@ -8317,11 +7942,7 @@ img.res-icon.small {
     0 0 9px var(--move-main),
     0 0 18px var(--move-deep);
 
-  animation:
-    move-note-rise
-    650ms
-    ease-out
-    forwards;
+  animation: move-note-rise 650ms ease-out forwards;
 }
 
 .move-sound .move-zone-core::after {
@@ -8336,30 +7957,18 @@ img.res-icon.small {
 
   color: var(--move-main);
 
-  text-shadow:
-    0 0 8px var(--move-deep);
+  text-shadow: 0 0 8px var(--move-deep);
 
-  animation:
-    move-note-rise
-    700ms
-    80ms
-    ease-out
-    forwards;
+  animation: move-note-rise 700ms 80ms ease-out forwards;
 }
 
 .move-perish .move-zone-core {
-  filter:
-    drop-shadow(
-      0 0 18px
-      #67258f
-    );
+  filter: drop-shadow(0 0 18px #67258f);
 }
 
 @keyframes move-note-rise {
   0% {
-    transform:
-      translateY(20px)
-      scale(.4);
+    transform: translateY(20px) scale(0.4);
 
     opacity: 0;
   }
@@ -8369,14 +7978,11 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translateY(-65px)
-      scale(1.2);
+    transform: translateY(-65px) scale(1.2);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    흑안개
@@ -8388,45 +7994,35 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      ellipse,
-      rgba(160,190,220,.5),
-      rgba(55,65,90,.7) 48%,
-      transparent 75%
-    );
+  background: radial-gradient(
+    ellipse,
+    rgba(160, 190, 220, 0.5),
+    rgba(55, 65, 90, 0.7) 48%,
+    transparent 75%
+  );
 
   filter: blur(9px);
 
-  animation:
-    move-haze-spread
-    720ms
-    ease-out
-    forwards;
+  animation: move-haze-spread 720ms ease-out forwards;
 }
 
 @keyframes move-haze-spread {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.25);
+    transform: translate(-50%, -50%) scale(0.25);
 
     opacity: 0;
   }
 
   35% {
-    opacity: .85;
+    opacity: 0.85;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.4);
+    transform: translate(-50%, -50%) scale(1.4);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    용성군
@@ -8438,8 +8034,7 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    var(--move-light);
+  background: var(--move-light);
 
   box-shadow:
     -18px -18px 12px var(--move-main),
@@ -8447,11 +8042,7 @@ img.res-icon.small {
 
   opacity: 0;
 
-  animation:
-    move-meteor-fall
-    620ms
-    ease-in
-    forwards;
+  animation: move-meteor-fall 620ms ease-in forwards;
 }
 
 .move-meteor .z1 {
@@ -8481,8 +8072,7 @@ img.res-icon.small {
 
 @keyframes move-meteor-fall {
   0% {
-    transform:
-      translate(-80px, -170px);
+    transform: translate(-80px, -170px);
 
     opacity: 0;
   }
@@ -8496,13 +8086,11 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(30px, 35px);
+    transform: translate(30px, 35px);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    대폭발
@@ -8514,32 +8102,25 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      circle,
-      #ffffff 0%,
-      #fff27a 18%,
-      #ff861f 40%,
-      #e82f0c 58%,
-      transparent 72%
-    );
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    #fff27a 18%,
+    #ff861f 40%,
+    #e82f0c 58%,
+    transparent 72%
+  );
 
   box-shadow:
     0 0 25px #ffbb37,
-    0 0 55px rgba(255,55,10,.8);
+    0 0 55px rgba(255, 55, 10, 0.8);
 
-  animation:
-    move-explosion-boom
-    820ms
-    ease-out
-    forwards;
+  animation: move-explosion-boom 820ms ease-out forwards;
 }
 
 @keyframes move-explosion-boom {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.1);
+    transform: translate(-50%, -50%) scale(0.1);
 
     opacity: 0;
   }
@@ -8549,22 +8130,17 @@ img.res-icon.small {
   }
 
   48% {
-    transform:
-      translate(-50%, -50%)
-      scale(5);
+    transform: translate(-50%, -50%) scale(5);
 
     opacity: 1;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(8);
+    transform: translate(-50%, -50%) scale(8);
 
     opacity: 0;
   }
 }
-
 
 /* ============================================================
    일격기 공통
@@ -8576,22 +8152,16 @@ img.res-icon.small {
 
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      circle,
-      var(--move-light),
-      var(--move-main) 30%,
-      transparent 68%
-    );
+  background: radial-gradient(
+    circle,
+    var(--move-light),
+    var(--move-main) 30%,
+    transparent 68%
+  );
 
-  box-shadow:
-    0 0 18px var(--move-main);
+  box-shadow: 0 0 18px var(--move-main);
 
-  animation:
-    move-execute-hit
-    620ms
-    ease-out
-    forwards;
+  animation: move-execute-hit 620ms ease-out forwards;
 }
 
 .move-freeze .move-zone-core {
@@ -8606,15 +8176,14 @@ img.res-icon.small {
 
   border-radius: 0;
 
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      #3b1d0c,
-      #d59142,
-      #35170a,
-      transparent
-    );
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #3b1d0c,
+    #d59142,
+    #35170a,
+    transparent
+  );
 }
 
 .move-drill .move-zone-core {
@@ -8623,15 +8192,9 @@ img.res-icon.small {
 
   background: transparent;
 
-  border:
-    7px double
-    var(--move-main);
+  border: 7px double var(--move-main);
 
-  animation:
-    move-drill-hit
-    600ms
-    ease-in
-    forwards;
+  animation: move-drill-hit 600ms ease-in forwards;
 }
 
 .move-guillotine .move-zp.z1,
@@ -8639,14 +8202,13 @@ img.res-icon.small {
   width: 100px;
   height: 7px;
 
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      #fff,
-      var(--move-main),
-      transparent
-    );
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #fff,
+    var(--move-main),
+    transparent
+  );
 
   transform-origin: center;
 }
@@ -8661,9 +8223,7 @@ img.res-icon.small {
 
 @keyframes move-execute-hit {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(.1);
+    transform: translate(-50%, -50%) scale(0.1);
 
     opacity: 0;
   }
@@ -8673,17 +8233,13 @@ img.res-icon.small {
   }
 
   65% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.2);
+    transform: translate(-50%, -50%) scale(1.2);
 
     opacity: 1;
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.5);
+    transform: translate(-50%, -50%) scale(1.5);
 
     opacity: 0;
   }
@@ -8691,10 +8247,7 @@ img.res-icon.small {
 
 @keyframes move-drill-hit {
   0% {
-    transform:
-      translate(-50%, -50%)
-      rotate(0deg)
-      scale(.15);
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.15);
 
     opacity: 0;
   }
@@ -8704,11 +8257,79 @@ img.res-icon.small {
   }
 
   100% {
-    transform:
-      translate(-50%, -50%)
-      rotate(520deg)
-      scale(1.15);
+    transform: translate(-50%, -50%) rotate(520deg) scale(1.15);
 
     opacity: 0;
+  }
+}
+
+/* ============================================================
+   기라티나 - 섀도다이브 잔상
+   ============================================================ */
+
+.shadowforce-ghost {
+  position: relative;
+  flex: 0 0 auto;
+
+  opacity: 0.28;
+
+  filter: grayscale(0.35) brightness(0.65) blur(0.4px);
+
+  pointer-events: none;
+
+  animation: shadowforce-ghost-pulse 1.7s ease-in-out infinite;
+}
+
+.shadowforce-ghost::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  z-index: 2;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(110, 70, 180, 0.22),
+    rgba(40, 10, 70, 0.08) 55%,
+    transparent 72%
+  );
+
+  filter: blur(8px);
+
+  pointer-events: none;
+}
+
+.shadowforce-ghost-label {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  z-index: 5;
+
+  transform: translateX(-50%);
+
+  white-space: nowrap;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+
+  color: rgba(220, 200, 255, 0.9);
+
+  text-shadow:
+    0 0 5px rgba(130, 80, 220, 0.8),
+    0 0 10px rgba(80, 30, 160, 0.6);
+}
+
+@keyframes shadowforce-ghost-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.97);
+  }
+
+  50% {
+    opacity: 0.38;
+    transform: scale(1);
   }
 }

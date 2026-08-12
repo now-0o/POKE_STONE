@@ -21,6 +21,12 @@ import {
   resolveHyperball,
   cleanupDeaths,
   resolveDeoxysForm,
+  resolveWishmaker,
+  resolveUxie,
+  resolveSpacialRend,
+  resolveMagmaStorm,
+  resolvePhioneBraveCharge,
+  resolveManaphyBraveCharge,
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
@@ -810,13 +816,8 @@ export default function Battle({ trainer, deck, onFinish }) {
     }
 
     // 명시적인 대상 UID
-    if (
-      action.targetUid &&
-      action.targetUid !== "hero"
-    ) {
-      const el = document.querySelector(
-        `[data-uid="${action.targetUid}"]`,
-      );
+    if (action.targetUid && action.targetUid !== "hero") {
+      const el = document.querySelector(`[data-uid="${action.targetUid}"]`);
 
       if (el) {
         return rectOfElement(el);
@@ -824,10 +825,7 @@ export default function Battle({ trainer, deck, onFinish }) {
 
       // 울부짖기 / 즉사처럼 이미 DOM에서 사라졌다면
       // 직전 저장 좌표 사용
-      const saved =
-        battleRectsRef.current.get(
-          action.targetUid,
-        );
+      const saved = battleRectsRef.current.get(action.targetUid);
 
       if (saved) {
         return saved;
@@ -845,13 +843,9 @@ export default function Battle({ trainer, deck, onFinish }) {
     }
 
     // 기존 impact 타겟 fallback
-    const impact =
-      action.impacts?.find(
-        (x) =>
-          x.type === "damage" ||
-          x.type === "heal" ||
-          x.type === "cleanse",
-      );
+    const impact = action.impacts?.find(
+      (x) => x.type === "damage" || x.type === "heal" || x.type === "cleanse",
+    );
 
     if (impact) {
       return getImpactRect(impact);
@@ -861,73 +855,50 @@ export default function Battle({ trainer, deck, onFinish }) {
   }
 
   function getPendingHpOffset(side, targetUid) {
-  if (!movePendingHp?.impacts?.length) {
-    return 0;
-  }
+    if (!movePendingHp?.impacts?.length) {
+      return 0;
+    }
 
-  return movePendingHp.impacts.reduce((sum, impact) => {
-    if (
-      impact.side !== side ||
-      impact.targetUid !== targetUid
-    ) {
+    return movePendingHp.impacts.reduce((sum, impact) => {
+      if (impact.side !== side || impact.targetUid !== targetUid) {
+        return sum;
+      }
+
+      if (impact.type === "damage") {
+        return sum + (impact.amount || 0);
+      }
+
+      if (impact.type === "heal") {
+        return sum - (impact.amount || 0);
+      }
+
       return sum;
-    }
-
-    if (impact.type === "damage") {
-      return sum + (impact.amount || 0);
-    }
-
-    if (impact.type === "heal") {
-      return sum - (impact.amount || 0);
-    }
-
-    return sum;
-  }, 0);
-}
-
-function getVisualUnit(unit) {
-  const offset = getPendingHpOffset(
-    unit.side,
-    unit.uid,
-  );
-
-  const visualHp = Math.max(
-    0,
-    Math.min(
-      unit.maxHp,
-      unit.hp + offset,
-    ),
-  );
-
-  if (visualHp === unit.hp) {
-    return unit;
+    }, 0);
   }
 
-  return {
-    ...unit,
-    hp: visualHp,
-  };
-}
+  function getVisualUnit(unit) {
+    const offset = getPendingHpOffset(unit.side, unit.uid);
 
-function getVisualHeroHp(side, hp, maxHp) {
-  const offset = getPendingHpOffset(
-    side,
-    "hero",
-  );
+    const visualHp = Math.max(0, Math.min(unit.maxHp, unit.hp + offset));
 
-  return Math.max(
-    0,
-    Math.min(
-      maxHp,
-      hp + offset,
-    ),
-  );
-}
+    if (visualHp === unit.hp) {
+      return unit;
+    }
+
+    return {
+      ...unit,
+      hp: visualHp,
+    };
+  }
+
+  function getVisualHeroHp(side, hp, maxHp) {
+    const offset = getPendingHpOffset(side, "hero");
+
+    return Math.max(0, Math.min(maxHp, hp + offset));
+  }
 
   function showMoveAnimation(card, action) {
-    const preset =
-      MOVE_FX_PRESETS[card?.id] ||
-      null;
+    const preset = MOVE_FX_PRESETS[card?.id] || null;
 
     if (!preset && !card?.animation) {
       return null;
@@ -938,86 +909,57 @@ function getVisualHeroHp(side, hp, maxHp) {
       ...(card?.animation || {}),
     };
 
-    const battleRect =
-      battleRef.current?.getBoundingClientRect();
+    const battleRect = battleRef.current?.getBoundingClientRect();
 
     if (!battleRect) {
       return null;
     }
 
-    const sourceEl =
-      document.querySelector(
-        action.side === "player"
-          ? '[data-drop="my-hero"] .trainer-sprite'
-          : '[data-drop="enemy-hero"] .trainer-sprite',
-      );
+    const sourceEl = document.querySelector(
+      action.side === "player"
+        ? '[data-drop="my-hero"] .trainer-sprite'
+        : '[data-drop="enemy-hero"] .trainer-sprite',
+    );
 
     if (!sourceEl) {
       return null;
     }
 
-    const sourceRect =
-      sourceEl.getBoundingClientRect();
+    const sourceRect = sourceEl.getBoundingClientRect();
 
-    const targetRect =
-      resolveMoveTargetRect(
-        animation,
-        action,
-      );
+    const targetRect = resolveMoveTargetRect(animation, action);
 
     if (!targetRect) {
       return null;
     }
 
     // 트레이너 바로 위에 기 모으기
-    const sourceCx =
-      sourceRect.left +
-      sourceRect.width / 2;
+    const sourceCx = sourceRect.left + sourceRect.width / 2;
 
-    const sourceCy =
-      sourceRect.top - 14;
+    const sourceCy = sourceRect.top - 14;
 
-    const targetCx =
-      targetRect.x ??
-      targetRect.left +
-        targetRect.width / 2;
+    const targetCx = targetRect.x ?? targetRect.left + targetRect.width / 2;
 
-    const targetCy =
-      targetRect.y ??
-      targetRect.top +
-        targetRect.height / 2;
+    const targetCy = targetRect.y ?? targetRect.top + targetRect.height / 2;
 
-    const x1 =
-      sourceCx -
-      battleRect.left;
+    const x1 = sourceCx - battleRect.left;
 
-    const y1 =
-      sourceCy -
-      battleRect.top;
+    const y1 = sourceCy - battleRect.top;
 
-    const x2 =
-      targetCx -
-      battleRect.left;
+    const x2 = targetCx - battleRect.left;
 
-    const y2 =
-      targetCy -
-      battleRect.top;
+    const y2 = targetCy - battleRect.top;
 
     const dx = x2 - x1;
     const dy = y2 - y1;
 
-    const distance =
-      Math.hypot(dx, dy);
+    const distance = Math.hypot(dx, dy);
 
-    const angle =
-      Math.atan2(dy, dx) *
-      (180 / Math.PI);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-    const startup =
-      animation.startup ?? 260;
+    const startup = animation.startup ?? 260;
 
-    const duration =
-      animation.duration ?? 450;
+    const duration = animation.duration ?? 450;
 
     const fx = {
       key: action.seq,
@@ -1027,8 +969,7 @@ function getVisualHeroHp(side, hp, maxHp) {
       type: animation.type,
       theme: animation.theme,
 
-      variant:
-        animation.variant || null,
+      variant: animation.variant || null,
 
       x: x1,
       y: y1,
@@ -1044,12 +985,9 @@ function getVisualHeroHp(side, hp, maxHp) {
       phase: "charge",
     };
 
-    const hpImpacts =
-      (action.impacts || []).filter(
-        (impact) =>
-          impact.type === "damage" ||
-          impact.type === "heal",
-      );
+    const hpImpacts = (action.impacts || []).filter(
+      (impact) => impact.type === "damage" || impact.type === "heal",
+    );
 
     if (hpImpacts.length > 0) {
       setMovePendingHp({
@@ -1061,36 +999,27 @@ function getVisualHeroHp(side, hp, maxHp) {
     // 1. 기 모으기
     setMoveFx(fx);
 
-    clearTimeout(
-      moveStartTimer.current,
-    );
+    clearTimeout(moveStartTimer.current);
 
     // 2. 발사
-    moveStartTimer.current =
-      setTimeout(() => {
-        setMoveFx({
-          ...fx,
-          phase: "fire",
-        });
-      }, startup);
+    moveStartTimer.current = setTimeout(() => {
+      setMoveFx({
+        ...fx,
+        phase: "fire",
+      });
+    }, startup);
 
-    clearTimeout(
-      moveFxTimer.current,
-    );
+    clearTimeout(moveFxTimer.current);
 
-    moveFxTimer.current =
-      setTimeout(() => {
-        setMoveFx(null);
-      }, startup + duration);
+    moveFxTimer.current = setTimeout(() => {
+      setMoveFx(null);
+    }, startup + duration);
 
     return {
       impactDelay:
-        startup +
-        (animation.impactDelay ??
-          Math.round(duration * 0.5)),
+        startup + (animation.impactDelay ?? Math.round(duration * 0.5)),
 
-      totalDuration:
-        startup + duration,
+      totalDuration: startup + duration,
     };
   }
 
@@ -1478,58 +1407,43 @@ function getVisualHeroHp(side, hp, maxHp) {
       }, attackTiming.totalDuration + 40);
     }
 
+    if (la.kind === "ability" && la.impacts?.length) {
+      showImpacts(la.impacts, la.seq);
+    }
+
     // 일반 공격이 아닌
     // 기술 / 전투의 함성 / 도구 / 회복 효과
-    if (
-      la.kind === "play" &&
-      playedCard
-    ) {
-      const moveTiming =
-        showMoveAnimation(
-          playedCard,
-          la,
-        );
+    if (la.kind === "play" && playedCard) {
+      const moveTiming = showMoveAnimation(playedCard, la);
 
       if (la.impacts?.length) {
         if (moveTiming) {
-          clearTimeout(
-            moveImpactTimer.current,
-          );
+          clearTimeout(moveImpactTimer.current);
 
           // 실제 기술이 명중하는 순간
-          moveImpactTimer.current =
-            setTimeout(() => {
-              // 이제 실제 HP를 화면에 반영
-              setMovePendingHp(null);
+          moveImpactTimer.current = setTimeout(() => {
+            // 이제 실제 HP를 화면에 반영
+            setMovePendingHp(null);
 
-              showImpacts(
-                la.impacts,
-                la.seq,
-              );
+            showImpacts(la.impacts, la.seq);
 
-              rerender();
-            }, moveTiming.impactDelay);
+            rerender();
+          }, moveTiming.impactDelay);
 
-          clearTimeout(
-            moveDeathTimer.current,
-          );
+          clearTimeout(moveDeathTimer.current);
 
           // 기술 연출이 다 끝난 뒤
           // 죽은 포켓몬 실제 제거
-          moveDeathTimer.current =
-            setTimeout(() => {
-              cleanupDeaths(game);
+          moveDeathTimer.current = setTimeout(() => {
+            cleanupDeaths(game);
 
-              setMovePendingHp(null);
-              rerender();
-            }, moveTiming.totalDuration + 80);
+            setMovePendingHp(null);
+            rerender();
+          }, moveTiming.totalDuration + 80);
         } else {
           setMovePendingHp(null);
 
-          showImpacts(
-            la.impacts,
-            la.seq,
-          );
+          showImpacts(la.impacts, la.seq);
 
           cleanupDeaths(game);
           rerender();
@@ -1562,11 +1476,7 @@ function getVisualHeroHp(side, hp, maxHp) {
 
   const me = game.players.player;
   const foe = game.players.enemy;
-  const myTurn =
-    game.turn === "player" &&
-    !game.winner &&
-    !atkFx &&
-    !moveFx;
+  const myTurn = game.turn === "player" && !game.winner && !atkFx && !moveFx;
 
   // ============================================================
   // 꾹 눌러 카드 크게 보기 (움직이면 취소)
@@ -1698,14 +1608,34 @@ function getVisualHeroHp(side, hp, maxHp) {
   // ============================================================
   // 손패 드래그 (모든 카드 이동 가능, 사용은 낼 수 있을 때만)
   // ============================================================
-  function calcInsertIndex(clientX) {
-    if (!myFieldRef.current) return null;
+  function calcVisualInsertIndex(clientX) {
+    if (!myFieldRef.current) {
+      return null;
+    }
+
     const units = [...myFieldRef.current.querySelectorAll(".field-unit")];
+
     for (let i = 0; i < units.length; i++) {
       const r = units[i].getBoundingClientRect();
-      if (clientX < r.left + r.width / 2) return i;
+
+      if (clientX < r.left + r.width / 2) {
+        return i;
+      }
     }
+
     return units.length;
+  }
+
+  function calcInsertIndex(clientX) {
+    const visualIndex = calcVisualInsertIndex(clientX);
+
+    if (visualIndex == null || !me._shadowForceExile) {
+      return visualIndex;
+    }
+
+    const ghostIndex = me._shadowForceExile.index;
+
+    return visualIndex > ghostIndex ? visualIndex - 1 : visualIndex;
   }
 
   function updateInsertMarker(clientX, clientY) {
@@ -1735,7 +1665,7 @@ function getVisualHeroHp(side, hp, maxHp) {
     if (units.length === 0) {
       x = fr.width / 2;
     } else {
-      const idx = calcInsertIndex(clientX);
+      const idx = calcVisualInsertIndex(clientX);
       if (idx === 0) x = units[0].getBoundingClientRect().left - fr.left - 7;
       else x = units[idx - 1].getBoundingClientRect().right - fr.left + 4;
     }
@@ -1893,14 +1823,25 @@ function getVisualHeroHp(side, hp, maxHp) {
     if (
       game.pendingBattlecry &&
       game.pendingBattlecry.side === "player" &&
-      side === "enemy" &&
+      side === (game.pendingBattlecry.targetSide || "enemy") &&
       game.pendingBattlecry.targets.includes(unit.uid)
     ) {
-      if (game.pendingBattlecry.ability === "metronome") {
+      const ability = game.pendingBattlecry.ability;
+
+      if (ability === "metronome") {
         resolveMew(game, "player", unit.uid);
+      } else if (ability === "spacialrend") {
+        resolveSpacialRend(game, "player", unit.uid);
+      } else if (ability === "magmastorm") {
+        resolveMagmaStorm(game, "player", unit.uid);
+      } else if (ability === "bravecharge_phione") {
+        resolvePhioneBraveCharge(game, "player", unit.uid);
+      } else if (ability === "bravecharge_manaphy") {
+        resolveManaphyBraveCharge(game, "player", unit.uid);
       } else {
         resolveMoldbreaker(game, "player", unit.uid);
       }
+
       rerender();
       return;
     }
@@ -1985,6 +1926,27 @@ function getVisualHeroHp(side, hp, maxHp) {
     const ok = resolveHyperball(game, "player", pickUid);
 
     playSfx(ok ? "click" : "buzzer");
+    rerender();
+  }
+
+  function onUxieChoose(pickUid) {
+    const ok = resolveUxie(game, "player", pickUid);
+
+    playSfx(ok ? "click" : "buzzer");
+
+    rerender();
+  }
+
+  function onWishmakerChoose(choice) {
+    const ok = resolveWishmaker(game, "player", choice);
+
+    playSfx(ok ? "click" : "buzzer");
+
+    if (ok) {
+      setSelectedHand(null);
+      setAimUid(null);
+    }
+
     rerender();
   }
 
@@ -2240,6 +2202,35 @@ function getVisualHeroHp(side, hp, maxHp) {
     >
       {resultOverlay}
 
+      {game.pendingWishmaker?.side === "player" && (
+        <div className="deoxys-form-overlay">
+          <div className="deoxys-form-box">
+            <h2>지라치의 소원</h2>
+            <p>이루고 싶은 소원을 선택하세요.</p>
+
+            <div className="deoxys-form-grid">
+              <button type="button" onClick={() => onWishmakerChoose("heal")}>
+                <strong>치유의 소원</strong>
+                <span>♥ +3</span>
+                <small>아군 포켓몬 전체 체력 3 회복</small>
+              </button>
+
+              <button type="button" onClick={() => onWishmakerChoose("draw")}>
+                <strong>지식의 소원</strong>
+                <span>+2 CARD</span>
+                <small>카드 2장을 뽑는다</small>
+              </button>
+
+              <button type="button" onClick={() => onWishmakerChoose("boost")}>
+                <strong>힘의 소원</strong>
+                <span>+1 / +1</span>
+                <small>아군 포켓몬 전체 +1/+1</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {game.pendingDeoxysForm?.side === "player" && (
         <div className="deoxys-form-overlay">
           <div className="deoxys-form-box">
@@ -2315,18 +2306,14 @@ function getVisualHeroHp(side, hp, maxHp) {
             날아가는 계열
             ======================================================== */}
         {moveFx?.phase === "fire" &&
-          ["beam", "stream", "bolt", "projectile"].includes(
-            moveFx.type,
-          ) && (
+          ["beam", "stream", "bolt", "projectile"].includes(moveFx.type) && (
             <div
               key={`${moveFx.key}-fire`}
               className={[
                 "move-fx",
                 `move-${moveFx.type}`,
                 `move-${moveFx.theme}`,
-                moveFx.variant
-                  ? `move-${moveFx.variant}`
-                  : "",
+                moveFx.variant ? `move-${moveFx.variant}` : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -2334,10 +2321,8 @@ function getVisualHeroHp(side, hp, maxHp) {
                 left: `${moveFx.x}px`,
                 top: `${moveFx.y}px`,
                 width: `${moveFx.distance}px`,
-                transform:
-                  `rotate(${moveFx.angle}deg)`,
-                "--move-duration":
-                  `${moveFx.duration}ms`,
+                transform: `rotate(${moveFx.angle}deg)`,
+                "--move-duration": `${moveFx.duration}ms`,
               }}
             >
               {moveFx.type === "bolt" && (
@@ -2365,8 +2350,7 @@ function getVisualHeroHp(side, hp, maxHp) {
                 </>
               )}
 
-              {(moveFx.type === "beam" ||
-                moveFx.type === "stream") && (
+              {(moveFx.type === "beam" || moveFx.type === "stream") && (
                 <>
                   <div className="move-beam-glow" />
                   <div className="move-beam-core" />
@@ -2392,26 +2376,21 @@ function getVisualHeroHp(side, hp, maxHp) {
             대상 / 필드에서 직접 터지는 계열
             ======================================================== */}
         {moveFx?.phase === "fire" &&
-          !["beam", "stream", "bolt", "projectile"].includes(
-            moveFx.type,
-          ) && (
+          !["beam", "stream", "bolt", "projectile"].includes(moveFx.type) && (
             <div
               key={`${moveFx.key}-zone`}
               className={[
                 "move-zone-fx",
                 `move-${moveFx.type}`,
                 `move-${moveFx.theme}`,
-                moveFx.variant
-                  ? `move-${moveFx.variant}`
-                  : "",
+                moveFx.variant ? `move-${moveFx.variant}` : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
               style={{
                 left: `${moveFx.targetX}px`,
                 top: `${moveFx.targetY}px`,
-                "--move-duration":
-                  `${moveFx.duration}ms`,
+                "--move-duration": `${moveFx.duration}ms`,
               }}
             >
               <div className="move-zone-core" />
@@ -2483,6 +2462,30 @@ function getVisualHeroHp(side, hp, maxHp) {
                     cardId={pick.cardId}
                     playable
                     onClick={() => onHyperballChoose(pick.uid)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+      {game.pendingChoose?.side === "player" &&
+        game.pendingChoose.effect === "uxie" && (
+          <div className="hyperball-choice-overlay">
+            <div className="hyperball-choice-box">
+              <h2>신비의힘·유크시</h2>
+
+              <p>
+                가져올 카드를 선택하세요. 선택한 카드의 비용이 2 감소합니다.
+              </p>
+
+              <div className="hyperball-choice-cards">
+                {game.pendingChoose.picks.map((pick) => (
+                  <HandCard
+                    key={pick.uid}
+                    cardId={pick.cardId}
+                    playable
+                    onClick={() => onUxieChoose(pick.uid)}
                   />
                 ))}
               </div>
@@ -2642,6 +2645,7 @@ function getVisualHeroHp(side, hp, maxHp) {
           <HandCard
             cardId={me.hand[dragIdx].cardId}
             game={game}
+            handCard={h}
             playable
             ghost
           />
@@ -2689,20 +2693,43 @@ function getVisualHeroHp(side, hp, maxHp) {
       </div>
 
       <div className="field enemy-field" data-drop="enemy-field">
-        {foe.field.map((u) => (
-          <FieldUnit
-            key={u.uid}
-            unit={getVisualUnit(u)}
-            game={game}
-            targetable={isEnemyTargetable(u)}
-            onClick={() => onUnitClick("enemy", u)}
-            onPointerDown={(e) => onEnemyUnitPointerDown(u, e)}
-            dropZone="unit-enemy"
-            fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
-            fxKey={unitFx ? unitFx.key : 0}
-          />
-        ))}
-        {foe.field.length === 0 && (
+        {(() => {
+          const fieldSlots = [...foe.field];
+
+          if (foe._shadowForceExile) {
+            fieldSlots.splice(foe._shadowForceExile.index, 0, {
+              ...foe._shadowForceExile.unit,
+              _shadowForceGhost: true,
+            });
+          }
+
+          return fieldSlots.map((u) => {
+            if (u._shadowForceGhost) {
+              return (
+                <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
+                  <FieldUnit unit={u} game={game} />
+
+                  <div className="shadowforce-ghost-label">섀도다이브</div>
+                </div>
+              );
+            }
+
+            return (
+              <FieldUnit
+                key={u.uid}
+                unit={getVisualUnit(u)}
+                game={game}
+                targetable={isEnemyTargetable(u)}
+                onClick={() => onUnitClick("enemy", u)}
+                onPointerDown={(e) => onEnemyUnitPointerDown(u, e)}
+                dropZone="unit-enemy"
+                fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
+                fxKey={unitFx ? unitFx.key : 0}
+              />
+            );
+          });
+        })()}
+        {foe.field.length === 0 && !foe._shadowForceExile && (
           <div className="field-empty">필드가 비어 있다</div>
         )}
       </div>
@@ -2775,24 +2802,49 @@ function getVisualHeroHp(side, hp, maxHp) {
         ref={myFieldRef}
       >
         <div className="insert-marker" ref={markerRef} />
-        {me.field.map((u) => (
-          <FieldUnit
-            key={u.uid}
-            unit={getVisualUnit(u)}
-            game={game}
-            canAct={myTurn && canAttack(game, "player", u.uid)}
-            selected={aimUid === u.uid}
-            targetable={isFriendlyTargetable(u)}
-            onClick={() => onUnitClick("player", u)}
-            onPointerDown={(e) => onMyUnitPointerDown(u, e)}
-            dropZone="unit-player"
-            fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
-            fxKey={unitFx ? unitFx.key : 0}
-          />
-        ))}
-        {me.field.length === 0 && !draggingBasicPokemon && (
-          <div className="field-empty">포켓몬을 끌어다 놓자!</div>
-        )}
+        {(() => {
+          const fieldSlots = [...me.field];
+
+          if (me._shadowForceExile) {
+            fieldSlots.splice(me._shadowForceExile.index, 0, {
+              ...me._shadowForceExile.unit,
+              _shadowForceGhost: true,
+            });
+          }
+
+          return fieldSlots.map((u) => {
+            if (u._shadowForceGhost) {
+              return (
+                <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
+                  <FieldUnit unit={u} game={game} />
+
+                  <div className="shadowforce-ghost-label">섀도다이브</div>
+                </div>
+              );
+            }
+
+            return (
+              <FieldUnit
+                key={u.uid}
+                unit={getVisualUnit(u)}
+                game={game}
+                canAct={myTurn && canAttack(game, "player", u.uid)}
+                selected={aimUid === u.uid}
+                targetable={isFriendlyTargetable(u)}
+                onClick={() => onUnitClick("player", u)}
+                onPointerDown={(e) => onMyUnitPointerDown(u, e)}
+                dropZone="unit-player"
+                fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
+                fxKey={unitFx ? unitFx.key : 0}
+              />
+            );
+          });
+        })()}
+        {me.field.length === 0 &&
+          !me._shadowForceExile &&
+          !draggingBasicPokemon && (
+            <div className="field-empty">포켓몬을 끌어다 놓자!</div>
+          )}
       </div>
 
       {/* 내 영역 */}
@@ -2861,6 +2913,7 @@ function getVisualHeroHp(side, hp, maxHp) {
               <HandCard
                 cardId={h.cardId}
                 game={game}
+                handCard={h}
                 playable={playableNow}
                 selected={selectedHand === idx}
                 dragOrigin={dragIdx === idx}
@@ -2897,7 +2950,15 @@ function getVisualHeroHp(side, hp, maxHp) {
         <div className="target-hint">
           {game.pendingBattlecry?.ability === "metronome"
             ? "변신! 공격력을 복사할 상대 포켓몬을 선택하세요"
-            : "틀깨기! 도발을 없앨 상대 포켓몬을 선택하세요"}
+            : game.pendingBattlecry?.ability === "spacialrend"
+              ? "공간절단! 공격할 상대 포켓몬을 선택하세요"
+              : game.pendingBattlecry?.ability === "magmastorm"
+                ? "마그마스톰! 가둘 상대 포켓몬을 선택하세요"
+                : game.pendingBattlecry?.ability === "bravecharge_phione"
+                  ? "브레이브차지! 강화할 아군 포켓몬을 선택하세요"
+                  : game.pendingBattlecry?.ability === "bravecharge_manaphy"
+                    ? "브레이브차지! 2회 공격시킬 아군 포켓몬을 선택하세요"
+                    : "틀깨기! 도발을 없앨 상대 포켓몬을 선택하세요"}
         </div>
       )}
       {selectedHand !== null && spellNeed && dragIdx === null && (

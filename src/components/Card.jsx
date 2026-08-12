@@ -332,6 +332,7 @@ export function HandCard({
   dragOrigin,
   ghost,
   unit,
+  handCard,
 }) {
   const card = CARD_MAP[cardId];
   const cost = game ? effectiveCost(card, game) : card.cost;
