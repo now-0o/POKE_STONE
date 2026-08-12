@@ -380,8 +380,9 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
     // 전설/환상 포켓몬만 덱 전체 최대 3장
     if (
+      !save.adminMode &&
       isLegendaryPokemon(card) &&
-      legendaryPokemonCount >= MAX_LEGENDARY_POKEMON
+      legendaryCount >= MAX_LEGENDARY_POKEMON
     ) {
       playSfx("buzzer");
       return;
@@ -629,7 +630,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                   <HandCard
                     cardId={card.id}
                     playable={
-                      inDeck < max && save.deck.length < 30 && !legendaryBlocked
+                      inDeck < max &&
+                      save.deck.length < 30 &&
+                      (save.adminMode ||
+                        !isLegendaryPokemon(card) ||
+                        legendaryCount < MAX_LEGENDARY_POKEMON)
                     }
                     onClick={() => addToDeck(card.id)}
                     onPointerDown={press({ cardId: card.id })}
