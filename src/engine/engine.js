@@ -523,8 +523,8 @@ function spawnGardeniaVine(game) {
     (obstacle) => obstacle.type === "vine" && obstacle.hp > 0,
   );
 
-  // 최대 2개
-  if (vines.length >= 2) {
+  // 최대 3개
+  if (vines.length >= 3) {
     return false;
   }
 
@@ -535,7 +535,7 @@ function spawnGardeniaVine(game) {
   }
 
   // 덩굴은 1번 / 4번 자리에 고정
-  const vineSlots = [1, 4];
+  const vineSlots = [1, 4, 2];
 
   const occupiedSlots = new Set(obstacles.map((obstacle) => obstacle.slot));
 
