@@ -2687,7 +2687,7 @@ export default function Battle({ trainer, deck, onFinish }) {
           <HandCard
             cardId={me.hand[dragIdx].cardId}
             game={game}
-            handCard={h}
+            handCard={me.hand[dragIdx]}
             playable
             ghost
           />
