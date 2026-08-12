@@ -481,12 +481,12 @@ function setupTrainerGimmick(game) {
         {
           id: "roark-rock-left",
           type: "rock",
-          position: "start",
+          slot: 0,
         },
         {
           id: "roark-rock-right",
           type: "rock",
-          position: "end",
+          slot: 5,
         },
       ];
 

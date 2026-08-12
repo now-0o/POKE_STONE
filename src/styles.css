@@ -8532,14 +8532,31 @@ body[data-gym-type="챔피언"] {
 .field-obstacle {
   position: relative;
 
-  width: var(--unit-w, 98px);
-  height: var(--unit-h, 112px);
-
-  flex: 0 0 auto;
+  width: 100%;
+  height: 100%;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  padding: 5px;
+
+  border-radius: 11px;
+  border: 3px solid rgba(255, 255, 255, 0.28);
+
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.035)
+    ),
+    rgba(13, 18, 30, 0.78);
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.32),
+    inset 0 0 10px rgba(255, 255, 255, 0.04);
+
+  overflow: hidden;
 
   pointer-events: none;
 }
@@ -8548,24 +8565,21 @@ body[data-gym-type="챔피언"] {
   display: block;
 
   width: 92%;
-  height: 92%;
+  height: 88%;
 
   object-fit: contain;
-
   image-rendering: pixelated;
 
   user-select: none;
   pointer-events: none;
 }
 
-.field-obstacle-rock img {
-  width: 96%;
-  height: 96%;
+.field-obstacle-rock {
+  border-color: rgba(173, 143, 99, 0.7);
 }
 
-.field-obstacle-vine img {
-  width: 90%;
-  height: 90%;
+.field-obstacle-vine {
+  border-color: rgba(92, 150, 91, 0.72);
 }
 
 .field-obstacle-hp {
@@ -8587,10 +8601,61 @@ body[data-gym-type="챔피언"] {
   border: 2px solid #fff;
 
   color: #fff;
-
   font-family: var(--display-font);
   font-size: 12px;
   font-weight: 900;
+}
 
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+.battle-board .field-fixed-slot {
+  position: relative;
+
+  width: var(--unit-w);
+  height: var(--unit-h);
+
+  flex: 0 0 var(--unit-w);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-board .field-fixed-slot.is-empty {
+  pointer-events: none;
+}
+
+/* ============================================================
+   코인토스 화면 스크롤 방지
+   ============================================================ */
+
+.battle-intro.intro-phase-coin {
+  position: fixed;
+
+  inset: 0;
+
+  width: 100vw;
+  height: 100dvh;
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  overscroll-behavior: none;
+}
+
+.intro-phase-coin .coin-toss-wrap {
+  width: 100%;
+  height: 100%;
+
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+
+  justify-content: center;
 }

@@ -468,15 +468,17 @@ function FieldObstacle({ obstacle }) {
   );
 }
 
+const FIELD_VISUAL_SLOT_COUNT = 6;
+
 function buildVisualField(player) {
-  const entries = player.field.map((unit) => ({
+  const visualUnits = player.field.map((unit) => ({
     kind: "unit",
     unit,
   }));
 
-  // 기라티나 - 섀도다이브 잔상
+  // 기라티나 섀도다이브 자리도 포켓몬 자리로 취급
   if (player._shadowForceExile) {
-    entries.splice(player._shadowForceExile.index, 0, {
+    visualUnits.splice(player._shadowForceExile.index, 0, {
       kind: "ghost",
       unit: {
         ...player._shadowForceExile.unit,
@@ -487,43 +489,92 @@ function buildVisualField(player) {
 
   const obstacles = player.fieldObstacles || [];
 
-  obstacles
-    .filter((obstacle) => obstacle.position === "start")
-    .forEach((obstacle) => {
-      entries.unshift({
-        kind: "obstacle",
-        obstacle,
-      });
-    });
+  // 장애물이 없는 일반 배틀은
+  // 기존처럼 카드 수에 따라 자연스럽게 중앙 정렬
+  if (obstacles.length === 0) {
+    return visualUnits.map((entry) => ({
+      ...entry,
+      fixedSlot: false,
+    }));
+  }
 
-  obstacles
-    .filter(
-      (obstacle) =>
-        obstacle.position !== "start" && obstacle.position !== "end",
-    )
-    .forEach((obstacle) => {
-      const position = Number.isInteger(obstacle.position)
-        ? obstacle.position
-        : entries.length;
+  // 장애물이 있는 필드만 6칸 고정
+  const slots = Array.from(
+    {
+      length: FIELD_VISUAL_SLOT_COUNT,
+    },
+    (_, slotIndex) => ({
+      kind: "empty",
+      fixedSlot: true,
+      slotIndex,
+    }),
+  );
 
-      const at = Math.max(0, Math.min(position, entries.length));
+  const blockedSlots = new Set();
 
-      entries.splice(at, 0, {
-        kind: "obstacle",
-        obstacle,
-      });
-    });
+  obstacles.forEach((obstacle) => {
+    const slotIndex = obstacle.slot;
 
-  obstacles
-    .filter((obstacle) => obstacle.position === "end")
-    .forEach((obstacle) => {
-      entries.push({
-        kind: "obstacle",
-        obstacle,
-      });
-    });
+    if (
+      !Number.isInteger(slotIndex) ||
+      slotIndex < 0 ||
+      slotIndex >= FIELD_VISUAL_SLOT_COUNT
+    ) {
+      return;
+    }
 
-  return entries;
+    blockedSlots.add(slotIndex);
+
+    slots[slotIndex] = {
+      kind: "obstacle",
+      obstacle,
+      fixedSlot: true,
+      slotIndex,
+    };
+  });
+
+  // 장애물이 없는 칸
+  const availableSlots = Array.from(
+    {
+      length: FIELD_VISUAL_SLOT_COUNT,
+    },
+    (_, i) => i,
+  ).filter((slotIndex) => !blockedSlots.has(slotIndex));
+
+  // 중앙에서 가까운 자리부터 사용
+  const center = (FIELD_VISUAL_SLOT_COUNT - 1) / 2;
+
+  const unitSlots = availableSlots
+    .slice()
+    .sort((a, b) => {
+      const da = Math.abs(a - center);
+
+      const db = Math.abs(b - center);
+
+      if (da !== db) {
+        return da - db;
+      }
+
+      return a - b;
+    })
+    .slice(0, visualUnits.length)
+    .sort((a, b) => a - b);
+
+  visualUnits.forEach((entry, index) => {
+    const slotIndex = unitSlots[index];
+
+    if (slotIndex == null) {
+      return;
+    }
+
+    slots[slotIndex] = {
+      ...entry,
+      fixedSlot: true,
+      slotIndex,
+    };
+  });
+
+  return slots;
 }
 
 export default function Battle({ trainer, deck, onFinish }) {
@@ -2809,40 +2860,61 @@ export default function Battle({ trainer, deck, onFinish }) {
       </div>
 
       <div className="field enemy-field" data-drop="enemy-field">
-        {buildVisualField(foe).map((entry) => {
+        {buildVisualField(me).map((entry, index) => {
+          let content = null;
+
           if (entry.kind === "obstacle") {
-            return (
-              <FieldObstacle
-                key={entry.obstacle.id}
-                obstacle={entry.obstacle}
-              />
-            );
-          }
+            content = <FieldObstacle obstacle={entry.obstacle} />;
+          } else if (entry.kind === "ghost") {
+            const u = entry.unit;
 
-          const u = entry.unit;
-
-          if (entry.kind === "ghost") {
-            return (
-              <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
+            content = (
+              <div className="shadowforce-ghost">
                 <FieldUnit unit={u} game={game} />
 
                 <div className="shadowforce-ghost-label">섀도다이브</div>
               </div>
             );
+          } else if (entry.kind === "unit") {
+            const u = entry.unit;
+
+            content = (
+              <FieldUnit
+                unit={getVisualUnit(u)}
+                game={game}
+                canAct={myTurn && canAttack(game, "player", u.uid)}
+                selected={aimUid === u.uid}
+                targetable={isFriendlyTargetable(u)}
+                onClick={() => onUnitClick("player", u)}
+                onPointerDown={(e) => onMyUnitPointerDown(u, e)}
+                dropZone="unit-player"
+                fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
+                fxKey={unitFx ? unitFx.key : 0}
+              />
+            );
           }
 
+          // 장애물 없는 일반 배틀
+          if (!entry.fixedSlot) {
+            return (
+              <React.Fragment key={entry.unit?.uid || index}>
+                {content}
+              </React.Fragment>
+            );
+          }
+
+          // 신오 기믹 필드
           return (
-            <FieldUnit
-              key={u.uid}
-              unit={getVisualUnit(u)}
-              game={game}
-              targetable={isEnemyTargetable(u)}
-              onClick={() => onUnitClick("enemy", u)}
-              onPointerDown={(e) => onEnemyUnitPointerDown(u, e)}
-              dropZone="unit-enemy"
-              fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
-              fxKey={unitFx ? unitFx.key : 0}
-            />
+            <div
+              key={`player-slot-${entry.slotIndex}`}
+              className={[
+                "field-fixed-slot",
+                entry.kind === "empty" ? "is-empty" : "",
+              ].join(" ")}
+              data-field-slot={entry.slotIndex}
+            >
+              {content}
+            </div>
           );
         })}
         {foe.field.length === 0 &&
@@ -2920,42 +2992,61 @@ export default function Battle({ trainer, deck, onFinish }) {
         ref={myFieldRef}
       >
         <div className="insert-marker" ref={markerRef} />
-        {buildVisualField(me).map((entry) => {
+        {buildVisualField(me).map((entry, index) => {
+          let content = null;
+
           if (entry.kind === "obstacle") {
-            return (
-              <FieldObstacle
-                key={entry.obstacle.id}
-                obstacle={entry.obstacle}
-              />
-            );
-          }
+            content = <FieldObstacle obstacle={entry.obstacle} />;
+          } else if (entry.kind === "ghost") {
+            const u = entry.unit;
 
-          const u = entry.unit;
-
-          if (entry.kind === "ghost") {
-            return (
-              <div key={`shadow-${u.uid}`} className="shadowforce-ghost">
+            content = (
+              <div className="shadowforce-ghost">
                 <FieldUnit unit={u} game={game} />
 
                 <div className="shadowforce-ghost-label">섀도다이브</div>
               </div>
             );
+          } else if (entry.kind === "unit") {
+            const u = entry.unit;
+
+            content = (
+              <FieldUnit
+                unit={getVisualUnit(u)}
+                game={game}
+                canAct={myTurn && canAttack(game, "player", u.uid)}
+                selected={aimUid === u.uid}
+                targetable={isFriendlyTargetable(u)}
+                onClick={() => onUnitClick("player", u)}
+                onPointerDown={(e) => onMyUnitPointerDown(u, e)}
+                dropZone="unit-player"
+                fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
+                fxKey={unitFx ? unitFx.key : 0}
+              />
+            );
           }
 
+          // 장애물 없는 일반 배틀
+          if (!entry.fixedSlot) {
+            return (
+              <React.Fragment key={entry.unit?.uid || index}>
+                {content}
+              </React.Fragment>
+            );
+          }
+
+          // 신오 기믹 필드
           return (
-            <FieldUnit
-              key={u.uid}
-              unit={getVisualUnit(u)}
-              game={game}
-              canAct={myTurn && canAttack(game, "player", u.uid)}
-              selected={aimUid === u.uid}
-              targetable={isFriendlyTargetable(u)}
-              onClick={() => onUnitClick("player", u)}
-              onPointerDown={(e) => onMyUnitPointerDown(u, e)}
-              dropZone="unit-player"
-              fx={unitFx && unitFx.uid === u.uid ? unitFx.kind : null}
-              fxKey={unitFx ? unitFx.key : 0}
-            />
+            <div
+              key={`player-slot-${entry.slotIndex}`}
+              className={[
+                "field-fixed-slot",
+                entry.kind === "empty" ? "is-empty" : "",
+              ].join(" ")}
+              data-field-slot={entry.slotIndex}
+            >
+              {content}
+            </div>
           );
         })}
         {me.field.length === 0 &&
