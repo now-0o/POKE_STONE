@@ -350,6 +350,7 @@ export function HandCard({
   const shownName = unit ? unit.name : card.name;
   const shownAtk = unit ? unit.atk : card.atk;
   const shownHp = unit ? unit.hp : card.hp;
+  const shownType = unit ? unit.type : card.type;
   const { ref, onMouseMove, onMouseLeave } = useTilt();
   const holo = card.rarity !== "C";
   const isPokemon = card.kind === "pokemon";
@@ -366,7 +367,7 @@ export function HandCard({
         dragOrigin ? "drag-origin" : "",
         ghost ? "ghost-card" : "",
       ].join(" ")}
-      style={{ "--type-color": TYPE_COLORS[card.type] }}
+      style={{ "--type-color": TYPE_COLORS[shownType] }}
       onClick={onClick}
       onPointerDown={onPointerDown}
       onMouseMove={onMouseMove}
@@ -418,7 +419,7 @@ export function HandCard({
                   ? "도구"
                   : card.kind === "spell"
                     ? `기술 · ${card.moveType || "보조"}`
-                    : `${card.type} 포켓몬`}
+                    : `${shownType} 포켓몬`}
         </span>
       </div>
 

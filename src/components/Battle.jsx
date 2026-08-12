@@ -5,7 +5,12 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { CARD_MAP, UI_SPRITES, spriteUrl } from "../data/cards.js";
+import {
+  CARD_MAP,
+  UI_SPRITES,
+  spriteUrl,
+  isLegendaryPokemon,
+} from "../data/cards.js";
 import {
   createGame,
   playCard,
@@ -31,7 +36,7 @@ import {
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
-import { playSfx, playCry, isLegend } from "../audio.js";
+import { playSfx, playCry } from "../audio.js";
 import { resolveMew } from "../engine/engine.js";
 
 const AI_DELAY = 1100;
@@ -1344,7 +1349,7 @@ export default function Battle({ trainer, deck, onFinish }) {
       la.kind === "play" &&
       la.cardId &&
       la.cardId !== "deoxys" &&
-      isLegend(la.cardId)
+      isLegendaryPokemon(playedCard)
     ) {
       playCry(la.cardId);
 
@@ -2622,62 +2627,26 @@ export default function Battle({ trainer, deck, onFinish }) {
           <div className="legend-rings" />
           <img
             className="legend-sprite"
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${
+            src={
               legendFx.cardId === "deoxys"
-                ? {
-                    normal: 386,
-                    attack: 10001,
-                    defense: 10002,
-                    speed: 10003,
-                  }[legendFx.form || "normal"]
-                : {
-                    kyogre: 382,
-                    suicune: 245,
-                    moltres: 146,
-                    entei: 244,
-                    hooh: 250,
-                    zapdos: 145,
-                    raikou: 243,
-                    groudon: 383,
-                    articuno: 144,
-                    regice: 378,
-                    celebi: 251,
-                    mewtwo: 150,
-                    mew: 151,
-                    lugia: 249,
-                    regirock: 377,
-                    latias: 380,
-                    rayquaza: 384,
-                    registeel: 379,
-                  }[legendFx.cardId]
-            }.png`}
-            alt=""
-          />
-          <div className="legend-name">
-            {
-              {
-                kyogre: "가이오가",
-                suicune: "스이쿤",
-                moltres: "파이어",
-                entei: "앤테이",
-                hooh: "칠색조",
-                zapdos: "썬더",
-                raikou: "라이코",
-                groudon: "그란돈",
-                articuno: "프리져",
-                regice: "레지아이스",
-                celebi: "세레비",
-                mewtwo: "뮤츠",
-                mew: "뮤",
-                lugia: "루기아",
-                regirock: "레지락",
-                latias: "라티아스",
-                rayquaza: "레쿠쟈",
-                registeel: "레지스틸",
-                deoxys: "테오키스",
-              }[legendFx.cardId]
+                ? spriteUrl(
+                    "deoxys",
+                    false,
+                    false,
+                    {
+                      normal: 386,
+                      attack: 10001,
+                      defense: 10002,
+                      speed: 10003,
+                    }[legendFx.form || "normal"],
+                  )
+                : spriteUrl(legendFx.cardId)
             }
-          </div>
+            alt=""
+            draggable={false}
+          />
+
+          <div className="legend-name">{CARD_MAP[legendFx.cardId]?.name}</div>
         </div>
       )}
 
