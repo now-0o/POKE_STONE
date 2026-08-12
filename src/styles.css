@@ -280,14 +280,6 @@ img.res-icon.small {
   );
 }
 
-.region-card.region-sinnoh {
-  background: linear-gradient(
-    145deg,
-    rgba(55, 62, 110, 0.95),
-    rgba(25, 28, 55, 0.98)
-  );
-}
-
 .region-card.region-locked {
   opacity: 0.48;
   filter: grayscale(0.65);
@@ -4715,13 +4707,6 @@ img.res-icon.small {
 
   --battle-skin: none;
 
-  --battle-glow: rgba(65, 94, 160, 0.24);
-
-  --battle-bg-top: #101936;
-  --battle-bg-upper: #151e3c;
-  --battle-bg-lower: #111936;
-  --battle-bg-bottom: #0c142d;
-
   position: relative;
 
   width: 100%;
@@ -4742,190 +4727,14 @@ img.res-icon.small {
     var(--battle-skin),
     radial-gradient(
       ellipse 70% 65% at 50% 50%,
-      var(--battle-glow),
+      rgba(65, 94, 160, 0.24),
       transparent 70%
     ),
-    linear-gradient(
-      180deg,
-      var(--battle-bg-top) 0%,
-      var(--battle-bg-upper) 48%,
-      var(--battle-bg-lower) 52%,
-      var(--battle-bg-bottom) 100%
-    );
+    linear-gradient(180deg, #101936 0%, #151e3c 48%, #111936 52%, #0c142d 100%);
 
   background-size: cover, auto, auto;
 
   background-position: center, center, center;
-}
-
-/* ============================================================
-   신오 체육관 - 타입별 배틀 필드 컬러
-   ============================================================ */
-
-/* 강석 - 바위 */
-.battle-board[data-gym-type="바위"] {
-  --battle-glow: rgba(169, 140, 93, 0.18);
-
-  --battle-bg-top: #29251f;
-  --battle-bg-upper: #3a3228;
-  --battle-bg-lower: #302b24;
-  --battle-bg-bottom: #201d19;
-}
-
-/* 유채 - 풀 */
-.battle-board[data-gym-type="풀"] {
-  --battle-glow: rgba(92, 151, 92, 0.18);
-
-  --battle-bg-top: #16251c;
-  --battle-bg-upper: #203729;
-  --battle-bg-lower: #1b3023;
-  --battle-bg-bottom: #101e16;
-}
-
-/* 자두 - 격투 */
-.battle-board[data-gym-type="격투"] {
-  --battle-glow: rgba(173, 82, 72, 0.18);
-
-  --battle-bg-top: #2b1c1b;
-  --battle-bg-upper: #402724;
-  --battle-bg-lower: #35211f;
-  --battle-bg-bottom: #211514;
-}
-
-/* 맥실러 - 물 */
-.battle-board[data-gym-type="물"] {
-  --battle-glow: rgba(68, 135, 177, 0.2);
-
-  --battle-bg-top: #15232e;
-  --battle-bg-upper: #1c3445;
-  --battle-bg-lower: #192d3c;
-  --battle-bg-bottom: #0e1d27;
-}
-
-/* 멜리사 - 고스트 */
-.battle-board[data-gym-type="고스트"] {
-  --battle-glow: rgba(112, 82, 145, 0.2);
-
-  --battle-bg-top: #211b2b;
-  --battle-bg-upper: #302641;
-  --battle-bg-lower: #292137;
-  --battle-bg-bottom: #17131e;
-}
-
-/* 동관 - 강철 */
-.battle-board[data-gym-type="강철"] {
-  --battle-glow: rgba(135, 153, 166, 0.18);
-
-  --battle-bg-top: #22282c;
-  --battle-bg-upper: #303a40;
-  --battle-bg-lower: #293238;
-  --battle-bg-bottom: #171d20;
-}
-
-/* 무청 - 얼음 */
-.battle-board[data-gym-type="얼음"] {
-  --battle-glow: rgba(143, 193, 207, 0.2);
-
-  --battle-bg-top: #1d2c32;
-  --battle-bg-upper: #29414a;
-  --battle-bg-lower: #233940;
-  --battle-bg-bottom: #142329;
-}
-
-/* 전진 - 전기 */
-.battle-board[data-gym-type="전기"] {
-  --battle-glow: rgba(196, 167, 67, 0.19);
-
-  --battle-bg-top: #29271b;
-  --battle-bg-upper: #3c3824;
-  --battle-bg-lower: #332f20;
-  --battle-bg-bottom: #201e15;
-}
-
-/* 난천 - 챔피언 */
-.battle-board[data-gym-type="챔피언"] {
-  --battle-glow: rgba(167, 140, 192, 0.2);
-
-  --battle-bg-top: #201d29;
-  --battle-bg-upper: #302b3a;
-  --battle-bg-lower: #282431;
-  --battle-bg-bottom: #141219;
-}
-
-/* ============================================================
-   신오 체육관 - 전체 화면 배경
-   ============================================================ */
-
-/* 강석 - 바위 */
-body[data-gym-type="바위"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #4a4032 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #332b23 0%, transparent 58%),
-    linear-gradient(180deg, #181613, #211d18 50%, #171411);
-}
-
-/* 유채 - 풀 */
-body[data-gym-type="풀"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #294633 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #1b3324 0%, transparent 58%),
-    linear-gradient(180deg, #0e1912, #14231a 50%, #0c160f);
-}
-
-/* 자두 - 격투 */
-body[data-gym-type="격투"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #55302d 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #36201e 0%, transparent 58%),
-    linear-gradient(180deg, #1b1110, #281816 50%, #160d0c);
-}
-
-/* 맥실러 - 물 */
-body[data-gym-type="물"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #24475e 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #173446 0%, transparent 58%),
-    linear-gradient(180deg, #0d1820, #122631 50%, #0a151c);
-}
-
-/* 멜리사 - 고스트 */
-body[data-gym-type="고스트"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #43325b 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #2b213a 0%, transparent 58%),
-    linear-gradient(180deg, #15101d, #21182d 50%, #100c16);
-}
-
-/* 동관 - 강철 */
-body[data-gym-type="강철"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #45525a 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #303b41 0%, transparent 58%),
-    linear-gradient(180deg, #151a1d, #20282c 50%, #111618);
-}
-
-/* 무청 - 얼음 */
-body[data-gym-type="얼음"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #3e6672 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #294750 0%, transparent 58%),
-    linear-gradient(180deg, #101b20, #192a30 50%, #0d171b);
-}
-
-/* 전진 - 전기 */
-body[data-gym-type="전기"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #554d27 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #39331e 0%, transparent 58%),
-    linear-gradient(180deg, #19170e, #262315 50%, #15130b);
-}
-
-/* 난천 */
-body[data-gym-type="챔피언"] {
-  background:
-    radial-gradient(ellipse 100% 65% at 50% -5%, #453a55 0%, transparent 60%),
-    radial-gradient(ellipse 80% 55% at 50% 105%, #30283b 0%, transparent 58%),
-    linear-gradient(180deg, #15121a, #211c29 50%, #100e14);
 }
 
 /* ============================================================
@@ -7764,6 +7573,218 @@ body[data-gym-type="챔피언"] {
 }
 
 /* ============================================================
+   오물웨이브 전용
+   끈적한 독액 파도 + 기포 + 독성 비말
+   ============================================================ */
+
+.move-wave.move-poison .move-zone-core {
+  width: 290px;
+  height: 105px;
+
+  border-radius: 48% 52% 40% 44% / 56% 58% 42% 46%;
+
+  background:
+    radial-gradient(
+      circle at 18% 38%,
+      rgba(240, 180, 255, 0.95) 0 5%,
+      transparent 6%
+    ),
+    radial-gradient(
+      circle at 47% 28%,
+      rgba(211, 116, 235, 0.85) 0 7%,
+      transparent 8%
+    ),
+    radial-gradient(
+      circle at 78% 43%,
+      rgba(246, 183, 255, 0.75) 0 5%,
+      transparent 6%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(221, 120, 240, 0.95) 0%,
+      #a742bf 40%,
+      #6d197e 72%,
+      #3c0e49 100%
+    );
+
+  border-top: 3px solid rgba(245, 190, 255, 0.85);
+
+  box-shadow:
+    inset 0 8px 15px rgba(255, 255, 255, 0.12),
+    inset 0 -16px 20px rgba(45, 5, 55, 0.45),
+    0 0 14px rgba(182, 63, 211, 0.8),
+    0 10px 24px rgba(70, 10, 85, 0.45);
+
+  filter: drop-shadow(0 0 9px rgba(194, 77, 223, 0.8));
+
+  opacity: 0;
+
+  animation: sludge-wave-surge var(--move-duration, 720ms)
+    cubic-bezier(0.15, 0.75, 0.2, 1) forwards;
+}
+
+/* 파도 머리의 독성 거품 */
+
+.move-wave.move-poison .move-zone-core::before {
+  content: "";
+
+  position: absolute;
+
+  left: 12%;
+  right: 8%;
+  top: -13px;
+
+  height: 30px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(circle at 10% 70%, #f1b8ff 0 6px, transparent 7px),
+    radial-gradient(circle at 27% 40%, #cc75e3 0 8px, transparent 9px),
+    radial-gradient(circle at 52% 68%, #efb5ff 0 5px, transparent 6px),
+    radial-gradient(circle at 73% 42%, #bd5fd3 0 9px, transparent 10px),
+    radial-gradient(circle at 91% 65%, #e69bf5 0 6px, transparent 7px);
+
+  filter: drop-shadow(0 0 5px rgba(220, 130, 240, 0.8));
+}
+
+/* 표면 하이라이트 */
+
+.move-wave.move-poison .move-zone-core::after {
+  content: "";
+
+  position: absolute;
+
+  left: 17%;
+  top: 20%;
+
+  width: 55%;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 220, 255, 0.38);
+
+  filter: blur(2px);
+
+  transform: rotate(-4deg);
+}
+
+/* 독 기포 */
+
+.move-wave.move-poison .move-zp {
+  width: 11px;
+  height: 11px;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle at 35% 30%,
+    #ffd8ff,
+    #bc57d1 48%,
+    #631574 100%
+  );
+
+  border: 1px solid rgba(255, 220, 255, 0.45);
+
+  box-shadow: 0 0 7px rgba(194, 76, 220, 0.85);
+
+  opacity: 0;
+
+  animation: sludge-bubble-pop 560ms ease-out forwards;
+}
+
+.move-wave.move-poison .z1 {
+  --bx: -110px;
+  --by: -65px;
+  animation-delay: 40ms;
+}
+
+.move-wave.move-poison .z2 {
+  --bx: -65px;
+  --by: -88px;
+  animation-delay: 100ms;
+}
+
+.move-wave.move-poison .z3 {
+  --bx: -15px;
+  --by: -72px;
+  animation-delay: 25ms;
+}
+
+.move-wave.move-poison .z4 {
+  --bx: 42px;
+  --by: -92px;
+  animation-delay: 120ms;
+}
+
+.move-wave.move-poison .z5 {
+  --bx: 88px;
+  --by: -70px;
+  animation-delay: 60ms;
+}
+
+.move-wave.move-poison .z6 {
+  --bx: 120px;
+  --by: -48px;
+  animation-delay: 150ms;
+}
+
+@keyframes sludge-wave-surge {
+  0% {
+    transform: translate(-50%, 45%) scaleX(0.35) scaleY(0.18) skewX(-8deg);
+
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 0.95;
+  }
+
+  48% {
+    transform: translate(-50%, -20%) scaleX(0.9) scaleY(0.85) skewX(5deg);
+
+    opacity: 1;
+  }
+
+  72% {
+    transform: translate(-50%, -62%) scaleX(1.08) scaleY(1.08) skewX(-3deg);
+
+    opacity: 0.95;
+  }
+
+  100% {
+    transform: translate(-50%, -100%) scaleX(1.18) scaleY(0.72) skewX(4deg);
+
+    opacity: 0;
+  }
+}
+
+@keyframes sludge-bubble-pop {
+  0% {
+    transform: translate(0, 20px) scale(0.2);
+
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  75% {
+    transform: translate(var(--bx), var(--by)) scale(1);
+
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translate(var(--bx), calc(var(--by) - 15px)) scale(1.6);
+
+    opacity: 0;
+  }
+}
+
+/* ============================================================
    눈보라 / 열풍 / 방전
    ============================================================ */
 
@@ -8285,31 +8306,210 @@ body[data-gym-type="챔피언"] {
 
 /* ============================================================
    대폭발
+   백색 섬광 → 화구 → 충격파 → 파편 → 연기
    ============================================================ */
 
 .move-explosion .move-zone-core {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
 
   border-radius: 50%;
 
   background: radial-gradient(
     circle,
     #ffffff 0%,
-    #fff27a 18%,
-    #ff861f 40%,
-    #e82f0c 58%,
-    transparent 72%
+    #fffbd0 12%,
+    #ffe44d 26%,
+    #ff8b20 46%,
+    #eb3510 65%,
+    rgba(130, 15, 5, 0.2) 78%,
+    transparent 82%
   );
 
   box-shadow:
-    0 0 25px #ffbb37,
-    0 0 55px rgba(255, 55, 10, 0.8);
+    0 0 14px #ffffff,
+    0 0 30px #ffd632,
+    0 0 55px rgba(255, 85, 15, 0.95),
+    0 0 90px rgba(225, 30, 5, 0.55);
 
-  animation: move-explosion-boom 820ms ease-out forwards;
+  animation: explosion-core-burst var(--move-duration, 900ms)
+    cubic-bezier(0.08, 0.72, 0.16, 1) forwards;
 }
 
-@keyframes move-explosion-boom {
+/* 충격파 */
+
+.move-explosion .move-zone-core::before {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 90px;
+  height: 90px;
+
+  border-radius: 50%;
+
+  border: 7px solid rgba(255, 238, 155, 0.9);
+
+  box-shadow:
+    0 0 14px rgba(255, 225, 90, 0.9),
+    inset 0 0 12px rgba(255, 180, 35, 0.65);
+
+  transform: translate(-50%, -50%) scale(0.15);
+
+  opacity: 0;
+
+  animation: explosion-shockwave 720ms 90ms cubic-bezier(0.08, 0.65, 0.2, 1)
+    forwards;
+}
+
+/* 연기 */
+
+.move-explosion .move-zone-core::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 115px;
+  height: 85px;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    ellipse,
+    rgba(75, 64, 62, 0.75),
+    rgba(48, 40, 42, 0.5) 48%,
+    transparent 72%
+  );
+
+  filter: blur(7px);
+
+  transform: translate(-50%, -35%) scale(0.25);
+
+  opacity: 0;
+
+  animation: explosion-smoke 760ms 260ms ease-out forwards;
+}
+
+/* 화염 파편 */
+
+.move-explosion .move-zp {
+  width: 13px;
+  height: 13px;
+
+  border-radius: 70% 30% 65% 35%;
+
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff6a0,
+    #ff9f22 35%,
+    #ec3510 68%,
+    #661005 100%
+  );
+
+  box-shadow:
+    0 0 7px #ffad24,
+    0 0 13px rgba(255, 65, 10, 0.8);
+
+  opacity: 0;
+
+  animation: explosion-fragment 580ms ease-out forwards;
+}
+
+.move-explosion .z1 {
+  --ex: -125px;
+  --ey: -75px;
+  --er: -120deg;
+  animation-delay: 90ms;
+}
+
+.move-explosion .z2 {
+  --ex: -100px;
+  --ey: 80px;
+  --er: 85deg;
+  animation-delay: 140ms;
+}
+
+.move-explosion .z3 {
+  --ex: -18px;
+  --ey: -125px;
+  --er: 210deg;
+  animation-delay: 70ms;
+}
+
+.move-explosion .z4 {
+  --ex: 95px;
+  --ey: -88px;
+  --er: 130deg;
+  animation-delay: 130ms;
+}
+
+.move-explosion .z5 {
+  --ex: 125px;
+  --ey: 55px;
+  --er: 250deg;
+  animation-delay: 105ms;
+}
+
+.move-explosion .z6 {
+  --ex: 15px;
+  --ey: 120px;
+  --er: 320deg;
+  animation-delay: 155ms;
+}
+
+@keyframes explosion-core-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.05);
+
+    filter: brightness(3);
+
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) scale(0.35);
+
+    opacity: 1;
+  }
+
+  22% {
+    transform: translate(-50%, -50%) scale(1.25);
+
+    filter: brightness(2.4);
+
+    opacity: 1;
+  }
+
+  42% {
+    transform: translate(-50%, -50%) scale(3.3);
+
+    filter: brightness(1.5);
+
+    opacity: 1;
+  }
+
+  68% {
+    transform: translate(-50%, -50%) scale(4.3);
+
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(5.2);
+
+    filter: brightness(0.8);
+
+    opacity: 0;
+  }
+}
+
+@keyframes explosion-shockwave {
   0% {
     transform: translate(-50%, -50%) scale(0.1);
 
@@ -8320,14 +8520,46 @@ body[data-gym-type="챔피언"] {
     opacity: 1;
   }
 
-  48% {
-    transform: translate(-50%, -50%) scale(5);
+  100% {
+    transform: translate(-50%, -50%) scale(3.8);
 
+    border-width: 1px;
+
+    opacity: 0;
+  }
+}
+
+@keyframes explosion-fragment {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.2);
+
+    opacity: 0;
+  }
+
+  15% {
     opacity: 1;
   }
 
   100% {
-    transform: translate(-50%, -50%) scale(8);
+    transform: translate(var(--ex), var(--ey)) rotate(var(--er)) scale(0.7);
+
+    opacity: 0;
+  }
+}
+
+@keyframes explosion-smoke {
+  0% {
+    transform: translate(-50%, -30%) scale(0.25);
+
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translate(-50%, -105%) scale(2.5);
 
     opacity: 0;
   }
@@ -8454,240 +8686,18 @@ body[data-gym-type="챔피언"] {
   }
 }
 
-/* ============================================================
-   기라티나 - 섀도다이브 잔상
-   ============================================================ */
+.field-obstacle.targetable {
+  pointer-events: auto;
 
-.shadowforce-ghost {
-  position: relative;
-  flex: 0 0 auto;
+  cursor: crosshair;
 
-  opacity: 0.28;
-
-  filter: grayscale(0.35) brightness(0.65) blur(0.4px);
-
-  pointer-events: none;
-
-  animation: shadowforce-ghost-pulse 1.7s ease-in-out infinite;
-}
-
-.shadowforce-ghost::after {
-  content: "";
-  position: absolute;
-  inset: 8%;
-  z-index: 2;
-
-  border-radius: 50%;
-
-  background: radial-gradient(
-    circle,
-    rgba(110, 70, 180, 0.22),
-    rgba(40, 10, 70, 0.08) 55%,
-    transparent 72%
-  );
-
-  filter: blur(8px);
-
-  pointer-events: none;
-}
-
-.shadowforce-ghost-label {
-  position: absolute;
-  left: 50%;
-  bottom: -4px;
-  z-index: 5;
-
-  transform: translateX(-50%);
-
-  white-space: nowrap;
-
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-
-  color: rgba(220, 200, 255, 0.9);
-
-  text-shadow:
-    0 0 5px rgba(130, 80, 220, 0.8),
-    0 0 10px rgba(80, 30, 160, 0.6);
-}
-
-@keyframes shadowforce-ghost-pulse {
-  0%,
-  100% {
-    opacity: 0.2;
-    transform: scale(0.97);
-  }
-
-  50% {
-    opacity: 0.38;
-    transform: scale(1);
-  }
-}
-
-/* ============================================================
-   신오 - 필드 장애물
-   ============================================================ */
-
-.field-obstacle {
-  position: relative;
-
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 5px;
-
-  border-radius: 11px;
-  border: 3px solid rgba(255, 255, 255, 0.28);
-
-  background:
-    linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.12),
-      rgba(255, 255, 255, 0.035)
-    ),
-    rgba(13, 18, 30, 0.78);
+  outline: 2px solid rgba(255, 90, 90, 0.85);
 
   box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.32),
-    inset 0 0 10px rgba(255, 255, 255, 0.04);
-
-  overflow: hidden;
-
-  pointer-events: none;
+    0 0 12px rgba(255, 80, 80, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.32);
 }
 
-.field-obstacle img {
-  display: block;
-
-  width: 92%;
-  height: 88%;
-
-  object-fit: contain;
-  image-rendering: pixelated;
-
-  user-select: none;
-  pointer-events: none;
-}
-
-.field-obstacle-rock {
-  border-color: rgba(173, 143, 99, 0.7);
-}
-
-.field-obstacle-vine {
-  border-color: rgba(92, 150, 91, 0.72);
-}
-
-.field-obstacle-hp {
-  position: absolute;
-
-  right: 5px;
-  bottom: 4px;
-
-  width: 24px;
-  height: 24px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #c74444;
-  border: 2px solid #fff;
-
-  color: #fff;
-  font-family: var(--display-font);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.battle-board .field-fixed-slot {
-  position: relative;
-
-  width: var(--unit-w);
-  height: var(--unit-h);
-
-  flex: 0 0 var(--unit-w);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.battle-board .field-fixed-slot.is-empty {
-  pointer-events: none;
-}
-
-/* ============================================================
-   코인토스 화면 스크롤 방지
-   ============================================================ */
-
-.battle-intro.intro-phase-coin {
-  position: fixed;
-
-  inset: 0;
-
-  width: 100vw;
-  height: 100dvh;
-  min-height: 0;
-
-  margin: 0;
-  padding: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  overflow: hidden;
-
-  overscroll-behavior: none;
-}
-
-.intro-phase-coin .coin-toss-wrap {
-  width: 100%;
-  height: 100%;
-
-  min-height: 0;
-
-  margin: 0;
-  padding: 0;
-
-  justify-content: center;
-}
-
-.field-obstacle-turn {
-  position: absolute;
-
-  left: 50%;
-  bottom: 5px;
-
-  transform: translateX(-50%);
-
-  max-width: calc(100% - 10px);
-
-  padding: 3px 6px;
-
-  border-radius: 5px;
-
-  background: rgba(10, 12, 16, 0.82);
-
-  border: 1px solid rgba(255, 255, 255, 0.25);
-
-  color: #fff;
-
-  font-family: var(--display-font);
-  font-size: clamp(7px, 0.9vmin, 10px);
-
-  line-height: 1.15;
-
-  white-space: nowrap;
-
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-
-  pointer-events: none;
+.field-obstacle.targetable:hover {
+  filter: brightness(1.15);
 }

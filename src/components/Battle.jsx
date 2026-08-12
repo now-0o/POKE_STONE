@@ -15,6 +15,7 @@ import {
   createGame,
   playCard,
   attack,
+  attackFieldObstacle,
   endTurn,
   canPlayCard,
   canAttack,
@@ -436,7 +437,11 @@ const MOVE_FX_PRESETS = {
   },
 };
 
-function FieldObstacle({ obstacle, currentPlayerTurn = 0 }) {
+function FieldObstacle({
+  obstacle,
+  currentPlayerTurn = 0,
+  targetable = false,
+}) {
   if (!obstacle) {
     return null;
   }
@@ -459,10 +464,15 @@ function FieldObstacle({ obstacle, currentPlayerTurn = 0 }) {
 
   return (
     <div
-      className={["field-obstacle", `field-obstacle-${obstacle.type}`].join(
-        " ",
-      )}
+      className={[
+        "field-obstacle",
+        `field-obstacle-${obstacle.type}`,
+        targetable ? "targetable" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-obstacle-id={obstacle.id}
+      data-drop={targetable ? "obstacle-player" : undefined}
     >
       <img src={src} alt="" draggable={false} />
 
@@ -709,6 +719,27 @@ export default function Battle({ trainer, deck, onFinish }) {
     }
   }
 
+  document.querySelectorAll("[data-obstacle-id]").forEach((el) => {
+    const obstacleId = el.dataset.obstacleId;
+
+    if (!obstacleId) {
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+
+    battleRectsRef.current.set(obstacleId, {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+
+      x: rect.left + rect.width / 2,
+
+      y: rect.top + rect.height / 2,
+    });
+  });
+
   function impactRectKey(impact) {
     if (impact.targetUid === "hero") {
       return `hero-${impact.side}`;
@@ -728,7 +759,13 @@ export default function Battle({ trainer, deck, onFinish }) {
       );
     }
 
-    return document.querySelector(`[data-uid="${impact.targetUid}"]`);
+    const unitEl = document.querySelector(`[data-uid="${impact.targetUid}"]`);
+
+    if (unitEl) {
+      return unitEl;
+    }
+
+    return document.querySelector(`[data-obstacle-id="${impact.targetUid}"]`);
   }
 
   function getImpactRect(impact) {
@@ -1256,7 +1293,8 @@ export default function Battle({ trainer, deck, onFinish }) {
 
     const attackerRect = battleRectsRef.current.get(action.uid);
 
-    const targetSide = action.side === "player" ? "enemy" : "player";
+    const targetSide =
+      action.targetSide || (action.side === "player" ? "enemy" : "player");
 
     const targetKey =
       action.targetUid === "hero" ? `hero-${targetSide}` : action.targetUid;
@@ -1707,11 +1745,21 @@ export default function Battle({ trainer, deck, onFinish }) {
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const drop = el ? el.closest("[data-drop]") : null;
       if (!drop) return;
-      if (drop.dataset.drop === "unit-enemy" && drop.dataset.uid) {
-        attack(game, "player", unit.uid, { uid: drop.dataset.uid });
+      if (drop.dataset.drop === "obstacle-player" && drop.dataset.obstacleId) {
+        attackFieldObstacle(game, "player", unit.uid, drop.dataset.obstacleId);
+
+        rerender();
+      } else if (drop.dataset.drop === "unit-enemy" && drop.dataset.uid) {
+        attack(game, "player", unit.uid, {
+          uid: drop.dataset.uid,
+        });
+
         rerender();
       } else if (drop.dataset.drop === "enemy-hero") {
-        attack(game, "player", unit.uid, { uid: "hero" });
+        attack(game, "player", unit.uid, {
+          uid: "hero",
+        });
+
         rerender();
       }
     };
@@ -3008,6 +3056,11 @@ export default function Battle({ trainer, deck, onFinish }) {
               <FieldObstacle
                 obstacle={entry.obstacle}
                 currentPlayerTurn={me._roarkPlayerTurns || 0}
+                targetable={
+                  attackMode &&
+                  entry.obstacle.type === "vine" &&
+                  entry.obstacle.hp > 0
+                }
               />
             );
           } else if (entry.kind === "ghost") {

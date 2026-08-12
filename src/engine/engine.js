@@ -5459,6 +5459,90 @@ function spendAttack(game, unit) {
   }
 }
 
+export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
+  if (game.turn !== side || game.winner) {
+    return false;
+  }
+
+  const p = game.players[side];
+
+  const atkUnit = p.field.find((u) => u.uid === attackerUid);
+
+  if (!atkUnit || !canAttack(game, side, attackerUid)) {
+    return false;
+  }
+
+  const obstacle = (p.fieldObstacles || []).find(
+    (item) => item.id === obstacleId && item.type === "vine" && item.hp > 0,
+  );
+
+  if (!obstacle) {
+    return false;
+  }
+
+  beginImpactCapture(game);
+
+  const beforeHp = obstacle.hp;
+
+  const damage = Math.max(0, effectiveAtk(atkUnit, game));
+
+  if (damage <= 0) {
+    takeImpacts(game);
+    return false;
+  }
+
+  obstacle.hp = Math.max(0, obstacle.hp - damage);
+
+  const dealt = beforeHp - obstacle.hp;
+
+  recordImpact(game, {
+    type: "damage",
+    side,
+    targetUid: obstacle.id,
+    amount: dealt,
+  });
+
+  // 공격 횟수 소모
+  spendAttack(game, atkUnit);
+
+  markProductiveAction(game, side);
+
+  log(game, `${atkUnit.name}이(가) 덩굴을 공격! 피해 ${dealt}!`);
+
+  if (obstacle.hp <= 0) {
+    p.fieldObstacles = (p.fieldObstacles || []).filter(
+      (item) => item.id !== obstacle.id,
+    );
+
+    log(game, "덩굴이 끊어져 필드 한 칸이 다시 열렸다!");
+  }
+
+  // 공격 자체 반동 등으로
+  // 공격자가 죽었을 수도 있음
+  cleanupDeaths(game, true);
+
+  game.animSeq = (game.animSeq || 0) + 1;
+
+  game.lastAction = {
+    seq: game.animSeq,
+    kind: "attack",
+
+    side,
+
+    uid: attackerUid,
+
+    targetUid: obstacle.id,
+
+    // 일반 공격과 달리
+    // 같은 편 필드의 장애물을 공격
+    targetSide: side,
+
+    impacts: takeImpacts(game),
+  };
+
+  return true;
+}
+
 export function attack(game, side, attackerUid, target) {
   if (game.turn !== side || game.winner) return false;
   const p = game.players[side];
