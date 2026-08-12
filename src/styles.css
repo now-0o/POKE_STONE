@@ -8712,3 +8712,143 @@ img.res-icon.small {
     0 0 12px rgba(255, 80, 80, 0.45),
     0 4px 10px rgba(0, 0, 0, 0.32);
 }
+
+/* ============================================================
+   신오 체육관 필드 장애물
+   ============================================================ */
+
+.battle-board .field-fixed-slot {
+  position: relative;
+
+  width: var(--unit-w);
+  height: var(--unit-h);
+
+  flex: 0 0 var(--unit-w);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-board .field-fixed-slot.is-empty {
+  pointer-events: none;
+}
+
+/* 바위 / 덩굴 공통 */
+.battle-board .field-obstacle {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  border-radius: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+
+  background: rgba(13, 18, 30, 0.5);
+
+  overflow: hidden;
+
+  pointer-events: none;
+}
+
+/* 장애물 이미지 */
+.battle-board .field-obstacle img {
+  display: block;
+
+  width: 68%;
+  height: 68%;
+
+  max-width: 68%;
+  max-height: 68%;
+
+  object-fit: contain;
+
+  image-rendering: pixelated;
+
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 바위 */
+.battle-board .field-obstacle-rock {
+  border-color: rgba(173, 143, 99, 0.65);
+}
+
+/* 덩굴 */
+.battle-board .field-obstacle-vine {
+  border-color: rgba(92, 150, 91, 0.72);
+}
+
+/* 덩굴 HP */
+.battle-board .field-obstacle-hp {
+  position: absolute;
+
+  right: 5px;
+  bottom: 5px;
+
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #c74444;
+  border: 2px solid #fff;
+
+  color: #fff;
+
+  font-family: var(--display-font);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* 강석 바위 해제 턴 */
+.battle-board .field-obstacle-turn {
+  position: absolute;
+
+  left: 50%;
+  bottom: 5px;
+
+  transform: translateX(-50%);
+
+  padding: 3px 6px;
+
+  border-radius: 5px;
+
+  background: rgba(10, 12, 16, 0.82);
+
+  color: #fff;
+
+  font-family: var(--display-font);
+  font-size: clamp(7px, 0.9vmin, 10px);
+
+  white-space: nowrap;
+
+  pointer-events: none;
+}
+
+/* 덩굴 공격 가능 상태 */
+.battle-board .field-obstacle.targetable {
+  pointer-events: auto;
+
+  cursor: crosshair;
+
+  outline: 2px solid rgba(255, 90, 90, 0.85);
+
+  box-shadow:
+    0 0 12px rgba(255, 80, 80, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.32);
+}
+
+.battle-board .field-obstacle.targetable:hover {
+  filter: brightness(1.15);
+}
