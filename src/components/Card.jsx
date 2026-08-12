@@ -335,7 +335,9 @@ export function HandCard({
   handCard,
 }) {
   const card = CARD_MAP[cardId];
-  const cost = game ? effectiveCost(card, game) : card.cost;
+  const cost = game
+    ? effectiveCost(card, game, "player", handCard)
+    : Math.max(0, card.cost - (handCard?.costReduction || 0));
   const discounted = cost < card.cost;
   const shownAbility = unit ? unit.ability : card.ability;
   const shownSecondaryAbility = unit
