@@ -500,6 +500,8 @@ export const ABILITY_TEXT = {
   roark_headsmash:
     "양날박치기: 공격할 때 상대 필드에 남아 있는 바위 1개당 이번 공격 피해 +1. 공격 후 자신이 피해 1을 받는다.",
 
+  gardenia_petaldance: "꽃보라: 상대 필드에 덩굴이 하나라도 있으면 공격력 +2.",
+
   // ============================================================
   // 퀘스트 보상
   // ============================================================
@@ -4052,6 +4054,12 @@ export const TRAINER_CARDS = [
     signature: true,
     trainerOnly: true,
   }),
+
+  P("sinnoh_gardenia_roserade", "유채의 로즈레이드", "풀", 5, 6, 8, "L", {
+    ability: "gardenia_petaldance",
+    signature: true,
+    trainerOnly: true,
+  }),
 ];
 
 // ============================================================
@@ -4123,6 +4131,7 @@ export const DEX = {
 
   // 신오 시그니처
   sinnoh_roark_rampardos: 409,
+  sinnoh_gardenia_roserade: 407,
 
   mudkip: 258,
   marshtomp: 259,

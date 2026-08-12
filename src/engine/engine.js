@@ -514,6 +514,50 @@ function setupTrainerGimmick(game) {
   }
 }
 
+function spawnGardeniaVine(game) {
+  const player = game.players.player;
+
+  const obstacles = player.fieldObstacles || [];
+
+  const vines = obstacles.filter(
+    (obstacle) => obstacle.type === "vine" && obstacle.hp > 0,
+  );
+
+  // 최대 2개
+  if (vines.length >= 2) {
+    return false;
+  }
+
+  // 포켓몬 + 장애물 합쳐
+  // 필드가 꽉 찼으면 생성 불가
+  if (!hasOpenFieldSlot(player)) {
+    return false;
+  }
+
+  // 덩굴은 1번 / 4번 자리에 고정
+  const vineSlots = [1, 4];
+
+  const occupiedSlots = new Set(obstacles.map((obstacle) => obstacle.slot));
+
+  const slot = vineSlots.find((slotIndex) => !occupiedSlots.has(slotIndex));
+
+  if (slot == null) {
+    return false;
+  }
+
+  player.fieldObstacles.push({
+    id: `gardenia-vine-${slot}`,
+    type: "vine",
+    slot,
+    hp: 2,
+    maxHp: 2,
+  });
+
+  log(game, "영원의 숲에서 덩굴이 자라나 필드 한 칸을 뒤덮었다!");
+
+  return true;
+}
+
 // ---------- 게임 생성 ----------
 export function createGame(playerDeckIds, trainer) {
   const first = Math.random() < 0.5 ? "player" : "enemy"; // 코인토스로 선공 결정
@@ -938,6 +982,31 @@ function startTurn(game, side) {
   }
 }
 
+function runTrainerGimmickTurnEnd(game, side) {
+  const trainer = game.trainer;
+
+  if (!trainer?.gimmick) {
+    return;
+  }
+
+  switch (trainer.gimmick) {
+    case "eternal_vines": {
+      // 유채의 턴이 끝날 때
+      // 플레이어 필드에 덩굴 생성
+      if (side !== "enemy") {
+        return;
+      }
+
+      spawnGardeniaVine(game);
+
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
 export function endTurn(game) {
   const side = game.turn;
   const p = game.players[side];
@@ -1232,6 +1301,8 @@ export function endTurn(game) {
 
   if (game.winner) return;
 
+  runTrainerGimmickTurnEnd(game, side);
+
   const next = other(side);
   game.turn = next;
   if (next === "player") game.turnCount += 1;
@@ -1274,6 +1345,19 @@ export function effectiveCost(card, game, side = null, handCard = null) {
 
 export function effectiveAtk(unit, game) {
   let atk = unit.atk;
+
+  // 유채의 로즈레이드 - 꽃보라
+  if (hasAbility(unit, "gardenia_petaldance")) {
+    const player = game.players.player;
+
+    const hasVine = (player.fieldObstacles || []).some(
+      (obstacle) => obstacle.type === "vine" && obstacle.hp > 0,
+    );
+
+    if (hasVine) {
+      atk += 2;
+    }
+  }
 
   // 피오네 / 마나피 - 브레이브차지
   if (unit._braveChargeAtkBonus) {

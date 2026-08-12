@@ -2008,6 +2008,84 @@ export const SINNOH_TRAINERS = [
       "pokeball",
     ],
   },
+  {
+    id: "sinnoh_gardenia",
+    region: "sinnoh",
+
+    name: "영원시티 관장 유채",
+    sprite: "gardenia",
+    title: "체육관 관장",
+    emoji: "🌿",
+
+    aiLevel: 5,
+
+    stableDeck: true,
+    consistencyAssist: 0.9,
+
+    reward: 400,
+    hp: 52,
+
+    requires: "sinnoh_roark",
+
+    gymType: "풀",
+
+    battlefield: "eterna_forest",
+
+    gimmick: "eternal_vines",
+
+    signatureCard: "sinnoh_gardenia_roserade",
+
+    introLines: [
+      "풀 포켓몬과 함께 있으면 기분이 정말 좋아!",
+      "영원의 숲이 네 앞길을 막을 거야!",
+    ],
+
+    winLines: ["후후! 숲을 빠져나오지 못했네!"],
+
+    loseLines: ["굉장해! 네 포켓몬 정말 강하구나!"],
+
+    deck: [
+      "sinnoh_gardenia_roserade",
+
+      "budew",
+      "budew",
+      "roselia",
+      "roselia",
+      "roserade",
+      "roserade",
+
+      "turtwig",
+      "turtwig",
+      "grotle",
+      "grotle",
+      "torterra",
+
+      "bulbasaur",
+      "bulbasaur",
+      "ivysaur",
+      "ivysaur",
+      "venusaur",
+
+      "venusaurite",
+
+      "cherubi",
+      "cherubi",
+      "cherrim",
+      "cherrim",
+
+      "carnivine",
+      "carnivine",
+
+      "solarbeam",
+      "solarbeam",
+
+      "sunnyday",
+      "sunnyday",
+
+      "pokeball",
+      "pokeball",
+    ],
+  },
 ];
 
 // ============================================================
