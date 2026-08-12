@@ -1935,10 +1935,10 @@ export const SINNOH_TRAINERS = [
     ],
 
     winLines: ["무쇠탄갱에선 내가 훨씬 유리하지!"],
-
     loseLines: ["굉장한데! 이 바위를 뚫고 지나가다니!"],
 
-    // 시그니처 램펄드는 다음 작업에서 교체
+    signatureCard: "sinnoh_roark_rampardos",
+
     deck: [
       "geodude",
       "geodude",
@@ -1958,7 +1958,7 @@ export const SINNOH_TRAINERS = [
 
       "cranidos",
       "cranidos",
-      "rampardos",
+      "sinnoh_roark_rampardos",
 
       "aron",
       "aron",

@@ -479,16 +479,28 @@ function setupTrainerGimmick(game) {
 
       player.fieldObstacles = [
         {
-          id: "roark-rock-left",
+          id: "roark-rock-left-outer",
           type: "rock",
           slot: 0,
-          removeAtPlayerTurn: 5,
+          removeAtPlayerTurn: 12,
         },
         {
-          id: "roark-rock-right",
+          id: "roark-rock-left-inner",
+          type: "rock",
+          slot: 1,
+          removeAtPlayerTurn: 4,
+        },
+        {
+          id: "roark-rock-right-inner",
+          type: "rock",
+          slot: 4,
+          removeAtPlayerTurn: 8,
+        },
+        {
+          id: "roark-rock-right-outer",
           type: "rock",
           slot: 5,
-          removeAtPlayerTurn: 10,
+          removeAtPlayerTurn: 16,
         },
       ];
 
@@ -5274,6 +5286,47 @@ function finishExpansionAttack(game, unit) {
   }
 }
 
+// ============================================================
+// 신오지방 - 공격 전 효과
+// ============================================================
+function prepareSinnohAttack(game, unit) {
+  const result = {
+    bonusDamage: 0,
+  };
+
+  if (!unit) {
+    return result;
+  }
+
+  // 강석의 램펄드 - 양날박치기
+  // 상대 필드에 남아 있는 바위 1개당 피해 +1
+  if (hasAbility(unit, "roark_headsmash")) {
+    const foe = game.players[other(unit.side)];
+
+    result.bonusDamage = (foe.fieldObstacles || []).filter(
+      (obstacle) => obstacle.type === "rock",
+    ).length;
+  }
+
+  return result;
+}
+
+// ============================================================
+// 신오지방 - 공격 후 효과
+// ============================================================
+function finishSinnohAttack(game, unit) {
+  if (!unit || unit.hp <= 0) {
+    return;
+  }
+
+  // 강석의 램펄드 - 양날박치기 반동
+  if (hasAbility(unit, "roark_headsmash")) {
+    applyDamage(game, unit, 1, null, true);
+
+    log(game, `${unit.name}의 양날박치기 반동! 피해 1!`);
+  }
+}
+
 function spendAttack(game, unit) {
   const braveChargeDouble = unit._braveChargeDouble === true;
 
@@ -5340,8 +5393,20 @@ export function attack(game, side, attackerUid, target) {
 
     const expansion = prepareExpansionAttack(game, atkUnit);
 
+    const sinnoh = prepareSinnohAttack(game, atkUnit);
+
     let dmg =
-      effectiveAtk(atkUnit, game) + johto.bonusDamage + expansion.bonusDamage;
+      effectiveAtk(atkUnit, game) +
+      johto.bonusDamage +
+      expansion.bonusDamage +
+      sinnoh.bonusDamage;
+
+    if (sinnoh.bonusDamage > 0) {
+      log(
+        game,
+        `${atkUnit.name}의 양날박치기! 남은 바위 ${sinnoh.bonusDamage}개, 피해 +${sinnoh.bonusDamage}!`,
+      );
+    }
 
     foe.hp -= dmg;
 
@@ -5371,6 +5436,8 @@ export function attack(game, side, attackerUid, target) {
     finishJohtoAttack(game, atkUnit, foe);
 
     finishExpansionAttack(game, atkUnit);
+
+    finishSinnohAttack(game, atkUnit);
 
     markProductiveAction(game, side);
 
@@ -5403,6 +5470,8 @@ export function attack(game, side, attackerUid, target) {
   const johto = prepareJohtoAttack(game, atkUnit);
 
   const expansion = prepareExpansionAttack(game, atkUnit);
+
+  const sinnoh = prepareSinnohAttack(game, atkUnit);
 
   // ============================================================
   // 아르세우스 - 멀티타입
@@ -5479,6 +5548,13 @@ export function attack(game, side, attackerUid, target) {
     atkDmg += johto.bonusDamage;
 
     atkDmg += expansion.bonusDamage;
+
+    if (sinnoh.bonusDamage > 0) {
+      log(
+        game,
+        `${atkUnit.name}의 양날박치기! 남은 바위 ${sinnoh.bonusDamage}개, 피해 +${sinnoh.bonusDamage}!`,
+      );
+    }
 
     // 레지기가스 - 묵사발
     if (hasAbility(atkUnit, "crushgrip") && defUnit.hp === defUnit.maxHp) {
@@ -5659,6 +5735,8 @@ export function attack(game, side, attackerUid, target) {
   finishJohtoAttack(game, atkUnit, foe);
 
   finishExpansionAttack(game, atkUnit);
+
+  finishSinnohAttack(game, atkUnit);
 
   markProductiveAction(game, side);
 
