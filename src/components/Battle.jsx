@@ -2307,6 +2307,7 @@ export default function Battle({ trainer, deck, onFinish }) {
       className={`battle battle-board ${attackMode ? "aiming" : ""}`}
       data-region={trainer.region || "kanto"}
       data-trainer={trainer.id}
+      data-gym-type={trainer.gymType || ""}
       onContextMenu={(e) => e.preventDefault()}
     >
       {resultOverlay}

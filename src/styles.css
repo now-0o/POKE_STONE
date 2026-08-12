@@ -4715,6 +4715,13 @@ img.res-icon.small {
 
   --battle-skin: none;
 
+  --battle-glow: rgba(65, 94, 160, 0.24);
+
+  --battle-bg-top: #101936;
+  --battle-bg-upper: #151e3c;
+  --battle-bg-lower: #111936;
+  --battle-bg-bottom: #0c142d;
+
   position: relative;
 
   width: 100%;
@@ -4735,14 +4742,114 @@ img.res-icon.small {
     var(--battle-skin),
     radial-gradient(
       ellipse 70% 65% at 50% 50%,
-      rgba(65, 94, 160, 0.24),
+      var(--battle-glow),
       transparent 70%
     ),
-    linear-gradient(180deg, #101936 0%, #151e3c 48%, #111936 52%, #0c142d 100%);
+    linear-gradient(
+      180deg,
+      var(--battle-bg-top) 0%,
+      var(--battle-bg-upper) 48%,
+      var(--battle-bg-lower) 52%,
+      var(--battle-bg-bottom) 100%
+    );
 
   background-size: cover, auto, auto;
 
   background-position: center, center, center;
+}
+
+/* ============================================================
+   신오 체육관 - 타입별 배틀 필드 컬러
+   ============================================================ */
+
+/* 강석 - 바위 */
+.battle-board[data-gym-type="바위"] {
+  --battle-glow: rgba(169, 140, 93, 0.18);
+
+  --battle-bg-top: #29251f;
+  --battle-bg-upper: #3a3228;
+  --battle-bg-lower: #302b24;
+  --battle-bg-bottom: #201d19;
+}
+
+/* 유채 - 풀 */
+.battle-board[data-gym-type="풀"] {
+  --battle-glow: rgba(92, 151, 92, 0.18);
+
+  --battle-bg-top: #16251c;
+  --battle-bg-upper: #203729;
+  --battle-bg-lower: #1b3023;
+  --battle-bg-bottom: #101e16;
+}
+
+/* 자두 - 격투 */
+.battle-board[data-gym-type="격투"] {
+  --battle-glow: rgba(173, 82, 72, 0.18);
+
+  --battle-bg-top: #2b1c1b;
+  --battle-bg-upper: #402724;
+  --battle-bg-lower: #35211f;
+  --battle-bg-bottom: #211514;
+}
+
+/* 맥실러 - 물 */
+.battle-board[data-gym-type="물"] {
+  --battle-glow: rgba(68, 135, 177, 0.2);
+
+  --battle-bg-top: #15232e;
+  --battle-bg-upper: #1c3445;
+  --battle-bg-lower: #192d3c;
+  --battle-bg-bottom: #0e1d27;
+}
+
+/* 멜리사 - 고스트 */
+.battle-board[data-gym-type="고스트"] {
+  --battle-glow: rgba(112, 82, 145, 0.2);
+
+  --battle-bg-top: #211b2b;
+  --battle-bg-upper: #302641;
+  --battle-bg-lower: #292137;
+  --battle-bg-bottom: #17131e;
+}
+
+/* 동관 - 강철 */
+.battle-board[data-gym-type="강철"] {
+  --battle-glow: rgba(135, 153, 166, 0.18);
+
+  --battle-bg-top: #22282c;
+  --battle-bg-upper: #303a40;
+  --battle-bg-lower: #293238;
+  --battle-bg-bottom: #171d20;
+}
+
+/* 무청 - 얼음 */
+.battle-board[data-gym-type="얼음"] {
+  --battle-glow: rgba(143, 193, 207, 0.2);
+
+  --battle-bg-top: #1d2c32;
+  --battle-bg-upper: #29414a;
+  --battle-bg-lower: #233940;
+  --battle-bg-bottom: #142329;
+}
+
+/* 전진 - 전기 */
+.battle-board[data-gym-type="전기"] {
+  --battle-glow: rgba(196, 167, 67, 0.19);
+
+  --battle-bg-top: #29271b;
+  --battle-bg-upper: #3c3824;
+  --battle-bg-lower: #332f20;
+  --battle-bg-bottom: #201e15;
+}
+
+/* 난천 - 챔피언 */
+.battle-board[data-gym-type="챔피언"] {
+  --battle-glow: rgba(167, 140, 192, 0.2);
+
+  --battle-bg-top: #201d29;
+  --battle-bg-upper: #302b3a;
+  --battle-bg-lower: #282431;
+  --battle-bg-bottom: #141219;
 }
 
 /* ============================================================
