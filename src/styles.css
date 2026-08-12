@@ -4853,6 +4853,82 @@ img.res-icon.small {
 }
 
 /* ============================================================
+   신오 체육관 - 전체 화면 배경
+   ============================================================ */
+
+/* 강석 - 바위 */
+body[data-gym-type="바위"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #4a4032 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #332b23 0%, transparent 58%),
+    linear-gradient(180deg, #181613, #211d18 50%, #171411);
+}
+
+/* 유채 - 풀 */
+body[data-gym-type="풀"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #294633 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #1b3324 0%, transparent 58%),
+    linear-gradient(180deg, #0e1912, #14231a 50%, #0c160f);
+}
+
+/* 자두 - 격투 */
+body[data-gym-type="격투"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #55302d 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #36201e 0%, transparent 58%),
+    linear-gradient(180deg, #1b1110, #281816 50%, #160d0c);
+}
+
+/* 맥실러 - 물 */
+body[data-gym-type="물"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #24475e 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #173446 0%, transparent 58%),
+    linear-gradient(180deg, #0d1820, #122631 50%, #0a151c);
+}
+
+/* 멜리사 - 고스트 */
+body[data-gym-type="고스트"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #43325b 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #2b213a 0%, transparent 58%),
+    linear-gradient(180deg, #15101d, #21182d 50%, #100c16);
+}
+
+/* 동관 - 강철 */
+body[data-gym-type="강철"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #45525a 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #303b41 0%, transparent 58%),
+    linear-gradient(180deg, #151a1d, #20282c 50%, #111618);
+}
+
+/* 무청 - 얼음 */
+body[data-gym-type="얼음"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #3e6672 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #294750 0%, transparent 58%),
+    linear-gradient(180deg, #101b20, #192a30 50%, #0d171b);
+}
+
+/* 전진 - 전기 */
+body[data-gym-type="전기"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #554d27 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #39331e 0%, transparent 58%),
+    linear-gradient(180deg, #19170e, #262315 50%, #15130b);
+}
+
+/* 난천 */
+body[data-gym-type="챔피언"] {
+  background:
+    radial-gradient(ellipse 100% 65% at 50% -5%, #453a55 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% 105%, #30283b 0%, transparent 58%),
+    linear-gradient(180deg, #15121a, #211c29 50%, #100e14);
+}
+
+/* ============================================================
    영웅
    ============================================================ */
 

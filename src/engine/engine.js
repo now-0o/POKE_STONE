@@ -459,6 +459,47 @@ function markProductiveAction(game, side) {
   p._productiveActionsThisTurn = (p._productiveActionsThisTurn || 0) + 1;
 }
 
+// ============================================================
+// 트레이너 전용 기믹 - 전투 시작
+// ============================================================
+function setupTrainerGimmick(game) {
+  const trainer = game.trainer;
+
+  if (!trainer?.gimmick) {
+    return;
+  }
+
+  switch (trainer.gimmick) {
+    // ----------------------------------------------------------
+    // 강석 - 무쇠탄갱
+    // 플레이어 필드 양끝 2칸이 바위로 막힌 상태로 시작
+    // ----------------------------------------------------------
+    case "mine_collapse": {
+      const player = game.players.player;
+
+      player.fieldObstacles = [
+        {
+          id: "roark-rock-left",
+          type: "rock",
+          position: "start",
+        },
+        {
+          id: "roark-rock-right",
+          type: "rock",
+          position: "end",
+        },
+      ];
+
+      player._roarkPlayerTurns = 0;
+
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
 // ---------- 게임 생성 ----------
 export function createGame(playerDeckIds, trainer) {
   const first = Math.random() < 0.5 ? "player" : "enemy"; // 코인토스로 선공 결정
@@ -477,6 +518,9 @@ export function createGame(playerDeckIds, trainer) {
       enemy: makePlayer(trainer.deck, trainer.name, trainer.hp),
     },
   };
+
+  setupTrainerGimmick(game);
+
   // 선공 3장 / 후공 4장 드로우 (후공 보상)
   const openingDraws = {
     [first]: 3,
@@ -760,8 +804,65 @@ function resolveStatusAtTurnStart(game, side, u) {
 }
 // ─────────────────────────────────────────────────────────
 
+// ============================================================
+// 트레이너 전용 기믹 - 턴 시작
+// ============================================================
+function runTrainerGimmickTurnStart(game, side) {
+  const trainer = game.trainer;
+
+  if (!trainer?.gimmick) {
+    return;
+  }
+
+  switch (trainer.gimmick) {
+    // ----------------------------------------------------------
+    // 강석 - 무쇠탄갱
+    // 플레이어의 3번째 / 5번째 턴에 바위 하나씩 제거
+    // ----------------------------------------------------------
+    case "mine_collapse": {
+      if (side !== "player") {
+        return;
+      }
+
+      const player = game.players.player;
+
+      player._roarkPlayerTurns = (player._roarkPlayerTurns || 0) + 1;
+
+      let rockId = null;
+
+      if (player._roarkPlayerTurns === 5) {
+        rockId = "roark-rock-left";
+      } else if (player._roarkPlayerTurns === 10) {
+        rockId = "roark-rock-right";
+      }
+
+      if (!rockId) {
+        return;
+      }
+
+      const before = player.fieldObstacles?.length || 0;
+
+      player.fieldObstacles = (player.fieldObstacles || []).filter(
+        (obstacle) => obstacle.id !== rockId,
+      );
+
+      if (player.fieldObstacles.length < before) {
+        log(game, "무쇠탄갱의 바위가 무너져 필드가 넓어졌다!");
+      }
+
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
 function startTurn(game, side) {
   const p = game.players[side];
+
+  runTrainerGimmickTurnStart(game, side);
+
   p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
   p.mana = p.maxMana;
   p.discardUsedThisTurn = false;
@@ -1470,6 +1571,20 @@ function applyDamage(
   }
 
   let dmg = amount;
+
+  // ============================================================
+  // 강석 - 무쇠탄갱
+  // 강석의 바위 타입 포켓몬은 받는 피해 -1
+  // ============================================================
+  if (
+    !ignoreDefense &&
+    game.trainer?.gimmick === "mine_collapse" &&
+    unit.side === "enemy" &&
+    unit.type === "바위" &&
+    dmg > 0
+  ) {
+    dmg = Math.max(0, dmg - 1);
+  }
 
   // ============================================================
   // v6 신규 방어 특성

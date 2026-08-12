@@ -567,6 +567,20 @@ export default function Battle({ trainer, deck, onFinish }) {
   const moveStartTimer = useRef(null);
   const moveDeathTimer = useRef(null);
 
+  useEffect(() => {
+    const gymType = trainer.gymType || "";
+
+    if (gymType) {
+      document.body.dataset.gymType = gymType;
+    } else {
+      delete document.body.dataset.gymType;
+    }
+
+    return () => {
+      delete document.body.dataset.gymType;
+    };
+  }, [trainer.gymType]);
+
   if (!gameRef.current) {
     gameRef.current = createGame(deck, trainer);
   }
