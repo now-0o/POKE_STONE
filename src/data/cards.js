@@ -395,6 +395,15 @@ export const ABILITY_TEXT = {
   bravecharge_manaphy:
     "브레이브차지·마나피: 나왔을 때 다른 아군 전체가 이번 턴 공격력 +1. 아직 공격하지 않은 아군 1마리를 선택해 이번 턴 2회 공격할 수 있다",
 
+  shaymin_formchange:
+    "폼체인지: 소환할 때 랜드폼 또는 스카이폼 중 하나를 선택한다",
+
+  shaymin_land:
+    "랜드폼: 폼체인지할 때 아군 전체의 상태이상을 해제하고 체력을 2 회복한다",
+
+  shaymin_sky:
+    "스카이폼: 즉시 공격할 수 있다. 상대 포켓몬을 공격하면 그 포켓몬의 공격력 -2",
+
   // 메가진화 전용
   megalauncher: "메가런처: 공격할 때 대상 양옆의 상대 포켓몬에게도 피해 1",
 
@@ -477,7 +486,7 @@ export const ABILITY_TEXT = {
   shadowforce:
     "섀도다이브: 나왔을 때 필드에서 사라진다. 다음 자신의 턴 시작에 돌아와 가장 강한 상대 포켓몬에게 고스트 타입 피해 6",
   darkvoid:
-    "다크홀: 나올 때 상대 포켓몬 전체에게 악 타입 피해 1을 주고 무작위 상대 하나를 잠들게 한다",
+    "다크홀: 공격할 수 없다. 내 턴 종료 시 무작위 상대 포켓몬 1마리를 잠들게 한다. 나이트메어: 그 후 잠든 상대 포켓몬 모두에게 피해 2",
   multitype:
     "멀티타입: 공격할 때 대상에게 가장 유리한 타입으로 변한다. 이번 게임에서 처음 변하는 타입이라면 +1/+1을 얻는다",
   slowstart:
@@ -2406,12 +2415,12 @@ export const CARDS = [
     ability: "bravecharge_manaphy",
   }),
 
-  P("darkrai", "다크라이", "악", 8, 9, 7, "L", {
+  P("darkrai", "다크라이", "악", 8, 3, 8, "L", {
     ability: "darkvoid",
   }),
 
   P("shaymin", "쉐이미", "풀", 8, 7, 9, "L", {
-    ability: "regenerator",
+    ability: "shaymin_formchange",
   }),
 
   P("arceus", "아르세우스", "노말", 9, 9, 10, "L", {

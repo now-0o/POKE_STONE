@@ -27,6 +27,7 @@ import {
   resolveMagmaStorm,
   resolvePhioneBraveCharge,
   resolveManaphyBraveCharge,
+  resolveShayminForm,
 } from "../engine/engine.js";
 import { aiStep } from "../engine/ai.js";
 import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";
@@ -1977,6 +1978,19 @@ export default function Battle({ trainer, deck, onFinish }) {
     rerender();
   }
 
+  function onShayminFormChoose(form) {
+    const ok = resolveShayminForm(game, "player", form);
+
+    playSfx(ok ? "click" : "buzzer");
+
+    if (ok) {
+      setSelectedHand(null);
+      setAimUid(null);
+    }
+
+    rerender();
+  }
+
   function onEndTurn() {
     if (!myTurn) return;
     playSfx("click");
@@ -2225,6 +2239,34 @@ export default function Battle({ trainer, deck, onFinish }) {
                 <strong>힘의 소원</strong>
                 <span>+1 / +1</span>
                 <small>아군 포켓몬 전체 +1/+1</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {game.pendingShayminForm?.side === "player" && (
+        <div className="deoxys-form-overlay">
+          <div className="deoxys-form-box">
+            <h2>쉐이미 폼 선택</h2>
+
+            <p>이번 배틀에서 사용할 폼을 선택하세요.</p>
+
+            <div className="deoxys-form-grid">
+              <button type="button" onClick={() => onShayminFormChoose("land")}>
+                <strong>랜드폼</strong>
+
+                <span>7 / 9</span>
+
+                <small>아군 전체 상태이상 해제 · 체력 +2</small>
+              </button>
+
+              <button type="button" onClick={() => onShayminFormChoose("sky")}>
+                <strong>스카이폼</strong>
+
+                <span>7 / 9</span>
+
+                <small>즉시 공격 · 공격한 상대 공격력 -2</small>
               </button>
             </div>
           </div>

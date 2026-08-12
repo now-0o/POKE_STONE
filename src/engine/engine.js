@@ -958,6 +958,70 @@ export function endTurn(game) {
   cleanupDeaths(game);
 
   // ============================================================
+  // 다크라이 - 다크홀 / 나이트메어
+  // ============================================================
+  const darkrai = p.field.find((u) => u.hp > 0 && hasAbility(u, "darkvoid"));
+
+  if (darkrai) {
+    const foe = game.players[other(side)];
+
+    // ----------------------------------------
+    // 다크홀
+    // 아직 상태이상이 없는 상대 중 무작위 1마리
+    // ----------------------------------------
+    const sleepCandidates = foe.field.filter((u) => u.hp > 0 && !u.status);
+
+    if (sleepCandidates.length > 0) {
+      const target =
+        sleepCandidates[Math.floor(Math.random() * sleepCandidates.length)];
+
+      const slept = applyStatus(game, target, "sleep", darkrai);
+
+      if (slept) {
+        log(game, `${darkrai.name}의 다크홀! ${target.name}이(가) 잠들었다!`);
+      }
+    }
+
+    // ----------------------------------------
+    // 나이트메어
+    // 다크홀 처리 후 현재 잠든 상대 전부 피해 2
+    // ----------------------------------------
+    const sleepingTargets = foe.field.filter(
+      (u) => u.hp > 0 && u.status === "sleep",
+    );
+
+    if (sleepingTargets.length > 0) {
+      beginImpactCapture(game);
+
+      sleepingTargets.forEach((target) => {
+        applyDamage(game, target, 2, null, true);
+      });
+
+      log(
+        game,
+        `${darkrai.name}의 나이트메어! 잠든 상대 포켓몬들이 피해 2를 받았다!`,
+      );
+
+      cleanupDeaths(game);
+
+      const impacts = takeImpacts(game);
+
+      if (impacts.length > 0) {
+        game.animSeq = (game.animSeq || 0) + 1;
+
+        game.lastAction = {
+          seq: game.animSeq,
+          kind: "ability",
+          side,
+          cardId: "darkrai",
+          uid: darkrai.uid,
+          impacts,
+        };
+      }
+    }
+  }
+
+  // ============================================================
   // 히드런 - 마그마스톰
   // 마그마스톰에 갇힌 플레이어의 턴 종료마다 피해 2
   // ============================================================
@@ -1732,6 +1796,8 @@ export function cleanupDeaths(game, deferRemoval = false) {
           // 테오키스 같은 특수 형태 보존
           deoxysForm: u.deoxysForm || null,
 
+          shayminForm: u.shayminForm || null,
+
           ability: u.ability || null,
 
           secondaryAbility: u.secondaryAbility || null,
@@ -1882,6 +1948,92 @@ function applyDeoxysForm(game, unit, form) {
   return true;
 }
 
+const SHAYMIN_FORMS = {
+  land: {
+    label: "랜드폼",
+    ability: "shaymin_land",
+  },
+
+  sky: {
+    label: "스카이폼",
+    ability: "shaymin_sky",
+  },
+};
+
+function applyShayminForm(game, unit, form, triggerEffect = true) {
+  const data = SHAYMIN_FORMS[form];
+
+  if (!unit || unit.cardId !== "shaymin" || !data) {
+    return false;
+  }
+
+  const p = game.players[unit.side];
+
+  unit.shayminForm = form;
+  unit.name = `쉐이미 (${data.label})`;
+
+  // 폼별 스탯은 현재 기존 7/9 유지
+  unit.type = "풀";
+  unit.atk = 7;
+  unit.baseAtk = 7;
+  unit.maxHp = 9;
+  unit.hp = Math.min(unit.hp, unit.maxHp);
+
+  unit.ability = data.ability;
+
+  unit.secondaryAbility = null;
+
+  // ==========================================
+  // 랜드폼
+  // ==========================================
+  if (form === "land" && triggerEffect) {
+    p.field.forEach((ally) => {
+      if (ally.hp <= 0) {
+        return;
+      }
+
+      // 상태이상 해제
+      ally.status = null;
+      ally.statusTurns = 0;
+      ally.frozen = 0;
+
+      // 체력 2 회복
+      const before = ally.hp;
+
+      ally.hp = Math.min(ally.maxHp, ally.hp + 2);
+
+      const healed = ally.hp - before;
+
+      if (healed > 0) {
+        recordImpact(game, {
+          type: "heal",
+          side: unit.side,
+          targetUid: ally.uid,
+          amount: healed,
+        });
+      }
+    });
+
+    log(
+      game,
+      `${unit.name}의 힘! 아군 전체의 상태이상을 해제하고 체력을 2 회복했다!`,
+    );
+  }
+
+  // ==========================================
+  // 스카이폼
+  // ==========================================
+  if (form === "sky") {
+    unit.canAttack = true;
+
+    log(game, `${unit.name}(으)로 폼체인지! 바로 공격할 수 있다!`);
+  } else {
+    log(game, `${unit.name}(으)로 폼체인지했다!`);
+  }
+
+  return true;
+}
+
 function applyWishmakerChoice(game, side, choice) {
   const p = game.players[side];
 
@@ -1985,6 +2137,50 @@ export function resolveDeoxysForm(game, side, form) {
 
   if (result) {
     game.pendingDeoxysForm = null;
+  }
+
+  return result;
+}
+
+export function resolveShayminForm(game, side, form) {
+  const pending = game.pendingShayminForm;
+
+  if (!pending || pending.side !== side) {
+    return false;
+  }
+
+  if (!SHAYMIN_FORMS[form]) {
+    return false;
+  }
+
+  const unit = game.players[side].field.find((u) => u.uid === pending.uid);
+
+  if (!unit) {
+    game.pendingShayminForm = null;
+
+    return false;
+  }
+
+  beginImpactCapture(game);
+
+  const result = applyShayminForm(game, unit, form);
+
+  const impacts = takeImpacts(game);
+
+  if (result) {
+    game.pendingShayminForm = null;
+
+    game.animSeq = (game.animSeq || 0) + 1;
+
+    game.lastAction = {
+      seq: game.animSeq,
+      kind: "ability",
+      side,
+      cardId: "shaymin",
+      uid: unit.uid,
+
+      ...(impacts.length > 0 ? { impacts } : {}),
+    };
   }
 
   return result;
@@ -2778,6 +2974,20 @@ function runBattlecry(game, side, unit) {
             }
           }
 
+          // =========================
+          // 쉐이미 폼 복구
+          // =========================
+          if (dead.cardId === "shaymin" && dead.shayminForm) {
+            applyShayminForm(game, revivedUnit, dead.shayminForm, false);
+
+            // 세레비 부활은 체력 1
+            revivedUnit.hp = 1;
+
+            // 스카이폼이어도
+            // 부활한 턴에는 바로 공격 불가
+            revivedUnit.canAttack = false;
+          }
+
           me.field.push(revivedUnit);
 
           // 같은 포켓몬 반복 부활 방지
@@ -3140,29 +3350,32 @@ function runBattlecry(game, side, unit) {
 
     // 다크라이 - 다크홀
     case "darkvoid": {
-      foe.field.forEach((target) => {
-        applyTypedAbilityDamage(game, target, 1, "악");
-      });
+      // 다크홀 / 나이트메어는
+      // 턴 종료 시 발동
+      break;
+    }
 
-      cleanupDeaths(game);
+    case "shaymin_formchange": {
+      if (side === "enemy") {
+        // AI:
+        // 상태이상 아군이 있거나
+        // 회복할 체력이 충분하면 랜드폼,
+        // 아니면 스카이폼
+        const needLand =
+          me.field.some((ally) => ally.hp > 0 && ally.status) ||
+          me.field.reduce(
+            (sum, ally) => sum + Math.max(0, ally.maxHp - ally.hp),
+            0,
+          ) >= 3;
 
-      const alive = foe.field.filter((target) => target.hp > 0);
-
-      if (alive.length > 0) {
-        const target = alive[Math.floor(Math.random() * alive.length)];
-
-        const slept = applyStatus(game, target, "sleep", unit);
-
-        if (slept) {
-          log(
-            game,
-            `${unit.name}의 다크홀! 상대 전체에게 악 피해 1, ${target.name}이(가) 잠들었다!`,
-          );
-        } else {
-          log(game, `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`);
-        }
+        applyShayminForm(game, unit, needLand ? "land" : "sky");
       } else {
-        log(game, `${unit.name}의 다크홀! 상대 전체에게 악 피해 1!`);
+        game.pendingShayminForm = {
+          side,
+          uid: unit.uid,
+        };
+
+        log(game, `${unit.name}의 폼체인지! 폼을 선택하세요.`);
       }
 
       break;
@@ -4506,6 +4719,10 @@ export function canAttack(game, side, unitUid) {
   if ((p._roarOfTimeBlockTurns || 0) > 0) {
     return false;
   }
+  // 다크라이 - 다크홀
+  if (hasAbility(u, "darkvoid")) {
+    return false;
+  }
   if (u.ability === "fortress") return false;
   if (!u.canAttack) return false;
   if (u.status === "ice") return false;
@@ -5283,6 +5500,27 @@ export function attack(game, side, attackerUid, target) {
 
     if (lowered > 0) {
       log(game, `${atkUnit.name}의 폭발펀치! ${defUnit.name}의 공격력 -1!`);
+    }
+  }
+
+  // ============================================================
+  // 쉐이미 스카이폼 - 공격 대상 공격력 -2
+  // ============================================================
+  if (hasAbility(atkUnit, "shaymin_sky") && defUnit.hp > 0) {
+    const lowered = lowerAttack(game, defUnit, 2, "스카이폼");
+
+    if (lowered > 0) {
+      log(
+        game,
+        `${atkUnit.name}의 스카이폼! ${defUnit.name}의 공격력 -${lowered}!`,
+      );
+
+      recordImpact(game, {
+        type: "debuff",
+        side: defUnit.side,
+        targetUid: defUnit.uid,
+        amount: lowered,
+      });
     }
   }
 
