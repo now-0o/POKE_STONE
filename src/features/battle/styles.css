@@ -6,6 +6,20 @@
   min-height: 100dvh;
 }
 
+/* 배틀 중 로그/카드/이미지가 길게 눌리거나 드래그되어 선택되지 않게 한다. */
+.battle.battle-board,
+.battle.battle-board * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.battle.battle-board img,
+.battle-intro img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 /* VS / 코인토스는 문서 레이아웃과 분리해 스크롤 점멸을 막는다. */
 .battle-intro {
   position: fixed !important;
@@ -22,6 +36,9 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 html.battle-page-locked,
