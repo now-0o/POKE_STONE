@@ -10,6 +10,27 @@ function pushLog(game, message) {
   }
 }
 
+function syncMayleneComboVisual(game) {
+  if (typeof document === "undefined") return;
+
+  const isMaylene = game?.trainer?.gimmick === "dojo_combo";
+  const combo = isMaylene ? Math.max(0, game._mayleneCombo || 0) : 0;
+
+  if (isMaylene) {
+    document.body.dataset.mayleneCombo = String(combo);
+  } else {
+    delete document.body.dataset.mayleneCombo;
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("maylene-combo-change", {
+        detail: { combo, active: isMaylene },
+      }),
+    );
+  }
+}
+
 function enemyUnitIds(game) {
   return new Set(game.players.enemy.field.map((unit) => unit.uid));
 }
@@ -29,6 +50,7 @@ function resetMayleneComboIfNeeded(game, beforeIds) {
     pushLog(game, "자두의 포켓몬이 쓰러졌다! 격투도장의 연속공격 콤보가 초기화됐다!");
   }
   game._mayleneCombo = 0;
+  syncMayleneComboVisual(game);
 }
 
 function setWakeFloodVisual(level) {
@@ -163,6 +185,8 @@ export function createGame(playerDeckIds, trainer) {
     game._mayleneCombo = 0;
   }
 
+  syncMayleneComboVisual(game);
+
   if (trainer?.gimmick === "rising_tide") {
     game._wakePlayerTurns = game.turn === "player" ? 1 : 0;
     game._wakeFloodLevel = 0;
@@ -237,6 +261,7 @@ export function attack(game, side, attackerUid, target) {
 
   if (game.trainer?.gimmick === "dojo_combo" && side === "enemy") {
     game._mayleneCombo = comboBefore + 1;
+    syncMayleneComboVisual(game);
 
     if (comboBonus > 0) {
       pushLog(
@@ -275,6 +300,7 @@ export function endTurn(game) {
 
   if (game.trainer?.gimmick === "dojo_combo" && endingSide === "enemy") {
     game._mayleneCombo = 0;
+    syncMayleneComboVisual(game);
   }
 
   if (
