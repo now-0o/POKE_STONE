@@ -1,5 +1,4 @@
-const GHOST_LIFETIME_PLAYER_TURNS = 2;
-const GHOST_HP = 2;
+const GHOST_HP = 3;
 const DRAIN_MAX_STACKS = 3;
 
 function pushLog(game, message) {
@@ -53,7 +52,6 @@ function makeFantinaGhost(game, source) {
     noEvolve: true,
     side: "player",
     _fantinaGhost: true,
-    _fantinaGhostTurns: GHOST_LIFETIME_PLAYER_TURNS,
     _deathProcessed: false,
   };
 }
@@ -80,7 +78,7 @@ export function spawnFantinaGhostsFromDeaths(game, beforeField) {
 
     pushLog(
       game,
-      `숲의 양옥집의 기운이 ${unit.name}의 유령을 붙잡았다! 유령은 잠시 필드에 남는다.`,
+      `숲의 양옥집의 기운이 ${unit.name}의 유령을 붙잡았다! 유령은 HP 3으로 필드를 막는다.`,
     );
   });
 
@@ -111,6 +109,54 @@ export function fantinaGhostUids(game) {
     .map((unit) => unit.uid);
 }
 
+function playGhostVanishAnimation(uid) {
+  if (typeof document === "undefined") return;
+
+  const unitElement = document.querySelector(
+    `.battle-board[data-battlefield="old_chateau"] .field-unit[data-uid="${uid}"]`,
+  );
+
+  if (!unitElement) return;
+
+  const rect = unitElement.getBoundingClientRect();
+  const fx = document.createElement("div");
+  fx.className = "fantina-ghost-vanish-fx";
+  fx.style.left = `${rect.left + rect.width / 2}px`;
+  fx.style.top = `${rect.top + rect.height / 2}px`;
+  fx.style.width = `${Math.max(48, rect.width * 0.9)}px`;
+  fx.style.height = `${Math.max(54, rect.height * 0.9)}px`;
+  document.body.appendChild(fx);
+
+  window.setTimeout(() => fx.remove(), 720);
+}
+
+function absorbExpiredGhosts(game, count) {
+  if (!isFantinaBattle(game) || count <= 0) return;
+
+  const mismagius = game.players.enemy.field.find(
+    (unit) => unit.hp > 0 && unit.ability === "fantina_drain",
+  );
+
+  if (!mismagius) return;
+
+  let gained = 0;
+
+  while (gained < count && (mismagius._fantinaDrainStacks || 0) < DRAIN_MAX_STACKS) {
+    mismagius._fantinaDrainStacks = (mismagius._fantinaDrainStacks || 0) + 1;
+    mismagius.atk += 1;
+    mismagius.hp += 1;
+    mismagius.maxHp += 1;
+    gained += 1;
+  }
+
+  if (gained > 0) {
+    pushLog(
+      game,
+      `${mismagius.name}의 흡수! 자연 소멸한 유령의 기운 ${gained}개를 흡수해 +${gained}/+${gained}! (${mismagius._fantinaDrainStacks}/${DRAIN_MAX_STACKS})`,
+    );
+  }
+}
+
 export function ageFantinaGhosts(game, eligibleUids) {
   if (!isFantinaBattle(game) || !eligibleUids?.length) return;
 
@@ -121,61 +167,25 @@ export function ageFantinaGhosts(game, eligibleUids) {
   player.field.forEach((unit) => {
     if (!unit._fantinaGhost || !eligible.has(unit.uid) || unit.hp <= 0) return;
 
-    unit._fantinaGhostTurns = Math.max(0, (unit._fantinaGhostTurns || 1) - 1);
-    if (unit._fantinaGhostTurns <= 0) expired.push(unit.uid);
+    unit.hp = Math.max(0, unit.hp - 1);
+
+    if (unit.hp > 0) {
+      pushLog(game, `${unit.name}의 기운이 약해졌다. (HP ${unit.hp})`);
+      return;
+    }
+
+    expired.push(unit);
   });
 
   if (!expired.length) return;
 
-  const expiredSet = new Set(expired);
-  const names = player.field
-    .filter((unit) => expiredSet.has(unit.uid))
-    .map((unit) => unit.name);
+  expired.forEach((unit) => playGhostVanishAnimation(unit.uid));
+  absorbExpiredGhosts(game, expired.length);
 
-  player.field = player.field.filter((unit) => !expiredSet.has(unit.uid));
+  const expiredIds = new Set(expired.map((unit) => unit.uid));
+  player.field = player.field.filter((unit) => !expiredIds.has(unit.uid));
 
-  names.forEach((name) => {
-    pushLog(game, `${name}이(가) 안개 속으로 사라졌다.`);
+  expired.forEach((unit) => {
+    pushLog(game, `${unit.name}이(가) 안개 속으로 사라졌다.`);
   });
-}
-
-function addBuffImpact(game, unit) {
-  if (!game.lastAction) return;
-  if (!Array.isArray(game.lastAction.impacts)) game.lastAction.impacts = [];
-
-  game.lastAction.impacts.push({
-    type: "buff",
-    side: unit.side,
-    targetUid: unit.uid,
-    amount: 1,
-  });
-}
-
-export function handleFantinaDrain(game, attacker, target) {
-  if (!isFantinaBattle(game)) return false;
-  if (!attacker || attacker.ability !== "fantina_drain") return false;
-  if (!target?._fantinaGhost || target.hp > 0 || target._fantinaDrainClaimed) {
-    return false;
-  }
-
-  target._fantinaDrainClaimed = true;
-
-  const stacks = attacker._fantinaDrainStacks || 0;
-  if (stacks >= DRAIN_MAX_STACKS) {
-    pushLog(game, `${attacker.name}의 흡수는 이미 최대치다!`);
-    return false;
-  }
-
-  attacker._fantinaDrainStacks = stacks + 1;
-  attacker.atk += 1;
-  attacker.hp += 1;
-  attacker.maxHp += 1;
-  addBuffImpact(game, attacker);
-
-  pushLog(
-    game,
-    `${attacker.name}의 흡수! 유령의 기운을 삼켜 +1/+1! (${attacker._fantinaDrainStacks}/${DRAIN_MAX_STACKS})`,
-  );
-
-  return true;
 }
