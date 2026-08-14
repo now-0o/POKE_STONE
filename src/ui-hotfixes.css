@@ -18,3 +18,11 @@ body.battle-page-locked {
     0 5px 18px rgba(0, 0, 0, 0.36),
     0 0 16px rgba(245, 197, 66, 0.1) !important;
 }
+
+/* 커버플로우에서도 잠긴 지방의 기존 회색 처리 유지 */
+.region-select.region-coverflow > .region-card.region-locked {
+  filter:
+    brightness(var(--cf-brightness, 1))
+    saturate(var(--cf-saturation, 1))
+    grayscale(0.65) !important;
+}
