@@ -56,13 +56,66 @@ body[data-battlefield="old_chateau"] {
   pointer-events: none;
 }
 
+.fantina-ghost-vanish-fx {
+  position: fixed;
+  z-index: 980;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 55%, rgba(221, 197, 255, 0.62) 0 8%, rgba(160, 112, 219, 0.34) 22%, transparent 58%);
+  filter: drop-shadow(0 0 12px rgba(181, 137, 238, 0.72));
+  animation: fantina-ghost-vanish 0.68s cubic-bezier(0.2, 0.72, 0.2, 1) forwards;
+}
+
+.fantina-ghost-vanish-fx::before,
+.fantina-ghost-vanish-fx::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26%;
+  height: 68%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(234, 219, 255, 0.76), rgba(123, 79, 181, 0));
+  transform-origin: 50% 100%;
+}
+
+.fantina-ghost-vanish-fx::before {
+  transform: translate(-70%, -52%) rotate(-20deg);
+}
+
+.fantina-ghost-vanish-fx::after {
+  transform: translate(-30%, -52%) rotate(20deg);
+}
+
 @keyframes fantina-ghost-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
 
+@keyframes fantina-ghost-vanish {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.82);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(-50%, -62%) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -105%) scale(0.48);
+    filter: blur(5px) drop-shadow(0 0 18px rgba(181, 137, 238, 0.3));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .battle-board[data-battlefield="old_chateau"] .field-unit[data-uid^="fantina-ghost-"] {
     animation: none;
+  }
+
+  .fantina-ghost-vanish-fx {
+    animation-duration: 0.12s;
   }
 }
