@@ -115,11 +115,8 @@ function enhanceRegionCarousel(container) {
     startIndex = activeIndex;
     dragging = false;
 
-    try {
-      container.setPointerCapture(pointerId);
-    } catch {
-      // 브라우저가 pointer capture를 지원하지 않아도 드래그는 계속 동작한다.
-    }
+    // 클릭 자체가 정상적으로 region-card 버튼까지 전달되도록
+    // pointerdown 시점에는 capture하지 않고 실제 드래그가 시작될 때만 잡는다.
   }
 
   function onPointerMove(event) {
@@ -141,6 +138,12 @@ function enhanceRegionCarousel(container) {
 
       dragging = true;
       container.classList.add("is-dragging");
+
+      try {
+        container.setPointerCapture(pointerId);
+      } catch {
+        // 브라우저가 pointer capture를 지원하지 않아도 드래그는 계속 동작한다.
+      }
     }
 
     event.preventDefault();
@@ -152,7 +155,10 @@ function enhanceRegionCarousel(container) {
   }
 
   function finishPointer(event) {
-    if (pointerId === null || (event?.pointerId != null && event.pointerId !== pointerId)) {
+    if (
+      pointerId === null ||
+      (event?.pointerId != null && event.pointerId !== pointerId)
+    ) {
       return;
     }
 
@@ -161,9 +167,13 @@ function enhanceRegionCarousel(container) {
 
     if (wasDragging) {
       const threshold = clamp(container.clientWidth * 0.075, 42, 78);
+
+      // 실제로 드래그해 도달한 위치를 기준으로 스냅한다.
+      // 따라서 한 번에 두세 지방을 넘겨도 시작점 옆으로 되돌아가지 않는다.
       let next = Math.round(visualIndex);
 
-      if (Math.abs(dx) > threshold) {
+      // 짧지만 의도가 분명한 스와이프는 최소 한 칸 이동시킨다.
+      if (next === startIndex && Math.abs(dx) > threshold) {
         next = startIndex + (dx < 0 ? 1 : -1);
       }
 
@@ -176,7 +186,9 @@ function enhanceRegionCarousel(container) {
 
     if (pointerId !== null) {
       try {
-        container.releasePointerCapture(pointerId);
+        if (container.hasPointerCapture?.(pointerId)) {
+          container.releasePointerCapture(pointerId);
+        }
       } catch {
         // 무시
       }
@@ -203,6 +215,7 @@ function enhanceRegionCarousel(container) {
       return;
     }
 
+    // 어두운 이전/다음 카드를 누르면 바로 해당 인덱스를 중앙으로 이동.
     if (index !== activeIndex) {
       event.preventDefault();
       event.stopPropagation();
@@ -210,6 +223,8 @@ function enhanceRegionCarousel(container) {
       return;
     }
 
+    // 현재 중앙 카드의 클릭은 막지 않는다.
+    // 기존 React onClick(selectRegion)이 그대로 실행되어 지방 선택 화면으로 진입한다.
     lastActiveIndex = index;
   }
 
@@ -267,7 +282,9 @@ function syncRegionCarousel() {
 
 function startRegionCarousel() {
   if (!document.body) {
-    window.addEventListener("DOMContentLoaded", startRegionCarousel, { once: true });
+    window.addEventListener("DOMContentLoaded", startRegionCarousel, {
+      once: true,
+    });
     return;
   }
 
