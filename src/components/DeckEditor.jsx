@@ -274,6 +274,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
   const collectionGridRef = useRef(null);
   const previousCardRectsRef = useRef(new Map());
+  const deckNameInputRef = useRef(null);
 
   function captureCardPositions() {
     const grid = collectionGridRef.current;
@@ -612,7 +613,10 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
       <div className="editor-layout">
         {/* 컬렉션 */}
-        <div className="collection-pane">
+        <div
+          className="collection-pane"
+          style={{ overscrollBehaviorY: "contain" }}
+        >
           <div className="collection-grid" ref={collectionGridRef}>
             {ownedCards.map((card) => {
               const owned = save.collection[card.id];
@@ -677,26 +681,40 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               <span>덱 이름</span>
 
               <input
+                ref={deckNameInputRef}
                 key={`${activePreset}-${presets[activePreset]?.name}`}
                 type="text"
                 maxLength={16}
                 defaultValue={
                   presets[activePreset]?.name || `덱 ${activePreset + 1}`
                 }
-                onBlur={(e) => renamePreset(activePreset, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.currentTarget.blur();
-                  }
-                }}
               />
+
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{
+                  flexShrink: 0,
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                }}
+                onClick={() => {
+                  playSfx("click");
+                  renamePreset(
+                    activePreset,
+                    deckNameInputRef.current?.value || "",
+                  );
+                }}
+              >
+                수정
+              </button>
             </div>
+
+            <h3 style={{ marginTop: "10px", marginBottom: 0 }}>내 덱</h3>
           </div>
 
           {/* 카드 리스트 - 여기만 스크롤 */}
           <div className="deck-card-list">
-            <h3>내 덱</h3>
-
             {deckList.map(({ card, count }) => (
               <div
                 key={card.id}
