@@ -1,0 +1,474 @@
+/* ============================================================
+   신오 배틀필드
+   ============================================================ */
+
+body[data-battlefield="oreburgh_mine"] {
+  background:
+    radial-gradient(ellipse 90% 65% at 50% 20%, rgba(137, 103, 63, 0.28), transparent 62%),
+    radial-gradient(ellipse 70% 50% at 50% 105%, rgba(72, 54, 39, 0.72), transparent 70%),
+    linear-gradient(180deg, #171720 0%, #241d1a 48%, #161318 100%);
+}
+
+.battle-board[data-battlefield="oreburgh_mine"] {
+  background-image:
+    radial-gradient(ellipse 68% 78% at 50% 50%, rgba(183, 139, 78, 0.18), transparent 67%),
+    radial-gradient(circle at 18% 32%, rgba(244, 196, 111, 0.08), transparent 22%),
+    linear-gradient(180deg, #171922 0%, #2d241d 47%, #211916 53%, #12141c 100%);
+}
+
+body[data-battlefield="eterna_forest"] {
+  background:
+    radial-gradient(ellipse 90% 65% at 50% 10%, rgba(76, 136, 89, 0.24), transparent 64%),
+    radial-gradient(ellipse 75% 55% at 50% 105%, rgba(24, 75, 55, 0.72), transparent 70%),
+    linear-gradient(180deg, #0d1820 0%, #10261d 50%, #0a1518 100%);
+}
+
+.battle-board[data-battlefield="eterna_forest"] {
+  background-image:
+    radial-gradient(ellipse 68% 75% at 50% 50%, rgba(85, 164, 94, 0.17), transparent 66%),
+    radial-gradient(circle at 78% 25%, rgba(177, 221, 131, 0.08), transparent 24%),
+    linear-gradient(180deg, #0e1c21 0%, #153526 47%, #10291f 53%, #09181d 100%);
+}
+
+body[data-battlefield="veilstone_dojo"] {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 8%, rgba(180, 66, 62, 0.22), transparent 66%),
+    radial-gradient(ellipse 70% 50% at 50% 105%, rgba(82, 40, 38, 0.7), transparent 72%),
+    linear-gradient(180deg, #19151c 0%, #2b191c 50%, #12131a 100%);
+}
+
+.battle-board[data-battlefield="veilstone_dojo"] {
+  background-image:
+    radial-gradient(ellipse 72% 70% at 50% 50%, rgba(206, 82, 68, 0.15), transparent 68%),
+    linear-gradient(90deg, transparent 49.7%, rgba(245, 197, 66, 0.08) 50%, transparent 50.3%),
+    linear-gradient(180deg, #18161d 0%, #3a2021 47%, #2c191c 53%, #11131a 100%);
+}
+
+body[data-battlefield="pastoria_gym"] {
+  background:
+    radial-gradient(ellipse 90% 62% at 50% 10%, rgba(64, 145, 205, 0.28), transparent 64%),
+    radial-gradient(ellipse 75% 55% at 50% 108%, rgba(18, 76, 122, 0.76), transparent 70%),
+    linear-gradient(180deg, #0b1824 0%, #102c40 52%, #08151f 100%);
+}
+
+.battle-board[data-battlefield="pastoria_gym"] {
+  background-image:
+    radial-gradient(ellipse 70% 72% at 50% 50%, rgba(74, 173, 230, 0.16), transparent 68%),
+    repeating-linear-gradient(90deg, rgba(122, 207, 255, 0.025) 0 2px, transparent 2px 72px),
+    linear-gradient(180deg, #0d202f 0%, #16445e 47%, #12394f 53%, #091925 100%);
+}
+
+/* 맥실러전 수몰 표시 */
+body[data-wake-flood="1"] .battle-board[data-battlefield="pastoria_gym"] .my-field::before,
+body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-field::before,
+body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-field::after {
+  content: "수몰";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  z-index: 2;
+  width: 13%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 1px solid rgba(112, 205, 255, 0.22);
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(105, 203, 255, 0.16) 0 7px,
+      rgba(49, 145, 203, 0.24) 7px 14px
+    );
+  color: rgba(200, 235, 255, 0.68);
+  font-family: var(--display-font);
+  font-size: clamp(8px, 1vw, 11px);
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(2px);
+}
+
+body[data-wake-flood="1"] .battle-board[data-battlefield="pastoria_gym"] .my-field::before,
+body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-field::before {
+  left: 0.5%;
+  border-radius: 12px 4px 4px 12px;
+}
+
+body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-field::after {
+  right: 0.5%;
+  border-radius: 4px 12px 12px 4px;
+}
+
+/* ============================================================
+   신오 기믹 도움말
+   ============================================================ */
+
+#battle-enhancement-root {
+  position: relative;
+  z-index: 700;
+}
+
+.battle-gimmick-help-wrap {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(24px, calc(env(safe-area-inset-right) + 14px));
+  z-index: 720;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.battle-gimmick-help-btn {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 197, 66, 0.5);
+  background: rgba(10, 15, 32, 0.72);
+  color: var(--accent);
+  font-family: var(--display-font);
+  font-size: 19px;
+  line-height: 1;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.battle-gimmick-help-btn:hover {
+  background: rgba(245, 197, 66, 0.14);
+  border-color: var(--accent);
+}
+
+.battle-gimmick-entry-tip {
+  position: relative;
+  max-width: min(310px, calc(100vw - 90px));
+  padding: 8px 12px;
+  border: 1px solid rgba(245, 197, 66, 0.5);
+  border-radius: 10px;
+  background: rgba(10, 15, 32, 0.9);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(245, 197, 66, 0.22);
+  box-shadow:
+    0 5px 18px rgba(0, 0, 0, 0.36),
+    0 0 16px rgba(245, 197, 66, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: battle-gimmick-tip-in 0.32s ease-out both,
+    battle-gimmick-tip-out 0.45s ease-in 3.55s forwards;
+}
+
+.battle-gimmick-entry-tip::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%) rotate(45deg);
+  border-top: 1px solid rgba(245, 197, 66, 0.5);
+  border-right: 1px solid rgba(245, 197, 66, 0.5);
+  background: rgba(10, 15, 32, 0.9);
+}
+
+.maylene-combo-hud {
+  position: fixed;
+  top: max(58px, calc(env(safe-area-inset-top) + 52px));
+  right: max(24px, calc(env(safe-area-inset-right) + 14px));
+  z-index: 718;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid rgba(245, 197, 66, 0.42);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(34, 24, 28, 0.92), rgba(12, 16, 31, 0.92));
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  pointer-events: none;
+  white-space: nowrap;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.maylene-combo-label {
+  color: #c7cbd8;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.maylene-combo-hud strong {
+  color: #f5c542;
+  font-family: var(--display-font);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.maylene-combo-next {
+  padding-left: 8px;
+  border-left: 1px solid rgba(255,255,255,.12);
+  color: #9da4b5;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.maylene-combo-hud.is-maxed {
+  border-color: rgba(255, 119, 76, 0.88);
+  background: linear-gradient(135deg, rgba(112, 30, 24, 0.94), rgba(35, 19, 28, 0.94));
+  box-shadow: 0 5px 20px rgba(255, 86, 52, 0.22), inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+.maylene-combo-hud.is-maxed strong {
+  color: #ff9a70;
+  text-shadow: 0 0 10px rgba(255, 95, 58, .42);
+}
+
+.maylene-combo-hud:not(.is-maxed) .maylene-combo-next:not(:empty) {
+  color: #ffd8a8;
+}
+
+.battle-gimmick-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(5, 8, 18, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: battle-gimmick-backdrop-in 0.2s ease-out both;
+}
+
+.battle-gimmick-dialog {
+  position: relative;
+  width: min(560px, calc(100vw - 36px));
+  overflow: hidden;
+  border: 1px solid rgba(245, 197, 66, 0.28);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245, 197, 66, 0.08), transparent 45%),
+    linear-gradient(180deg, rgba(21, 30, 57, 0.98), rgba(10, 16, 34, 0.99));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62);
+  transform-origin: 50% 45%;
+  animation: battle-gimmick-dialog-in 0.28s cubic-bezier(0.2, 0.85, 0.25, 1.12) both;
+}
+
+.battle-gimmick-modal-head {
+  min-height: 70px;
+  padding: 15px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.battle-gimmick-modal-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.battle-gimmick-modal-head span {
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.battle-gimmick-modal-head strong {
+  color: var(--accent);
+  font-family: var(--display-font);
+  font-size: 18px;
+}
+
+.battle-gimmick-close {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 23px;
+  line-height: 1;
+}
+
+.battle-gimmick-slide {
+  min-height: 220px;
+  padding: 27px 30px 24px;
+}
+
+.battle-gimmick-single {
+  display: flex;
+  flex-direction: column;
+}
+
+.battle-gimmick-eyebrow {
+  align-self: flex-start;
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 4px 9px;
+  border: 1px solid rgba(245, 197, 66, 0.28);
+  border-radius: 999px;
+  color: var(--accent);
+  background: rgba(245, 197, 66, 0.07);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.battle-gimmick-slide h2 {
+  margin-bottom: 18px;
+  color: var(--text);
+  font-family: var(--display-font);
+  font-size: clamp(20px, 3vw, 27px);
+}
+
+.battle-gimmick-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.battle-gimmick-copy p {
+  position: relative;
+  padding-left: 16px;
+  color: #d8deed;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.battle-gimmick-copy p::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 7px rgba(245, 197, 66, 0.5);
+}
+
+.battle-gimmick-hint {
+  margin-top: 22px;
+  padding: 11px 13px;
+  border: 1px solid rgba(245, 197, 66, 0.2);
+  border-radius: 11px;
+  background: rgba(245, 197, 66, 0.07);
+  color: #f3e7bb;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+@keyframes battle-gimmick-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes battle-gimmick-dialog-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes battle-gimmick-tip-in {
+  from { opacity: 0; transform: translateX(10px) scale(0.97); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes battle-gimmick-tip-out {
+  to { opacity: 0; transform: translateX(8px) scale(0.98); }
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .battle-gimmick-help-wrap {
+    top: max(8px, env(safe-area-inset-top));
+    right: max(14px, calc(env(safe-area-inset-right) + 8px));
+    gap: 7px;
+  }
+
+  .battle-gimmick-help-btn {
+    width: 29px;
+    height: 29px;
+    font-size: 16px;
+  }
+
+  .battle-gimmick-entry-tip {
+    max-width: calc(100vw - 70px);
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .maylene-combo-hud {
+    top: max(45px, calc(env(safe-area-inset-top) + 39px));
+    right: max(14px, calc(env(safe-area-inset-right) + 8px));
+    min-height: 28px;
+    padding: 5px 8px;
+    gap: 6px;
+  }
+
+  .maylene-combo-hud strong { font-size: 12px; }
+  .maylene-combo-label,
+  .maylene-combo-next { font-size: 8px; }
+
+  .battle-gimmick-dialog {
+    width: min(540px, calc(100vw - 28px));
+    max-height: calc(100dvh - 18px);
+  }
+
+  .battle-gimmick-modal-head {
+    min-height: 52px;
+    padding: 9px 14px 8px;
+  }
+
+  .battle-gimmick-modal-head strong { font-size: 15px; }
+
+  .battle-gimmick-close {
+    width: 29px;
+    height: 29px;
+    font-size: 20px;
+  }
+
+  .battle-gimmick-slide {
+    min-height: 145px;
+    padding: 15px 22px 14px;
+  }
+
+  .battle-gimmick-slide h2 {
+    margin-bottom: 9px;
+    font-size: 18px;
+  }
+
+  .battle-gimmick-copy { gap: 5px; }
+
+  .battle-gimmick-copy p {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .battle-gimmick-hint {
+    margin-top: 10px;
+    padding: 7px 9px;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-gimmick-entry-tip,
+  .battle-gimmick-modal,
+  .battle-gimmick-dialog {
+    animation: none;
+  }
+}
