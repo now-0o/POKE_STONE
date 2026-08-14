@@ -7,6 +7,8 @@ import './battle-enhancements.css';
 import './screen-transitions.css';
 import './region-carousel.css';
 import './ui-hotfixes.css';
+import './sinnoh-expansion.css';
+import './sinnoh-expansion.js';
 import './battle-enhancements.jsx';
 import './region-carousel.js';
 
