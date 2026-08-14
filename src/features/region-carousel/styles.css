@@ -10,29 +10,49 @@
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
+}
 
-  /*
-   * 양끝 카드가 overflow 경계에서 뚝 잘리지 않도록
-   * viewport 가장자리만 자연스럽게 투명해진다.
-   */
-  -webkit-mask-image: linear-gradient(
+/*
+ * 카드 자체의 opacity를 깎는 방식이 아니라,
+ * 캐러셀 viewport 양끝 위에 흐림 레이어를 덮는다.
+ * 그래서 2칸 바깥 카드가 overflow에서 잘리는 경계만
+ * 자연스럽게 블러/페이드되고 중앙 카드는 그대로 선명하다.
+ */
+.region-select.region-coverflow::before,
+.region-select.region-coverflow::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(58px, 8.5vw, 96px);
+  z-index: 140;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.region-select.region-coverflow::before {
+  left: 0;
+  background: linear-gradient(
     to right,
-    transparent 0%,
-    rgba(0, 0, 0, 0.3) 2.5%,
-    #000 8%,
-    #000 92%,
-    rgba(0, 0, 0, 0.3) 97.5%,
-    transparent 100%
+    rgba(7, 9, 15, 0.42) 0%,
+    rgba(7, 9, 15, 0.18) 48%,
+    rgba(7, 9, 15, 0) 100%
   );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(0, 0, 0, 0.3) 2.5%,
-    #000 8%,
-    #000 92%,
-    rgba(0, 0, 0, 0.3) 97.5%,
-    transparent 100%
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 42%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 42%, transparent 100%);
+}
+
+.region-select.region-coverflow::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(7, 9, 15, 0.42) 0%,
+    rgba(7, 9, 15, 0.18) 48%,
+    rgba(7, 9, 15, 0) 100%
   );
+  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 42%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 0%, #000 42%, transparent 100%);
 }
 
 .region-select.region-coverflow.is-dragging { cursor: grabbing; }
@@ -128,25 +148,11 @@
 }
 
 @media (max-width: 760px) {
-  .region-select.region-coverflow {
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      rgba(0, 0, 0, 0.25) 3%,
-      #000 10%,
-      #000 90%,
-      rgba(0, 0, 0, 0.25) 97%,
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      rgba(0, 0, 0, 0.25) 3%,
-      #000 10%,
-      #000 90%,
-      rgba(0, 0, 0, 0.25) 97%,
-      transparent 100%
-    );
+  .region-select.region-coverflow::before,
+  .region-select.region-coverflow::after {
+    width: clamp(64px, 12vw, 92px);
+    -webkit-backdrop-filter: blur(7px);
+    backdrop-filter: blur(7px);
   }
 
   .region-select.region-coverflow > .region-card {
