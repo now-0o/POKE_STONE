@@ -58,6 +58,17 @@
   scrollbar-gutter: stable;
 }
 
+/*
+ * 구매 목록에서는 스크롤 컨테이너 자체를 뷰포트 전체 폭으로 확장한다.
+ * 내용은 기존 app 안전 영역에 그대로 두고 스크롤바만 브라우저 우측 끝으로 보낸다.
+ */
+.pack-shop:has(.pack-buy-area) {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding-left: max(12px, calc((100vw - 1280px) / 2 + 12px));
+  padding-right: max(12px, calc((100vw - 1280px) / 2 + 12px));
+}
+
 /* 짧은 높이의 가로모드 모바일에서는 기존 비율을 유지하며 소폭만 확대 */
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .deck-editor {
@@ -85,6 +96,11 @@
   .deck-editor .editor-topbar .filter-btn {
     font-size: 12px;
     padding: 4px 10px;
+  }
+
+  .pack-shop:has(.pack-buy-area) {
+    padding-left: max(6px, calc((100vw - 1280px) / 2 + 6px));
+    padding-right: max(6px, calc((100vw - 1280px) / 2 + 6px));
   }
 }
 
