@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const sinnohEngineWrapper = path.resolve(
   process.cwd(),
-  'src/features/sinnoh/engine.js',
+  'src/engine/sinnoh/index.js',
 );
 
 export default defineConfig({
