@@ -4901,7 +4901,7 @@ export const PACKS = {
   basic: {
     id: "basic",
     name: "포스스톤",
-    sub: "기본팩 · 스타디움",
+    sub: "기본팩 · 레전드 확률 0.5%",
     price: 70,
     weights: { C: 82, R: 15, E: 2.5, L: 0.5 },
     guarantee: "R", // 최소 레어 1장 보장
@@ -4910,9 +4910,9 @@ export const PACKS = {
   premium: {
     id: "premium",
     name: "포스스톤 EX",
-    sub: "프리미엄팩 · 챔피언로드",
+    sub: "프리미엄팩 · 레전드 확률 3%",
     price: 350,
-    weights: { C: 48, R: 38, E: 11.5, L: 2.5 },
+    weights: { C: 48, R: 38, E: 11, L: 3 },
     guarantee: "E",
     ball: "master",
   },
