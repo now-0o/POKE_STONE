@@ -11,7 +11,7 @@ import './features/navigation/transitions.css';
 import './features/deck-editor/styles.css';
 import './features/pack-shop/styles.css';
 import './features/region-carousel/styles.css';
-import './features/sinnoh/styles.css';
+import './features/sinnoh/index.css';
 
 import './features/battle/runtime.js';
 import './features/sinnoh/battle-ui.jsx';
