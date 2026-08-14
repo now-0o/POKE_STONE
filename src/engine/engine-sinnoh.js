@@ -10,6 +10,26 @@ function pushLog(game, message) {
   }
 }
 
+function syncBattleTurnVisual(game) {
+  if (typeof document === "undefined") return;
+
+  const turn = game?.turn;
+
+  if (turn === "player" || turn === "enemy") {
+    document.body.dataset.battleTurn = turn;
+  } else {
+    delete document.body.dataset.battleTurn;
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("battle-turn-change", {
+        detail: { turn: turn || null },
+      }),
+    );
+  }
+}
+
 function syncMayleneComboVisual(game) {
   if (typeof document === "undefined") return;
 
@@ -196,6 +216,7 @@ export function createGame(playerDeckIds, trainer) {
     setWakeFloodVisual(0);
   }
 
+  syncBattleTurnVisual(game);
   return game;
 }
 
@@ -210,6 +231,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   }
 
   resetMayleneComboIfNeeded(game, enemyBefore);
+  syncBattleTurnVisual(game);
   return result;
 }
 
@@ -247,7 +269,10 @@ export function attack(game, side, attackerUid, target) {
   }
 
   const result = base.attack(game, side, attackerUid, target);
-  if (!result) return false;
+  if (!result) {
+    syncBattleTurnVisual(game);
+    return false;
+  }
 
   const totalBonus = comboBonus + lucarioBonus + floatzelBonus;
   const dealtBonus = applyAttackBonus(
@@ -287,6 +312,7 @@ export function attack(game, side, attackerUid, target) {
   }
 
   resetMayleneComboIfNeeded(game, enemyBefore);
+  syncBattleTurnVisual(game);
   return true;
 }
 
@@ -311,6 +337,7 @@ export function endTurn(game) {
     advanceWakeFlood(game);
   }
 
+  syncBattleTurnVisual(game);
   return result;
 }
 
@@ -318,5 +345,6 @@ export function cleanupDeaths(game, ...args) {
   const enemyBefore = enemyUnitIds(game);
   const result = base.cleanupDeaths(game, ...args);
   resetMayleneComboIfNeeded(game, enemyBefore);
+  syncBattleTurnVisual(game);
   return result;
 }
