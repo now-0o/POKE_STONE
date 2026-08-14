@@ -5,7 +5,9 @@ import './styles.css';
 import './deck-editor-scroll.css';
 import './battle-enhancements.css';
 import './screen-transitions.css';
+import './region-carousel.css';
 import './battle-enhancements.jsx';
+import './region-carousel.js';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
