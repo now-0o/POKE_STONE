@@ -23,9 +23,10 @@
   animation: game-intro-enter 0.32s cubic-bezier(0.2, 0.82, 0.24, 1) both;
 }
 
-/* 코인토스가 끝나고 실제 배틀판이 나타날 때 */
+/* 코인토스가 끝나고 실제 배틀판이 나타날 때.
+   종료 후 transform/filter를 점유하지 않아 피격 화면 흔들림과 충돌하지 않는다. */
 .battle.battle-board {
-  animation: game-battle-enter 0.42s cubic-bezier(0.16, 0.86, 0.24, 1) both;
+  animation: game-battle-enter 0.42s cubic-bezier(0.16, 0.86, 0.24, 1) backwards;
 }
 
 /* 메인 -> 지방 내부 트레이너 목록: 오른쪽에서 들어오는 느낌 */
