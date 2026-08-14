@@ -1,0 +1,43 @@
+/* 배틀은 앱 안전 여백을 상쇄하고 뷰포트를 정확히 채운다. */
+.battle.battle-board {
+  margin-top: -12px;
+  margin-bottom: -12px;
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+/* VS / 코인토스는 문서 레이아웃과 분리해 스크롤 점멸을 막는다. */
+.battle-intro {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 500;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+html.battle-page-locked,
+body.battle-page-locked {
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  scrollbar-gutter: auto !important;
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .battle.battle-board {
+    margin-top: -6px;
+    margin-bottom: -6px;
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
