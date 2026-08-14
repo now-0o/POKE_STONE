@@ -1,5 +1,6 @@
 const GHOST_HP = 3;
 const DRAIN_MAX_STACKS = 3;
+const SPIRIT_PRESSURE_MAX = 2;
 
 function pushLog(game, message) {
   game.log.push(message);
@@ -13,6 +14,7 @@ export function isFantinaBattle(game) {
 export function initFantinaBattle(game) {
   if (!isFantinaBattle(game)) return;
   game._fantinaGhostSeq = 0;
+  game._fantinaManaPenalty = 0;
 }
 
 export function captureFantinaPlayerField(game) {
@@ -107,6 +109,33 @@ export function fantinaGhostUids(game) {
   return game.players.player.field
     .filter((unit) => unit._fantinaGhost)
     .map((unit) => unit.uid);
+}
+
+export function applyFantinaSpiritPressure(game) {
+  if (!isFantinaBattle(game) || game.turn !== "player") return 0;
+
+  const player = game.players.player;
+  const ghostCount = player.field.filter(
+    (unit) => unit._fantinaGhost && unit.hp > 0,
+  ).length;
+  const penalty = Math.min(SPIRIT_PRESSURE_MAX, ghostCount);
+
+  game._fantinaManaPenalty = penalty;
+
+  if (penalty <= 0) return 0;
+
+  const beforeMana = player.mana;
+  player.mana = Math.max(0, player.mana - penalty);
+  const drained = beforeMana - player.mana;
+
+  if (drained > 0) {
+    pushLog(
+      game,
+      `영혼의 압박! 유령 ${ghostCount}마리가 기력을 빼앗아 이번 턴 사용 가능 마나가 ${drained} 감소했다. (${player.mana}/${player.maxMana})`,
+    );
+  }
+
+  return drained;
 }
 
 function playGhostVanishAnimation(uid) {
