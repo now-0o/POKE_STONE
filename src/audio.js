@@ -1,7 +1,7 @@
 // ============================================================
 // 오디오 매니저: BGM(화면별 전환+루프+크로스페이드) + 효과음(중첩 재생 가능)
 //
-// 설계 메모: BGM은 화면 전환마다 새 Audio 객체를 만들지 않고, 4개 트랙을
+// 설계 메모: BGM은 화면 전환마다 새 Audio 객체를 만들지 않고, 트랙을
 // 모듈 로드 시점에 한 번만 만들어서 재사용한다.
 //
 // 자동재생 복구는 'click' 이벤트 기준으로 한다 - 'pointerdown'은 브라우저가
@@ -21,8 +21,12 @@ const BGM_FILES = {
   kanto: "/audio/bgm/kanto.mp3",
   johto: "/audio/bgm/johto.mp3",
   hoenn: "/audio/bgm/hoenn.mp3",
+  sinnoh: "/audio/bgm/sinnoh.mp3",
   red_lance: "/audio/bgm/red_lance.mp3",
   steven: "/audio/bgm/steven.mp3",
+
+  // 신오 챔피언 난천 전용. 난천 트레이너 구현 전에는 선택되지 않는다.
+  cynthia: "/audio/bgm/cynthia.mp3",
 };
 
 const SFX_FILES = {
