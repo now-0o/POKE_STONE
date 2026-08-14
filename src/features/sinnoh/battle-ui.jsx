@@ -38,6 +38,24 @@ const GIMMICK_GUIDES = {
     ],
     hint: "힌트: 장기전으로 갈수록 필드 전개가 불리해집니다. 수위가 오르기 전에 빠르게 주도권을 잡으세요.",
   },
+  haunted_echoes: {
+    fieldName: "숲의 양옥집",
+    lines: [
+      "플레이어 포켓몬이 기절하면 HP 2의 유령으로 필드에 잠시 남습니다.",
+      "유령은 공격하거나 진화할 수 없고 필드 한 칸을 계속 차지합니다.",
+      "유령은 플레이어 턴을 2번 버티면 자연스럽게 사라집니다.",
+    ],
+    hint: "힌트: 멜리사의 시그니처 포켓몬이 유령을 직접 마무리하면 점점 강해집니다. 유령이 쌓이기 전에 전투 흐름을 잡으세요.",
+  },
+  foundry_armor: {
+    fieldName: "골풀무제철소",
+    lines: [
+      "동관의 모든 포켓몬은 방어도 3을 가진 상태로 등장합니다.",
+      "방어도는 HP보다 먼저 피해를 흡수하며, 각 포켓몬 위의 방패 숫자로 남은 수치를 확인할 수 있습니다.",
+      "동관의 시그니처 포켓몬은 자신의 턴 종료 시 방어도를 1 회복합니다. 최대 방어도는 3입니다.",
+    ],
+    hint: "힌트: 시그니처 포켓몬의 방어도를 공격으로 완전히 깨면 메탈버스트가 게임당 1회 발동해 공격자에게 피해 3을 되돌립니다.",
+  },
 };
 
 function GimmickHelp({ trainer }) {
@@ -195,11 +213,31 @@ function ensureEnhancementRoot() {
   return enhancementRoot;
 }
 
+function syncByronArmorDom() {
+  const armors = window.__pokeSinnohArmor || {};
+
+  document
+    .querySelectorAll(".battle.battle-board .field-unit[data-uid]")
+    .forEach((element) => {
+      const uid = element.dataset.uid;
+      if (Object.prototype.hasOwnProperty.call(armors, uid)) {
+        element.dataset.sinnohArmor = String(armors[uid]);
+      } else {
+        delete element.dataset.sinnohArmor;
+      }
+    });
+}
+
 function clearSinnohBattleState() {
   activeTrainerId = null;
   delete document.body.dataset.battlefield;
   delete document.body.dataset.wakeFlood;
   delete document.body.dataset.mayleneCombo;
+
+  document
+    .querySelectorAll(".field-unit[data-sinnoh-armor]")
+    .forEach((element) => delete element.dataset.sinnohArmor);
+
   enhancementRoot?.render(null);
 }
 
@@ -225,6 +263,8 @@ function syncSinnohBattleUi() {
   if (trainer?.gimmick !== "rising_tide") delete document.body.dataset.wakeFlood;
   if (trainer?.gimmick !== "dojo_combo") delete document.body.dataset.mayleneCombo;
 
+  syncByronArmorDom();
+
   if (activeTrainerId === trainerId) return;
 
   activeTrainerId = trainerId;
@@ -238,6 +278,7 @@ function startSinnohBattleUi() {
   }
 
   syncSinnohBattleUi();
+  window.addEventListener("byron-armor-change", syncByronArmorDom);
 
   const observer = new MutationObserver(syncSinnohBattleUi);
   observer.observe(document.body, { childList: true, subtree: true });
