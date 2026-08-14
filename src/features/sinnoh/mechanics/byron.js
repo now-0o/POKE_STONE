@@ -1,5 +1,5 @@
-const MAX_ARMOR = 3;
-const METAL_BURST_DAMAGE = 3;
+const MAX_ARMOR = 2;
+const METAL_BURST_DAMAGE = 1;
 
 function pushLog(game, message) {
   game.log.push(message);
@@ -96,10 +96,7 @@ export function handleByronMetalBurst(game, attacker, target, armorBefore) {
   if (!isByronBattle(game)) return false;
   if (!attacker || attacker.side !== "player") return false;
   if (!target || target.ability !== "byron_ironwall") return false;
-  if (game._byronMetalBurstUsed) return false;
   if (armorBefore <= 0 || getByronArmor(target) > 0) return false;
-
-  game._byronMetalBurstUsed = true;
 
   const beforeHp = attacker.hp;
   attacker.hp -= METAL_BURST_DAMAGE;
@@ -139,7 +136,6 @@ export function initByronBattle(game) {
     return;
   }
 
-  game._byronMetalBurstUsed = false;
   ensureByronArmor(game);
 }
 
