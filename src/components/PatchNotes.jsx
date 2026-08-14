@@ -1,9 +1,6 @@
 import React, { useState } from "react";
-import { PATCH_NOTES } from "../patchNotes.js";
-import { PATCH_NOTE_V27 } from "../patchNotes-v27.js";
+import { ALL_PATCH_NOTES } from "../features/patch-notes/index.js";
 import { playSfx } from "../audio.js";
-
-const ALL_PATCH_NOTES = [PATCH_NOTE_V27, ...PATCH_NOTES];
 
 export default function PatchNotes() {
   const [open, setOpen] = useState(false);
@@ -44,8 +41,8 @@ export default function PatchNotes() {
                   <span className="patchnotes-date">{entry.date}</span>
                 </div>
                 <ul>
-                  {entry.changes.map((c, i) => (
-                    <li key={i}>{c}</li>
+                  {entry.changes.map((change, index) => (
+                    <li key={index}>{change}</li>
                   ))}
                 </ul>
               </div>
