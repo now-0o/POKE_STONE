@@ -6,7 +6,6 @@ import {
   PACKS,
   CARDS,
   CARD_MAP,
-  STARTER_DECK,
   DEX,
   PACK_PRICE,
   PACK_SIZE,
@@ -14,6 +13,7 @@ import {
   RARITY_REFUND,
   MAX_COPIES,
 } from "../data/cards.js";
+import { STARTER_DECK } from "../data/starterDeck.js";
 
 const SAVE_KEY = "pkm_stone_v1";
 export const LOSE_REWARD = 30;
