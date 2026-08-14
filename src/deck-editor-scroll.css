@@ -1,0 +1,49 @@
+/* 덱 편집 전용 스크롤 영역 보정 */
+.deck-editor .collection-pane {
+  /* 카드 코스트 배지/호버 확대가 스크롤 경계에 잘리지 않도록 안전 여백 확보 */
+  padding: 14px 10px 18px 16px;
+  scrollbar-gutter: stable;
+}
+
+.deck-editor .deck-card-list {
+  /* 우측 리스트도 스크롤바가 내용 위에 겹치지 않도록 공간 고정 */
+  scrollbar-gutter: stable;
+}
+
+/* Firefox: 트랙은 배경과 섞이게 투명, thumb만 표시 */
+.deck-editor .collection-pane,
+.deck-editor .deck-card-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(238, 240, 246, 0.36) transparent;
+}
+
+/* Chromium / Safari */
+.deck-editor .collection-pane::-webkit-scrollbar,
+.deck-editor .deck-card-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.deck-editor .collection-pane::-webkit-scrollbar-track,
+.deck-editor .deck-card-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.deck-editor .collection-pane::-webkit-scrollbar-thumb,
+.deck-editor .deck-card-list::-webkit-scrollbar-thumb {
+  background: rgba(238, 240, 246, 0.36);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.deck-editor .collection-pane::-webkit-scrollbar-thumb:hover,
+.deck-editor .deck-card-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(238, 240, 246, 0.55);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.deck-editor .collection-pane::-webkit-scrollbar-corner,
+.deck-editor .deck-card-list::-webkit-scrollbar-corner {
+  background: transparent;
+}
