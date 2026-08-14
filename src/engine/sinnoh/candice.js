@@ -1,5 +1,6 @@
-const MAX_COLD = 3;
-const BLIZZARD_DAMAGE = 1;
+const BASE_WHITEOUT_TARGETS = 2;
+const SNOW_WARNING_TARGETS = 3;
+const WHITEOUT_BONUS_DAMAGE = 2;
 
 function pushLog(game, message) {
   game.log.push(message);
@@ -7,141 +8,139 @@ function pushLog(game, message) {
 }
 
 export function isCandiceBattle(game) {
-  return game?.trainer?.gimmick === "diamond_dust";
+  return game?.trainer?.gimmick === "whiteout";
 }
 
-export function getCandiceCold(game) {
-  return isCandiceBattle(game) ? Math.max(0, game._candiceCold || 0) : 0;
+function hasCandiceAbomasnow(game) {
+  return game.players.enemy.field.some(
+    (unit) => unit.hp > 0 && unit.ability === "candice_snow_warning",
+  );
+}
+
+function shuffled(values) {
+  const copy = [...values];
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+
+  return copy;
+}
+
+function activeWhiteoutUids(game) {
+  if (!isCandiceBattle(game)) return [];
+
+  const alive = new Set(
+    game.players.player.field
+      .filter((unit) => unit.hp > 0)
+      .map((unit) => unit.uid),
+  );
+
+  const current = Array.isArray(game._candiceWhiteoutUids)
+    ? game._candiceWhiteoutUids
+    : [];
+
+  return current.filter((uid) => alive.has(uid));
 }
 
 export function syncCandiceVisual(game) {
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
   const active = isCandiceBattle(game);
-  const cold = active ? getCandiceCold(game) : 0;
-  const warm = active && game._candiceWarmThisTurn === true;
+  const uids = active ? activeWhiteoutUids(game) : [];
+  const targets = Object.fromEntries(uids.map((uid) => [uid, true]));
+  const boosted = active && hasCandiceAbomasnow(game);
 
   if (active) {
-    document.body.dataset.candiceCold = String(cold);
-    if (warm) document.body.dataset.candiceWarm = "1";
-    else delete document.body.dataset.candiceWarm;
+    document.body.dataset.candiceWhiteoutCount = String(uids.length);
+    document.body.dataset.candiceSnowWarning = boosted ? "1" : "0";
   } else {
-    delete document.body.dataset.candiceCold;
-    delete document.body.dataset.candiceWarm;
+    delete document.body.dataset.candiceWhiteoutCount;
+    delete document.body.dataset.candiceSnowWarning;
   }
 
+  window.__pokeCandiceWhiteout = targets;
   window.dispatchEvent(
-    new CustomEvent("candice-cold-change", {
-      detail: { active, cold, warm },
+    new CustomEvent("candice-whiteout-change", {
+      detail: { active, uids, boosted },
     }),
   );
 }
 
+export function beginCandicePlayerTurn(game) {
+  if (!isCandiceBattle(game) || game.winner || game.turn !== "player") {
+    return false;
+  }
+
+  const playerUnits = game.players.player.field.filter((unit) => unit.hp > 0);
+  const targetCount = hasCandiceAbomasnow(game)
+    ? SNOW_WARNING_TARGETS
+    : BASE_WHITEOUT_TARGETS;
+  const selected = shuffled(playerUnits)
+    .slice(0, Math.min(targetCount, playerUnits.length))
+    .map((unit) => unit.uid);
+  const selectedSet = new Set(selected);
+
+  game._candiceWhiteoutUids = selected;
+  game.players.player.field.forEach((unit) => {
+    const affected = selectedSet.has(unit.uid);
+    unit._candiceWhiteout = affected;
+    if (affected) unit.canAttack = false;
+  });
+
+  if (selected.length > 0) {
+    pushLog(
+      game,
+      `화이트아웃! 플레이어 필드 ${selected.length}곳이 눈보라 지역이 되어 이번 턴 공격할 수 없다!`,
+    );
+  } else {
+    pushLog(game, "화이트아웃이 휘몰아쳤지만 얼어붙을 포켓몬이 없다.");
+  }
+
+  if (targetCount === SNOW_WARNING_TARGETS) {
+    pushLog(
+      game,
+      "무청의 눈설왕이 눈퍼뜨리기를 유지해 화이트아웃 범위가 3곳으로 넓어졌다!",
+    );
+  }
+
+  syncCandiceVisual(game);
+  return selected.length > 0;
+}
+
 export function initCandiceBattle(game) {
+  game._candiceWhiteoutUids = [];
+
   if (!isCandiceBattle(game)) {
     syncCandiceVisual(game);
     return;
   }
 
-  game._candiceCold = 0;
-  game._candiceWarmThisTurn = false;
-  syncCandiceVisual(game);
-}
-
-export function markCandiceFireAction(game, side, source) {
-  if (!isCandiceBattle(game) || side !== "player") return false;
-
-  const isFireAction = source?.moveType === "불꽃" || source?.type === "불꽃";
-  if (!isFireAction) return false;
-
-  game._candiceWarmThisTurn = true;
-  syncCandiceVisual(game);
-  return true;
-}
-
-export function getCandiceSignatureBonus(game, attacker) {
-  if (!isCandiceBattle(game)) return 0;
-  if (!attacker || attacker.side !== "enemy") return 0;
-  if (attacker.ability !== "candice_snowveil") return 0;
-  return getCandiceCold(game) >= 2 ? 2 : 0;
-}
-
-function makeBlizzardImpact(side, targetUid, amount) {
-  return {
-    type: "damage",
-    side,
-    targetUid,
-    amount,
-  };
-}
-
-export function resolveCandicePlayerTurnEnd(game) {
-  if (!isCandiceBattle(game) || game.winner) return false;
-
-  const warmed = game._candiceWarmThisTurn === true;
-  game._candiceWarmThisTurn = false;
-
-  if (warmed) {
-    const before = getCandiceCold(game);
-    game._candiceCold = Math.max(0, before - 1);
-
-    pushLog(
-      game,
-      before > 0
-        ? `불꽃의 열기가 다이아몬드 더스트를 녹였다! 냉기 ${before} → ${game._candiceCold}.`
-        : "불꽃의 열기가 눈보라의 냉기를 막아냈다!",
-    );
-
-    syncCandiceVisual(game);
-    return false;
-  }
-
-  game._candiceCold = Math.min(MAX_COLD, getCandiceCold(game) + 1);
-
-  if (game._candiceCold < MAX_COLD) {
-    pushLog(
-      game,
-      `다이아몬드 더스트의 냉기가 짙어진다! (${game._candiceCold}/${MAX_COLD})`,
-    );
-    syncCandiceVisual(game);
-    return false;
-  }
-
-  const player = game.players.player;
-  const impacts = [];
-
-  const heroBefore = player.hp;
-  player.hp = Math.max(0, player.hp - BLIZZARD_DAMAGE);
-  const heroDamage = Math.max(0, heroBefore - player.hp);
-  if (heroDamage > 0) {
-    impacts.push(makeBlizzardImpact("player", "hero", heroDamage));
-  }
-
-  player.field.forEach((unit) => {
-    if (unit.hp <= 0) return;
-    const before = unit.hp;
-    unit.hp -= BLIZZARD_DAMAGE;
-    const dealt = Math.max(0, before - unit.hp);
-    if (dealt > 0) {
-      impacts.push(makeBlizzardImpact("player", unit.uid, dealt));
-    }
+  game.players.player.field.forEach((unit) => {
+    unit._candiceWhiteout = false;
   });
 
-  game._candiceCold = 0;
-  game.animSeq = (game.animSeq || 0) + 1;
-  game.lastAction = {
-    seq: game.animSeq,
-    kind: "ability",
-    side: "enemy",
-    cardId: "sinnoh_candice_froslass",
-    impacts,
-  };
+  if (game.turn === "player") {
+    beginCandicePlayerTurn(game);
+  } else {
+    syncCandiceVisual(game);
+  }
+}
 
-  pushLog(
-    game,
-    `다이아몬드 더스트가 눈보라로 폭발했다! 플레이어와 필드 전체에 피해 ${BLIZZARD_DAMAGE}!`,
-  );
+export function isCandiceWhiteoutUnit(game, side, unitUid) {
+  if (!isCandiceBattle(game) || side !== "player") return false;
+  return activeWhiteoutUids(game).includes(unitUid);
+}
 
-  syncCandiceVisual(game);
-  return true;
+export function getCandiceWhiteoutAttackBonus(game, attacker, target) {
+  if (!isCandiceBattle(game)) return 0;
+  if (!attacker || attacker.side !== "enemy" || attacker.type !== "얼음") {
+    return 0;
+  }
+  if (!target || target.side !== "player" || target.hp <= 0) return 0;
+
+  return isCandiceWhiteoutUnit(game, "player", target.uid)
+    ? WHITEOUT_BONUS_DAMAGE
+    : 0;
 }
