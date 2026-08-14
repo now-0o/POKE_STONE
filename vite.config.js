@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const sinnohEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/engine-sinnoh.js',
+  'src/features/sinnoh/engine.js',
 );
 
 export default defineConfig({
@@ -13,7 +13,9 @@ export default defineConfig({
       name: 'poke-stone-sinnoh-engine-wrapper',
       enforce: 'pre',
       resolveId(source, importer) {
-        if (!importer || importer.endsWith('/engine-sinnoh.js')) {
+        const importerPath = importer?.split('?')[0];
+
+        if (!importerPath || importerPath === sinnohEngineWrapper) {
           return null;
         }
 
