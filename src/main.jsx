@@ -10,6 +10,7 @@ import './ui-hotfixes.css';
 import './sinnoh-expansion.css';
 import './sinnoh-expansion.js';
 import './battle-enhancements.jsx';
+import './battle-turn-label-fix.js';
 import './region-carousel.js';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
