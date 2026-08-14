@@ -1,0 +1,140 @@
+/* ============================================================
+   전체 화면 전환 + 배틀 뷰포트 보정
+   ============================================================ */
+
+/* 배틀은 위/아래 앱 패딩을 모두 상쇄하고 뷰포트를 정확히 가득 채운다. */
+.battle.battle-board {
+  margin-top: -12px;
+  margin-bottom: -12px;
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+/* 화면 단위 진입 전환 */
+.main-menu,
+.pack-shop,
+.deck-editor {
+  animation: game-screen-enter 0.34s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+  transform-origin: 50% 50%;
+}
+
+/* VS 화면도 별도 화면처럼 자연스럽게 등장 */
+.battle-intro {
+  animation: game-intro-enter 0.32s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+}
+
+/* 코인토스가 끝나고 실제 배틀판이 나타날 때 */
+.battle.battle-board {
+  animation: game-battle-enter 0.42s cubic-bezier(0.16, 0.86, 0.24, 1) both;
+}
+
+/* 메인 -> 지방 내부 트레이너 목록: 오른쪽에서 들어오는 느낌 */
+.main-menu .trainer-region-header {
+  animation: game-region-forward 0.3s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+}
+
+.main-menu .trainer-list {
+  animation: game-region-forward 0.34s cubic-bezier(0.2, 0.82, 0.24, 1) 0.035s both;
+}
+
+/* 트레이너 목록 -> 지방 선택: 반대 방향으로 복귀 */
+.main-menu .region-title {
+  animation: game-region-back 0.28s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+}
+
+.main-menu .region-select {
+  animation: game-region-back 0.33s cubic-bezier(0.2, 0.82, 0.24, 1) 0.025s both;
+}
+
+@keyframes game-screen-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    filter: blur(2.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes game-intro-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.025);
+    filter: blur(3px) brightness(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes game-battle-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(1.018);
+    filter: blur(5px) brightness(0.7);
+  }
+  58% {
+    opacity: 1;
+    filter: blur(0.8px) brightness(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes game-region-forward {
+  from {
+    opacity: 0;
+    transform: translateX(34px) scale(0.99);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes game-region-back {
+  from {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.99);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* 짧은 가로모드에서는 앱 기본 여백이 6px이므로 동일하게 상쇄 */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .battle.battle-board {
+    margin-top: -6px;
+    margin-bottom: -6px;
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-menu,
+  .pack-shop,
+  .deck-editor,
+  .battle-intro,
+  .battle.battle-board,
+  .main-menu .trainer-region-header,
+  .main-menu .trainer-list,
+  .main-menu .region-title,
+  .main-menu .region-select {
+    animation: none !important;
+  }
+}
