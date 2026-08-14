@@ -31,6 +31,16 @@ function getBattleBgmKey(trainer) {
     return "youngster";
   }
 
+  // 난천 - 신오 챔피언 전용 BGM
+  // 실제 난천 트레이너가 추가되면 이 분기에서 자동으로 전용곡을 사용한다.
+  if (
+    trainer.id === "sinnoh_cynthia" ||
+    trainer.sprite === "cynthia" ||
+    trainer.name?.includes("난천")
+  ) {
+    return "cynthia";
+  }
+
   // 성호
   if (
     trainer.sprite === "steven" ||
@@ -47,6 +57,14 @@ function getBattleBgmKey(trainer) {
     trainer.id === "johto_lance"
   ) {
     return "red_lance";
+  }
+
+  // 신오 트레이너 배틀은 공통 신오 BGM
+  if (
+    trainer.region === "sinnoh" ||
+    trainer.id?.startsWith("sinnoh_")
+  ) {
+    return "sinnoh";
   }
 
   // 체육관 관장
