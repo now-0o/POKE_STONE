@@ -64,22 +64,22 @@ const SINNOH_TRAINER_CARDS = [
     trainerOnly: true,
   },
   {
-    id: "sinnoh_candice_froslass",
-    name: "무청의 눈여아",
+    id: "sinnoh_candice_abomasnow",
+    name: "무청의 눈설왕",
     kind: "pokemon",
     type: "얼음",
     cost: 5,
     atk: 6,
-    hp: 7,
+    hp: 9,
     rarity: "L",
     stage: 0,
-    ability: "candice_snowveil",
+    ability: "candice_snow_warning",
     signature: true,
     trainerOnly: true,
   },
   {
-    id: "sinnoh_volkner_electivire",
-    name: "전진의 에레키블",
+    id: "sinnoh_volkner_luxray",
+    name: "전진의 렌트라",
     kind: "pokemon",
     type: "전기",
     cost: 5,
@@ -87,7 +87,7 @@ const SINNOH_TRAINER_CARDS = [
     hp: 8,
     rarity: "L",
     stage: 0,
-    ability: "volkner_overdrive",
+    ability: "volkner_charge",
     signature: true,
     trainerOnly: true,
   },
@@ -104,8 +104,8 @@ Object.assign(DEX, {
   sinnoh_wake_floatzel: 419,
   sinnoh_fantina_mismagius: 429,
   sinnoh_byron_bastiodon: 411,
-  sinnoh_candice_froslass: 478,
-  sinnoh_volkner_electivire: 466,
+  sinnoh_candice_abomasnow: 460,
+  sinnoh_volkner_luxray: 405,
 });
 
 Object.assign(ABILITY_TEXT, {
@@ -119,8 +119,8 @@ Object.assign(ABILITY_TEXT, {
     "철벽: 방어도 2로 등장한다. 자신의 턴 종료 시 방어도 +1(최대 2). 방어도가 공격으로 완전히 파괴될 때마다 메탈버스트로 공격자에게 피해 1.",
   byron_sturdy:
     "옹골참: 방어도와 체력을 합친 총내구가 한 번에 모두 소진될 때 체력 1을 남기고 버틴다.",
-  candice_snowveil:
-    "설녀의 장막: 즉시 공격. 다이아몬드 더스트의 냉기가 2 이상이면 공격 피해 +2.",
-  volkner_overdrive:
-    "오버드라이브: 즉시 공격. 전력망 과부하가 발생할 때마다 공격력 +1. 최대 3회.",
+  candice_snow_warning:
+    "눈퍼뜨리기: 이 포켓몬이 살아 있는 동안 매 플레이어 턴 화이트아웃 대상이 2곳에서 3곳으로 증가한다.",
+  volkner_charge:
+    "충전: 전진의 턴 종료 시 마나가 2 이상 남아 있다면 +1/+1을 얻는다. 최대 3회.",
 });
