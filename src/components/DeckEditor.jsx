@@ -382,7 +382,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     if (
       !save.adminMode &&
       isLegendaryPokemon(card) &&
-      legendaryCount >= MAX_LEGENDARY_POKEMON
+      legendaryPokemonCount >= MAX_LEGENDARY_POKEMON
     ) {
       playSfx("buzzer");
       return;
@@ -634,7 +634,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                       save.deck.length < 30 &&
                       (save.adminMode ||
                         !isLegendaryPokemon(card) ||
-                        legendaryCount < MAX_LEGENDARY_POKEMON)
+                        legendaryPokemonCount < MAX_LEGENDARY_POKEMON)
                     }
                     onClick={() => addToDeck(card.id)}
                     onPointerDown={press({ cardId: card.id })}
