@@ -325,3 +325,45 @@ for (const trainer of EXTRA_SINNOH_TRAINERS) {
   TRAINERS.push(trainer);
   TRAINER_MAP[trainer.id] = trainer;
 }
+
+// 신오는 호연처럼 HP/AI 수치를 계속 올리는 대신,
+// 기존 체육관 기믹이 안정적으로 작동하도록 덱의 질만 한 단계 보정한다.
+// 각 교체는 1:1이므로 덱 장수는 그대로 30장을 유지한다.
+const SINNOH_DECK_UPGRADES = {
+  sinnoh_roark: [
+    ["pokeball", "hyperball"],
+    ["sandstorm", "fullrestore"],
+  ],
+  sinnoh_gardenia: [
+    ["pokeball", "hyperball"],
+    ["pokeball", "fullrestore"],
+    ["cherrim", "lifeorb"],
+  ],
+  sinnoh_maylene: [
+    ["superball", "hyperball"],
+    ["quickattack", "lifeorb"],
+    ["hitmontop", "focussash"],
+  ],
+  sinnoh_wake: [
+    ["quagsire", "hyperball"],
+    ["golduck", "fullrestore"],
+  ],
+  sinnoh_fantina: [
+    ["superball", "hyperball"],
+    ["darkpulse", "fullrestore"],
+  ],
+  sinnoh_byron: [
+    ["superball", "fullrestore"],
+    ["ironhead", "focussash"],
+  ],
+};
+
+for (const [trainerId, replacements] of Object.entries(SINNOH_DECK_UPGRADES)) {
+  const trainer = TRAINER_MAP[trainerId];
+  if (!trainer?.deck) continue;
+
+  replacements.forEach(([fromCardId, toCardId]) => {
+    const index = trainer.deck.indexOf(fromCardId);
+    if (index !== -1) trainer.deck[index] = toCardId;
+  });
+}
