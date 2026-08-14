@@ -4,7 +4,6 @@ import {
   ageFantinaGhosts,
   captureFantinaPlayerField,
   fantinaGhostUids,
-  handleFantinaDrain,
   initFantinaBattle,
   normalizeFantinaGhosts,
   spawnFantinaGhostsFromDeaths,
@@ -65,6 +64,62 @@ function syncMayleneComboVisual(game) {
       }),
     );
   }
+}
+
+function isFantinaEnemyAction(game, side) {
+  return game?.trainer?.gimmick === "haunted_echoes" && side === "enemy";
+}
+
+function isFantinaGhost(unit) {
+  return Boolean(unit?._fantinaGhost);
+}
+
+export function validAttackTargets(game, side, attackerUid) {
+  const targets = base.validAttackTargets(game, side, attackerUid);
+
+  if (!isFantinaEnemyAction(game, side)) {
+    return targets;
+  }
+
+  return {
+    ...targets,
+    units: targets.units.filter((unit) => !isFantinaGhost(unit)),
+  };
+}
+
+function redirectFantinaGhostTarget(
+  game,
+  side,
+  target,
+  { attackerUid = null, cardId = null } = {},
+) {
+  if (!isFantinaEnemyAction(game, side) || !target || target.uid === "hero") {
+    return target;
+  }
+
+  const selected = game.players.player.field.find((unit) => unit.uid === target.uid);
+  if (!isFantinaGhost(selected)) {
+    return target;
+  }
+
+  if (attackerUid) {
+    const legal = validAttackTargets(game, side, attackerUid);
+
+    if (legal.hero) return { uid: "hero" };
+    if (legal.units.length > 0) return { uid: legal.units[0].uid };
+    return null;
+  }
+
+  const card = cardId ? CARD_MAP[cardId] : null;
+  const nonGhost = game.players.player.field.find(
+    (unit) => unit.hp > 0 && !isFantinaGhost(unit),
+  );
+
+  if (card?.spell?.target === "enemy-any") {
+    return { uid: "hero" };
+  }
+
+  return nonGhost ? { uid: nonGhost.uid } : null;
 }
 
 function enemyUnitIds(game) {
@@ -238,7 +293,8 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   const enemyBefore = enemyUnitIds(game);
   const fantinaBefore = captureFantinaPlayerField(game);
   const cardId = game.players[side].hand[handIdx]?.cardId || null;
-  const result = base.playCard(game, side, handIdx, target, fieldIndex);
+  const resolvedTarget = redirectFantinaGhostTarget(game, side, target, { cardId });
+  const result = base.playCard(game, side, handIdx, resolvedTarget, fieldIndex);
 
   if (result && cardId) enableSignatureRush(game, side, cardId);
 
@@ -249,16 +305,29 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 }
 
 export function attack(game, side, attackerUid, target) {
+  const resolvedTarget = redirectFantinaGhostTarget(game, side, target, {
+    attackerUid,
+  });
+
+  if (!resolvedTarget) {
+    syncSinnohMechanics(game);
+    return false;
+  }
+
   const enemyBefore = enemyUnitIds(game);
   const fantinaBefore = captureFantinaPlayerField(game);
   const attacker = game.players[side].field.find((unit) => unit.uid === attackerUid);
   const targetSide = base.other(side);
   const targetRef =
-    target.uid === "hero"
+    resolvedTarget.uid === "hero"
       ? null
-      : game.players[targetSide].field.find((unit) => unit.uid === target.uid) || null;
+      : game.players[targetSide].field.find(
+          (unit) => unit.uid === resolvedTarget.uid,
+        ) || null;
   const beforeHp =
-    target.uid === "hero" ? game.players[targetSide].hp : targetRef?.hp ?? null;
+    resolvedTarget.uid === "hero"
+      ? game.players[targetSide].hp
+      : targetRef?.hp ?? null;
   const armorBefore = getByronArmor(targetRef);
 
   let comboBefore = 0;
@@ -283,14 +352,21 @@ export function attack(game, side, attackerUid, target) {
     floatzelBonus = Math.min(2, game._wakeFloodLevel || 0);
   }
 
-  const result = base.attack(game, side, attackerUid, target);
+  const result = base.attack(game, side, attackerUid, resolvedTarget);
   if (!result) {
     syncSinnohMechanics(game);
     return false;
   }
 
   const totalBonus = comboBonus + lucarioBonus + floatzelBonus;
-  applyAttackBonus(game, side, target, targetRef, beforeHp, totalBonus);
+  applyAttackBonus(
+    game,
+    side,
+    resolvedTarget,
+    targetRef,
+    beforeHp,
+    totalBonus,
+  );
 
   if (game.trainer?.gimmick === "dojo_combo" && side === "enemy") {
     game._mayleneCombo = comboBefore + 1;
@@ -314,8 +390,6 @@ export function attack(game, side, attackerUid, target) {
       `아쿠아제트! 수몰된 필드 ${floatzelBonus}칸으로 추가 피해 +${floatzelBonus}!`,
     );
   }
-
-  handleFantinaDrain(game, attacker, targetRef);
 
   if (handleByronMetalBurst(game, attacker, targetRef, armorBefore)) {
     base.cleanupDeaths(game, true);
