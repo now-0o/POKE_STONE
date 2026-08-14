@@ -4,7 +4,80 @@ import {
   TRAINER_MAP,
 } from "../trainers.js";
 
-const SINNOH_TRAINERS = [
+export const SINNOH_TRAINERS = [
+  {
+    id: "sinnoh_roark",
+    region: "sinnoh",
+    name: "무쇠시티 관장 강석",
+    sprite: "roark",
+    title: "체육관 관장",
+    emoji: "🪨",
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.9,
+    reward: 350,
+    hp: 50,
+    requires: null,
+    gymType: "바위",
+    battlefield: "oreburgh_mine",
+    gimmick: "mine_collapse",
+    signatureCard: "sinnoh_roark_rampardos",
+    introLines: [
+      "여기가 바로 무쇠시티 체육관이다!",
+      "바위처럼 단단한 승부를 보여주지!",
+    ],
+    winLines: ["무쇠탄갱에선 내가 훨씬 유리하지!"],
+    loseLines: ["굉장한데! 이 바위를 뚫고 지나가다니!"],
+    deck: [
+      "sinnoh_roark_rampardos",
+      "geodude", "geodude", "graveler", "graveler", "golem",
+      "larvitar", "larvitar", "pupitar", "pupitar", "tyranitar", "tyranitar",
+      "tyranitarite",
+      "onix", "onix",
+      "aerodactyl", "aerodactyl",
+      "cranidos", "cranidos", "rampardos",
+      "rhyhorn", "rhydon", "rhyperior",
+      "stoneedge", "stoneedge",
+      "earthquake", "earthquake",
+      "sandstorm", "fullrestore", "hyperball",
+    ],
+  },
+  {
+    id: "sinnoh_gardenia",
+    region: "sinnoh",
+    name: "영원시티 관장 유채",
+    sprite: "gardenia",
+    title: "체육관 관장",
+    emoji: "🌿",
+    aiLevel: 5,
+    stableDeck: true,
+    consistencyAssist: 0.9,
+    reward: 400,
+    hp: 52,
+    requires: "sinnoh_roark",
+    gymType: "풀",
+    battlefield: "eterna_forest",
+    gimmick: "eternal_vines",
+    signatureCard: "sinnoh_gardenia_roserade",
+    introLines: [
+      "풀 포켓몬과 함께 있으면 기분이 정말 좋아!",
+      "영원의 숲이 네 앞길을 막을 거야!",
+    ],
+    winLines: ["후후! 숲을 빠져나오지 못했네!"],
+    loseLines: ["굉장해! 네 포켓몬 정말 강하구나!"],
+    deck: [
+      "sinnoh_gardenia_roserade",
+      "budew", "budew", "roselia", "roselia", "roserade", "roserade",
+      "turtwig", "turtwig", "grotle", "grotle", "torterra",
+      "bulbasaur", "bulbasaur", "ivysaur", "ivysaur", "venusaur",
+      "venusaurite",
+      "cherubi", "cherubi", "cherrim", "lifeorb",
+      "carnivine", "carnivine",
+      "solarbeam", "solarbeam",
+      "sunnyday", "sunnyday",
+      "hyperball", "fullrestore",
+    ],
+  },
   {
     id: "sinnoh_maylene",
     region: "sinnoh",
@@ -150,33 +223,18 @@ const SINNOH_TRAINERS = [
   },
 ];
 
+// trainers.js에 남아 있는 초기 신오 정의를 런타임에서 이 모듈의 정의로 교체한다.
+// 이후 신오 트레이너 데이터의 실제 source of truth는 이 파일이다.
+TRAINERS_BY_REGION.sinnoh.splice(
+  0,
+  TRAINERS_BY_REGION.sinnoh.length,
+  ...SINNOH_TRAINERS,
+);
+
 for (const trainer of SINNOH_TRAINERS) {
-  if (TRAINER_MAP[trainer.id]) continue;
-  TRAINERS_BY_REGION.sinnoh.push(trainer);
-  TRAINERS.push(trainer);
+  const index = TRAINERS.findIndex((entry) => entry.id === trainer.id);
+  if (index === -1) TRAINERS.push(trainer);
+  else TRAINERS[index] = trainer;
+
   TRAINER_MAP[trainer.id] = trainer;
-}
-
-// 강석·유채는 기존 trainers.js에 정의되어 있으므로 여기서 덱 품질만 보정한다.
-// HP/AI는 올리지 않고 기믹이 손패 꼬임 없이 작동하도록 실전 카드 비율만 높인다.
-const BASE_SINNOH_DECK_UPGRADES = {
-  sinnoh_roark: [
-    ["pokeball", "hyperball"],
-    ["sandstorm", "fullrestore"],
-  ],
-  sinnoh_gardenia: [
-    ["pokeball", "hyperball"],
-    ["pokeball", "fullrestore"],
-    ["cherrim", "lifeorb"],
-  ],
-};
-
-for (const [trainerId, replacements] of Object.entries(BASE_SINNOH_DECK_UPGRADES)) {
-  const trainer = TRAINER_MAP[trainerId];
-  if (!trainer?.deck) continue;
-
-  replacements.forEach(([fromCardId, toCardId]) => {
-    const index = trainer.deck.indexOf(fromCardId);
-    if (index !== -1) trainer.deck[index] = toCardId;
-  });
 }
