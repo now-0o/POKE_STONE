@@ -6,6 +6,7 @@ import './deck-editor-scroll.css';
 import './battle-enhancements.css';
 import './screen-transitions.css';
 import './region-carousel.css';
+import './ui-hotfixes.css';
 import './battle-enhancements.jsx';
 import './region-carousel.js';
 
