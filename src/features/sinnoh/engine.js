@@ -2,6 +2,7 @@ import * as base from "../../engine/engine.js?base";
 import { CARD_MAP } from "../../data/cards.js";
 import {
   ageFantinaGhosts,
+  applyFantinaSpiritPressure,
   captureFantinaPlayerField,
   fantinaGhostUids,
   initFantinaBattle,
@@ -426,6 +427,10 @@ export function endTurn(game) {
 
   if (endingSide === "player") {
     ageFantinaGhosts(game, existingGhosts);
+  }
+
+  if (endingSide === "enemy" && game.turn === "player" && !game.winner) {
+    applyFantinaSpiritPressure(game);
   }
 
   if (endingSide === "enemy") {
