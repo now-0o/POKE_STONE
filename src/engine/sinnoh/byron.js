@@ -1,5 +1,7 @@
 const MAX_ARMOR = 2;
 const METAL_BURST_DAMAGE = 1;
+const BYRON_STURDY_ABILITY = "byron_sturdy";
+const BYRON_FOCUS_SASH_ITEM = "byron_focussash";
 
 function pushLog(game, message) {
   game.log.push(message);
@@ -10,7 +12,35 @@ export function isByronBattle(game) {
   return game?.trainer?.gimmick === "foundry_armor";
 }
 
-function bindArmorHp(unit) {
+function normalizeByronSurvivalTriggers(unit) {
+  // 기본 엔진의 옹골참/기합의띠는 실제 HP만 보고 치명타를 판정한다.
+  // 동관전에서는 방어도 + HP가 총내구이므로 전용 식별자로 바꾼 뒤
+  // 아래 HP setter에서 총내구 기준으로 직접 판정한다.
+  if (unit.ability === "sturdy") {
+    unit.ability = BYRON_STURDY_ABILITY;
+  }
+
+  if (unit.secondaryAbility === "sturdy") {
+    unit.secondaryAbility = BYRON_STURDY_ABILITY;
+  }
+
+  if (unit.item === "focussash") {
+    unit.item = BYRON_FOCUS_SASH_ITEM;
+  }
+}
+
+function hasByronSturdy(unit) {
+  return (
+    unit.ability === BYRON_STURDY_ABILITY ||
+    unit.secondaryAbility === BYRON_STURDY_ABILITY
+  );
+}
+
+function hasByronFocusSash(unit) {
+  return unit.item === BYRON_FOCUS_SASH_ITEM && !unit.focusSashUsed;
+}
+
+function bindArmorHp(unit, game) {
   if (unit._byronArmorBound) return;
 
   const initialHp = Math.max(0, Number(unit.hp) || 0);
@@ -35,17 +65,47 @@ function bindArmorHp(unit) {
       const currentHp = Math.max(0, Number(this._byronRealHp) || 0);
       const armorBefore = Math.max(0, Number(this._byronArmor) || 0);
 
+      // 회복과 최대 HP 증가는 실제 HP에만 적용한다.
+      // 방어도는 철벽 기믹으로만 회복된다.
       if (next >= currentHp) {
         this._byronRealHp = next;
         return;
       }
 
+      // 멸망의노래는 피해가 아니라 강제 기절 판정이다.
+      // 방어도 및 옹골참/기합의띠로 막지 않는다.
+      if (next <= 0 && this._perishCount != null && this._perishCount <= 0) {
+        this._byronArmor = 0;
+        this._byronRealHp = 0;
+        this._byronArmorAbsorbedPending = 0;
+        return;
+      }
+
+      // 방어도는 공격 횟수제가 아니라 HP 앞에 붙은 추가 내구도다.
+      // 예) 방어도 2 + HP 3에 피해 4 => 방어도 0 + HP 1.
       const incomingDamage = Math.max(0, currentHp - next);
       const totalDurabilityBefore = currentHp + armorBefore;
-      const totalDurabilityAfter = Math.max(
+      let totalDurabilityAfter = Math.max(
         0,
         totalDurabilityBefore - incomingDamage,
       );
+
+      // 옹골참과 기합의띠도 방어도를 포함한 총내구가
+      // 한 번에 전부 소진될 때만 체력 1을 남긴다.
+      const atFullHp = currentHp === Math.max(0, Number(this.maxHp) || 0);
+      let survivalMessage = null;
+
+      if (totalDurabilityAfter <= 0 && atFullHp) {
+        if (hasByronSturdy(this)) {
+          totalDurabilityAfter = 1;
+          survivalMessage = `${this.name}의 옹골참! 방어도까지 무너졌지만 체력 1을 남기고 버텼다!`;
+        } else if (hasByronFocusSash(this)) {
+          totalDurabilityAfter = 1;
+          this.focusSashUsed = true;
+          survivalMessage = `${this.name}은(는) 기합의띠로 방어도까지 무너진 공격을 버티고 체력 1이 남았다!`;
+        }
+      }
+
       const armorAfter = Math.max(0, armorBefore - incomingDamage);
       const hpAfter = Math.max(0, totalDurabilityAfter - armorAfter);
       const absorbed = Math.max(0, armorBefore - armorAfter);
@@ -54,6 +114,10 @@ function bindArmorHp(unit) {
       this._byronRealHp = hpAfter;
       this._byronArmorAbsorbedPending =
         (this._byronArmorAbsorbedPending || 0) + absorbed;
+
+      if (survivalMessage) {
+        pushLog(game, survivalMessage);
+      }
     },
   });
 }
@@ -65,7 +129,8 @@ export function ensureByronArmor(game) {
   }
 
   game.players.enemy.field.forEach((unit) => {
-    bindArmorHp(unit);
+    bindArmorHp(unit, game);
+    normalizeByronSurvivalTriggers(unit);
   });
 
   syncByronArmorVisual(game);
@@ -73,6 +138,11 @@ export function ensureByronArmor(game) {
 
 export function getByronArmor(unit) {
   return Math.max(0, unit?._byronArmor || 0);
+}
+
+export function getByronDurability(unit) {
+  const hp = Math.max(0, Number(unit?.hp) || 0);
+  return hp + getByronArmor(unit);
 }
 
 export function flushByronArmorLogs(game) {
