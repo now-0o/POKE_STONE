@@ -60,22 +60,23 @@ const GIMMICK_GUIDES = {
   whiteout: {
     fieldName: "설원",
     lines: [
-      "매 플레이어 턴 시작 시 플레이어 필드의 무작위 2곳이 눈보라 지역이 됩니다.",
-      "눈보라 지역의 포켓몬은 그 플레이어 턴에 공격할 수 없으며, 즉시 공격 효과도 무효가 됩니다.",
-      "무청의 얼음 포켓몬이 눈보라 지역의 포켓몬을 공격하면 피해가 2 증가합니다.",
-      "무청의 눈설왕이 살아 있으면 화이트아웃 대상이 2곳에서 3곳으로 증가합니다.",
+      "플레이어 필드는 처음부터 6개의 고정 슬롯으로 표시됩니다.",
+      "매 플레이어 턴 시작 시 포켓몬 유무와 관계없이 무작위 2칸이 눈보라 지역이 됩니다.",
+      "눈보라 칸의 포켓몬은 그 플레이어 턴에 공격할 수 없으며, 즉시 공격 효과도 무효가 됩니다.",
+      "무청의 얼음 포켓몬이 눈보라 칸의 포켓몬을 공격하면 피해가 2 증가합니다.",
+      "무청의 눈설왕이 살아 있으면 화이트아웃 대상이 2칸에서 3칸으로 증가합니다.",
     ],
-    hint: "힌트: 눈설왕을 오래 남겨두면 매턴 플레이어 필드 절반이 얼어붙습니다. 눈설왕을 우선 제거하세요.",
+    hint: "힌트: 빈칸도 화이트아웃 대상으로 뽑힐 수 있습니다. 눈설왕을 오래 남겨두면 매턴 필드 절반이 봉쇄되니 우선 제거하세요.",
   },
   valley_windworks: {
     fieldName: "골짜기발전소",
     lines: [
       "양쪽 모두 자신의 턴이 시작될 때 최대 마나가 2 증가하고, 증가한 최대치까지 마나를 충전합니다.",
-      "플레이어는 턴 종료 시 남은 마나만큼 전진에게 피해를 줍니다. 전진은 남은 마나 패널티를 받지 않습니다.",
-      "전진은 자신의 턴에 처음 사용하는 전기 카드의 비용이 1 감소합니다.",
+      "플레이어는 턴 종료 시 남은 마나를 2로 나눈 값의 내림만큼 본체 피해를 받습니다.",
+      "전진은 남은 마나로 피해를 받지 않으며, 자신의 턴에 처음 사용하는 전기 카드 비용이 1 감소합니다.",
       "전진의 렌트라는 전진의 턴 종료 시 마나가 2 이상 남아 있으면 +1/+1을 얻습니다. 최대 3회입니다.",
     ],
-    hint: "힌트: 플레이어는 마나를 남겨 직접 피해로 바꿀 수 있습니다. 반대로 렌트라가 있으면 전진이 마나 2를 남기기 전에 빠르게 제거하세요.",
+    hint: "힌트: 플레이어는 마나를 최대한 사용해 과부하 피해를 줄여야 합니다. 렌트라는 충전이 쌓이기 전에 빠르게 제거하세요.",
   },
 };
 
@@ -223,6 +224,7 @@ function GimmickHelp({ trainer }) {
 let enhancementRoot = null;
 let enhancementHost = null;
 let activeTrainerId = null;
+let candiceSlotOverlay = null;
 
 function ensureEnhancementRoot() {
   if (enhancementRoot) return enhancementRoot;
@@ -232,6 +234,29 @@ function ensureEnhancementRoot() {
   document.body.appendChild(enhancementHost);
   enhancementRoot = createRoot(enhancementHost);
   return enhancementRoot;
+}
+
+function ensureCandiceSlotOverlay() {
+  if (candiceSlotOverlay?.isConnected) return candiceSlotOverlay;
+
+  candiceSlotOverlay = document.createElement("div");
+  candiceSlotOverlay.className = "candice-slot-overlay";
+  candiceSlotOverlay.setAttribute("aria-hidden", "true");
+
+  for (let slot = 0; slot < 6; slot += 1) {
+    const zone = document.createElement("span");
+    zone.className = "candice-slot-zone";
+    zone.dataset.candiceSlotZone = String(slot);
+    candiceSlotOverlay.appendChild(zone);
+  }
+
+  document.body.appendChild(candiceSlotOverlay);
+  return candiceSlotOverlay;
+}
+
+function clearCandiceSlotOverlay() {
+  candiceSlotOverlay?.remove();
+  candiceSlotOverlay = null;
 }
 
 function syncByronArmorDom() {
@@ -249,16 +274,60 @@ function syncByronArmorDom() {
     });
 }
 
+function syncCandiceSlotOverlay() {
+  const active = document.body.dataset.battlefield === "snowpoint_snowfield";
+  const myField = document.querySelector(
+    '.battle.battle-board[data-battlefield="snowpoint_snowfield"] .my-field',
+  );
+
+  if (!active || !myField) {
+    document
+      .querySelectorAll('.my-field[data-candice-fixed-field="1"]')
+      .forEach((element) => delete element.dataset.candiceFixedField);
+    clearCandiceSlotOverlay();
+    return;
+  }
+
+  myField.dataset.candiceFixedField = "1";
+
+  const overlay = ensureCandiceSlotOverlay();
+  const rect = myField.getBoundingClientRect();
+  const selectedSlots = new Set(
+    Array.isArray(window.__pokeCandiceWhiteoutSlots)
+      ? window.__pokeCandiceWhiteoutSlots.map(Number)
+      : [],
+  );
+
+  overlay.style.left = `${rect.left}px`;
+  overlay.style.top = `${rect.top}px`;
+  overlay.style.width = `${rect.width}px`;
+  overlay.style.height = `${rect.height}px`;
+  overlay.style.display = rect.width > 0 && rect.height > 0 ? "grid" : "none";
+
+  overlay.querySelectorAll("[data-candice-slot-zone]").forEach((zone) => {
+    const slot = Number(zone.dataset.candiceSlotZone);
+    zone.classList.toggle("is-whiteout", selectedSlots.has(slot));
+  });
+}
+
 function syncCandiceWhiteoutDom() {
   const targets = window.__pokeCandiceWhiteout || {};
+  const slots = window.__pokeCandiceSlots || {};
 
   document
     .querySelectorAll(".battle.battle-board .field-unit[data-uid]")
     .forEach((element) => {
       const uid = element.dataset.uid;
+      const slot = slots[uid];
+
+      if (Number.isInteger(slot)) element.dataset.candiceSlot = String(slot);
+      else delete element.dataset.candiceSlot;
+
       if (targets[uid]) element.dataset.candiceWhiteout = "1";
       else delete element.dataset.candiceWhiteout;
     });
+
+  syncCandiceSlotOverlay();
 }
 
 function clearSinnohBattleState() {
@@ -267,6 +336,7 @@ function clearSinnohBattleState() {
   delete document.body.dataset.wakeFlood;
   delete document.body.dataset.mayleneCombo;
   delete document.body.dataset.candiceWhiteoutCount;
+  delete document.body.dataset.candiceWhiteoutSlots;
   delete document.body.dataset.candiceSnowWarning;
   delete document.body.dataset.volknerCharge;
   delete document.body.dataset.volknerDiscount;
@@ -276,9 +346,17 @@ function clearSinnohBattleState() {
     .forEach((element) => delete element.dataset.sinnohArmor);
 
   document
-    .querySelectorAll(".field-unit[data-candice-whiteout]")
-    .forEach((element) => delete element.dataset.candiceWhiteout);
+    .querySelectorAll(".field-unit[data-candice-whiteout], .field-unit[data-candice-slot]")
+    .forEach((element) => {
+      delete element.dataset.candiceWhiteout;
+      delete element.dataset.candiceSlot;
+    });
 
+  document
+    .querySelectorAll('.my-field[data-candice-fixed-field="1"]')
+    .forEach((element) => delete element.dataset.candiceFixedField);
+
+  clearCandiceSlotOverlay();
   enhancementRoot?.render(null);
 }
 
@@ -306,6 +384,7 @@ function syncSinnohBattleUi() {
 
   if (trainer?.gimmick !== "whiteout") {
     delete document.body.dataset.candiceWhiteoutCount;
+    delete document.body.dataset.candiceWhiteoutSlots;
     delete document.body.dataset.candiceSnowWarning;
   }
 
@@ -332,6 +411,7 @@ function startSinnohBattleUi() {
   syncSinnohBattleUi();
   window.addEventListener("byron-armor-change", syncByronArmorDom);
   window.addEventListener("candice-whiteout-change", syncCandiceWhiteoutDom);
+  window.addEventListener("resize", syncCandiceWhiteoutDom);
 
   const observer = new MutationObserver(syncSinnohBattleUi);
   observer.observe(document.body, { childList: true, subtree: true });
