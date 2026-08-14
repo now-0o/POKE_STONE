@@ -20,6 +20,24 @@ const GIMMICK_GUIDES = {
     ],
     hint: "힌트: 덩굴을 오래 방치하면 전투가 불리해집니다. 가능하면 빠르게 제거하세요.",
   },
+  dojo_combo: {
+    fieldName: "격투도장",
+    lines: [
+      "자두가 같은 턴에 공격을 이어갈수록 연속공격 콤보가 강해집니다.",
+      "첫 공격은 추가 피해가 없고, 2번째 +1 · 3번째 +2 · 4번째 이후 +3의 추가 피해를 줍니다.",
+      "자두의 포켓몬이 하나라도 기절하면 현재 콤보는 즉시 초기화됩니다.",
+    ],
+    hint: "힌트: 공격 순서를 그대로 내주지 말고, 위협적인 포켓몬 하나를 먼저 쓰러뜨려 콤보를 끊어보세요.",
+  },
+  rising_tide: {
+    fieldName: "들판체육관",
+    lines: [
+      "플레이어의 3번째 턴과 6번째 턴에 수위가 상승합니다.",
+      "수위가 오를 때마다 플레이어가 사용할 수 있는 최대 필드가 6칸 → 5칸 → 4칸으로 줄어듭니다.",
+      "이미 필드에 나와 있는 포켓몬은 사라지지 않지만, 빈자리가 생기기 전까지 새 포켓몬을 추가하기 어려워집니다.",
+    ],
+    hint: "힌트: 장기전으로 갈수록 필드 전개가 불리해집니다. 수위가 오르기 전에 빠르게 주도권을 잡으세요.",
+  },
 };
 
 function GimmickHelp({ trainer }) {
@@ -166,6 +184,7 @@ function syncBattleEnhancements() {
     if (activeTrainerId !== null) {
       activeTrainerId = null;
       delete document.body.dataset.battlefield;
+      delete document.body.dataset.wakeFlood;
       enhancementRoot?.render(null);
     }
     return;
@@ -179,6 +198,10 @@ function syncBattleEnhancements() {
   } else {
     delete battle.dataset.battlefield;
     delete document.body.dataset.battlefield;
+  }
+
+  if (trainer?.gimmick !== "rising_tide") {
+    delete document.body.dataset.wakeFlood;
   }
 
   if (activeTrainerId === trainerId) {
