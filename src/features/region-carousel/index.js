@@ -63,11 +63,12 @@ function enhanceRegionCarousel(container) {
       const y = Math.min(abs, 1.8) * 20;
       const z = -Math.min(abs, 2.4) * 42;
       const scale = Math.max(0.76, 1 - abs * 0.115);
-      const opacity = Math.max(0.32, 1 - abs * 0.23);
+      const opacity = abs >= 2 ? 0 : Math.max(0.32, 1 - abs * 0.23);
       const brightness = Math.max(0.52, 1 - abs * 0.25);
       const saturation = Math.max(0.55, 1 - abs * 0.15);
       const zIndex = 100 - Math.round(abs * 20);
       const isActive = index === Math.round(position) && abs < 0.5;
+      const isHidden = abs >= 2;
 
       card.style.setProperty("--cf-x", `${x}px`);
       card.style.setProperty("--cf-y", `${y}px`);
@@ -77,8 +78,10 @@ function enhanceRegionCarousel(container) {
       card.style.setProperty("--cf-brightness", brightness.toFixed(3));
       card.style.setProperty("--cf-saturation", saturation.toFixed(3));
       card.style.setProperty("--cf-z-index", String(zIndex));
+      card.style.pointerEvents = isHidden ? "none" : "";
       card.classList.toggle("cf-active", isActive);
       card.setAttribute("aria-current", isActive ? "true" : "false");
+      card.setAttribute("aria-hidden", isHidden ? "true" : "false");
     });
 
     dotButtons.forEach((dot, index) => {
