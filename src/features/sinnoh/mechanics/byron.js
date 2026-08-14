@@ -13,7 +13,7 @@ export function isByronBattle(game) {
 function bindArmorHp(unit) {
   if (unit._byronArmorBound) return;
 
-  const initialHp = unit.hp;
+  const initialHp = Math.max(0, Number(unit.hp) || 0);
   unit._byronRealHp = initialHp;
   unit._byronArmor = MAX_ARMOR;
   unit._byronArmorBound = true;
@@ -32,18 +32,32 @@ function bindArmorHp(unit) {
         return;
       }
 
-      const current = Number(this._byronRealHp || 0);
-      if (next < current && (this._byronArmor || 0) > 0) {
-        const incoming = current - next;
-        const absorbed = Math.min(this._byronArmor, incoming);
-        this._byronArmor -= absorbed;
-        this._byronArmorAbsorbedPending =
-          (this._byronArmorAbsorbedPending || 0) + absorbed;
-        this._byronRealHp = current - (incoming - absorbed);
+      const currentHp = Math.max(0, Number(this._byronRealHp) || 0);
+      const armorBefore = Math.max(0, Number(this._byronArmor) || 0);
+
+      // 회복 / 체력 증가 계열은 방어도와 무관하게 실제 HP에만 반영한다.
+      if (next >= currentHp) {
+        this._byronRealHp = next;
         return;
       }
 
-      this._byronRealHp = next;
+      // 방어도는 "공격 1회당 1" 같은 횟수제가 아니라
+      // HP 앞에 붙은 추가 내구도처럼 피해량 전체를 계산한다.
+      // 예) 방어도 2 + HP 3에 피해 4 => 방어도 0 + HP 1.
+      const incomingDamage = Math.max(0, currentHp - next);
+      const totalDurabilityBefore = currentHp + armorBefore;
+      const totalDurabilityAfter = Math.max(
+        0,
+        totalDurabilityBefore - incomingDamage,
+      );
+      const armorAfter = Math.max(0, armorBefore - incomingDamage);
+      const hpAfter = Math.max(0, totalDurabilityAfter - armorAfter);
+      const absorbed = Math.max(0, armorBefore - armorAfter);
+
+      this._byronArmor = armorAfter;
+      this._byronRealHp = hpAfter;
+      this._byronArmorAbsorbedPending =
+        (this._byronArmorAbsorbedPending || 0) + absorbed;
     },
   });
 }
@@ -73,9 +87,12 @@ export function flushByronArmorLogs(game) {
     if (absorbed <= 0) return;
 
     unit._byronArmorAbsorbedPending = 0;
+    const armor = getByronArmor(unit);
+    const hp = Math.max(0, Number(unit.hp) || 0);
+
     pushLog(
       game,
-      `${unit.name}의 방어도가 피해 ${absorbed}을 막았다! (방어도 ${getByronArmor(unit)})`,
+      `${unit.name}의 방어도가 피해 ${absorbed}을 흡수했다! (방어도 ${armor} + HP ${hp} = 내구 ${armor + hp})`,
     );
   });
 }
