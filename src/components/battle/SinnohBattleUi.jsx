@@ -57,43 +57,33 @@ const GIMMICK_GUIDES = {
     ],
     hint: "힌트: 시그니처 포켓몬의 방어도를 공격으로 완전히 깰 때마다 메탈버스트가 발동해 공격자에게 피해 1을 되돌립니다. 발동 횟수 제한은 없습니다.",
   },
-  diamond_dust: {
-    fieldName: "선단체육관",
+  whiteout: {
+    fieldName: "설원",
     lines: [
-      "플레이어 턴이 끝날 때마다 다이아몬드 더스트의 냉기가 1씩 쌓입니다.",
-      "냉기가 3이 되면 눈보라가 폭발해 플레이어와 플레이어 필드 전체에 피해 1을 주고 냉기가 0으로 돌아갑니다.",
-      "그 턴에 불꽃 타입 포켓몬으로 공격하거나 불꽃 기술 카드를 사용했다면 냉기가 쌓이지 않고 대신 1 감소합니다.",
+      "매 플레이어 턴 시작 시 플레이어 필드의 무작위 2곳이 눈보라 지역이 됩니다.",
+      "눈보라 지역의 포켓몬은 그 플레이어 턴에 공격할 수 없으며, 즉시 공격 효과도 무효가 됩니다.",
+      "무청의 얼음 포켓몬이 눈보라 지역의 포켓몬을 공격하면 피해가 2 증가합니다.",
+      "무청의 눈설왕이 살아 있으면 화이트아웃 대상이 2곳에서 3곳으로 증가합니다.",
     ],
-    hint: "힌트: 냉기가 2 이상이면 무청의 시그니처 눈여아가 공격 피해 +2를 얻습니다. 불꽃 행동을 눈보라 직전에 배치해 흐름을 끊으세요.",
+    hint: "힌트: 눈설왕을 오래 남겨두면 매턴 플레이어 필드 절반이 얼어붙습니다. 눈설왕을 우선 제거하세요.",
   },
-  power_grid: {
-    fieldName: "물가체육관 전력망",
+  valley_windworks: {
+    fieldName: "골짜기발전소",
     lines: [
-      "전진의 전기 타입 포켓몬이 공격할 때마다 전력망의 전압이 1씩 충전됩니다.",
-      "전압이 3이 되면 과부하가 발생해 플레이어와 플레이어 필드 전체에 피해 1을 주고 전압이 0으로 돌아갑니다.",
-      "전진의 포켓몬을 하나라도 쓰러뜨리면 연결된 회로가 끊겨 현재 전압이 즉시 0이 됩니다.",
+      "양쪽 모두 자신의 턴이 시작될 때 최대 마나가 2 증가하고, 증가한 최대치까지 마나를 충전합니다.",
+      "플레이어는 턴 종료 시 남은 마나만큼 전진에게 피해를 줍니다. 전진은 남은 마나 패널티를 받지 않습니다.",
+      "전진은 자신의 턴에 처음 사용하는 전기 카드의 비용이 1 감소합니다.",
+      "전진의 렌트라는 전진의 턴 종료 시 마나가 2 이상 남아 있으면 +1/+1을 얻습니다. 최대 3회입니다.",
     ],
-    hint: "힌트: 시그니처 에레키블은 과부하가 발생할 때마다 공격력 +1을 얻습니다. 전압이 2일 때 전진의 공격 순서를 그대로 넘기지 마세요.",
+    hint: "힌트: 플레이어는 마나를 남겨 직접 피해로 바꿀 수 있습니다. 반대로 렌트라가 있으면 전진이 마나 2를 남기기 전에 빠르게 제거하세요.",
   },
 };
-
-function MeterPips({ value, max = 3 }) {
-  return (
-    <span className="sinnoh-meter-pips" aria-hidden="true">
-      {Array.from({ length: max }, (_, index) => (
-        <i key={index} className={index < value ? "is-filled" : ""} />
-      ))}
-    </span>
-  );
-}
 
 function GimmickHelp({ trainer }) {
   const guide = GIMMICK_GUIDES[trainer?.gimmick];
   const [open, setOpen] = useState(false);
   const [showTip, setShowTip] = useState(true);
   const [mayleneCombo, setMayleneCombo] = useState(0);
-  const [candiceMeter, setCandiceMeter] = useState({ cold: 0, warm: false });
-  const [volknerVoltage, setVolknerVoltage] = useState(0);
 
   useEffect(() => {
     setOpen(false);
@@ -136,62 +126,10 @@ function GimmickHelp({ trainer }) {
     return () => window.removeEventListener("maylene-combo-change", onComboChange);
   }, [trainer?.id, trainer?.gimmick]);
 
-  useEffect(() => {
-    if (trainer?.gimmick !== "diamond_dust") {
-      setCandiceMeter({ cold: 0, warm: false });
-      return undefined;
-    }
-
-    const readMeter = () => ({
-      cold: Math.max(0, Number(document.body.dataset.candiceCold || 0)),
-      warm: document.body.dataset.candiceWarm === "1",
-    });
-
-    const onColdChange = (event) => {
-      const cold = Number(event.detail?.cold);
-      setCandiceMeter({
-        cold: Number.isFinite(cold) ? Math.max(0, cold) : readMeter().cold,
-        warm: event.detail?.warm === true,
-      });
-    };
-
-    setCandiceMeter(readMeter());
-    window.addEventListener("candice-cold-change", onColdChange);
-
-    return () => window.removeEventListener("candice-cold-change", onColdChange);
-  }, [trainer?.id, trainer?.gimmick]);
-
-  useEffect(() => {
-    if (trainer?.gimmick !== "power_grid") {
-      setVolknerVoltage(0);
-      return undefined;
-    }
-
-    const readVoltage = () => {
-      const raw = Number(document.body.dataset.volknerVoltage || 0);
-      return Number.isFinite(raw) ? Math.max(0, raw) : 0;
-    };
-
-    const onVoltageChange = (event) => {
-      const next = Number(event.detail?.voltage);
-      setVolknerVoltage(
-        Number.isFinite(next) ? Math.max(0, next) : readVoltage(),
-      );
-    };
-
-    setVolknerVoltage(readVoltage());
-    window.addEventListener("volkner-voltage-change", onVoltageChange);
-
-    return () =>
-      window.removeEventListener("volkner-voltage-change", onVoltageChange);
-  }, [trainer?.id, trainer?.gimmick]);
-
   if (!trainer || trainer.region !== "sinnoh" || !guide) return null;
 
   const comboBonus = Math.min(3, mayleneCombo);
   const comboMaxed = mayleneCombo >= 3;
-  const candiceDanger = candiceMeter.cold >= 2 && !candiceMeter.warm;
-  const volknerDanger = volknerVoltage >= 2;
 
   return (
     <>
@@ -225,53 +163,6 @@ function GimmickHelp({ trainer }) {
           <span className="maylene-combo-label">격투도장</span>
           <strong>{mayleneCombo} COMBO</strong>
           <span className="maylene-combo-next">다음 공격 +{comboBonus}</span>
-        </div>
-      )}
-
-      {trainer.gimmick === "diamond_dust" && (
-        <div
-          className={[
-            "sinnoh-meter-hud",
-            "candice-cold-hud",
-            candiceDanger ? "is-danger" : "",
-            candiceMeter.warm ? "is-safe" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          aria-live="polite"
-        >
-          <span className="sinnoh-meter-label">다이아몬드 더스트</span>
-          <MeterPips value={candiceMeter.cold} />
-          <strong>{candiceMeter.cold}/3</strong>
-          <span className="sinnoh-meter-note">
-            {candiceMeter.warm
-              ? "불꽃 사용 · 턴 종료 시 냉기 -1"
-              : candiceMeter.cold >= 2
-                ? "다음 플레이어 턴 종료에 눈보라"
-                : "플레이어 턴 종료마다 +1"}
-          </span>
-        </div>
-      )}
-
-      {trainer.gimmick === "power_grid" && (
-        <div
-          className={[
-            "sinnoh-meter-hud",
-            "volkner-voltage-hud",
-            volknerDanger ? "is-danger" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          aria-live="polite"
-        >
-          <span className="sinnoh-meter-label">전력망 전압</span>
-          <MeterPips value={volknerVoltage} />
-          <strong>{volknerVoltage}/3</strong>
-          <span className="sinnoh-meter-note">
-            {volknerVoltage >= 2
-              ? "다음 전기 공격에 과부하"
-              : "전기 공격마다 +1 · 처치 시 초기화"}
-          </span>
         </div>
       )}
 
@@ -358,18 +249,35 @@ function syncByronArmorDom() {
     });
 }
 
+function syncCandiceWhiteoutDom() {
+  const targets = window.__pokeCandiceWhiteout || {};
+
+  document
+    .querySelectorAll(".battle.battle-board .field-unit[data-uid]")
+    .forEach((element) => {
+      const uid = element.dataset.uid;
+      if (targets[uid]) element.dataset.candiceWhiteout = "1";
+      else delete element.dataset.candiceWhiteout;
+    });
+}
+
 function clearSinnohBattleState() {
   activeTrainerId = null;
   delete document.body.dataset.battlefield;
   delete document.body.dataset.wakeFlood;
   delete document.body.dataset.mayleneCombo;
-  delete document.body.dataset.candiceCold;
-  delete document.body.dataset.candiceWarm;
-  delete document.body.dataset.volknerVoltage;
+  delete document.body.dataset.candiceWhiteoutCount;
+  delete document.body.dataset.candiceSnowWarning;
+  delete document.body.dataset.volknerCharge;
+  delete document.body.dataset.volknerDiscount;
 
   document
     .querySelectorAll(".field-unit[data-sinnoh-armor]")
     .forEach((element) => delete element.dataset.sinnohArmor);
+
+  document
+    .querySelectorAll(".field-unit[data-candice-whiteout]")
+    .forEach((element) => delete element.dataset.candiceWhiteout);
 
   enhancementRoot?.render(null);
 }
@@ -395,15 +303,19 @@ function syncSinnohBattleUi() {
 
   if (trainer?.gimmick !== "rising_tide") delete document.body.dataset.wakeFlood;
   if (trainer?.gimmick !== "dojo_combo") delete document.body.dataset.mayleneCombo;
-  if (trainer?.gimmick !== "diamond_dust") {
-    delete document.body.dataset.candiceCold;
-    delete document.body.dataset.candiceWarm;
+
+  if (trainer?.gimmick !== "whiteout") {
+    delete document.body.dataset.candiceWhiteoutCount;
+    delete document.body.dataset.candiceSnowWarning;
   }
-  if (trainer?.gimmick !== "power_grid") {
-    delete document.body.dataset.volknerVoltage;
+
+  if (trainer?.gimmick !== "valley_windworks") {
+    delete document.body.dataset.volknerCharge;
+    delete document.body.dataset.volknerDiscount;
   }
 
   syncByronArmorDom();
+  syncCandiceWhiteoutDom();
 
   if (activeTrainerId === trainerId) return;
 
@@ -419,6 +331,7 @@ function startSinnohBattleUi() {
 
   syncSinnohBattleUi();
   window.addEventListener("byron-armor-change", syncByronArmorDom);
+  window.addEventListener("candice-whiteout-change", syncCandiceWhiteoutDom);
 
   const observer = new MutationObserver(syncSinnohBattleUi);
   observer.observe(document.body, { childList: true, subtree: true });
