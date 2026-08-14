@@ -6,56 +6,36 @@ import { playSfx } from "./audio.js";
 const GIMMICK_GUIDES = {
   mine_collapse: {
     fieldName: "무쇠탄갱",
-    slides: [
-      {
-        eyebrow: "배틀필드",
-        title: "무쇠탄갱",
-        lines: [
-          "플레이어 필드가 바위로 봉쇄된 상태로 시작합니다.",
-          "플레이어 턴이 지날수록 바위가 차례로 무너져 사용할 수 있는 필드가 넓어집니다.",
-        ],
-      },
-      {
-        eyebrow: "시그니처",
-        title: "강석의 램펄드 · 양날박치기",
-        lines: [
-          "플레이어 필드에 남아 있는 바위 1개당 이번 공격의 피해가 +1 증가합니다.",
-          "공격 후에는 반동 피해를 받습니다. 초반을 버텨 바위를 줄이는 것이 핵심입니다.",
-        ],
-      },
+    lines: [
+      "플레이어 필드가 바위로 봉쇄된 상태로 시작합니다.",
+      "플레이어 턴이 지날수록 바위가 차례로 무너져 사용할 수 있는 필드가 넓어집니다.",
     ],
+    hint: "힌트: 남아 있는 바위가 많을수록 강석의 시그니처 포켓몬이 강해지니 주의하세요.",
   },
   eternal_vines: {
     fieldName: "영원의 숲",
-    slides: [
-      {
-        eyebrow: "배틀필드",
-        title: "영원의 숲",
-        lines: [
-          "유채의 턴이 끝날 때 플레이어 필드의 빈 칸에 덩굴이 자라납니다.",
-          "덩굴은 HP 2의 장애물로 필드 한 칸을 차지하며, 포켓몬으로 직접 공격해 제거할 수 있습니다.",
-        ],
-      },
-      {
-        eyebrow: "시그니처",
-        title: "유채의 로즈레이드 · 꽃보라",
-        lines: [
-          "플레이어 필드에 덩굴이 하나라도 남아 있으면 로즈레이드의 공격력이 +2 증가합니다.",
-          "덩굴을 제거하면 필드 공간을 되찾는 동시에 로즈레이드의 화력도 낮출 수 있습니다.",
-        ],
-      },
+    lines: [
+      "유채의 턴이 끝날 때 플레이어 필드의 빈 칸에 덩굴이 자라납니다.",
+      "덩굴은 HP 2의 장애물로 필드 한 칸을 차지하며, 포켓몬으로 직접 공격해 제거할 수 있습니다.",
     ],
+    hint: "힌트: 덩굴을 오래 방치하면 전투가 불리해집니다. 가능하면 빠르게 제거하세요.",
   },
 };
 
 function GimmickHelp({ trainer }) {
   const guide = GIMMICK_GUIDES[trainer?.gimmick];
   const [open, setOpen] = useState(false);
-  const [slide, setSlide] = useState(0);
+  const [showTip, setShowTip] = useState(true);
 
   useEffect(() => {
     setOpen(false);
-    setSlide(0);
+    setShowTip(true);
+
+    const timer = window.setTimeout(() => {
+      setShowTip(false);
+    }, 4200);
+
+    return () => window.clearTimeout(timer);
   }, [trainer?.id]);
 
   useEffect(() => {
@@ -64,48 +44,40 @@ function GimmickHelp({ trainer }) {
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
         setOpen(false);
-      } else if (event.key === "ArrowLeft") {
-        setSlide((index) =>
-          index === 0 ? guide.slides.length - 1 : index - 1,
-        );
-      } else if (event.key === "ArrowRight") {
-        setSlide((index) => (index + 1) % guide.slides.length);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, guide]);
+  }, [open]);
 
   if (!trainer || trainer.region !== "sinnoh" || !guide) {
     return null;
   }
 
-  const current = guide.slides[slide];
-
-  const moveSlide = (direction) => {
-    playSfx("click");
-    setSlide((index) => {
-      const length = guide.slides.length;
-      return (index + direction + length) % length;
-    });
-  };
-
   return (
     <>
-      <button
-        type="button"
-        className="battle-gimmick-help-btn"
-        aria-label={`${guide.fieldName} 기믹 설명`}
-        title="체육관 기믹 설명"
-        onClick={() => {
-          playSfx("click");
-          setSlide(0);
-          setOpen(true);
-        }}
-      >
-        ?
-      </button>
+      <div className="battle-gimmick-help-wrap">
+        {showTip && !open && (
+          <div className="battle-gimmick-entry-tip" role="status">
+            ? 버튼을 눌러 배틀필드 효과를 확인하세요
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="battle-gimmick-help-btn"
+          aria-label={`${guide.fieldName} 기믹 설명`}
+          title="체육관 기믹 설명"
+          onClick={() => {
+            playSfx("click");
+            setShowTip(false);
+            setOpen(true);
+          }}
+        >
+          ?
+        </button>
+      </div>
 
       {open && (
         <div
@@ -142,61 +114,18 @@ function GimmickHelp({ trainer }) {
               </button>
             </div>
 
-            <div className="battle-gimmick-viewport">
-              <div
-                className="battle-gimmick-track"
-                style={{ transform: `translateX(-${slide * 100}%)` }}
-              >
-                {guide.slides.map((item) => (
-                  <section className="battle-gimmick-slide" key={item.title}>
-                    <span className="battle-gimmick-eyebrow">{item.eyebrow}</span>
-                    <h2>{item.title}</h2>
-                    <div className="battle-gimmick-copy">
-                      {item.lines.map((line) => (
-                        <p key={line}>{line}</p>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </div>
+            <section className="battle-gimmick-slide battle-gimmick-single">
+              <span className="battle-gimmick-eyebrow">배틀필드</span>
+              <h2>{guide.fieldName}</h2>
 
-            <div className="battle-gimmick-slider-controls">
-              <button
-                type="button"
-                aria-label="이전 설명"
-                onClick={() => moveSlide(-1)}
-              >
-                ‹
-              </button>
-
-              <div className="battle-gimmick-dots" aria-label="설명 페이지">
-                {guide.slides.map((item, index) => (
-                  <button
-                    type="button"
-                    key={item.title}
-                    className={index === slide ? "active" : ""}
-                    aria-label={`${index + 1}페이지`}
-                    onClick={() => {
-                      playSfx("click");
-                      setSlide(index);
-                    }}
-                  />
+              <div className="battle-gimmick-copy">
+                {guide.lines.map((line) => (
+                  <p key={line}>{line}</p>
                 ))}
               </div>
 
-              <button
-                type="button"
-                aria-label="다음 설명"
-                onClick={() => moveSlide(1)}
-              >
-                ›
-              </button>
-            </div>
-
-            <div className="battle-gimmick-page-count">
-              {slide + 1} / {guide.slides.length}
-            </div>
+              <div className="battle-gimmick-hint">{guide.hint}</div>
+            </section>
           </div>
         </div>
       )}
