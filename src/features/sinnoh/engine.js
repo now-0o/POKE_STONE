@@ -1,5 +1,23 @@
 import * as base from "../../engine/engine.js?base";
 import { CARD_MAP } from "../../data/cards.js";
+import {
+  ageFantinaGhosts,
+  captureFantinaPlayerField,
+  fantinaGhostUids,
+  handleFantinaDrain,
+  initFantinaBattle,
+  normalizeFantinaGhosts,
+  spawnFantinaGhostsFromDeaths,
+} from "./mechanics/fantina.js";
+import {
+  ensureByronArmor,
+  flushByronArmorLogs,
+  getByronArmor,
+  handleByronMetalBurst,
+  initByronBattle,
+  regenByronBastiodonArmor,
+  syncByronArmorVisual,
+} from "./mechanics/byron.js";
 
 export * from "../../engine/engine.js?base";
 
@@ -187,6 +205,14 @@ function applyAttackBonus(game, side, target, targetRef, beforeHp, bonus) {
   return dealt;
 }
 
+function syncSinnohMechanics(game) {
+  normalizeFantinaGhosts(game);
+  ensureByronArmor(game);
+  flushByronArmorLogs(game);
+  syncByronArmorVisual(game);
+  syncBattleTurnVisual(game);
+}
+
 export function createGame(playerDeckIds, trainer) {
   const game = base.createGame(playerDeckIds, trainer);
 
@@ -202,24 +228,29 @@ export function createGame(playerDeckIds, trainer) {
     setWakeFloodVisual(0);
   }
 
-  syncBattleTurnVisual(game);
+  initFantinaBattle(game);
+  initByronBattle(game);
+  syncSinnohMechanics(game);
   return game;
 }
 
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const enemyBefore = enemyUnitIds(game);
+  const fantinaBefore = captureFantinaPlayerField(game);
   const cardId = game.players[side].hand[handIdx]?.cardId || null;
   const result = base.playCard(game, side, handIdx, target, fieldIndex);
 
   if (result && cardId) enableSignatureRush(game, side, cardId);
 
+  spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
-  syncBattleTurnVisual(game);
+  syncSinnohMechanics(game);
   return result;
 }
 
 export function attack(game, side, attackerUid, target) {
   const enemyBefore = enemyUnitIds(game);
+  const fantinaBefore = captureFantinaPlayerField(game);
   const attacker = game.players[side].field.find((unit) => unit.uid === attackerUid);
   const targetSide = base.other(side);
   const targetRef =
@@ -228,6 +259,7 @@ export function attack(game, side, attackerUid, target) {
       : game.players[targetSide].field.find((unit) => unit.uid === target.uid) || null;
   const beforeHp =
     target.uid === "hero" ? game.players[targetSide].hp : targetRef?.hp ?? null;
+  const armorBefore = getByronArmor(targetRef);
 
   let comboBefore = 0;
   let comboBonus = 0;
@@ -253,7 +285,7 @@ export function attack(game, side, attackerUid, target) {
 
   const result = base.attack(game, side, attackerUid, target);
   if (!result) {
-    syncBattleTurnVisual(game);
+    syncSinnohMechanics(game);
     return false;
   }
 
@@ -283,16 +315,26 @@ export function attack(game, side, attackerUid, target) {
     );
   }
 
+  handleFantinaDrain(game, attacker, targetRef);
+
+  if (handleByronMetalBurst(game, attacker, targetRef, armorBefore)) {
+    base.cleanupDeaths(game, true);
+  }
+
+  spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
-  syncBattleTurnVisual(game);
+  syncSinnohMechanics(game);
   return true;
 }
 
 export function endTurn(game) {
   const enemyBefore = enemyUnitIds(game);
+  const fantinaBefore = captureFantinaPlayerField(game);
+  const existingGhosts = fantinaGhostUids(game);
   const endingSide = game.turn;
   const result = base.endTurn(game);
 
+  spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
 
   if (game.trainer?.gimmick === "dojo_combo" && endingSide === "enemy") {
@@ -308,14 +350,25 @@ export function endTurn(game) {
     advanceWakeFlood(game);
   }
 
-  syncBattleTurnVisual(game);
+  if (endingSide === "player") {
+    ageFantinaGhosts(game, existingGhosts);
+  }
+
+  if (endingSide === "enemy") {
+    regenByronBastiodonArmor(game);
+  }
+
+  syncSinnohMechanics(game);
   return result;
 }
 
 export function cleanupDeaths(game, ...args) {
   const enemyBefore = enemyUnitIds(game);
+  const fantinaBefore = captureFantinaPlayerField(game);
   const result = base.cleanupDeaths(game, ...args);
+
+  spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
-  syncBattleTurnVisual(game);
+  syncSinnohMechanics(game);
   return result;
 }
