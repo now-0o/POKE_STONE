@@ -1,6 +1,8 @@
+const FIELD_SLOT_COUNT = 6;
 const BASE_WHITEOUT_TARGETS = 2;
 const SNOW_WARNING_TARGETS = 3;
 const WHITEOUT_BONUS_DAMAGE = 2;
+const SLOT_PRIORITY = [2, 3, 1, 4, 0, 5];
 
 function pushLog(game, message) {
   game.log.push(message);
@@ -28,42 +30,121 @@ function shuffled(values) {
   return copy;
 }
 
-function activeWhiteoutUids(game) {
+function isValidSlot(slot) {
+  return Number.isInteger(slot) && slot >= 0 && slot < FIELD_SLOT_COUNT;
+}
+
+function activeWhiteoutSlots(game) {
   if (!isCandiceBattle(game)) return [];
 
-  const alive = new Set(
-    game.players.player.field
-      .filter((unit) => unit.hp > 0)
-      .map((unit) => unit.uid),
-  );
-
-  const current = Array.isArray(game._candiceWhiteoutUids)
-    ? game._candiceWhiteoutUids
+  const slots = Array.isArray(game._candiceWhiteoutSlots)
+    ? game._candiceWhiteoutSlots
     : [];
 
-  return current.filter((uid) => alive.has(uid));
+  return [...new Set(slots.filter(isValidSlot))];
+}
+
+function normalizeCandiceFieldSlots(game) {
+  if (!isCandiceBattle(game)) return {};
+
+  const player = game.players.player;
+  const used = new Set();
+
+  player._candiceFixedSlots = true;
+
+  player.field.forEach((unit) => {
+    const slot = Number(unit._candiceFieldSlot);
+
+    if (!isValidSlot(slot) || used.has(slot)) {
+      delete unit._candiceFieldSlot;
+      return;
+    }
+
+    unit._candiceFieldSlot = slot;
+    used.add(slot);
+  });
+
+  player.field.forEach((unit) => {
+    if (isValidSlot(unit._candiceFieldSlot)) return;
+
+    const slot = SLOT_PRIORITY.find((candidate) => !used.has(candidate));
+    if (slot == null) return;
+
+    unit._candiceFieldSlot = slot;
+    used.add(slot);
+  });
+
+  return Object.fromEntries(
+    player.field
+      .filter((unit) => isValidSlot(unit._candiceFieldSlot))
+      .map((unit) => [unit.uid, unit._candiceFieldSlot]),
+  );
+}
+
+function chooseRotatingWhiteoutSlots(game, targetCount) {
+  const allSlots = Array.from({ length: FIELD_SLOT_COUNT }, (_, index) => index);
+  const previous = new Set(activeWhiteoutSlots(game));
+  const freshSlots = shuffled(allSlots.filter((slot) => !previous.has(slot)));
+  const repeatedSlots = shuffled(allSlots.filter((slot) => previous.has(slot)));
+
+  return [...freshSlots, ...repeatedSlots]
+    .slice(0, Math.min(targetCount, FIELD_SLOT_COUNT))
+    .sort((a, b) => a - b);
+}
+
+function applyWhiteoutFlags(game) {
+  if (!isCandiceBattle(game)) return;
+
+  const selectedSlots = new Set(activeWhiteoutSlots(game));
+  normalizeCandiceFieldSlots(game);
+
+  game.players.player.field.forEach((unit) => {
+    const affected = selectedSlots.has(unit._candiceFieldSlot);
+    unit._candiceWhiteout = affected;
+
+    if (affected && game.turn === "player") {
+      unit.canAttack = false;
+    }
+  });
 }
 
 export function syncCandiceVisual(game) {
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
   const active = isCandiceBattle(game);
-  const uids = active ? activeWhiteoutUids(game) : [];
-  const targets = Object.fromEntries(uids.map((uid) => [uid, true]));
+  const unitSlots = active ? normalizeCandiceFieldSlots(game) : {};
+  const slots = active ? activeWhiteoutSlots(game) : [];
+  const selectedSlots = new Set(slots);
+  const targets = Object.fromEntries(
+    Object.entries(unitSlots)
+      .filter(([, slot]) => selectedSlots.has(slot))
+      .map(([uid]) => [uid, true]),
+  );
   const boosted = active && hasCandiceAbomasnow(game);
 
   if (active) {
-    document.body.dataset.candiceWhiteoutCount = String(uids.length);
+    applyWhiteoutFlags(game);
+    document.body.dataset.candiceWhiteoutCount = String(slots.length);
+    document.body.dataset.candiceWhiteoutSlots = slots.join(",");
     document.body.dataset.candiceSnowWarning = boosted ? "1" : "0";
   } else {
     delete document.body.dataset.candiceWhiteoutCount;
+    delete document.body.dataset.candiceWhiteoutSlots;
     delete document.body.dataset.candiceSnowWarning;
   }
 
   window.__pokeCandiceWhiteout = targets;
+  window.__pokeCandiceSlots = unitSlots;
+  window.__pokeCandiceWhiteoutSlots = slots;
   window.dispatchEvent(
     new CustomEvent("candice-whiteout-change", {
-      detail: { active, uids, boosted },
+      detail: {
+        active,
+        slots,
+        unitSlots,
+        uids: Object.keys(targets),
+        boosted,
+      },
     }),
   );
 }
@@ -73,49 +154,44 @@ export function beginCandicePlayerTurn(game) {
     return false;
   }
 
-  const playerUnits = game.players.player.field.filter((unit) => unit.hp > 0);
+  normalizeCandiceFieldSlots(game);
+
   const targetCount = hasCandiceAbomasnow(game)
     ? SNOW_WARNING_TARGETS
     : BASE_WHITEOUT_TARGETS;
-  const selected = shuffled(playerUnits)
-    .slice(0, Math.min(targetCount, playerUnits.length))
-    .map((unit) => unit.uid);
-  const selectedSet = new Set(selected);
+  const selectedSlots = chooseRotatingWhiteoutSlots(game, targetCount);
 
-  game._candiceWhiteoutUids = selected;
-  game.players.player.field.forEach((unit) => {
-    const affected = selectedSet.has(unit.uid);
-    unit._candiceWhiteout = affected;
-    if (affected) unit.canAttack = false;
-  });
+  game._candiceWhiteoutSlots = selectedSlots;
+  applyWhiteoutFlags(game);
 
-  if (selected.length > 0) {
-    pushLog(
-      game,
-      `화이트아웃! 플레이어 필드 ${selected.length}곳이 눈보라 지역이 되어 이번 턴 공격할 수 없다!`,
-    );
-  } else {
-    pushLog(game, "화이트아웃이 휘몰아쳤지만 얼어붙을 포켓몬이 없다.");
-  }
+  pushLog(
+    game,
+    `화이트아웃! 고정 필드 6칸 중 ${selectedSlots
+      .map((slot) => slot + 1)
+      .join(", ")}번 칸이 눈보라 지역이 됐다!`,
+  );
 
   if (targetCount === SNOW_WARNING_TARGETS) {
     pushLog(
       game,
-      "무청의 눈설왕이 눈퍼뜨리기를 유지해 화이트아웃 범위가 3곳으로 넓어졌다!",
+      "무청의 눈설왕이 눈퍼뜨리기를 유지해 화이트아웃 범위가 3칸으로 넓어졌다!",
     );
   }
 
   syncCandiceVisual(game);
-  return selected.length > 0;
+  return true;
 }
 
 export function initCandiceBattle(game) {
-  game._candiceWhiteoutUids = [];
+  game._candiceWhiteoutSlots = [];
 
   if (!isCandiceBattle(game)) {
     syncCandiceVisual(game);
     return;
   }
+
+  game.players.player._candiceFixedSlots = true;
+  normalizeCandiceFieldSlots(game);
 
   game.players.player.field.forEach((unit) => {
     unit._candiceWhiteout = false;
@@ -130,7 +206,13 @@ export function initCandiceBattle(game) {
 
 export function isCandiceWhiteoutUnit(game, side, unitUid) {
   if (!isCandiceBattle(game) || side !== "player") return false;
-  return activeWhiteoutUids(game).includes(unitUid);
+
+  normalizeCandiceFieldSlots(game);
+
+  const unit = game.players.player.field.find((entry) => entry.uid === unitUid);
+  if (!unit || !isValidSlot(unit._candiceFieldSlot)) return false;
+
+  return activeWhiteoutSlots(game).includes(unit._candiceFieldSlot);
 }
 
 export function getCandiceWhiteoutAttackBonus(game, attacker, target) {
