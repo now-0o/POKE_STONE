@@ -112,23 +112,25 @@ export function resolveVolknerPlayerManaPenalty(game) {
     return 0;
   }
 
-  const remainingMana = Math.max(0, Number(game.players.player.mana) || 0);
-  if (remainingMana <= 0) return 0;
+  const player = game.players.player;
+  const remainingMana = Math.max(0, Number(player.mana) || 0);
+  const rawDamage = Math.floor(remainingMana / 2);
+  const damage = Math.min(rawDamage, Math.max(0, player.hp));
 
-  const enemy = game.players.enemy;
-  const damage = Math.min(remainingMana, Math.max(0, enemy.hp));
-  enemy.hp = Math.max(0, enemy.hp - damage);
+  if (damage <= 0) return 0;
+
+  player.hp = Math.max(0, player.hp - damage);
 
   game.animSeq = (game.animSeq || 0) + 1;
   game.lastAction = {
     seq: game.animSeq,
     kind: "ability",
-    side: "player",
+    side: "enemy",
     cardId: "sinnoh_volkner_luxray",
     impacts: [
       {
         type: "damage",
-        side: "enemy",
+        side: "player",
         targetUid: "hero",
         amount: damage,
       },
@@ -137,11 +139,11 @@ export function resolveVolknerPlayerManaPenalty(game) {
 
   pushLog(
     game,
-    `발전소 역류! 플레이어가 남긴 마나 ${remainingMana}만큼 전진이 피해를 받았다!`,
+    `발전소 과부하! 남은 마나 ${remainingMana}의 절반(내림)만큼 플레이어가 피해 ${damage}을 받았다!`,
   );
 
-  if (enemy.hp <= 0 && !game.winner) {
-    game.winner = "player";
+  if (player.hp <= 0 && !game.winner) {
+    game.winner = "enemy";
   }
 
   return damage;
