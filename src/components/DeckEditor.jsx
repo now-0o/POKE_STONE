@@ -408,6 +408,18 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     onSaveChange();
   }
 
+  function clearDeck() {
+    if (save.deck.length === 0) {
+      return;
+    }
+
+    save.deck = [];
+    syncActivePreset([]);
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
   // 덱 목록 (그룹핑)
   const deckList = useMemo(() => {
     const ids = [...new Set(save.deck)];
@@ -476,14 +488,23 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   return (
-    <div className="deck-editor">
+    <div
+      className="deck-editor"
+      style={{
+        height: "calc(100dvh - 24px)",
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       {inspect && (
         <div className="inspect-overlay">
           <HandCard cardId={inspect.cardId} playable ghost />
         </div>
       )}
 
-      <div className="editor-topbar">
+      <div className="editor-topbar" style={{ flex: "0 0 auto" }}>
         <div className="screen-header">
           <button
             className="btn-ghost"
@@ -611,11 +632,25 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         </div>
       </div>
 
-      <div className="editor-layout">
+      <div
+        className="editor-layout"
+        style={{
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflow: "hidden",
+          alignItems: "stretch",
+        }}
+      >
         {/* 컬렉션 */}
         <div
           className="collection-pane"
-          style={{ overscrollBehaviorY: "contain" }}
+          style={{
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            overscrollBehaviorY: "contain",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
           <div className="collection-grid" ref={collectionGridRef}>
             {ownedCards.map((card) => {
@@ -653,7 +688,17 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         </div>
 
         {/* 덱 영역 */}
-        <div className="deck-pane">
+        <div
+          className="deck-pane"
+          style={{
+            position: "static",
+            top: "auto",
+            height: "100%",
+            maxHeight: "none",
+            alignSelf: "stretch",
+            overflow: "hidden",
+          }}
+        >
           {/* 프리셋 영역 - 스크롤되지 않음 */}
           <div className="deck-preset-panel">
             <div className="deck-preset-tabs">
@@ -710,7 +755,30 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               </button>
             </div>
 
-            <h3 style={{ marginTop: "10px", marginBottom: 0 }}>내 덱</h3>
+            <div
+              style={{
+                marginTop: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+              }}
+            >
+              <h3 style={{ margin: 0 }}>내 덱</h3>
+              <button
+                type="button"
+                className="btn-ghost small danger"
+                disabled={save.deck.length === 0}
+                onClick={clearDeck}
+                style={{
+                  flexShrink: 0,
+                  textDecoration: "none",
+                  fontSize: "10px",
+                }}
+              >
+                전체 제거
+              </button>
+            </div>
           </div>
 
           {/* 카드 리스트 - 여기만 스크롤 */}
