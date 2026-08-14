@@ -149,6 +149,16 @@ function ensureEnhancementRoot() {
 }
 
 function syncBattleEnhancements() {
+  const battleSurface = document.querySelector(
+    ".battle-intro, .battle.battle-board",
+  );
+
+  document.documentElement.classList.toggle(
+    "battle-page-locked",
+    Boolean(battleSurface),
+  );
+  document.body.classList.toggle("battle-page-locked", Boolean(battleSurface));
+
   const battle = document.querySelector(".battle.battle-board[data-trainer]");
   const trainerId = battle?.dataset.trainer || null;
 
