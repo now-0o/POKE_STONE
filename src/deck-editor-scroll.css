@@ -10,26 +10,78 @@
   scrollbar-gutter: stable;
 }
 
+/* 좌측 컬렉션 카드: 남는 가로 공간을 활용해 살짝 확대 */
+.deck-editor .collection-item .hand-card {
+  width: 140px;
+  height: 196px;
+  min-height: 196px;
+}
+
+.deck-editor .collection-item .card-art {
+  height: 69px;
+  min-height: 69px;
+  flex-basis: 69px;
+}
+
+/* 상단 타입 카테고리 가독성 개선 */
+.deck-editor .editor-topbar .filter-btn {
+  font-size: 13px;
+  padding: 5px 12px;
+}
+
+/* 짧은 높이의 가로모드 모바일에서는 기존 비율을 유지하며 소폭만 확대 */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .deck-editor .collection-item .hand-card {
+    width: 122px;
+    height: 171px;
+    min-height: 171px;
+  }
+
+  .deck-editor .collection-item .card-art {
+    height: 60px;
+    min-height: 60px;
+    flex-basis: 60px;
+  }
+
+  .deck-editor .editor-topbar .filter-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
 /* Firefox: 트랙은 배경과 섞이게 투명, thumb만 표시 */
 .deck-editor .collection-pane,
-.deck-editor .deck-card-list {
+.deck-editor .deck-card-list,
+.pack-row,
+.pack-cards,
+.pack-open-area {
   scrollbar-width: thin;
   scrollbar-color: rgba(238, 240, 246, 0.36) transparent;
 }
 
 /* Chromium / Safari */
 .deck-editor .collection-pane::-webkit-scrollbar,
-.deck-editor .deck-card-list::-webkit-scrollbar {
+.deck-editor .deck-card-list::-webkit-scrollbar,
+.pack-row::-webkit-scrollbar,
+.pack-cards::-webkit-scrollbar,
+.pack-open-area::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .deck-editor .collection-pane::-webkit-scrollbar-track,
-.deck-editor .deck-card-list::-webkit-scrollbar-track {
+.deck-editor .deck-card-list::-webkit-scrollbar-track,
+.pack-row::-webkit-scrollbar-track,
+.pack-cards::-webkit-scrollbar-track,
+.pack-open-area::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .deck-editor .collection-pane::-webkit-scrollbar-thumb,
-.deck-editor .deck-card-list::-webkit-scrollbar-thumb {
+.deck-editor .deck-card-list::-webkit-scrollbar-thumb,
+.pack-row::-webkit-scrollbar-thumb,
+.pack-cards::-webkit-scrollbar-thumb,
+.pack-open-area::-webkit-scrollbar-thumb {
   background: rgba(238, 240, 246, 0.36);
   border: 2px solid transparent;
   border-radius: 999px;
@@ -37,13 +89,19 @@
 }
 
 .deck-editor .collection-pane::-webkit-scrollbar-thumb:hover,
-.deck-editor .deck-card-list::-webkit-scrollbar-thumb:hover {
+.deck-editor .deck-card-list::-webkit-scrollbar-thumb:hover,
+.pack-row::-webkit-scrollbar-thumb:hover,
+.pack-cards::-webkit-scrollbar-thumb:hover,
+.pack-open-area::-webkit-scrollbar-thumb:hover {
   background: rgba(238, 240, 246, 0.55);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 .deck-editor .collection-pane::-webkit-scrollbar-corner,
-.deck-editor .deck-card-list::-webkit-scrollbar-corner {
+.deck-editor .deck-card-list::-webkit-scrollbar-corner,
+.pack-row::-webkit-scrollbar-corner,
+.pack-cards::-webkit-scrollbar-corner,
+.pack-open-area::-webkit-scrollbar-corner {
   background: transparent;
 }
