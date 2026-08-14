@@ -1,0 +1,131 @@
+/* ============================================================
+   신오 후반 체육관 공용 기믹 게이지
+   ============================================================ */
+
+.sinnoh-meter-hud {
+  position: fixed;
+  top: max(58px, calc(env(safe-area-inset-top) + 52px));
+  right: max(24px, calc(env(safe-area-inset-right) + 14px));
+  z-index: 718;
+  min-width: 265px;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-template-areas:
+    "label pips value"
+    "note note note";
+  align-items: center;
+  gap: 4px 9px;
+  padding: 7px 10px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.09), transparent 40%),
+    linear-gradient(145deg, rgba(26, 35, 57, 0.95), rgba(9, 14, 29, 0.95));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 5px 18px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  pointer-events: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.sinnoh-meter-label {
+  grid-area: label;
+  color: #cdd5e5;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.sinnoh-meter-pips {
+  grid-area: pips;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sinnoh-meter-pips i {
+  width: 13px;
+  height: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.sinnoh-meter-pips i.is-filled {
+  transform: scale(1.04);
+}
+
+.sinnoh-meter-hud > strong {
+  grid-area: value;
+  justify-self: end;
+  min-width: 27px;
+  font-family: var(--display-font);
+  font-size: 14px;
+  line-height: 1;
+  text-align: right;
+}
+
+.sinnoh-meter-note {
+  grid-area: note;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #9da8bd;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.sinnoh-meter-hud.is-danger {
+  animation: sinnoh-meter-alert 1.1s ease-in-out infinite;
+}
+
+@keyframes sinnoh-meter-alert {
+  0%, 100% {
+    transform: translateZ(0) scale(1);
+  }
+  50% {
+    transform: translateZ(0) scale(1.015);
+  }
+}
+
+@media (max-width: 720px) {
+  .sinnoh-meter-hud {
+    right: max(12px, calc(env(safe-area-inset-right) + 8px));
+    min-width: min(245px, calc(100vw - 24px));
+    padding: 6px 8px 5px;
+  }
+
+  .sinnoh-meter-label,
+  .sinnoh-meter-note {
+    font-size: 8px;
+  }
+
+  .sinnoh-meter-pips i {
+    width: 11px;
+    height: 11px;
+  }
+
+  .sinnoh-meter-hud > strong {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sinnoh-meter-hud.is-danger {
+    animation: none;
+  }
+}
