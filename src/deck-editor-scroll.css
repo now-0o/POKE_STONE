@@ -1,4 +1,23 @@
 /* 덱 편집 전용 스크롤 영역 보정 */
+.deck-editor {
+  /* app의 상단 여백만큼 끌어올려 화면 최상단에 더 밀착 */
+  margin-top: -12px;
+}
+
+.deck-editor .editor-topbar {
+  position: relative;
+  top: auto;
+  margin: 0 -12px 10px;
+  padding: 8px 14px 10px;
+
+  /* 별도 단색 패널을 없애고 페이지 배경 그라데이션이 그대로 비치게 */
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
 .deck-editor .collection-pane {
   /* 카드 코스트 배지/호버 확대가 스크롤 경계에 잘리지 않도록 안전 여백 확보 */
   padding: 14px 10px 18px 16px;
@@ -41,6 +60,16 @@
 
 /* 짧은 높이의 가로모드 모바일에서는 기존 비율을 유지하며 소폭만 확대 */
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .deck-editor {
+    margin-top: -6px;
+  }
+
+  .deck-editor .editor-topbar {
+    margin-left: -6px;
+    margin-right: -6px;
+    padding-top: 6px;
+  }
+
   .deck-editor .collection-item .hand-card {
     width: 122px;
     height: 171px;
