@@ -44,6 +44,7 @@ function GimmickHelp({ trainer }) {
   const guide = GIMMICK_GUIDES[trainer?.gimmick];
   const [open, setOpen] = useState(false);
   const [showTip, setShowTip] = useState(true);
+  const [mayleneCombo, setMayleneCombo] = useState(0);
 
   useEffect(() => {
     setOpen(false);
@@ -69,9 +70,36 @@ function GimmickHelp({ trainer }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
+  useEffect(() => {
+    if (trainer?.gimmick !== "dojo_combo") {
+      setMayleneCombo(0);
+      return undefined;
+    }
+
+    const readCombo = () => {
+      const raw = Number(document.body.dataset.mayleneCombo || 0);
+      return Number.isFinite(raw) ? Math.max(0, raw) : 0;
+    };
+
+    const onComboChange = (event) => {
+      const next = Number(event.detail?.combo);
+      setMayleneCombo(Number.isFinite(next) ? Math.max(0, next) : readCombo());
+    };
+
+    setMayleneCombo(readCombo());
+    window.addEventListener("maylene-combo-change", onComboChange);
+
+    return () => {
+      window.removeEventListener("maylene-combo-change", onComboChange);
+    };
+  }, [trainer?.id, trainer?.gimmick]);
+
   if (!trainer || trainer.region !== "sinnoh" || !guide) {
     return null;
   }
+
+  const comboBonus = Math.min(3, mayleneCombo);
+  const comboMaxed = mayleneCombo >= 3;
 
   return (
     <>
@@ -96,6 +124,71 @@ function GimmickHelp({ trainer }) {
           ?
         </button>
       </div>
+
+      {trainer.gimmick === "dojo_combo" && (
+        <div
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            top: "max(58px, calc(env(safe-area-inset-top) + 52px))",
+            right: "max(24px, calc(env(safe-area-inset-right) + 14px))",
+            zIndex: 718,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            minHeight: "34px",
+            padding: "6px 10px",
+            borderRadius: "12px",
+            border: comboMaxed
+              ? "1px solid rgba(255, 119, 76, 0.88)"
+              : "1px solid rgba(245, 197, 66, 0.42)",
+            background: comboMaxed
+              ? "linear-gradient(135deg, rgba(112, 30, 24, 0.94), rgba(35, 19, 28, 0.94))"
+              : "linear-gradient(135deg, rgba(34, 24, 28, 0.92), rgba(12, 16, 31, 0.92))",
+            boxShadow: comboMaxed
+              ? "0 5px 20px rgba(255, 86, 52, 0.22), inset 0 1px 0 rgba(255,255,255,.12)"
+              : "0 5px 18px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,.08)",
+            backdropFilter: "blur(9px)",
+            WebkitBackdropFilter: "blur(9px)",
+            pointerEvents: "none",
+            transition: "border-color .18s ease, background .18s ease, box-shadow .18s ease",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span
+            style={{
+              color: "#c7cbd8",
+              fontSize: "9px",
+              fontWeight: 800,
+              letterSpacing: ".08em",
+            }}
+          >
+            격투도장
+          </span>
+          <strong
+            style={{
+              color: comboMaxed ? "#ff9a70" : "#f5c542",
+              fontFamily: "var(--display-font)",
+              fontSize: "15px",
+              lineHeight: 1,
+              textShadow: comboMaxed ? "0 0 10px rgba(255, 95, 58, .42)" : "none",
+            }}
+          >
+            {mayleneCombo} COMBO
+          </strong>
+          <span
+            style={{
+              paddingLeft: "8px",
+              borderLeft: "1px solid rgba(255,255,255,.12)",
+              color: comboBonus > 0 ? "#ffd8a8" : "#9da4b5",
+              fontSize: "10px",
+              fontWeight: 700,
+            }}
+          >
+            다음 공격 +{comboBonus}
+          </span>
+        </div>
+      )}
 
       {open && (
         <div
@@ -185,6 +278,7 @@ function syncBattleEnhancements() {
       activeTrainerId = null;
       delete document.body.dataset.battlefield;
       delete document.body.dataset.wakeFlood;
+      delete document.body.dataset.mayleneCombo;
       enhancementRoot?.render(null);
     }
     return;
@@ -202,6 +296,10 @@ function syncBattleEnhancements() {
 
   if (trainer?.gimmick !== "rising_tide") {
     delete document.body.dataset.wakeFlood;
+  }
+
+  if (trainer?.gimmick !== "dojo_combo") {
+    delete document.body.dataset.mayleneCombo;
   }
 
   if (activeTrainerId === trainerId) {
