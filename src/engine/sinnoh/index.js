@@ -1,6 +1,13 @@
 import * as base from "../engine.js?base";
 import { CARD_MAP } from "../../data/cards.js";
 import {
+  getCandiceSignatureBonus,
+  initCandiceBattle,
+  markCandiceFireAction,
+  resolveCandicePlayerTurnEnd,
+  syncCandiceVisual,
+} from "./candice.js";
+import {
   ageFantinaGhosts,
   applyFantinaSpiritPressure,
   captureFantinaPlayerField,
@@ -26,6 +33,12 @@ import {
   restoreGardeniaAnchor,
   restoreUnusedGardeniaAnchors,
 } from "./gardenia.js";
+import {
+  chargeVolknerGrid,
+  initVolknerBattle,
+  resetVolknerGridIfEnemyDefeated,
+  syncVolknerVisual,
+} from "./volkner.js";
 
 export * from "../engine.js?base";
 
@@ -125,9 +138,11 @@ function enemyUnitIds(game) {
 
 function didEnemyPokemonDie(game, beforeIds) {
   if (!beforeIds) return false;
-  return [...beforeIds].some(
-    (uid) => !game.players.enemy.field.some((unit) => unit.uid === uid),
-  );
+
+  return [...beforeIds].some((uid) => {
+    const unit = game.players.enemy.field.find((entry) => entry.uid === uid);
+    return !unit || unit.hp <= 0;
+  });
 }
 
 function resetMayleneComboIfNeeded(game, beforeIds) {
@@ -182,19 +197,22 @@ function findNewestUnitByCardId(game, side, cardId) {
 function enableSignatureRush(game, side, cardId) {
   const card = CARD_MAP[cardId];
   if (!card) return;
-  if (
-    card.ability !== "maylene_aurasphere" &&
-    card.ability !== "wake_aquajet"
-  ) return;
+
+  const rushNames = {
+    maylene_aurasphere: "파동탄",
+    wake_aquajet: "아쿠아제트",
+    candice_snowveil: "설녀의 장막",
+    volkner_overdrive: "오버드라이브",
+  };
+
+  const skillName = rushNames[card.ability];
+  if (!skillName) return;
 
   const unit = findNewestUnitByCardId(game, side, cardId);
   if (!unit) return;
 
   unit.canAttack = true;
-  pushLog(
-    game,
-    `${unit.name}의 ${card.ability === "maylene_aurasphere" ? "파동탄" : "아쿠아제트"}! 바로 공격할 수 있다!`,
-  );
+  pushLog(game, `${unit.name}의 ${skillName}! 바로 공격할 수 있다!`);
 }
 
 function addImpactDamage(game, targetSide, targetUid, amount) {
@@ -255,6 +273,8 @@ function syncSinnohMechanics(game) {
   ensureByronArmor(game);
   flushByronArmorLogs(game);
   syncByronArmorVisual(game);
+  syncCandiceVisual(game);
+  syncVolknerVisual(game);
   syncBattleTurnVisual(game);
 }
 
@@ -275,6 +295,8 @@ export function createGame(playerDeckIds, trainer) {
 
   initFantinaBattle(game);
   initByronBattle(game);
+  initCandiceBattle(game);
+  initVolknerBattle(game);
   syncSinnohMechanics(game);
   return game;
 }
@@ -289,10 +311,18 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   const result = base.playCard(game, side, handIdx, resolvedTarget, fieldIndex);
 
   if (!result && gardeniaAnchor) restoreGardeniaAnchor(game, gardeniaAnchor);
-  if (result && cardId) enableSignatureRush(game, side, cardId);
+
+  if (result && cardId) {
+    enableSignatureRush(game, side, cardId);
+
+    if (card?.kind === "spell") {
+      markCandiceFireAction(game, side, card);
+    }
+  }
 
   spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
+  resetVolknerGridIfEnemyDefeated(game, enemyBefore);
   syncSinnohMechanics(game);
   return result;
 }
@@ -339,6 +369,7 @@ export function attack(game, side, attackerUid, target) {
   let comboBonus = 0;
   let lucarioBonus = 0;
   let floatzelBonus = 0;
+  const candiceBonus = getCandiceSignatureBonus(game, attacker);
 
   if (game.trainer?.gimmick === "dojo_combo" && side === "enemy") {
     comboBefore = game._mayleneCombo || 0;
@@ -363,7 +394,9 @@ export function attack(game, side, attackerUid, target) {
     return false;
   }
 
-  const totalBonus = comboBonus + lucarioBonus + floatzelBonus;
+  const totalBonus =
+    comboBonus + lucarioBonus + floatzelBonus + candiceBonus;
+
   applyAttackBonus(
     game,
     side,
@@ -396,12 +429,29 @@ export function attack(game, side, attackerUid, target) {
     );
   }
 
+  if (candiceBonus > 0) {
+    pushLog(
+      game,
+      `설녀의 장막! 짙어진 냉기로 ${attacker.name}의 공격 피해 +${candiceBonus}!`,
+    );
+  }
+
+  markCandiceFireAction(game, side, attacker);
+
+  if (chargeVolknerGrid(game, attacker)) {
+    base.cleanupDeaths(game, true);
+    if (game.players.player.hp <= 0 && !game.winner) {
+      game.winner = "enemy";
+    }
+  }
+
   if (handleByronMetalBurst(game, attacker, targetRef, armorBefore)) {
     base.cleanupDeaths(game, true);
   }
 
   spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
+  resetVolknerGridIfEnemyDefeated(game, enemyBefore);
   syncSinnohMechanics(game);
   return true;
 }
@@ -419,6 +469,7 @@ export function endTurn(game) {
   restoreUnusedGardeniaAnchors(game, releasedGardeniaAnchors);
   spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
+  resetVolknerGridIfEnemyDefeated(game, enemyBefore);
 
   if (game.trainer?.gimmick === "dojo_combo" && endingSide === "enemy") {
     game._mayleneCombo = 0;
@@ -435,6 +486,13 @@ export function endTurn(game) {
 
   if (endingSide === "player") {
     ageFantinaGhosts(game, existingGhosts);
+
+    if (resolveCandicePlayerTurnEnd(game)) {
+      base.cleanupDeaths(game, true);
+      if (game.players.player.hp <= 0 && !game.winner) {
+        game.winner = "enemy";
+      }
+    }
   }
 
   if (endingSide === "enemy" && game.turn === "player" && !game.winner) {
@@ -456,6 +514,7 @@ export function cleanupDeaths(game, ...args) {
 
   spawnFantinaGhostsFromDeaths(game, fantinaBefore);
   resetMayleneComboIfNeeded(game, enemyBefore);
+  resetVolknerGridIfEnemyDefeated(game, enemyBefore);
   syncSinnohMechanics(game);
   return result;
 }
