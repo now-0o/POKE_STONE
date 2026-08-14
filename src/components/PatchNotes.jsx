@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { PATCH_NOTES } from "../patchNotes.js";
+import { PATCH_NOTE_V27 } from "../patchNotes-v27.js";
 import { playSfx } from "../audio.js";
+
+const ALL_PATCH_NOTES = [PATCH_NOTE_V27, ...PATCH_NOTES];
 
 export default function PatchNotes() {
   const [open, setOpen] = useState(false);
@@ -16,7 +19,7 @@ export default function PatchNotes() {
         }}
         title="패치노트"
       >
-        📋 v{PATCH_NOTES[0].version}
+        📋 v{ALL_PATCH_NOTES[0].version}
       </button>
       {open && (
         <div className="patchnotes-panel">
@@ -33,7 +36,7 @@ export default function PatchNotes() {
             </button>
           </div>
           <div className="patchnotes-body">
-            {PATCH_NOTES.map((entry) => (
+            {ALL_PATCH_NOTES.map((entry) => (
               <div key={entry.version} className="patchnotes-entry">
                 <div className="patchnotes-entry-head">
                   <span className="patchnotes-version">v{entry.version}</span>
