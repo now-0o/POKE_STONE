@@ -22,9 +22,24 @@ body[data-battlefield="sinnoh_champion_room"] {
     0 18px 58px rgba(0, 0, 0, 0.56);
 }
 
-/* 난천은 한 번에 한 마리만 전개하므로 필드의 정확한 정중앙에 고정한다. */
-.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field {
-  position: relative;
+/* 난천전은 전용 몬스터볼 소환 연출을 사용하므로 공용 SIGNATURE 연출은 끈다. */
+.battle-board[data-trainer="sinnoh_cynthia"] .signature-summon-fx {
+  display: none !important;
+}
+
+/*
+  공용 상대 필드는 화면 양옆 UI를 고려한 폭/오프셋을 쓴다.
+  난천은 한 마리만 전개하므로 그 영역의 중앙이 아니라 배틀보드 전체의 정확한 중앙을 쓴다.
+*/
+.battle-board[data-trainer="sinnoh_cynthia"] > .enemy-field {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  position: absolute;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
   grid-template-rows: minmax(0, 1fr) !important;
