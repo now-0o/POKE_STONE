@@ -3,6 +3,11 @@
   z-index: 735;
 }
 
+/* 기존 보드 내부 파티 뱃지는 HUD와 중복되므로 숨긴다. */
+.battle-board[data-trainer="sinnoh_cynthia"][data-cynthia-party]::before {
+  display: none;
+}
+
 .cynthia-hud-wrap {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
