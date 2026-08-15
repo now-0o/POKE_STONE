@@ -15,6 +15,71 @@
   padding-right: max(12px, calc((100vw - 1280px) / 2 + 12px));
 }
 
+/*
+ * 팩 개봉 결과는 앱의 1280px 컨테이너 중심이 아니라
+ * 실제 화면 전체를 기준으로 가운데 배치한다.
+ */
+.pack-shop:has(.pack-open-area) {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.pack-shop .pack-open-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(24px, 5vh, 56px);
+  padding-bottom: 40px;
+}
+
+/* 5장의 카드가 한 덩어리로 화면 정중앙에 오도록 고정 */
+.pack-shop .pack-open-area .pack-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 172px);
+  gap: 22px;
+  width: max-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  align-items: start;
+  perspective: 1100px;
+}
+
+/*
+ * 카드 내부 비율은 원본 HandCard(134 x 188)를 그대로 유지하고
+ * 앞면/뒷면 전체를 같은 비율로 확대한다.
+ */
+.pack-shop .pack-open-area .flip-card {
+  width: 172px;
+  min-height: 270px;
+}
+
+.pack-shop .pack-open-area .flip-inner {
+  width: 100%;
+  min-height: 270px;
+}
+
+.pack-shop .pack-open-area .pack-card-wrap,
+.pack-shop .pack-open-area .card-back {
+  scale: 1.22;
+  transform-origin: top center;
+}
+
+.pack-shop .pack-open-area .flip-face {
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.pack-shop .pack-open-area .reveal-actions,
+.pack-shop .pack-open-area .pack-done {
+  width: 100%;
+  justify-content: center;
+}
+
 .pack-shop,
 .pack-row,
 .pack-cards,
@@ -83,10 +148,41 @@
   to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
 }
 
+/* 작은 가로 화면에서는 5장을 유지하되 비율 그대로 조금만 축소 */
+@media (max-width: 980px) {
+  .pack-shop .pack-open-area .pack-cards {
+    grid-template-columns: repeat(5, 144px);
+    gap: 12px;
+  }
+
+  .pack-shop .pack-open-area .flip-card {
+    width: 144px;
+    min-height: 238px;
+  }
+
+  .pack-shop .pack-open-area .flip-inner {
+    min-height: 238px;
+  }
+
+  .pack-shop .pack-open-area .pack-card-wrap,
+  .pack-shop .pack-open-area .card-back {
+    scale: 1.06;
+  }
+}
+
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .pack-shop:has(.pack-buy-area) {
     padding-left: max(6px, calc((100vw - 1280px) / 2 + 6px));
     padding-right: max(6px, calc((100vw - 1280px) / 2 + 6px));
+  }
+
+  .pack-shop:has(.pack-open-area) {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .pack-shop .pack-open-area {
+    padding-top: 14px;
   }
 }
 
