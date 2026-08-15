@@ -1,0 +1,160 @@
+#cynthia-battle-ui-root {
+  position: relative;
+  z-index: 735;
+}
+
+.cynthia-hud-wrap {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(24px, calc(env(safe-area-inset-right) + 14px));
+  z-index: 738;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.cynthia-party-hud {
+  min-width: 238px;
+  padding: 8px 11px 7px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "title pips count"
+    "active active hazard";
+  gap: 5px 8px;
+  align-items: center;
+  border: 1px solid rgba(226, 203, 255, 0.38);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(39, 28, 62, 0.94), rgba(11, 12, 26, 0.95));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 20px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  pointer-events: none;
+}
+
+.cynthia-party-title {
+  grid-area: title;
+  color: #d7c6f4;
+  font-family: var(--display-font);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+
+.cynthia-party-pips {
+  grid-area: pips;
+  display: flex;
+  gap: 4px;
+}
+
+.cynthia-party-pip {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(255, 237, 173, 0.8);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 32%, #fff8cd 0 18%, #d5ae48 19% 52%, #62472a 54% 100%);
+  box-shadow: 0 0 6px rgba(242, 207, 112, 0.34);
+}
+
+.cynthia-party-pip.is-fainted {
+  opacity: 0.28;
+  filter: grayscale(1);
+  box-shadow: none;
+}
+
+.cynthia-party-hud > strong {
+  grid-area: count;
+  color: #fff0ad;
+  font-family: var(--display-font);
+  font-size: 12px;
+}
+
+.cynthia-active-name {
+  grid-area: active;
+  color: #f2eaff;
+  font-family: var(--display-font);
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cynthia-hazard {
+  grid-area: hazard;
+  justify-self: end;
+  color: #e5a5ed;
+  font-family: var(--display-font);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.cynthia-help-btn {
+  flex: 0 0 auto;
+  border-color: rgba(222, 196, 255, 0.55);
+  color: #e5d5ff;
+  background: rgba(25, 18, 42, 0.9);
+}
+
+.cynthia-guide-dialog {
+  width: min(690px, calc(100vw - 26px));
+}
+
+.cynthia-guide-body {
+  max-height: min(72vh, 620px);
+  overflow-y: auto;
+}
+
+.cynthia-member-guide {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cynthia-member-guide > div {
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid rgba(203, 180, 238, 0.18);
+  border-radius: 10px;
+  background: rgba(100, 73, 137, 0.1);
+}
+
+.cynthia-member-guide strong {
+  color: #f4e9ff;
+  font-family: var(--display-font);
+  font-size: 11px;
+}
+
+.cynthia-member-guide span {
+  color: #c4bfd0;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .cynthia-hud-wrap {
+    top: 7px;
+    right: 8px;
+    gap: 5px;
+  }
+
+  .cynthia-party-hud {
+    min-width: 190px;
+    padding: 6px 8px;
+  }
+
+  .cynthia-party-pip {
+    width: 8px;
+    height: 8px;
+  }
+
+  .cynthia-member-guide {
+    grid-template-columns: 1fr;
+  }
+}
