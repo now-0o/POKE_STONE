@@ -3,6 +3,7 @@ const BASE_WHITEOUT_TARGETS = 2;
 const SNOW_WARNING_TARGETS = 3;
 const WHITEOUT_BONUS_DAMAGE = 2;
 const SLOT_PRIORITY = [2, 3, 1, 4, 0, 5];
+const PREFERRED_SLOT_MAX_AGE_MS = 900;
 
 function pushLog(game, message) {
   game.log.push(message);
@@ -32,6 +33,29 @@ function shuffled(values) {
 
 function isValidSlot(slot) {
   return Number.isInteger(slot) && slot >= 0 && slot < FIELD_SLOT_COUNT;
+}
+
+function consumePreferredPlayerSlot(used) {
+  if (typeof window === "undefined") return null;
+
+  const pending = window.__pokeCandicePreferredSlot;
+  if (!pending) return null;
+
+  delete window.__pokeCandicePreferredSlot;
+
+  const slot = Number(pending.slot);
+  const age = Date.now() - Number(pending.at || 0);
+
+  if (
+    !isValidSlot(slot) ||
+    age < 0 ||
+    age > PREFERRED_SLOT_MAX_AGE_MS ||
+    used.has(slot)
+  ) {
+    return null;
+  }
+
+  return slot;
 }
 
 function activeWhiteoutSlots(game) {
@@ -64,10 +88,17 @@ function normalizeCandiceFieldSlots(game) {
     used.add(slot);
   });
 
-  player.field.forEach((unit) => {
-    if (isValidSlot(unit._candiceFieldSlot)) return;
+  const unassigned = player.field.filter(
+    (unit) => !isValidSlot(unit._candiceFieldSlot),
+  );
+  let preferredSlot =
+    unassigned.length > 0 ? consumePreferredPlayerSlot(used) : null;
 
-    const slot = SLOT_PRIORITY.find((candidate) => !used.has(candidate));
+  unassigned.forEach((unit) => {
+    const slot =
+      preferredSlot ?? SLOT_PRIORITY.find((candidate) => !used.has(candidate));
+
+    preferredSlot = null;
     if (slot == null) return;
 
     unit._candiceFieldSlot = slot;
