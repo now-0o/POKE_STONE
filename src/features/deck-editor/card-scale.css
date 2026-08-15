@@ -24,9 +24,9 @@
   aspect-ratio: auto;
   padding: 7px 8px 6px;
   gap: 3px;
-  scale: 1.4;
+  scale: 1.37;
   transform-origin: top center;
-  margin-bottom: 86px;
+  margin-bottom: 80px;
 }
 
 /* undo the previous per-section stretching so the original card proportions remain */
@@ -162,7 +162,7 @@
 
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .deck-editor .collection-item .hand-card {
-    scale: 1.2;
-    margin-bottom: 44px;
+    scale: 1.18;
+    margin-bottom: 40px;
   }
 }
