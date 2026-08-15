@@ -20,6 +20,52 @@
   user-drag: none;
 }
 
+/* 손패 드래그 카드는 원본 카드 비율을 유지한 채 전체를 더 크게 보여준다. */
+.battle-board .drag-ghost {
+  transform: translate(-50%, -62%) scale(1.6);
+}
+
+/* 필드 포켓몬 꾹눌러 보기: 현재 HP / 최대 HP를 한 오브 안에 정리한다. */
+.battle-board .inspect-overlay .hcard-orb.orb-hp.hp-current-max {
+  width: 48px !important;
+  height: 28px !important;
+  right: -19px;
+  border-radius: 999px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 10px !important;
+  line-height: 1;
+  white-space: nowrap;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 214, 208, 0.95), transparent 28%),
+    linear-gradient(180deg, #ef6d65 0%, var(--hp-red) 58%, #9d2828 100%);
+  box-shadow:
+    0 3px 7px rgba(0, 0, 0, 0.48),
+    inset 0 1px 1px rgba(255, 255, 255, 0.42),
+    inset 0 -3px 4px rgba(80, 0, 0, 0.25);
+}
+
+.battle-board .inspect-overlay .hp-current {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.battle-board .inspect-overlay .hp-divider {
+  font-size: 9px;
+  opacity: 0.62;
+  transform: translateY(-0.5px);
+}
+
+.battle-board .inspect-overlay .hp-maximum {
+  font-size: 9px;
+  color: #ffe2df;
+  opacity: 0.92;
+}
+
 /* VS / 코인토스는 문서 레이아웃과 분리해 스크롤 점멸을 막는다. */
 .battle-intro {
   position: fixed !important;
@@ -48,6 +94,12 @@ body.battle-page-locked {
   overflow: hidden !important;
   overscroll-behavior: none;
   scrollbar-gutter: auto !important;
+}
+
+@media (pointer: coarse) {
+  .battle-board .drag-ghost {
+    transform: translate(-50%, -62%) scale(1.18);
+  }
 }
 
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
