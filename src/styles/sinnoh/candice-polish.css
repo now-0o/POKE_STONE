@@ -1,0 +1,14 @@
+/* 무청전 시작 시 6칸 슬롯 표시가 플레이어 필드 아래로 살짝 내려가 보이던 부분 보정 */
+.battle-board[data-battlefield="snowpoint_snowfield"]
+  .candice-slot-overlay,
+body[data-battlefield="snowpoint_snowfield"] .candice-slot-overlay {
+  transform: translateY(-4px);
+}
+
+@media (max-width: 720px) {
+  .battle-board[data-battlefield="snowpoint_snowfield"]
+    .candice-slot-overlay,
+  body[data-battlefield="snowpoint_snowfield"] .candice-slot-overlay {
+    transform: translateY(-3px);
+  }
+}
