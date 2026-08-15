@@ -114,6 +114,7 @@ const CYNTHIA_CARDS = [
     type: "기술",
     cost: 0,
     rarity: "L",
+    emoji: "↩️",
     trainerOnly: true,
     spell: {
       effect: "cynthia_recall",
