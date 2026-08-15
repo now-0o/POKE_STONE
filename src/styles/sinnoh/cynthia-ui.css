@@ -208,8 +208,8 @@ body[data-cynthia-summoning="1"]
   56% {
     transform:
       translate(
-        calc(-50% + var(--cynthia-ball-dx) * 0.72),
-        calc(-50% + var(--cynthia-ball-dy) * 0.72 - 54px)
+        calc(-50% + var(--cynthia-ball-arc-dx)),
+        calc(-50% + var(--cynthia-ball-arc-dy))
       )
       rotate(510deg)
       scale(1.02);
