@@ -352,6 +352,7 @@ export function HandCard({
   const shownName = unit ? unit.name : card.name;
   const shownAtk = unit ? unit.atk : card.atk;
   const shownHp = unit ? unit.hp : card.hp;
+  const shownMaxHp = unit ? unit.maxHp : card.hp;
   const shownType = unit ? unit.type : card.type;
   const { ref, onMouseMove, onMouseLeave } = useTilt();
   const holo = card.rarity !== "C";
@@ -430,7 +431,20 @@ export function HandCard({
       {isPokemon && (
         <>
           <div className="hcard-orb orb-atk">{shownAtk}</div>
-          <div className="hcard-orb orb-hp">{shownHp}</div>
+          <div
+            className={`hcard-orb orb-hp ${unit ? "hp-current-max" : ""}`}
+            aria-label={unit ? `현재 체력 ${shownHp}, 최대 체력 ${shownMaxHp}` : undefined}
+          >
+            {unit ? (
+              <>
+                <span className="hp-current">{shownHp}</span>
+                <span className="hp-divider">/</span>
+                <span className="hp-maximum">{shownMaxHp}</span>
+              </>
+            ) : (
+              shownHp
+            )}
+          </div>
         </>
       )}
       <div className={`card-rarity-gem gem-${card.rarity}`} />
