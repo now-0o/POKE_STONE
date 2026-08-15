@@ -1,0 +1,178 @@
+/* ============================================================
+   난천전 - 승리 조건 / 독압정 가시성 보강
+   ============================================================ */
+
+/* 난천 본체는 승리 조건이 아니므로 HP/덱 정보를 노출하지 않고 타겟에서도 제외한다. */
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-hero-cluster .hero-hp,
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-hero-cluster .hero-sub {
+  display: none !important;
+}
+
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-hero-cluster .enemy-bar {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-hero-cluster .enemy-bar.targetable {
+  border-color: var(--panel-border) !important;
+  box-shadow: none !important;
+  animation: none !important;
+  cursor: default !important;
+}
+
+/* 규칙창에서 승리 조건을 한 번 더 명확하게 보여준다. */
+.cynthia-guide-body .battle-gimmick-copy::after {
+  content: "힌트: 난천 본체는 직접 공격할 수 없습니다. 필드에 나오는 여섯 포켓몬을 모두 쓰러뜨리면 승리합니다.";
+  display: block;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(235, 205, 123, 0.45);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(94, 67, 125, 0.3), rgba(34, 27, 54, 0.74));
+  color: #fff0b8;
+  font-family: var(--display-font);
+  font-size: 11px;
+  line-height: 1.55;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ------------------------------------------------------------
+   플레이어 필드 독압정 표시
+   필드 상단 테두리에 걸쳐 보여 카드와 겹치지 않으면서도 바로 인지된다.
+   ------------------------------------------------------------ */
+#cynthia-toxic-spikes-ui-root {
+  position: relative;
+  z-index: 746;
+}
+
+.cynthia-toxic-spikes-field-ui {
+  position: fixed;
+  z-index: 746;
+  transform: translateY(-48%);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid rgba(224, 151, 238, 0.72);
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(224, 153, 255, 0.18), transparent 36%),
+    linear-gradient(135deg, rgba(55, 24, 72, 0.96), rgba(25, 15, 38, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 14px rgba(18, 5, 24, 0.48),
+    0 0 12px rgba(177, 73, 204, 0.2);
+  color: #f6ddff;
+  pointer-events: none;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.cynthia-toxic-spikes-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--display-font);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.cynthia-toxic-spikes-mark {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid rgba(243, 193, 255, 0.76);
+  border-radius: 7px;
+  background: linear-gradient(145deg, #b34ccb, #612071);
+  color: #fff;
+  font-size: 9px;
+  box-shadow: 0 0 9px rgba(201, 91, 225, 0.5);
+}
+
+.cynthia-toxic-spikes-icons {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 25px;
+  padding: 0 2px;
+}
+
+.cynthia-toxic-spike {
+  position: relative;
+  width: 16px;
+  height: 22px;
+  clip-path: polygon(50% 0, 65% 48%, 100% 72%, 67% 78%, 50% 100%, 33% 78%, 0 72%, 35% 48%);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cynthia-toxic-spike.is-active {
+  background: linear-gradient(180deg, #f0b9ff 0%, #b846d0 42%, #5c176e 100%);
+  filter:
+    drop-shadow(0 0 3px rgba(244, 190, 255, 0.9))
+    drop-shadow(0 0 7px rgba(177, 64, 202, 0.72));
+  animation: cynthia-toxic-spike-pulse 1.25s ease-in-out infinite alternate;
+}
+
+.cynthia-toxic-spike.is-used {
+  background: linear-gradient(180deg, #806b87, #413747);
+  opacity: 0.28;
+  transform: scaleY(0.62);
+  filter: grayscale(1);
+}
+
+.cynthia-toxic-spikes-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.cynthia-toxic-spikes-copy strong {
+  color: #f1b8ff;
+  font-family: var(--display-font);
+  font-size: 10px;
+}
+
+.cynthia-toxic-spikes-copy span {
+  color: rgba(237, 218, 242, 0.78);
+  font-size: 9px;
+}
+
+@keyframes cynthia-toxic-spike-pulse {
+  from {
+    transform: translateY(1px) scale(0.94);
+    filter:
+      drop-shadow(0 0 2px rgba(244, 190, 255, 0.7))
+      drop-shadow(0 0 5px rgba(177, 64, 202, 0.52));
+  }
+  to {
+    transform: translateY(-1px) scale(1.04);
+    filter:
+      drop-shadow(0 0 4px rgba(244, 190, 255, 1))
+      drop-shadow(0 0 9px rgba(177, 64, 202, 0.84));
+  }
+}
+
+@media (max-width: 720px) {
+  .cynthia-toxic-spikes-field-ui {
+    gap: 6px;
+    padding: 5px 8px 5px 6px;
+  }
+
+  .cynthia-toxic-spikes-copy span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cynthia-toxic-spike.is-active {
+    animation: none;
+  }
+}
