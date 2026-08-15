@@ -1,0 +1,168 @@
+/*
+ * Deck editor card presentation
+ *
+ * The large inspect card is the visual source of truth: keep the native
+ * 134 x 188 HandCard layout intact and scale the whole card instead of
+ * stretching individual inner sections.
+ */
+
+/* ---------- collection: four columns, native card layout scaled as one ---------- */
+.deck-editor .collection-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px 14px;
+}
+
+.deck-editor .collection-item {
+  align-items: center;
+  overflow: visible;
+}
+
+.deck-editor .collection-item .hand-card {
+  width: 134px;
+  height: 188px;
+  min-height: 188px;
+  aspect-ratio: auto;
+  padding: 7px 8px 6px;
+  gap: 3px;
+  scale: 1.64;
+  transform-origin: top center;
+  margin-bottom: 120px;
+}
+
+/* undo the previous per-section stretching so the original card proportions remain */
+.deck-editor .collection-item .card-art {
+  height: 66px;
+  min-height: 66px;
+  flex: 0 0 66px;
+}
+
+.deck-editor .collection-item .card-sprite {
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.deck-editor .collection-item .card-name {
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.deck-editor .collection-item .card-stageline {
+  height: 14px;
+  min-height: 14px;
+  padding: 1px 5px;
+  font-size: 8.5px;
+  line-height: 12px;
+}
+
+.deck-editor .collection-item .card-typebadge {
+  padding: 2px 9px;
+  font-size: 9px;
+}
+
+.deck-editor .collection-item .card-text {
+  min-height: 0;
+  padding: 3px 5px;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.deck-editor .collection-item .collection-meta {
+  margin-top: 0;
+  font-size: 12.5px;
+}
+
+/* ---------- deck hover preview: same native layout, larger scale ---------- */
+.deck-hover-preview {
+  width: 279px;
+  height: 392px;
+}
+
+.deck-hover-preview .hand-card {
+  width: 134px;
+  height: 188px;
+  min-height: 188px;
+  padding: 7px 8px 6px;
+  gap: 3px;
+  border-width: 4px;
+  border-radius: 12px;
+  scale: 2.08;
+  transform: none !important;
+  transform-origin: top left;
+}
+
+.deck-hover-preview .card-art {
+  height: 66px;
+  min-height: 66px;
+  flex: 0 0 66px;
+  border-radius: 6px;
+}
+
+.deck-hover-preview .card-sprite {
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.deck-hover-preview .card-name {
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.deck-hover-preview .card-stageline {
+  height: 14px;
+  min-height: 14px;
+  padding: 1px 5px;
+  font-size: 8.5px;
+  line-height: 12px;
+}
+
+.deck-hover-preview .card-typebadge {
+  padding: 2px 9px;
+  font-size: 9px;
+}
+
+.deck-hover-preview .card-text {
+  min-height: 0;
+  padding: 3px 5px;
+  font-size: 9px;
+  line-height: 1.4;
+  border-radius: 5px;
+}
+
+.deck-hover-preview .card-cost {
+  top: -11px;
+  left: -11px;
+  width: 34px;
+  height: 34px;
+  border-width: 2px;
+  font-size: 18px;
+}
+
+.deck-hover-preview .hcard-orb {
+  bottom: -11px;
+  width: 31px;
+  height: 31px;
+  border-width: 2px;
+  font-size: 16px;
+}
+
+.deck-hover-preview .hcard-orb.orb-atk {
+  left: -10px;
+}
+
+.deck-hover-preview .hcard-orb.orb-hp {
+  right: -10px;
+}
+
+.deck-hover-preview .card-rarity-gem {
+  bottom: -7px;
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .deck-editor .collection-item .hand-card {
+    scale: 1.34;
+    margin-bottom: 64px;
+  }
+}
