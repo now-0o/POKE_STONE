@@ -1,0 +1,201 @@
+/* ============================================================
+   난천 - 챔피언 배틀 / 6체 파티
+   ============================================================ */
+
+body[data-battlefield="sinnoh_champion_room"] {
+  background:
+    radial-gradient(ellipse 78% 52% at 50% 0%, rgba(171, 139, 255, 0.2), transparent 68%),
+    radial-gradient(ellipse 72% 48% at 50% 108%, rgba(225, 190, 92, 0.14), transparent 72%),
+    linear-gradient(180deg, #0d0d1a 0%, #16132a 48%, #090a12 100%);
+}
+
+.battle-board[data-battlefield="sinnoh_champion_room"] {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(231, 218, 255, 0.15), transparent 29%),
+    linear-gradient(90deg, transparent 0 11%, rgba(205, 173, 255, 0.045) 12% 13%, transparent 14% 86%, rgba(205, 173, 255, 0.045) 87% 88%, transparent 89%),
+    linear-gradient(180deg, rgba(64, 49, 100, 0.84), rgba(18, 17, 35, 0.96) 46%, rgba(9, 10, 18, 0.98));
+  box-shadow:
+    inset 0 0 80px rgba(201, 174, 255, 0.08),
+    0 18px 58px rgba(0, 0, 0, 0.56);
+}
+
+/* 난천은 본가식으로 포켓몬 한 마리만 ACTIVE. */
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field {
+  position: relative;
+  justify-content: center !important;
+}
+
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field::after {
+  content: "ACTIVE";
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  transform: translateX(-50%);
+  color: rgba(239, 226, 255, 0.62);
+  font-family: var(--display-font);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  pointer-events: none;
+}
+
+/* 남은 포켓몬 수를 챔피언전 보드에 계속 표시한다. */
+.battle-board[data-trainer="sinnoh_cynthia"][data-cynthia-party]::before {
+  content: "CYNTHIA PARTY  " attr(data-cynthia-party) " / 6";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 44;
+  padding: 6px 10px 5px;
+  border: 1px solid rgba(225, 203, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(12, 10, 24, 0.72);
+  color: #f1e8ff;
+  font-family: var(--display-font);
+  font-size: clamp(8px, 0.95vmin, 11px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow:
+    inset 0 0 14px rgba(190, 157, 255, 0.08),
+    0 3px 14px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   마지막 한카리아스 - 챔피언 에이스 연출
+   ------------------------------------------------------------ */
+body[data-cynthia-ace="1"]
+  .battle-board[data-trainer="sinnoh_cynthia"] {
+  animation: cynthia-ace-board 2.5s ease-out both;
+}
+
+body[data-cynthia-ace="1"]
+  .battle-board[data-trainer="sinnoh_cynthia"]::after {
+  content: "CHAMPION'S ACE\A난천의 한카리아스";
+  white-space: pre-line;
+  position: absolute;
+  inset: 0;
+  z-index: 88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 4%;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(245, 222, 139, 0.18), transparent 31%),
+    radial-gradient(circle at 50% 50%, rgba(117, 72, 203, 0.42), rgba(6, 6, 16, 0.92) 72%);
+  color: #fff8d7;
+  text-align: center;
+  font-family: var(--display-font);
+  font-size: clamp(24px, 5.2vmin, 58px);
+  font-weight: 900;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 3px 0 rgba(61, 34, 97, 0.96),
+    0 0 16px rgba(243, 214, 126, 0.74),
+    0 0 38px rgba(158, 102, 255, 0.82);
+  pointer-events: none;
+  animation: cynthia-ace-banner 2.5s ease-out both;
+}
+
+body[data-cynthia-ace="1"]
+  .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit {
+  z-index: 96 !important;
+  animation: cynthia-ace-garchomp 2.5s cubic-bezier(0.18, 0.84, 0.28, 1) both;
+}
+
+body[data-cynthia-ace="1"]
+  .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 226, 126, 0.48), rgba(130, 72, 220, 0.26) 46%, transparent 72%);
+  filter: blur(5px);
+  animation: cynthia-ace-aura 0.55s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes cynthia-ace-banner {
+  0% {
+    opacity: 0;
+    transform: scale(1.12);
+    filter: brightness(2.1);
+  }
+  11% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1.45);
+  }
+  58% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  86% {
+    opacity: 0.94;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes cynthia-ace-garchomp {
+  0%, 12% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.72);
+    filter: brightness(2) drop-shadow(0 0 24px rgba(255, 226, 130, 0.8));
+  }
+  28% {
+    opacity: 1;
+    transform: translateY(0) scale(1.28);
+  }
+  64% {
+    transform: translateY(0) scale(1.18);
+    filter: brightness(1.2) drop-shadow(0 0 28px rgba(171, 112, 255, 0.92));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: none;
+  }
+}
+
+@keyframes cynthia-ace-board {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 80px rgba(201, 174, 255, 0.08),
+      0 18px 58px rgba(0, 0, 0, 0.56);
+  }
+  12% {
+    box-shadow:
+      inset 0 0 110px rgba(240, 215, 135, 0.22),
+      0 0 42px rgba(158, 100, 255, 0.5);
+  }
+  18% { transform: translateX(-2px); }
+  22% { transform: translateX(2px); }
+  26% { transform: translateX(-1px); }
+  30% { transform: translateX(0); }
+}
+
+@keyframes cynthia-ace-aura {
+  from { opacity: 0.58; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-cynthia-ace="1"]
+    .battle-board[data-trainer="sinnoh_cynthia"],
+  body[data-cynthia-ace="1"]
+    .battle-board[data-trainer="sinnoh_cynthia"]::after,
+  body[data-cynthia-ace="1"]
+    .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit,
+  body[data-cynthia-ace="1"]
+    .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit::before {
+    animation: none;
+  }
+}
