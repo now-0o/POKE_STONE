@@ -8,10 +8,7 @@ import {
 
 const PARTY_SIZE = 6;
 const SUMMON_MS = 1250;
-const SUMMON_DEDUP_MS = 1800;
 let summonSeq = 0;
-let lastSummonCardId = null;
-let lastSummonAt = 0;
 
 function normalizedActiveCardId(value) {
   if (!value || value === "none") return null;
@@ -29,6 +26,33 @@ function readState() {
     remaining: Number.isFinite(remaining) ? Math.max(0, remaining) : 0,
     activeCardId,
     toxicSpikes: Number.isFinite(toxicSpikes) ? Math.max(0, toxicSpikes) : 0,
+  };
+}
+
+function readSyncedState(event) {
+  const current = readState();
+
+  // battle-turn-change를 비롯한 공용 이벤트의 detail은 난천 파티 정보가 아니다.
+  // 난천 전용 이벤트에서만 detail을 사용하고, 누락된 값은 현재 body 상태를 유지한다.
+  if (event?.type !== "cynthia-party-change" || !event.detail) {
+    return current;
+  }
+
+  const { remaining, activeCardId, toxicSpikes } = event.detail;
+
+  return {
+    remaining:
+      remaining === undefined
+        ? current.remaining
+        : Math.max(0, Number(remaining) || 0),
+    activeCardId:
+      activeCardId === undefined
+        ? current.activeCardId
+        : normalizedActiveCardId(activeCardId),
+    toxicSpikes:
+      toxicSpikes === undefined
+        ? current.toxicSpikes
+        : Math.max(0, Number(toxicSpikes) || 0),
   };
 }
 
@@ -77,25 +101,12 @@ function CynthiaHud() {
   const summonTimerRef = useRef(null);
 
   const beginSummon = useCallback((cardId) => {
-    const now = Date.now();
-
-    // 같은 포켓몬의 상태 동기화 이벤트가 연속으로 들어와도
-    // 한 번의 실제 소환에는 몬스터볼 연출을 딱 한 번만 재생한다.
-    if (
-      cardId === lastSummonCardId &&
-      now - lastSummonAt < SUMMON_DEDUP_MS
-    ) {
-      return;
-    }
-
     const fx = buildSummonFx(cardId);
     if (!fx) {
       delete document.body.dataset.cynthiaSummoning;
       return;
     }
 
-    lastSummonCardId = cardId;
-    lastSummonAt = now;
     document.body.dataset.cynthiaSummoning = "1";
     setSummon(fx);
 
@@ -112,16 +123,11 @@ function CynthiaHud() {
 
   useEffect(() => {
     const sync = (event) => {
-      const next = event?.detail
-        ? {
-            remaining: Math.max(0, Number(event.detail.remaining) || 0),
-            activeCardId: normalizedActiveCardId(event.detail.activeCardId),
-            toxicSpikes: Math.max(0, Number(event.detail.toxicSpikes) || 0),
-          }
-        : readState();
+      const next = readSyncedState(event);
 
       setState(next);
 
+      // 몬스터볼 연출은 실제로 필드의 시그니처 포켓몬이 바뀔 때만 재생한다.
       if (
         next.activeCardId &&
         next.activeCardId !== previousActiveRef.current
@@ -315,8 +321,6 @@ function syncCynthiaBattleUi() {
     mounted = false;
     root?.render(null);
     delete document.body.dataset.cynthiaSummoning;
-    lastSummonCardId = null;
-    lastSummonAt = 0;
   }
 }
 
