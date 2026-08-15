@@ -131,7 +131,7 @@ body[data-battlefield="snowpoint_snowfield"][data-battle-turn="player"]
   opacity: 0;
   filter: grayscale(1) brightness(1.22) contrast(1.08)
     drop-shadow(0 0 2px rgba(222, 247, 255, 0.5));
-  animation: candice-snow-burst 1.15s ease-out 1 both;
+  animation: candice-snow-burst 1.7s ease-out 1 both;
 }
 
 /* snowstorm.gif의 검정 배경은 screen 합성에서 사라지고 밝은 눈만 남는다. */
