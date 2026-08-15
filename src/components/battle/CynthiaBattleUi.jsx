@@ -8,7 +8,9 @@ import {
 
 const PARTY_SIZE = 6;
 const SUMMON_MS = 1250;
+const RECALL_MS = 620;
 let summonSeq = 0;
+let recallSeq = 0;
 
 function normalizedActiveCardId(value) {
   if (!value || value === "none") return null;
@@ -56,9 +58,7 @@ function readSyncedState(event) {
   };
 }
 
-function buildSummonFx(cardId) {
-  if (!cardId) return null;
-
+function readTrainerAndFieldRects() {
   const trainer = document.querySelector(
     '.battle.battle-board[data-trainer="sinnoh_cynthia"] [data-drop="enemy-hero"] .trainer-sprite',
   );
@@ -68,8 +68,19 @@ function buildSummonFx(cardId) {
 
   if (!trainer || !field) return null;
 
-  const trainerRect = trainer.getBoundingClientRect();
-  const fieldRect = field.getBoundingClientRect();
+  return {
+    trainerRect: trainer.getBoundingClientRect(),
+    fieldRect: field.getBoundingClientRect(),
+  };
+}
+
+function buildSummonFx(cardId) {
+  if (!cardId) return null;
+
+  const rects = readTrainerAndFieldRects();
+  if (!rects) return null;
+
+  const { trainerRect, fieldRect } = rects;
   const startX = trainerRect.left + trainerRect.width * 0.42;
   const startY = trainerRect.top + trainerRect.height * 0.52;
   const targetX = fieldRect.left + fieldRect.width / 2;
@@ -93,12 +104,50 @@ function buildSummonFx(cardId) {
   };
 }
 
+function buildRecallFx(cardId) {
+  if (!cardId) return null;
+
+  const rects = readTrainerAndFieldRects();
+  if (!rects) return null;
+
+  const { trainerRect, fieldRect } = rects;
+  const activeUnit = document.querySelector(
+    '.battle.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit',
+  );
+  const unitRect = activeUnit?.getBoundingClientRect();
+
+  const startX = unitRect
+    ? unitRect.left + unitRect.width / 2
+    : fieldRect.left + fieldRect.width / 2;
+  const startY = unitRect
+    ? unitRect.top + unitRect.height / 2
+    : fieldRect.top + fieldRect.height / 2;
+  const targetX = trainerRect.left + trainerRect.width * 0.5;
+  const targetY = trainerRect.top + trainerRect.height * 0.52;
+
+  recallSeq += 1;
+
+  return {
+    key: `recall-${cardId}-${recallSeq}`,
+    cardId,
+    startX,
+    startY,
+    targetX,
+    targetY,
+    dx: targetX - startX,
+    dy: targetY - startY,
+  };
+}
+
 function CynthiaHud() {
   const [state, setState] = useState(readState);
   const [open, setOpen] = useState(false);
   const [summon, setSummon] = useState(null);
+  const [recall, setRecall] = useState(null);
   const previousActiveRef = useRef(null);
+  const pendingRecallRef = useRef(null);
   const summonTimerRef = useRef(null);
+  const recallTimerRef = useRef(null);
 
   const beginSummon = useCallback((cardId) => {
     const fx = buildSummonFx(cardId);
@@ -121,6 +170,55 @@ function CynthiaHud() {
     }, SUMMON_MS);
   }, []);
 
+  const cancelRecall = useCallback(() => {
+    if (recallTimerRef.current) {
+      window.clearTimeout(recallTimerRef.current);
+      recallTimerRef.current = null;
+    }
+
+    pendingRecallRef.current = null;
+    setRecall(null);
+    delete document.body.dataset.cynthiaRecalling;
+  }, []);
+
+  const beginRecall = useCallback(
+    (cardId) => {
+      const fx = buildRecallFx(cardId);
+      pendingRecallRef.current = {
+        outgoingCardId: cardId,
+        incomingCardId: null,
+      };
+
+      if (!fx) return false;
+
+      document.body.dataset.cynthiaRecalling = "1";
+      setRecall(fx);
+
+      if (recallTimerRef.current) {
+        window.clearTimeout(recallTimerRef.current);
+      }
+
+      recallTimerRef.current = window.setTimeout(() => {
+        const incomingCardId = pendingRecallRef.current?.incomingCardId || null;
+
+        setRecall(null);
+        recallTimerRef.current = null;
+
+        // 다음 포켓몬 소환 플래그를 먼저 켜 두고 회수 플래그를 내려서
+        // 실제 필드 카드가 두 연출 사이에 한 프레임 먼저 보이는 것을 막는다.
+        if (incomingCardId) {
+          beginSummon(incomingCardId);
+        }
+
+        delete document.body.dataset.cynthiaRecalling;
+        pendingRecallRef.current = null;
+      }, RECALL_MS);
+
+      return true;
+    },
+    [beginSummon],
+  );
+
   useEffect(() => {
     const sync = (event) => {
       const next = readSyncedState(event);
@@ -132,28 +230,62 @@ function CynthiaHud() {
         next.activeCardId &&
         next.activeCardId !== previousActiveRef.current
       ) {
-        beginSummon(next.activeCardId);
+        const pendingRecall = pendingRecallRef.current;
+
+        if (pendingRecall) {
+          pendingRecall.incomingCardId = next.activeCardId;
+
+          // 좌표를 잡지 못한 예외 상황에서는 회수 연출 없이 바로 새 포켓몬을 꺼낸다.
+          if (!recallTimerRef.current) {
+            pendingRecallRef.current = null;
+            delete document.body.dataset.cynthiaRecalling;
+            beginSummon(next.activeCardId);
+          }
+        } else {
+          beginSummon(next.activeCardId);
+        }
       }
 
       previousActiveRef.current = next.activeCardId;
     };
 
+    const onRecallStart = (event) => {
+      const cardId = event.detail?.outgoingCardId || previousActiveRef.current;
+      if (!cardId) return;
+      beginRecall(cardId);
+    };
+
+    const onRecallCancel = () => {
+      cancelRecall();
+    };
+
     window.addEventListener("cynthia-party-change", sync);
     window.addEventListener("battle-turn-change", sync);
+    window.addEventListener("cynthia-recall-start", onRecallStart);
+    window.addEventListener("cynthia-recall-cancel", onRecallCancel);
     sync();
 
     return () => {
       window.removeEventListener("cynthia-party-change", sync);
       window.removeEventListener("battle-turn-change", sync);
+      window.removeEventListener("cynthia-recall-start", onRecallStart);
+      window.removeEventListener("cynthia-recall-cancel", onRecallCancel);
 
       if (summonTimerRef.current) {
         window.clearTimeout(summonTimerRef.current);
         summonTimerRef.current = null;
       }
 
+      if (recallTimerRef.current) {
+        window.clearTimeout(recallTimerRef.current);
+        recallTimerRef.current = null;
+      }
+
+      pendingRecallRef.current = null;
       delete document.body.dataset.cynthiaSummoning;
+      delete document.body.dataset.cynthiaRecalling;
     };
-  }, [beginSummon]);
+  }, [beginRecall, beginSummon, cancelRecall]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -204,6 +336,37 @@ function CynthiaHud() {
           ?
         </button>
       </div>
+
+      {recall && (
+        <div
+          key={recall.key}
+          className="cynthia-recall-layer"
+          style={{
+            "--cynthia-recall-x": `${recall.startX}px`,
+            "--cynthia-recall-y": `${recall.startY}px`,
+            "--cynthia-recall-dx": `${recall.dx}px`,
+            "--cynthia-recall-dy": `${recall.dy}px`,
+          }}
+          aria-hidden="true"
+        >
+          <div className="cynthia-recall-flash">
+            <span className="cynthia-recall-ring ring-one" />
+            <span className="cynthia-recall-ring ring-two" />
+          </div>
+          <img
+            className="cynthia-recall-pokemon"
+            src={spriteUrl(recall.cardId)}
+            alt=""
+            draggable={false}
+          />
+          <img
+            className="cynthia-recall-ball"
+            src={UI_SPRITES.pokeball}
+            alt=""
+            draggable={false}
+          />
+        </div>
+      )}
 
       {summon && (
         <div
@@ -321,6 +484,7 @@ function syncCynthiaBattleUi() {
     mounted = false;
     root?.render(null);
     delete document.body.dataset.cynthiaSummoning;
+    delete document.body.dataset.cynthiaRecalling;
   }
 }
 
