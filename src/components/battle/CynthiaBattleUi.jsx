@@ -47,6 +47,8 @@ function buildSummonFx(cardId) {
   const startY = trainerRect.top + trainerRect.height * 0.52;
   const targetX = fieldRect.left + fieldRect.width / 2;
   const targetY = fieldRect.top + fieldRect.height / 2;
+  const dx = targetX - startX;
+  const dy = targetY - startY;
 
   summonSeq += 1;
 
@@ -57,8 +59,10 @@ function buildSummonFx(cardId) {
     startY,
     targetX,
     targetY,
-    dx: targetX - startX,
-    dy: targetY - startY,
+    dx,
+    dy,
+    arcDx: dx * 0.72,
+    arcDy: dy * 0.72 - 54,
   };
 }
 
@@ -71,7 +75,10 @@ function CynthiaHud() {
 
   const beginSummon = useCallback((cardId) => {
     const fx = buildSummonFx(cardId);
-    if (!fx) return;
+    if (!fx) {
+      delete document.body.dataset.cynthiaSummoning;
+      return;
+    }
 
     document.body.dataset.cynthiaSummoning = "1";
     setSummon(fx);
@@ -185,6 +192,8 @@ function CynthiaHud() {
             "--cynthia-ball-y": `${summon.startY}px`,
             "--cynthia-ball-dx": `${summon.dx}px`,
             "--cynthia-ball-dy": `${summon.dy}px`,
+            "--cynthia-ball-arc-dx": `${summon.arcDx}px`,
+            "--cynthia-ball-arc-dy": `${summon.arcDy}px`,
             "--cynthia-target-x": `${summon.targetX}px`,
             "--cynthia-target-y": `${summon.targetY}px`,
           }}
@@ -277,6 +286,11 @@ function syncCynthiaBattleUi() {
 
   if (active && !mounted) {
     mounted = true;
+
+    if (normalizedActiveCardId(document.body.dataset.cynthiaActive)) {
+      document.body.dataset.cynthiaSummoning = "1";
+    }
+
     ensureRoot().render(<CynthiaHud />);
     return;
   }
