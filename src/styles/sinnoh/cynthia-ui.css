@@ -44,9 +44,9 @@
   grid-area: title;
   color: #d7c6f4;
   font-family: var(--display-font);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.06em;
 }
 
 .cynthia-party-pips {
@@ -113,33 +113,185 @@
   overflow-y: auto;
 }
 
-.cynthia-member-guide {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+/* ============================================================
+   난천 포켓몬 소환 - 트레이너가 몬스터볼을 던져 필드 중앙에 꺼낸다.
+   ============================================================ */
+.cynthia-summon-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 755;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.cynthia-member-guide > div {
-  padding: 9px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border: 1px solid rgba(203, 180, 238, 0.18);
-  border-radius: 10px;
-  background: rgba(100, 73, 137, 0.1);
+.cynthia-thrown-ball {
+  position: fixed;
+  left: var(--cynthia-ball-x);
+  top: var(--cynthia-ball-y);
+  width: clamp(30px, 4.2vmin, 48px);
+  height: clamp(30px, 4.2vmin, 48px);
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.52));
+  transform-origin: center;
+  animation: cynthia-ball-throw 1.02s cubic-bezier(0.18, 0.74, 0.24, 1) both;
 }
 
-.cynthia-member-guide strong {
-  color: #f4e9ff;
-  font-family: var(--display-font);
-  font-size: 11px;
+.cynthia-ball-release {
+  position: fixed;
+  left: var(--cynthia-target-x);
+  top: var(--cynthia-target-y);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow:
+    0 0 18px 8px rgba(255, 255, 255, 0.92),
+    0 0 42px 18px rgba(174, 124, 255, 0.65),
+    0 0 72px 26px rgba(247, 216, 124, 0.3);
+  opacity: 0;
+  animation: cynthia-ball-open 1.18s ease-out both;
 }
 
-.cynthia-member-guide span {
-  color: #c4bfd0;
-  font-size: 10px;
-  line-height: 1.45;
+.cynthia-release-ring {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(245, 229, 255, 0.88);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.25);
+  opacity: 0;
+}
+
+.cynthia-release-ring.ring-one {
+  animation: cynthia-release-ring 0.58s ease-out 0.68s both;
+}
+
+.cynthia-release-ring.ring-two {
+  animation: cynthia-release-ring 0.66s ease-out 0.76s both;
+}
+
+.cynthia-release-pokemon {
+  position: fixed;
+  left: var(--cynthia-target-x);
+  top: var(--cynthia-target-y);
+  width: clamp(82px, 12vmin, 142px);
+  height: clamp(82px, 12vmin, 142px);
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: translate(-50%, -50%) scale(0.1);
+  transform-origin: center;
+  opacity: 0;
+  filter:
+    brightness(2.4)
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.9))
+    drop-shadow(0 0 28px rgba(173, 116, 255, 0.72));
+  animation: cynthia-pokemon-release 1.22s cubic-bezier(0.16, 0.82, 0.24, 1) both;
+}
+
+/* 소환 연출 중에는 실제 필드 카드가 먼저 보이지 않게 한다. */
+body[data-cynthia-summoning="1"]
+  .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit {
+  opacity: 0 !important;
+}
+
+@keyframes cynthia-ball-throw {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-45deg) scale(0.68);
+  }
+  8% {
+    opacity: 1;
+  }
+  56% {
+    transform:
+      translate(
+        calc(-50% + var(--cynthia-ball-dx) * 0.72),
+        calc(-50% + var(--cynthia-ball-dy) * 0.72 - 54px)
+      )
+      rotate(510deg)
+      scale(1.02);
+  }
+  73% {
+    opacity: 1;
+    transform:
+      translate(
+        calc(-50% + var(--cynthia-ball-dx)),
+        calc(-50% + var(--cynthia-ball-dy))
+      )
+      rotate(690deg)
+      scale(0.92);
+  }
+  80%, 100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(-50% + var(--cynthia-ball-dx)),
+        calc(-50% + var(--cynthia-ball-dy))
+      )
+      rotate(720deg)
+      scale(1.18);
+  }
+}
+
+@keyframes cynthia-ball-open {
+  0%, 59% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  67% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.28);
+  }
+  82% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(2.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.1);
+  }
+}
+
+@keyframes cynthia-release-ring {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.4);
+  }
+}
+
+@keyframes cynthia-pokemon-release {
+  0%, 61% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
+    filter:
+      brightness(3)
+      drop-shadow(0 0 20px rgba(255, 255, 255, 1))
+      drop-shadow(0 0 30px rgba(173, 116, 255, 0.8));
+  }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.58);
+  }
+  88% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12);
+    filter:
+      brightness(1.45)
+      drop-shadow(0 0 14px rgba(255, 255, 255, 0.7))
+      drop-shadow(0 0 24px rgba(173, 116, 255, 0.55));
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -158,8 +310,14 @@
     width: 8px;
     height: 8px;
   }
+}
 
-  .cynthia-member-guide {
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  .cynthia-thrown-ball,
+  .cynthia-ball-release,
+  .cynthia-release-ring,
+  .cynthia-release-pokemon {
+    animation-duration: 0.2s !important;
+    animation-delay: 0s !important;
   }
 }
