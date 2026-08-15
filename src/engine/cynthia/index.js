@@ -12,6 +12,7 @@ const SIGNATURE_SET = new Set(CYNTHIA_SIGNATURE_IDS);
 const MAX_COMPETITIVE_TRIGGERS = 2;
 const MAX_STOCKPILE_STACKS = 2;
 const ACE_VISUAL_MS = 2500;
+const GARCHOMP_ID = "sinnoh_cynthia_garchomp";
 
 const SUPPORT_POOLS = {
   sinnoh_cynthia_spiritomb: ["shadowball", "darkpulse", "toxic"],
@@ -154,11 +155,10 @@ function candidateScore(game, entry) {
       if (hpRatio >= 0.55) score += 6;
       break;
 
-    case "sinnoh_cynthia_garchomp":
-      score += fainted * 18;
-      if (fainted < 3) score -= 70;
-      if (fainted === 4) score += 30;
-      if (fainted >= 5) score += 200;
+    case GARCHOMP_ID:
+      // 한카리아스는 정말 마지막 포켓몬일 때만 출전한다.
+      if (fainted < 5) score -= 1000;
+      else score += 1000;
       break;
 
     default:
@@ -168,11 +168,24 @@ function candidateScore(game, entry) {
   return score;
 }
 
+function garchompCanEnter(game) {
+  if (!isCynthiaBattle(game)) return false;
+  return getCynthiaFaintedCount(game) >= 5;
+}
+
+function eligibleSignatureEntries(game) {
+  const entries = signatureHandEntries(game);
+  if (garchompCanEnter(game)) return entries;
+
+  const nonAce = entries.filter((entry) => entry.cardId !== GARCHOMP_ID);
+  return nonAce.length > 0 ? nonAce : entries;
+}
+
 export function getCynthiaPreferredDeployId(game) {
   if (!isCynthiaBattle(game)) return null;
   if (activeCynthiaUnit(game)) return null;
 
-  const entries = signatureHandEntries(game);
+  const entries = eligibleSignatureEntries(game);
   if (!entries.length) return null;
 
   const fainted = getCynthiaFaintedCount(game);
@@ -185,9 +198,7 @@ export function getCynthiaPreferredDeployId(game) {
   }
 
   if (fainted >= 5) {
-    const garchomp = entries.find(
-      (entry) => entry.cardId === "sinnoh_cynthia_garchomp",
-    );
+    const garchomp = entries.find((entry) => entry.cardId === GARCHOMP_ID);
     if (garchomp) return garchomp.cardId;
   }
 
@@ -197,7 +208,7 @@ export function getCynthiaPreferredDeployId(game) {
 }
 
 function preferredRecallTargetId(game) {
-  const entries = signatureHandEntries(game);
+  const entries = eligibleSignatureEntries(game);
   if (!entries.length) return null;
 
   return [...entries]
@@ -226,6 +237,15 @@ export function shouldCynthiaRecall(game) {
   if (game._cynthiaRecallUsedTurn === turnKey(game)) return false;
   if (active._cynthiaEntryTurnKey === turnKey(game)) return false;
 
+  // 마지막 두 마리 상황에서는 비에이스가 쓰러질 때까지 한카리아스를 숨긴다.
+  if (
+    getCynthiaFaintedCount(game) === 4 &&
+    active.cardId !== GARCHOMP_ID &&
+    signatureHandEntries(game).every((entry) => entry.cardId === GARCHOMP_ID)
+  ) {
+    return false;
+  }
+
   const targetId = preferredRecallTargetId(game);
   if (!targetId) return false;
 
@@ -248,10 +268,7 @@ export function shouldCynthiaRecall(game) {
     return true;
   }
 
-  if (
-    active.cardId === "sinnoh_cynthia_garchomp" &&
-    getCynthiaFaintedCount(game) < 4
-  ) {
+  if (active.cardId === GARCHOMP_ID && getCynthiaFaintedCount(game) < 5) {
     return true;
   }
 
@@ -340,6 +357,7 @@ function snapshotCynthiaUnit(unit) {
     _cynthiaStockpileStacks: unit._cynthiaStockpileStacks || 0,
     _cynthiaCompetitiveTriggers: unit._cynthiaCompetitiveTriggers || 0,
     _cynthiaSwordsDanceUsed: Boolean(unit._cynthiaSwordsDanceUsed),
+    _cynthiaAceTriggered: Boolean(unit._cynthiaAceTriggered),
   };
 }
 
@@ -364,6 +382,7 @@ function restoreCynthiaUnit(unit, state) {
   unit._cynthiaStockpileStacks = state._cynthiaStockpileStacks || 0;
   unit._cynthiaCompetitiveTriggers = state._cynthiaCompetitiveTriggers || 0;
   unit._cynthiaSwordsDanceUsed = Boolean(state._cynthiaSwordsDanceUsed);
+  unit._cynthiaAceTriggered = Boolean(state._cynthiaAceTriggered);
 }
 
 function applyCynthiaEntryEffects(game, unit, reason = "deploy") {
@@ -385,20 +404,21 @@ function applyCynthiaEntryEffects(game, unit, reason = "deploy") {
     }
   }
 
-  if (
-    unit.cardId === "sinnoh_cynthia_garchomp" &&
-    !unit._cynthiaSwordsDanceUsed
-  ) {
+  if (unit.cardId === GARCHOMP_ID) {
     const fainted = getCynthiaFaintedCount(game);
-    const bonus = fainted >= 5 ? 3 : fainted >= 4 ? 2 : fainted >= 2 ? 1 : 0;
 
-    unit._cynthiaSwordsDanceUsed = true;
-    if (bonus > 0) {
-      unit.atk += bonus;
-      pushLog(game, `난천의 한카리아스의 칼춤! 공격력 +${bonus}!`);
+    if (!unit._cynthiaSwordsDanceUsed) {
+      const bonus = fainted >= 5 ? 3 : fainted >= 4 ? 2 : fainted >= 2 ? 1 : 0;
+      unit._cynthiaSwordsDanceUsed = true;
+
+      if (bonus > 0) {
+        unit.atk += bonus;
+        pushLog(game, `난천의 한카리아스의 칼춤! 공격력 +${bonus}!`);
+      }
     }
 
-    if (fainted >= 5) {
+    if (fainted >= 5 && !unit._cynthiaAceTriggered) {
+      unit._cynthiaAceTriggered = true;
       unit.canAttack = true;
       unit._cynthiaDragonRushReady = true;
       triggerAceVisual(game);
@@ -767,7 +787,7 @@ function cynthiaAttackBonus(attacker) {
   }
 
   if (
-    attacker.cardId === "sinnoh_cynthia_garchomp" &&
+    attacker.cardId === GARCHOMP_ID &&
     attacker._cynthiaDragonRushReady
   ) {
     bonus += 2;
@@ -821,7 +841,7 @@ function consumeCynthiaAttackFlags(game, attacker, targetRef) {
   }
 
   if (
-    attacker.cardId === "sinnoh_cynthia_garchomp" &&
+    attacker.cardId === GARCHOMP_ID &&
     attacker._cynthiaDragonRushReady
   ) {
     if (targetRef && targetRef.hp > 0) {
