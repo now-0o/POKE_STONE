@@ -22,46 +22,27 @@ body[data-battlefield="sinnoh_champion_room"] {
     0 18px 58px rgba(0, 0, 0, 0.56);
 }
 
-/* 난천은 본가식으로 포켓몬 한 마리만 ACTIVE. */
+/* 난천은 한 번에 한 마리만 전개하므로 필드의 정확한 정중앙에 고정한다. */
 .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field {
   position: relative;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  place-items: center !important;
+  align-content: center !important;
   justify-content: center !important;
+  flex-wrap: nowrap !important;
 }
 
-.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field::after {
-  content: "ACTIVE";
-  position: absolute;
-  left: 50%;
-  top: 5px;
-  transform: translateX(-50%);
-  color: rgba(239, 226, 255, 0.62);
-  font-family: var(--display-font);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.22em;
-  pointer-events: none;
-}
-
-/* 남은 포켓몬 수를 챔피언전 보드에 계속 표시한다. */
-.battle-board[data-trainer="sinnoh_cynthia"][data-cynthia-party]::before {
-  content: "CYNTHIA PARTY  " attr(data-cynthia-party) " / 6";
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  z-index: 44;
-  padding: 6px 10px 5px;
-  border: 1px solid rgba(225, 203, 255, 0.32);
-  border-radius: 999px;
-  background: rgba(12, 10, 24, 0.72);
-  color: #f1e8ff;
-  font-family: var(--display-font);
-  font-size: clamp(8px, 0.95vmin, 11px);
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  box-shadow:
-    inset 0 0 14px rgba(190, 157, 255, 0.08),
-    0 3px 14px rgba(0, 0, 0, 0.4);
-  pointer-events: none;
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field > .field-unit,
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field > .shadowforce-ghost,
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field > .field-fixed-slot,
+.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field > .field-empty {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center !important;
+  justify-self: center !important;
+  margin: 0 !important;
 }
 
 /* ------------------------------------------------------------
