@@ -8,7 +8,10 @@ import {
 
 const PARTY_SIZE = 6;
 const SUMMON_MS = 1250;
+const SUMMON_DEDUP_MS = 1800;
 let summonSeq = 0;
+let lastSummonCardId = null;
+let lastSummonAt = 0;
 
 function normalizedActiveCardId(value) {
   if (!value || value === "none") return null;
@@ -74,12 +77,25 @@ function CynthiaHud() {
   const summonTimerRef = useRef(null);
 
   const beginSummon = useCallback((cardId) => {
+    const now = Date.now();
+
+    // 같은 포켓몬의 상태 동기화 이벤트가 연속으로 들어와도
+    // 한 번의 실제 소환에는 몬스터볼 연출을 딱 한 번만 재생한다.
+    if (
+      cardId === lastSummonCardId &&
+      now - lastSummonAt < SUMMON_DEDUP_MS
+    ) {
+      return;
+    }
+
     const fx = buildSummonFx(cardId);
     if (!fx) {
       delete document.body.dataset.cynthiaSummoning;
       return;
     }
 
+    lastSummonCardId = cardId;
+    lastSummonAt = now;
     document.body.dataset.cynthiaSummoning = "1";
     setSummon(fx);
 
@@ -299,6 +315,8 @@ function syncCynthiaBattleUi() {
     mounted = false;
     root?.render(null);
     delete document.body.dataset.cynthiaSummoning;
+    lastSummonCardId = null;
+    lastSummonAt = 0;
   }
 }
 
