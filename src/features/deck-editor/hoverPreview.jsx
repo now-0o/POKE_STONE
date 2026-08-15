@@ -4,9 +4,9 @@ import { CARDS } from "../../data/cards.js";
 import { HandCard } from "../../components/Card.jsx";
 
 const CARD_ID_BY_NAME = new Map(CARDS.map((card) => [card.name, card.id]));
-const PREVIEW_WIDTH = 190;
-const PREVIEW_HEIGHT = 270;
-const PREVIEW_GAP = 22;
+const PREVIEW_WIDTH = 306;
+const PREVIEW_HEIGHT = 438;
+const PREVIEW_GAP = 24;
 
 function deckRowFromTarget(target) {
   if (!(target instanceof Element)) return null;
