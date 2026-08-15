@@ -1,0 +1,204 @@
+/* ============================================================
+   난천 돌아와! - 기존 포켓몬 회수 → 다음 포켓몬 소환 연결
+   ============================================================ */
+
+.cynthia-recall-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 756;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cynthia-recall-pokemon {
+  position: fixed;
+  left: var(--cynthia-recall-x);
+  top: var(--cynthia-recall-y);
+  width: clamp(82px, 12vmin, 142px);
+  height: clamp(82px, 12vmin, 142px);
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: translate(-50%, -50%) scale(1);
+  transform-origin: center;
+  opacity: 1;
+  animation: cynthia-pokemon-recall 620ms cubic-bezier(0.32, 0, 0.22, 1) both;
+}
+
+.cynthia-recall-flash {
+  position: fixed;
+  left: var(--cynthia-recall-x);
+  top: var(--cynthia-recall-y);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.35);
+  opacity: 0;
+  background: #fff;
+  box-shadow:
+    0 0 18px 8px rgba(255, 255, 255, 0.92),
+    0 0 38px 17px rgba(255, 104, 128, 0.72),
+    0 0 66px 25px rgba(255, 67, 96, 0.3);
+  animation: cynthia-recall-flash 620ms ease-in both;
+}
+
+.cynthia-recall-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 58px;
+  border: 3px solid rgba(255, 224, 232, 0.9);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(3.2);
+}
+
+.cynthia-recall-ring.ring-one {
+  animation: cynthia-recall-ring-in 360ms ease-in 150ms both;
+}
+
+.cynthia-recall-ring.ring-two {
+  width: 42px;
+  height: 42px;
+  animation: cynthia-recall-ring-in 330ms ease-in 220ms both;
+}
+
+.cynthia-recall-ball {
+  position: fixed;
+  left: var(--cynthia-recall-x);
+  top: var(--cynthia-recall-y);
+  width: clamp(30px, 4.2vmin, 48px);
+  height: clamp(30px, 4.2vmin, 48px);
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform-origin: center;
+  opacity: 0;
+  filter:
+    drop-shadow(0 5px 5px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 8px rgba(255, 132, 150, 0.42));
+  animation: cynthia-ball-return 620ms cubic-bezier(0.3, 0.02, 0.32, 1) both;
+}
+
+/* 엔진은 교체를 즉시 처리하므로, 회수/소환 연출 동안 새 필드 카드가 먼저 보이지 않게 한다. */
+body[data-cynthia-recalling="1"]
+  .battle-board[data-trainer="sinnoh_cynthia"] .enemy-field .field-unit {
+  opacity: 0 !important;
+}
+
+@keyframes cynthia-pokemon-recall {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: none;
+  }
+  28% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04);
+    filter: brightness(1.08);
+  }
+  52% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.74);
+    filter:
+      brightness(2.2)
+      saturate(0.72)
+      drop-shadow(0 0 16px rgba(255, 239, 244, 0.96))
+      drop-shadow(0 0 25px rgba(255, 82, 112, 0.72));
+  }
+  76% {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(0.28);
+    filter:
+      brightness(3)
+      saturate(0.35)
+      drop-shadow(0 0 17px rgba(255, 255, 255, 1));
+  }
+  92% {
+    opacity: 0.14;
+    transform: translate(-50%, -50%) scale(0.06);
+    filter: brightness(4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.02);
+    filter: brightness(4);
+  }
+}
+
+@keyframes cynthia-recall-flash {
+  0%, 22% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  42% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  68% {
+    opacity: 0.72;
+    transform: translate(-50%, -50%) scale(1.65);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.34);
+  }
+}
+
+@keyframes cynthia-recall-ring-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.2);
+  }
+  20% {
+    opacity: 0.88;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.22);
+  }
+}
+
+@keyframes cynthia-ball-return {
+  0%, 32% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.56);
+  }
+  42% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-40deg) scale(1.08);
+  }
+  58% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-120deg) scale(0.96);
+  }
+  88% {
+    opacity: 1;
+    transform:
+      translate(
+        calc(-50% + var(--cynthia-recall-dx) * 0.82),
+        calc(-50% + var(--cynthia-recall-dy) * 0.82 - 18px)
+      )
+      rotate(-470deg)
+      scale(0.82);
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(-50% + var(--cynthia-recall-dx)),
+        calc(-50% + var(--cynthia-recall-dy))
+      )
+      rotate(-560deg)
+      scale(0.68);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cynthia-recall-pokemon,
+  .cynthia-recall-flash,
+  .cynthia-recall-ring,
+  .cynthia-recall-ball {
+    animation-duration: 0.2s !important;
+    animation-delay: 0s !important;
+  }
+}
