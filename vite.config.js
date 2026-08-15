@@ -2,20 +2,20 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-const sinnohEngineWrapper = path.resolve(
+const championEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/sinnoh/index.js',
+  'src/engine/cynthia/index.js',
 );
 
 export default defineConfig({
   plugins: [
     {
-      name: 'poke-stone-sinnoh-engine-wrapper',
+      name: 'poke-stone-champion-engine-wrapper',
       enforce: 'pre',
       resolveId(source, importer) {
         const importerPath = importer?.split('?')[0];
 
-        if (!importerPath || importerPath === sinnohEngineWrapper) {
+        if (!importerPath || importerPath === championEngineWrapper) {
           return null;
         }
 
@@ -23,7 +23,7 @@ export default defineConfig({
           source === '../engine/engine.js' ||
           source === './engine.js'
         ) {
-          return sinnohEngineWrapper;
+          return championEngineWrapper;
         }
 
         return null;
