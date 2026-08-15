@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const championEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/cynthia/index.js',
+  'src/engine/cynthia/balance.js',
 );
 
 export default defineConfig({
