@@ -18,6 +18,7 @@ import './styles/sinnoh/index.css';
 
 import './features/battle/runtime.js';
 import './components/battle/SinnohBattleUi.jsx';
+import './components/battle/CynthiaBattleUi.jsx';
 import './features/region-carousel/index.js';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
