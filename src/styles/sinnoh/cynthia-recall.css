@@ -175,8 +175,8 @@ body[data-cynthia-recalling="1"]
     opacity: 1;
     transform:
       translate(
-        calc(-50% + var(--cynthia-recall-dx) * 0.82),
-        calc(-50% + var(--cynthia-recall-dy) * 0.82 - 18px)
+        calc(-50% + var(--cynthia-recall-dx)),
+        calc(-50% + var(--cynthia-recall-dy) - 18px)
       )
       rotate(-470deg)
       scale(0.82);
