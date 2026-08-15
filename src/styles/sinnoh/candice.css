@@ -116,7 +116,7 @@ body[data-battlefield="snowpoint_snowfield"] {
   text-shadow: 0 1px 3px rgba(8, 31, 48, 0.96);
 }
 
-/* 기본 폴백: 투명 배경 snow.gif. */
+/* 플레이어 턴 시작을 알리는 짧은 눈보라 연출. 턴 중에는 계속 내리지 않는다. */
 body[data-battlefield="snowpoint_snowfield"][data-battle-turn="player"]
   .battle-board[data-battlefield="snowpoint_snowfield"]::before {
   content: "";
@@ -128,9 +128,10 @@ body[data-battlefield="snowpoint_snowfield"][data-battle-turn="player"]
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
-  opacity: 0.88;
+  opacity: 0;
   filter: grayscale(1) brightness(1.22) contrast(1.08)
     drop-shadow(0 0 2px rgba(222, 247, 255, 0.5));
+  animation: candice-snow-burst 1.15s ease-out 1 both;
 }
 
 /* snowstorm.gif의 검정 배경은 screen 합성에서 사라지고 밝은 눈만 남는다. */
@@ -139,15 +140,16 @@ body[data-battlefield="snowpoint_snowfield"][data-battle-turn="player"]
     .battle-board[data-battlefield="snowpoint_snowfield"]::before {
     background-image: url("/gimmicks/snowstorm.gif");
     mix-blend-mode: screen;
-    opacity: 0.9;
     filter: grayscale(1) brightness(1.28) contrast(1.14)
       drop-shadow(0 0 2px rgba(235, 251, 255, 0.55));
   }
 }
 
+/* 눈설왕이 살아 있을 때는 같은 짧은 연출을 조금 더 강하게 보인다. */
 body[data-battlefield="snowpoint_snowfield"][data-candice-snow-warning="1"]
   .battle-board[data-battlefield="snowpoint_snowfield"]::before {
-  opacity: 1;
+  filter: grayscale(1) brightness(1.4) contrast(1.2)
+    drop-shadow(0 0 3px rgba(235, 251, 255, 0.68));
 }
 
 /* 선택된 눈보라 지역의 포켓몬 */
@@ -192,6 +194,21 @@ body[data-battlefield="snowpoint_snowfield"][data-candice-snow-warning="1"]
   pointer-events: none;
 }
 
+@keyframes candice-snow-burst {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.92;
+  }
+  68% {
+    opacity: 0.82;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes candice-slot-pulse {
   0%, 100% {
     opacity: 0.78;
@@ -214,6 +231,11 @@ body[data-battlefield="snowpoint_snowfield"][data-candice-snow-warning="1"]
 }
 
 @media (prefers-reduced-motion: reduce) {
+  body[data-battlefield="snowpoint_snowfield"][data-battle-turn="player"]
+    .battle-board[data-battlefield="snowpoint_snowfield"]::before {
+    display: none;
+  }
+
   .candice-slot-zone.is-whiteout {
     animation: none;
   }
