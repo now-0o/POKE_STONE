@@ -1,21 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CARD_MAP } from "../../data/cards.js";
+import {
+  CARD_MAP,
+  UI_SPRITES,
+  spriteUrl,
+} from "../../data/cards.js";
 
 const PARTY_SIZE = 6;
+const SUMMON_MS = 1250;
+let summonSeq = 0;
 
-const MEMBER_GUIDE = [
-  ["난천의 화강돌", "원한 · 아픔나누기로 기술 비용과 체력을 압박"],
-  ["난천의 로즈레이드", "독압정 설치 · 돌아와! 사용 시 광합성 회복"],
-  ["난천의 트리토돈", "돌아와!마다 비축하기 · 기술 피해에 미러코트"],
-  ["난천의 루카리오", "신속으로 돌진 · 교체 등장 첫 공격 +2 · 저체력 기사회생"],
-  ["난천의 밀로틱", "공격력 감소에 승기 · 턴 종료 시 아쿠아링 회복"],
-  ["난천의 한카리아스", "마지막까지 대기 · 칼춤과 드래곤다이브를 가진 최종 에이스"],
-];
+function normalizedActiveCardId(value) {
+  if (!value || value === "none") return null;
+  return value;
+}
 
 function readState() {
   const remaining = Number(document.body.dataset.cynthiaPartyRemaining || 0);
-  const activeCardId = document.body.dataset.cynthiaActive || null;
+  const activeCardId = normalizedActiveCardId(
+    document.body.dataset.cynthiaActive,
+  );
   const toxicSpikes = Number(document.body.dataset.cynthiaToxicSpikes || 0);
 
   return {
@@ -25,21 +29,84 @@ function readState() {
   };
 }
 
+function buildSummonFx(cardId) {
+  if (!cardId) return null;
+
+  const trainer = document.querySelector(
+    '.battle.battle-board[data-trainer="sinnoh_cynthia"] [data-drop="enemy-hero"] .trainer-sprite',
+  );
+  const field = document.querySelector(
+    '.battle.battle-board[data-trainer="sinnoh_cynthia"] .enemy-field',
+  );
+
+  if (!trainer || !field) return null;
+
+  const trainerRect = trainer.getBoundingClientRect();
+  const fieldRect = field.getBoundingClientRect();
+  const startX = trainerRect.left + trainerRect.width * 0.42;
+  const startY = trainerRect.top + trainerRect.height * 0.52;
+  const targetX = fieldRect.left + fieldRect.width / 2;
+  const targetY = fieldRect.top + fieldRect.height / 2;
+
+  summonSeq += 1;
+
+  return {
+    key: `${cardId}-${summonSeq}`,
+    cardId,
+    startX,
+    startY,
+    targetX,
+    targetY,
+    dx: targetX - startX,
+    dy: targetY - startY,
+  };
+}
+
 function CynthiaHud() {
   const [state, setState] = useState(readState);
   const [open, setOpen] = useState(false);
+  const [summon, setSummon] = useState(null);
+  const previousActiveRef = useRef(null);
+  const summonTimerRef = useRef(null);
+
+  const beginSummon = useCallback((cardId) => {
+    const fx = buildSummonFx(cardId);
+    if (!fx) return;
+
+    document.body.dataset.cynthiaSummoning = "1";
+    setSummon(fx);
+
+    if (summonTimerRef.current) {
+      window.clearTimeout(summonTimerRef.current);
+    }
+
+    summonTimerRef.current = window.setTimeout(() => {
+      delete document.body.dataset.cynthiaSummoning;
+      setSummon(null);
+      summonTimerRef.current = null;
+    }, SUMMON_MS);
+  }, []);
 
   useEffect(() => {
     const sync = (event) => {
-      if (event?.detail) {
-        setState({
-          remaining: Math.max(0, Number(event.detail.remaining) || 0),
-          activeCardId: event.detail.activeCardId || null,
-          toxicSpikes: Math.max(0, Number(event.detail.toxicSpikes) || 0),
-        });
-      } else {
-        setState(readState());
+      const next = event?.detail
+        ? {
+            remaining: Math.max(0, Number(event.detail.remaining) || 0),
+            activeCardId: normalizedActiveCardId(event.detail.activeCardId),
+            toxicSpikes: Math.max(0, Number(event.detail.toxicSpikes) || 0),
+          }
+        : readState();
+
+      setState(next);
+
+      if (
+        next.activeCardId &&
+        next.activeCardId !== previousActiveRef.current
+      ) {
+        beginSummon(next.activeCardId);
       }
+
+      previousActiveRef.current = next.activeCardId;
     };
 
     window.addEventListener("cynthia-party-change", sync);
@@ -49,8 +116,15 @@ function CynthiaHud() {
     return () => {
       window.removeEventListener("cynthia-party-change", sync);
       window.removeEventListener("battle-turn-change", sync);
+
+      if (summonTimerRef.current) {
+        window.clearTimeout(summonTimerRef.current);
+        summonTimerRef.current = null;
+      }
+
+      delete document.body.dataset.cynthiaSummoning;
     };
-  }, []);
+  }, [beginSummon]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -72,8 +146,11 @@ function CynthiaHud() {
     <>
       <div className="cynthia-hud-wrap" aria-live="polite">
         <div className="cynthia-party-hud">
-          <span className="cynthia-party-title">CHAMPION PARTY</span>
-          <div className="cynthia-party-pips" aria-label={`남은 포켓몬 ${state.remaining}마리`}>
+          <span className="cynthia-party-title">포켓몬 리그</span>
+          <div
+            className="cynthia-party-pips"
+            aria-label={`남은 포켓몬 ${state.remaining}마리`}
+          >
             {Array.from({ length: PARTY_SIZE }, (_, index) => (
               <span
                 key={index}
@@ -82,7 +159,7 @@ function CynthiaHud() {
             ))}
           </div>
           <strong>{state.remaining} / {PARTY_SIZE}</strong>
-          <span className="cynthia-active-name">ACTIVE · {activeName}</span>
+          <span className="cynthia-active-name">{activeName}</span>
           {state.toxicSpikes > 0 && (
             <span className="cynthia-hazard">독압정 ×{state.toxicSpikes}</span>
           )}
@@ -98,6 +175,39 @@ function CynthiaHud() {
           ?
         </button>
       </div>
+
+      {summon && (
+        <div
+          key={summon.key}
+          className="cynthia-summon-layer"
+          style={{
+            "--cynthia-ball-x": `${summon.startX}px`,
+            "--cynthia-ball-y": `${summon.startY}px`,
+            "--cynthia-ball-dx": `${summon.dx}px`,
+            "--cynthia-ball-dy": `${summon.dy}px`,
+            "--cynthia-target-x": `${summon.targetX}px`,
+            "--cynthia-target-y": `${summon.targetY}px`,
+          }}
+          aria-hidden="true"
+        >
+          <img
+            className="cynthia-thrown-ball"
+            src={UI_SPRITES.pokeball}
+            alt=""
+            draggable={false}
+          />
+          <div className="cynthia-ball-release">
+            <span className="cynthia-release-ring ring-one" />
+            <span className="cynthia-release-ring ring-two" />
+          </div>
+          <img
+            className="cynthia-release-pokemon"
+            src={spriteUrl(summon.cardId)}
+            alt=""
+            draggable={false}
+          />
+        </div>
+      )}
 
       {open && (
         <div
@@ -130,26 +240,13 @@ function CynthiaHud() {
 
             <section className="battle-gimmick-slide battle-gimmick-single cynthia-guide-body">
               <span className="battle-gimmick-eyebrow">SPECIAL RULE</span>
-              <h2>6 Pokémon · 1 ACTIVE</h2>
+              <h2>포켓몬 리그</h2>
 
               <div className="battle-gimmick-copy">
                 <p>난천은 일반 드로우를 하지 않고 여섯 시그니처 포켓몬만 사용합니다.</p>
-                <p>필드에는 한 번에 한 마리만 ACTIVE로 존재하며, 여섯 마리를 모두 쓰러뜨려야 승리합니다.</p>
+                <p>난천의 필드에는 한 번에 포켓몬 한 마리만 존재하며, 여섯 마리를 모두 쓰러뜨려야 승리합니다.</p>
                 <p>난천 턴 시작마다 랜덤 기술 또는 도구 카드 1장을 받고, 손에 없다면 0코스트 「돌아와!」를 받습니다.</p>
                 <p>「돌아와!」로 교체된 포켓몬은 받은 피해가 회복되지 않고 현재 HP를 그대로 유지합니다.</p>
-              </div>
-
-              <div className="cynthia-member-guide">
-                {MEMBER_GUIDE.map(([name, text]) => (
-                  <div key={name}>
-                    <strong>{name}</strong>
-                    <span>{text}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="battle-gimmick-hint">
-                한카리아스는 다른 다섯 포켓몬이 모두 쓰러지기 전까지 출전하지 않습니다.
               </div>
             </section>
           </div>
@@ -187,6 +284,7 @@ function syncCynthiaBattleUi() {
   if (!active && mounted) {
     mounted = false;
     root?.render(null);
+    delete document.body.dataset.cynthiaSummoning;
   }
 }
 
