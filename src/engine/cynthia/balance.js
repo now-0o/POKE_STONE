@@ -1,4 +1,5 @@
 import * as cynthia from "./index.js";
+import { CYNTHIA_RECALL_CARD_ID } from "../../data/cards/cynthia.js";
 
 export * from "./index.js";
 
@@ -25,6 +26,67 @@ function removeSupportGrantLogs(game, startIndex = 0) {
       ),
   );
   game.log = [...before, ...after];
+}
+
+function removeCynthiaFatigueLogs(game, startIndex = 0) {
+  const before = game.log.slice(0, startIndex);
+  const after = game.log.slice(startIndex).filter(
+    (message) =>
+      !(
+        typeof message === "string" &&
+        message.includes("덱이 비었다!") &&
+        message.includes("탈진 피해")
+      ),
+  );
+  game.log = [...before, ...after];
+}
+
+function suppressCynthiaFatigue(game, beforeFatigue, logStart) {
+  if (!cynthia.isCynthiaBattle(game)) return;
+
+  const enemy = game.players.enemy;
+  const afterFatigue = Math.max(0, Number(enemy.fatigue) || 0);
+  const safeBefore = Math.max(0, Number(beforeFatigue) || 0);
+
+  if (afterFatigue <= safeBefore) return;
+
+  const fatigueCount = afterFatigue - safeBefore;
+  const fatigueDamage =
+    ((safeBefore + 1 + afterFatigue) * fatigueCount) / 2;
+
+  if (Number.isFinite(enemy.hp)) {
+    const maxHp = Number.isFinite(enemy.maxHp) ? enemy.maxHp : Infinity;
+    enemy.hp = Math.min(maxHp, enemy.hp + fatigueDamage);
+  }
+
+  // 난천은 일반 드로우를 하지 않으므로 빈 덱으로 인한 탈진 자체를 누적하지 않는다.
+  enemy.fatigue = safeBefore;
+  removeCynthiaFatigueLogs(game, logStart);
+
+  if (game.winner === "player" && enemy.hp > 0) {
+    game.winner = null;
+  }
+}
+
+function dispatchCynthiaRecallStart(game) {
+  if (typeof window === "undefined") return;
+
+  const active = game.players.enemy.field[0];
+  if (!active?.cardId) return;
+
+  window.dispatchEvent(
+    new CustomEvent("cynthia-recall-start", {
+      detail: {
+        outgoingCardId: active.cardId,
+        outgoingUid: active.uid || null,
+      },
+    }),
+  );
+}
+
+function dispatchCynthiaRecallCancel() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("cynthia-recall-cancel"));
 }
 
 function balanceEnteredEnemyTurn(game, beforeSupportUids, logStart) {
@@ -78,14 +140,44 @@ export function createGame(playerDeckIds, trainer) {
   return game;
 }
 
+export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
+  const handCard = game.players[side]?.hand?.[handIdx] || null;
+  const isRecall =
+    cynthia.isCynthiaBattle(game) &&
+    side === "enemy" &&
+    handCard?.cardId === CYNTHIA_RECALL_CARD_ID;
+
+  const animateRecall = isRecall && cynthia.canPlayCard(game, side, handIdx);
+
+  // 교체가 실제로 성립하기 직전, 아직 기존 포켓몬이 DOM에 있을 때 회수 연출 좌표를 잡는다.
+  if (animateRecall) {
+    dispatchCynthiaRecallStart(game);
+  }
+
+  const result = cynthia.playCard(game, side, handIdx, target, fieldIndex);
+
+  if (animateRecall && !result) {
+    dispatchCynthiaRecallCancel();
+  }
+
+  return result;
+}
+
 export function endTurn(game) {
   const endingSide = game.turn;
   const beforeSupportUids = new Set(
     generatedSupportEntries(game).map((entry) => entry.uid),
   );
   const logStart = game.log.length;
+  const beforeEnemyFatigue = cynthia.isCynthiaBattle(game)
+    ? game.players.enemy.fatigue || 0
+    : 0;
 
   const result = cynthia.endTurn(game);
+
+  if (cynthia.isCynthiaBattle(game)) {
+    suppressCynthiaFatigue(game, beforeEnemyFatigue, logStart);
+  }
 
   if (
     cynthia.isCynthiaBattle(game) &&
