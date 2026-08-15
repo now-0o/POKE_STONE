@@ -24,11 +24,11 @@
   scrollbar-gutter: stable;
 }
 
-/* 카드 목록은 항상 한 행 4장. 각 셀 안에서 가능한 만큼 크게 보여준다. */
+/* 카드 목록은 한 행 4장을 유지하면서 카드 자체를 더 크게 보여준다. */
 .deck-editor .collection-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px 14px;
+  gap: 26px 16px;
   width: 100%;
   align-items: start;
 }
@@ -39,24 +39,51 @@
 }
 
 .deck-editor .collection-item .hand-card {
-  width: min(170px, 100%);
+  width: min(215px, 100%);
   height: auto;
   min-height: 0;
-  aspect-ratio: 134 / 188;
+  aspect-ratio: 134 / 208;
+  padding: 9px 10px 8px;
+  gap: 4px;
 }
 
 .deck-editor .collection-item .card-art {
-  height: auto;
-  min-height: 0;
-  flex: 0 0 34%;
+  height: 96px;
+  min-height: 96px;
+  flex: 0 0 96px;
+}
+
+.deck-editor .collection-item .card-sprite {
+  width: 74px !important;
+  height: 74px !important;
 }
 
 .deck-editor .collection-item .card-name {
-  font-size: clamp(11px, 1vw, 13px);
+  font-size: clamp(12px, 1.05vw, 14px);
+}
+
+.deck-editor .collection-item .card-stageline {
+  height: 16px;
+  min-height: 16px;
+  font-size: 9.5px;
+  line-height: 14px;
+}
+
+.deck-editor .collection-item .card-typebadge {
+  font-size: 10px;
+  padding: 2px 10px;
+}
+
+/* 카드가 커진 만큼 특성/설명 영역도 별도로 넓혀 가독성을 확보한다. */
+.deck-editor .collection-item .card-text {
+  min-height: 88px;
+  padding: 5px 6px;
+  font-size: 10.5px;
+  line-height: 1.48;
 }
 
 .deck-editor .collection-item .collection-meta {
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 /* 상단 카테고리 / 필터 / 정렬 텍스트 가독성 개선 */
@@ -65,8 +92,53 @@
   padding: 6px 13px;
 }
 
+.deck-editor .ability-filter-box {
+  interpolate-size: allow-keywords;
+}
+
 .deck-editor .ability-filter-box > summary {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  list-style: none;
+  cursor: pointer;
   font-size: 13.5px;
+}
+
+.deck-editor .ability-filter-box > summary::-webkit-details-marker {
+  display: none;
+}
+
+.deck-editor .ability-filter-box > summary::after {
+  content: "▾";
+  margin-left: 7px;
+  color: var(--text-dim);
+  transform: rotate(0deg);
+  transform-origin: center;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.deck-editor .ability-filter-box[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+/* 최신 details content API를 사용해 열림뿐 아니라 닫힘도 높이/투명도가 같이 움직인다. */
+.deck-editor .ability-filter-box::details-content {
+  block-size: 0;
+  opacity: 0;
+  overflow: clip;
+  transform: translateY(-7px);
+  transition:
+    block-size 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    content-visibility 0.3s allow-discrete;
+}
+
+.deck-editor .ability-filter-box[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .deck-editor .ability-filter-check,
@@ -88,28 +160,89 @@
 .deck-hover-preview {
   position: fixed;
   z-index: 922;
-  width: 190px;
-  height: 270px;
+  width: 306px;
+  height: 438px;
   pointer-events: none;
-  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.68));
+  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.72));
   animation: deck-hover-card-in 0.13s ease-out both;
 }
 
 .deck-hover-preview .hand-card {
-  width: 178px;
-  height: 250px;
-  min-height: 250px;
+  width: 286px;
+  height: 420px;
+  min-height: 420px;
+  padding: 12px 14px 11px;
+  gap: 5px;
+  border-width: 5px;
+  border-radius: 16px;
   transform: none !important;
 }
 
 .deck-hover-preview .card-art {
-  height: 88px;
-  min-height: 88px;
-  flex-basis: 88px;
+  height: 118px;
+  min-height: 118px;
+  flex-basis: 118px;
+  border-radius: 9px;
+}
+
+.deck-hover-preview .card-sprite {
+  width: 104px !important;
+  height: 104px !important;
 }
 
 .deck-hover-preview .card-name {
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.deck-hover-preview .card-stageline {
+  height: 20px;
+  min-height: 20px;
+  padding: 2px 7px;
+  font-size: 11.5px;
+  line-height: 16px;
+}
+
+.deck-hover-preview .card-typebadge {
+  padding: 3px 13px;
+  font-size: 11.5px;
+}
+
+.deck-hover-preview .card-text {
+  min-height: 132px;
+  padding: 8px 9px;
   font-size: 13px;
+  line-height: 1.5;
+  border-radius: 8px;
+}
+
+.deck-hover-preview .card-cost {
+  top: -14px;
+  left: -14px;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+
+.deck-hover-preview .hcard-orb {
+  width: 39px;
+  height: 39px;
+  bottom: -14px;
+  font-size: 19px;
+}
+
+.deck-hover-preview .hcard-orb.orb-atk {
+  left: -13px;
+}
+
+.deck-hover-preview .hcard-orb.orb-hp {
+  right: -13px;
+}
+
+.deck-hover-preview .card-rarity-gem {
+  width: 19px;
+  height: 19px;
+  bottom: -9px;
 }
 
 @keyframes deck-hover-card-in {
@@ -166,6 +299,13 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .deck-editor .ability-filter-box::details-content,
+  .deck-editor .ability-filter-box > summary::after {
+    transition: none;
+  }
+}
+
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
   .deck-editor {
     margin-top: -6px;
@@ -183,16 +323,29 @@
   }
 
   .deck-editor .collection-item .hand-card {
-    width: min(138px, 100%);
+    width: min(146px, 100%);
     height: auto;
     min-height: 0;
-    aspect-ratio: 134 / 188;
+    aspect-ratio: 134 / 202;
+    padding: 6px 7px 6px;
+    gap: 3px;
   }
 
   .deck-editor .collection-item .card-art {
-    height: auto;
-    min-height: 0;
-    flex: 0 0 34%;
+    height: 66px;
+    min-height: 66px;
+    flex: 0 0 66px;
+  }
+
+  .deck-editor .collection-item .card-sprite {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  .deck-editor .collection-item .card-text {
+    min-height: 54px;
+    padding: 3px 4px;
+    font-size: 9px;
   }
 
   .deck-editor .editor-topbar .filter-btn {
