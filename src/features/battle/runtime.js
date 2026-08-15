@@ -11,6 +11,100 @@ function syncEndTurnLabel() {
   }
 }
 
+function getCandiceFieldContentRect() {
+  const myField = document.querySelector(
+    '.battle.battle-board[data-battlefield="snowpoint_snowfield"] .my-field[data-candice-fixed-field="1"]',
+  );
+
+  if (!myField) return null;
+
+  const rect = myField.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return null;
+
+  const style = window.getComputedStyle(myField);
+  const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+  const borderRight = Number.parseFloat(style.borderRightWidth) || 0;
+  const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+  const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+  const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+  const paddingRight = Number.parseFloat(style.paddingRight) || 0;
+  const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+  const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
+
+  const left = rect.left + borderLeft + paddingLeft;
+  const top = rect.top + borderTop + paddingTop;
+  const width = Math.max(
+    0,
+    rect.width - borderLeft - borderRight - paddingLeft - paddingRight,
+  );
+  const height = Math.max(
+    0,
+    rect.height - borderTop - borderBottom - paddingTop - paddingBottom,
+  );
+
+  return { myField, left, top, width, height };
+}
+
+function syncCandiceOverlayAlignment() {
+  const overlay = document.querySelector(".candice-slot-overlay");
+  if (!overlay) return;
+
+  const contentRect = getCandiceFieldContentRect();
+  if (!contentRect) {
+    overlay.style.display = "none";
+    return;
+  }
+
+  overlay.style.left = `${contentRect.left}px`;
+  overlay.style.top = `${contentRect.top}px`;
+  overlay.style.width = `${contentRect.width}px`;
+  overlay.style.height = `${contentRect.height}px`;
+  overlay.style.display = "grid";
+}
+
+function queueCandiceOverlayAlignment() {
+  window.requestAnimationFrame(syncCandiceOverlayAlignment);
+}
+
+function rememberCandiceDropSlot(event) {
+  if (
+    document.body.dataset.battlefield !== "snowpoint_snowfield" ||
+    document.body.dataset.battleTurn !== "player"
+  ) {
+    delete window.__pokeCandicePreferredSlot;
+    return;
+  }
+
+  const contentRect = getCandiceFieldContentRect();
+  if (!contentRect || contentRect.width <= 0) {
+    delete window.__pokeCandicePreferredSlot;
+    return;
+  }
+
+  const { clientX, clientY } = event;
+  const inside =
+    clientX >= contentRect.left &&
+    clientX <= contentRect.left + contentRect.width &&
+    clientY >= contentRect.top &&
+    clientY <= contentRect.top + contentRect.height;
+
+  if (!inside) {
+    delete window.__pokeCandicePreferredSlot;
+    return;
+  }
+
+  const trackWidth = contentRect.width / 6;
+  const slot = Math.max(
+    0,
+    Math.min(5, Math.floor((clientX - contentRect.left) / trackWidth)),
+  );
+
+  window.__pokeCandicePreferredSlot = {
+    slot,
+    at: Date.now(),
+  };
+}
+
 function syncBattlePageState() {
   const battleSurface = document.querySelector(
     ".battle-intro, .battle.battle-board",
@@ -22,12 +116,22 @@ function syncBattlePageState() {
   document.body.classList.toggle("battle-page-locked", locked);
 
   syncEndTurnLabel();
+  queueCandiceOverlayAlignment();
 }
 
 function startBattleRuntime() {
   syncBattlePageState();
 
-  window.addEventListener("battle-turn-change", syncEndTurnLabel);
+  window.addEventListener("battle-turn-change", () => {
+    syncEndTurnLabel();
+    queueCandiceOverlayAlignment();
+  });
+  window.addEventListener(
+    "candice-whiteout-change",
+    queueCandiceOverlayAlignment,
+  );
+  window.addEventListener("resize", queueCandiceOverlayAlignment);
+  window.addEventListener("pointerup", rememberCandiceDropSlot, true);
 
   const observer = new MutationObserver(syncBattlePageState);
   observer.observe(document.body, {
