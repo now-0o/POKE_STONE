@@ -6,6 +6,20 @@
   min-height: 100dvh;
 }
 
+/*
+  수몰/화이트아웃 오버레이는 body 직속 레이어라 배틀 내부 inspect의 z-index보다
+  바깥 stacking context에서 앞설 수 있다. 꾹 눌러보기 중에는 배틀 자체를 위로 올려
+  확대 카드가 모든 필드 기믹보다 항상 앞에 오게 한다.
+*/
+.battle.battle-board:has(.inspect-overlay) {
+  position: relative;
+  z-index: 900 !important;
+}
+
+.battle-board .inspect-overlay {
+  z-index: 1200 !important;
+}
+
 /* 배틀 중 로그/카드/이미지가 길게 눌리거나 드래그되어 선택되지 않게 한다. */
 .battle.battle-board,
 .battle.battle-board * {
