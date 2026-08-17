@@ -184,7 +184,10 @@ function floodNextSlot(game) {
     const name = victim.name || "포켓몬";
     victim.hp = 0;
     pushLog(game, `수몰된 ${slot + 1}번 칸의 ${name}이(가) 기절했다!`);
-    core.cleanupDeaths(game, true);
+
+    // 수몰은 공격/기술 연출을 기다리는 피해가 아니다.
+    // 즉시 사망 처리를 확정해 기절한 포켓몬이 다른 빈 슬롯으로 재배치되는 프레임을 막는다.
+    core.cleanupDeaths(game);
   }
 
   normalizeWakeSlots(game);
