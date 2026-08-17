@@ -1,9 +1,12 @@
 import * as core from "./cynthia/balance.js";
+import { CARD_MAP } from "../data/cards.js";
 
 export * from "./cynthia/balance.js";
 
 const WAKE_GIMMICK = "rising_tide";
+const CANDICE_GIMMICK = "whiteout";
 const FIELD_SLOT_COUNT = 6;
+const FIXED_DROP_MAX_AGE_MS = 1200;
 const FLOOD_TURNS = [4, 8, 12, 16];
 // 바깥쪽부터 좌우로 잠겨 최종적으로 중앙 2칸만 남는다.
 const FLOOD_ORDER = [0, 5, 1, 4];
@@ -22,6 +25,10 @@ function isValidSlot(slot) {
   return Number.isInteger(slot) && slot >= 0 && slot < FIELD_SLOT_COUNT;
 }
 
+function isBasicPokemon(card) {
+  return card?.kind === "pokemon" && !card.evolvesFrom;
+}
+
 function floodCount(game) {
   return isWakeBattle(game)
     ? Math.max(0, Math.min(FLOOD_ORDER.length, Number(game._wakeFixedFloodCount) || 0))
@@ -37,6 +44,29 @@ function applyWakeCapacity(game) {
   const count = floodCount(game);
   game._wakeFloodLevel = count;
   game.players.player.fieldCapacity = FIELD_SLOT_COUNT - count;
+}
+
+function consumePreferredWakeSlot(blocked, used) {
+  if (typeof window === "undefined") return null;
+
+  const pending = window.__pokeWakePreferredSlot;
+  if (!pending) return null;
+  delete window.__pokeWakePreferredSlot;
+
+  const slot = Number(pending.slot);
+  const age = Date.now() - Number(pending.at || 0);
+
+  if (
+    !isValidSlot(slot) ||
+    age < 0 ||
+    age > FIXED_DROP_MAX_AGE_MS ||
+    blocked.has(slot) ||
+    used.has(slot)
+  ) {
+    return null;
+  }
+
+  return slot;
 }
 
 function normalizeWakeSlots(game) {
@@ -59,17 +89,25 @@ function normalizeWakeSlots(game) {
     used.add(slot);
   });
 
-  player.field
-    .filter((unit) => !isValidSlot(unit._wakeFieldSlot))
-    .forEach((unit) => {
-      const slot = SLOT_PRIORITY.find(
+  const unassigned = player.field.filter(
+    (unit) => !isValidSlot(unit._wakeFieldSlot),
+  );
+  let preferredSlot =
+    unassigned.length > 0 ? consumePreferredWakeSlot(blocked, used) : null;
+
+  unassigned.forEach((unit) => {
+    const slot =
+      preferredSlot ??
+      SLOT_PRIORITY.find(
         (candidate) => !blocked.has(candidate) && !used.has(candidate),
       );
 
-      if (slot == null) return;
-      unit._wakeFieldSlot = slot;
-      used.add(slot);
-    });
+    preferredSlot = null;
+    if (slot == null) return;
+
+    unit._wakeFieldSlot = slot;
+    used.add(slot);
+  });
 
   return Object.fromEntries(
     player.field
@@ -169,6 +207,76 @@ function applyWakeTurnMilestones(game) {
   syncWakeVisual(game);
 }
 
+function occupiedCandiceSlot(game, slot) {
+  return game.players.player.field.some(
+    (unit) => Number(unit._candiceFieldSlot) === slot,
+  );
+}
+
+function occupiedWakeSlot(game, slot) {
+  return game.players.player.field.some(
+    (unit) => Number(unit._wakeFieldSlot) === slot,
+  );
+}
+
+function consumeFixedFieldDrop(game, side, card) {
+  if (typeof window === "undefined") {
+    return { requested: false, valid: true, gimmick: null };
+  }
+
+  const pending = window.__pokeFixedFieldPreferredDrop;
+  if (!pending) {
+    return { requested: false, valid: true, gimmick: null };
+  }
+
+  delete window.__pokeFixedFieldPreferredDrop;
+
+  if (side !== "player" || !isBasicPokemon(card)) {
+    return { requested: false, valid: true, gimmick: null };
+  }
+
+  const gimmick = game?.trainer?.gimmick || null;
+  const slot = Number(pending.slot);
+  const age = Date.now() - Number(pending.at || 0);
+
+  if (
+    pending.gimmick !== gimmick ||
+    ![CANDICE_GIMMICK, WAKE_GIMMICK].includes(gimmick) ||
+    !isValidSlot(slot) ||
+    age < 0 ||
+    age > FIXED_DROP_MAX_AGE_MS
+  ) {
+    return { requested: false, valid: true, gimmick: null };
+  }
+
+  if (gimmick === CANDICE_GIMMICK) {
+    if (occupiedCandiceSlot(game, slot)) {
+      return { requested: true, valid: false, gimmick };
+    }
+
+    window.__pokeCandicePreferredSlot = { slot, at: Date.now() };
+    return { requested: true, valid: true, gimmick };
+  }
+
+  const blocked = new Set(floodedSlots(game));
+  if (blocked.has(slot) || occupiedWakeSlot(game, slot)) {
+    return { requested: true, valid: false, gimmick };
+  }
+
+  window.__pokeWakePreferredSlot = { slot, at: Date.now() };
+  return { requested: true, valid: true, gimmick };
+}
+
+function clearFixedFieldPreferredSlot(gimmick) {
+  if (typeof window === "undefined") return;
+
+  if (gimmick === CANDICE_GIMMICK) {
+    delete window.__pokeCandicePreferredSlot;
+  } else if (gimmick === WAKE_GIMMICK) {
+    delete window.__pokeWakePreferredSlot;
+  }
+}
+
 export function createGame(playerDeckIds, trainer) {
   const game = core.createGame(playerDeckIds, trainer);
 
@@ -201,7 +309,20 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     applyWakeCapacity(game);
   }
 
+  const handCard = game.players[side]?.hand?.[handIdx] || null;
+  const card = handCard ? CARD_MAP[handCard.cardId] : null;
+  const fixedDrop = consumeFixedFieldDrop(game, side, card);
+
+  if (fixedDrop.requested && !fixedDrop.valid) {
+    clearFixedFieldPreferredSlot(fixedDrop.gimmick);
+    return false;
+  }
+
   const result = core.playCard(game, side, handIdx, target, fieldIndex);
+
+  if (!result) {
+    clearFixedFieldPreferredSlot(fixedDrop.gimmick);
+  }
 
   if (isWakeBattle(game)) {
     disableLegacyWakeCounter(game);
@@ -210,6 +331,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     syncWakeVisual(game);
   }
 
+  clearFixedFieldPreferredSlot(fixedDrop.gimmick);
   return result;
 }
 
