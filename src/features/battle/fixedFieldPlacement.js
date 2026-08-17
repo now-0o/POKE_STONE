@@ -64,26 +64,44 @@ function floodedWakeSlots() {
   );
 }
 
+function unitGridItem(element) {
+  const parent = element?.parentElement;
+  return parent?.classList.contains("unit-pop") ? parent : element;
+}
+
+function clearUnitPlacement(element) {
+  if (!element) return;
+
+  const gridItem = unitGridItem(element);
+
+  [element, gridItem].forEach((target) => {
+    if (!target) return;
+    delete target.dataset.fixedFieldSlot;
+    delete target.dataset.candiceSlot;
+    delete target.dataset.wakeSlot;
+    target.style.removeProperty("grid-column");
+    target.style.removeProperty("grid-row");
+    target.style.removeProperty("justify-self");
+    target.style.removeProperty("align-self");
+  });
+}
+
 function syncFixedFieldUnitPositions() {
   const fixed = activeFixedField();
 
   if (!fixed) {
     document
-      .querySelectorAll(".field-unit[data-fixed-field-slot]")
-      .forEach((element) => {
-        delete element.dataset.fixedFieldSlot;
-        delete element.dataset.candiceSlot;
-        delete element.dataset.wakeSlot;
-        element.style.removeProperty("grid-column");
-        element.style.removeProperty("grid-row");
-      });
+      .querySelectorAll(
+        ".field-unit[data-fixed-field-slot], .unit-pop[data-fixed-field-slot]",
+      )
+      .forEach((element) => clearUnitPlacement(element));
     return;
   }
 
   const { field, gimmick } = fixed;
   const slotMap = fixedSlotMap(gimmick);
 
-  // 필드 자체도 이 런타임에서 고정 그리드 상태를 보장한다.
+  // 무청/맥실러 필드는 실제 DOM 자체를 6열 Grid로 고정한다.
   if (gimmick === "whiteout") {
     field.dataset.candiceFixedField = "1";
     delete field.dataset.wakeFixedField;
@@ -94,24 +112,35 @@ function syncFixedFieldUnitPositions() {
 
   field.querySelectorAll(".field-unit[data-uid]").forEach((element) => {
     const slot = Number(slotMap[element.dataset.uid]);
+    const gridItem = unitGridItem(element);
+
+    // FieldUnit은 .unit-pop > .field-unit 구조다.
+    // CSS Grid의 실제 아이템인 .unit-pop에 column을 줘야 선택한 칸에 배치된다.
+    element.style.removeProperty("grid-column");
+    element.style.removeProperty("grid-row");
 
     if (!Number.isInteger(slot) || slot < 0 || slot >= SLOT_COUNT) {
-      delete element.dataset.fixedFieldSlot;
-      element.style.removeProperty("grid-column");
-      element.style.removeProperty("grid-row");
+      clearUnitPlacement(element);
       return;
     }
 
     element.dataset.fixedFieldSlot = String(slot);
-    element.style.setProperty("grid-column", String(slot + 1));
-    element.style.setProperty("grid-row", "1");
+    gridItem.dataset.fixedFieldSlot = String(slot);
+    gridItem.style.setProperty("grid-column", String(slot + 1));
+    gridItem.style.setProperty("grid-row", "1");
+    gridItem.style.setProperty("justify-self", "center");
+    gridItem.style.setProperty("align-self", "center");
 
     if (gimmick === "whiteout") {
       element.dataset.candiceSlot = String(slot);
+      gridItem.dataset.candiceSlot = String(slot);
       delete element.dataset.wakeSlot;
+      delete gridItem.dataset.wakeSlot;
     } else {
       element.dataset.wakeSlot = String(slot);
+      gridItem.dataset.wakeSlot = String(slot);
       delete element.dataset.candiceSlot;
+      delete gridItem.dataset.candiceSlot;
     }
   });
 }
@@ -206,8 +235,7 @@ function onPointerUpCapture(event) {
     at: Date.now(),
   };
 
-  // 공통 래퍼와 각 기믹 엔진 양쪽에 같은 슬롯을 넘긴다.
-  // 실제 카드 사용은 이 pointerup 이벤트 안에서 동기적으로 처리된다.
+  // 실제 카드 사용보다 먼저 선택 슬롯을 엔진에 전달한다.
   window.__pokeFixedFieldPreferredDrop = marker;
   if (fixed.gimmick === "whiteout") {
     window.__pokeCandicePreferredSlot = { slot, at: marker.at };
