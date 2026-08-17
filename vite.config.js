@@ -2,12 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
+const normalizePath = (value) => value.replace(/\\/g, '/');
+
 const gameEngineWrapper = path.resolve(
   process.cwd(),
   'src/engine/gameplay-balance.js',
 );
 
-const pokeApiCardsModule = path.resolve(process.cwd(), 'src/data/cards.js');
+const pokeApiCardsModule = normalizePath(
+  path.resolve(process.cwd(), 'src/data/cards.js'),
+);
 const pokeApiRawSpriteBase =
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites';
 const localSpriteBase = '/sprites';
@@ -38,7 +42,7 @@ export default defineConfig({
       name: 'poke-stone-local-sprites',
       enforce: 'pre',
       transform(code, id) {
-        const modulePath = id.split('?')[0];
+        const modulePath = normalizePath(id.split('?')[0]);
         if (modulePath !== pokeApiCardsModule) return null;
         if (!code.includes(pokeApiRawSpriteBase)) return null;
 
