@@ -3,6 +3,7 @@ import MainMenu from "./components/MainMenu.jsx";
 import Battle from "./components/Battle.jsx";
 import PackShop from "./components/PackShop.jsx";
 import DeckEditor from "./components/DeckEditor.jsx";
+import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
 import {
@@ -28,7 +29,7 @@ const ADMIN_CODE = "stonemaster"; // 숨겨진 관리자 모드 진입 코드 (�
 
 export default function App() {
   const saveRef = useRef(null);
-  const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck
+  const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck | tutorial
   const [trainer, setTrainer] = useState(null);
   const [, forceRender] = useState(0);
   const [adminToast, setAdminToast] = useState(false);
@@ -45,7 +46,7 @@ export default function App() {
   const [muted, setMuted] = useState(isMuted());
   const [volume, setVolumeState] = useState(getVolume());
 
-  // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집 / 상점 / 배틀
+  // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집·튜토리얼 / 상점 / 배틀
   // 배틀은 지역/트레이너 구분 없이 battle.mp3 한 곡만 사용한다.
   useEffect(() => {
     if (authStatus === "anon" || authStatus === "checking") {
@@ -192,6 +193,7 @@ export default function App() {
             onBattle={startBattle}
             onShop={() => setScreen("shop")}
             onDeck={() => setScreen("deck")}
+            onTutorial={() => setScreen("tutorial")}
             onSaveChange={onSaveChange}
             onLogout={onLogout}
           />
@@ -217,6 +219,9 @@ export default function App() {
             onSaveChange={onSaveChange}
             onBack={() => setScreen("menu")}
           />
+        )}
+        {screen === "tutorial" && (
+          <Tutorial onBack={() => setScreen("menu")} />
         )}
       </>
     );
