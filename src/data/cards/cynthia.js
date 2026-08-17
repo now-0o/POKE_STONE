@@ -158,7 +158,7 @@ Object.assign(ABILITY_TEXT, {
   cynthia_competitive:
     "승기: 상대 효과로 공격력이 감소하면 즉시 공격력 +2. 최대 2회 발동한다.",
   cynthia_aqua_ring:
-    "아쿠아링: 난천의 턴 종료 시 이 포켓몬이 필드에 있으면 체력을 2 회복한다.",
+    "아쿠아링: 난천의 턴 종료 시 이 포켓몬이 필드에 있으면 체력을 1 회복한다.",
   cynthia_swords_dance:
     "칼춤: 처음 필드에 나올 때 이미 기절한 난천의 포켓몬 수에 따라 공격력이 증가한다.\n2~3마리 기절: 공격력 +1\n4마리 기절: 공격력 +2\n5마리 기절: 공격력 +3",
   cynthia_dragon_rush:
