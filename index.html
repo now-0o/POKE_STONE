@@ -10,44 +10,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>POKE STONE</title>
-    <script>
-      // 카드 데이터가 기존 GitHub Raw URL을 사용하더라도 브라우저에서는
-      // 빌드 시 준비한 Netlify 로컬 정적 파일로 바꿔 요청한다.
-      (() => {
-        const rawSpritePattern =
-          /^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[^/]+\/sprites\/(.+)$/;
-
-        const rewriteSpriteUrl = (value) => {
-          if (typeof value !== "string") return value;
-          const match = value.match(rawSpritePattern);
-          return match ? `/sprites/${match[1]}` : value;
-        };
-
-        const srcDescriptor = Object.getOwnPropertyDescriptor(
-          HTMLImageElement.prototype,
-          "src",
-        );
-
-        if (srcDescriptor?.get && srcDescriptor?.set) {
-          Object.defineProperty(HTMLImageElement.prototype, "src", {
-            configurable: srcDescriptor.configurable,
-            enumerable: srcDescriptor.enumerable,
-            get: srcDescriptor.get,
-            set(value) {
-              srcDescriptor.set.call(this, rewriteSpriteUrl(value));
-            },
-          });
-        }
-
-        const nativeSetAttribute = HTMLImageElement.prototype.setAttribute;
-        HTMLImageElement.prototype.setAttribute = function (name, value) {
-          if (String(name).toLowerCase() === "src") {
-            value = rewriteSpriteUrl(String(value));
-          }
-          return nativeSetAttribute.call(this, name, value);
-        };
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>
