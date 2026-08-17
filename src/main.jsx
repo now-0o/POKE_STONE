@@ -20,6 +20,7 @@ import './features/region-carousel/styles.css';
 import './styles/sinnoh/index.css';
 
 import './features/battle/runtime.js';
+import './features/battle/fixedFieldPlacement.js';
 import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/WakeBattleUi.jsx';
