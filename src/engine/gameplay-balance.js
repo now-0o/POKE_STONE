@@ -5,7 +5,6 @@ export * from "./wake-balance.js";
 
 const CYNTHIA_GIMMICK = "champion_party";
 const CYNTHIA_MILOTIC_ID = "sinnoh_cynthia_milotic";
-const FULL_RESTORE_ID = "fullrestore";
 const STEVEN_METAGROSS_ID = "hoenn_steven_metagross";
 const STEVEN_METAGROSSITE_ID = "hoenn_steven_metagrossite";
 const STEVEN_MEGA_METAGROSS_NAME = "성호의 메가 메타그로스";
@@ -60,60 +59,6 @@ function normalizeStevenMegaMetagross(game, side, card, target, logStart) {
   }
 }
 
-function fullyRestoreTrainer(game, side, card, target, hpBeforePlay) {
-  if (
-    card?.id !== FULL_RESTORE_ID ||
-    target?.uid !== "hero" ||
-    !Number.isFinite(hpBeforePlay)
-  ) {
-    return;
-  }
-
-  const player = game.players[side];
-  if (!player || !Number.isFinite(player.maxHp)) return;
-
-  player.hp = player.maxHp;
-  const healed = Math.max(0, player.hp - hpBeforePlay);
-
-  // 기본 엔진은 트레이너 대상 풀회복약을 +8로 처리한다.
-  // 카드 의미에 맞게 최대 체력까지 회복시키고, 연출 수치도 실제 총 회복량으로 맞춘다.
-  if (game.lastAction?.cardId === FULL_RESTORE_ID) {
-    if (!Array.isArray(game.lastAction.impacts)) {
-      game.lastAction.impacts = [];
-    }
-
-    const impact = game.lastAction.impacts.find(
-      (entry) =>
-        entry?.type === "heal" &&
-        entry.side === side &&
-        entry.targetUid === "hero",
-    );
-
-    if (healed > 0) {
-      if (impact) {
-        impact.amount = healed;
-      } else {
-        game.lastAction.impacts.push({
-          type: "heal",
-          side,
-          targetUid: "hero",
-          amount: healed,
-        });
-      }
-    }
-  }
-
-  // 기본 로그의 +8 회복량이 남지 않도록 실제 총 회복량으로 맞춘다.
-  for (let i = game.log.length - 1; i >= 0; i -= 1) {
-    const message = game.log[i];
-    if (typeof message !== "string") continue;
-    if (!message.includes("풀회복약!")) continue;
-
-    game.log[i] = `풀회복약! ${player.name}의 체력이 ${healed} 회복됐다!`;
-    break;
-  }
-}
-
 export function canPlayCard(game, side, handIdx) {
   const normal = core.canPlayCard(game, side, handIdx);
   if (normal) return true;
@@ -136,12 +81,6 @@ export function canPlayCard(game, side, handIdx) {
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const { player, card } = handCardInfo(game, side, handIdx);
   const logStart = game.log.length;
-  const fullRestoreHeroHpBefore =
-    card?.id === FULL_RESTORE_ID &&
-    target?.uid === "hero" &&
-    Number.isFinite(player?.hp)
-      ? player.hp
-      : null;
   const trainerHealWithoutUnits =
     player?.field.length === 0 &&
     target?.uid === "hero" &&
@@ -155,7 +94,6 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
   if (!result) return result;
 
-  fullyRestoreTrainer(game, side, card, target, fullRestoreHeroHpBefore);
   normalizeStevenMegaMetagross(game, side, card, target, logStart);
 
   return result;
