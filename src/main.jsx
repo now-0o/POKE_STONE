@@ -20,6 +20,7 @@ import './features/tutorial/styles.css';
 import './features/tutorial/menu.css';
 import './features/region-carousel/styles.css';
 import './styles/sinnoh/index.css';
+import './features/mobile/styles.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
