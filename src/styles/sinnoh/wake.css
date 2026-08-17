@@ -77,7 +77,12 @@ body[data-battlefield="pastoria_gym"]
   border-radius: 12px;
   background: rgba(84, 168, 216, 0.025);
   box-shadow: inset 0 0 16px rgba(100, 190, 235, 0.025);
+  opacity: 0.58;
+  transform: translateY(3px) scale(0.96);
+  transform-origin: 50% 65%;
   transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
     border-color 0.28s ease,
     background 0.28s ease,
     box-shadow 0.28s ease,
@@ -96,9 +101,13 @@ body[data-battlefield="pastoria_gym"]
   box-shadow:
     inset 0 0 24px rgba(113, 205, 248, 0.25),
     0 0 12px rgba(53, 159, 219, 0.22);
+  opacity: 1;
+  transform: translateY(0) scale(1);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  animation: wake-flood-water 1.8s ease-in-out infinite alternate;
+  animation:
+    wake-flood-enter 0.32s cubic-bezier(0.2, 0.82, 0.25, 1) 1,
+    wake-flood-water 1.8s ease-in-out 0.32s infinite alternate;
 }
 
 .wake-field-slot.is-flooded::before,
@@ -138,6 +147,17 @@ body[data-battlefield="pastoria_gym"]
     0 0 7px rgba(113, 211, 255, 0.65);
 }
 
+@keyframes wake-flood-enter {
+  from {
+    opacity: 0.18;
+    transform: translateY(9px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes wake-flood-water {
   from {
     filter: brightness(0.96);
@@ -162,7 +182,9 @@ body[data-battlefield="pastoria_gym"]
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .wake-field-slot,
   .wake-field-slot.is-flooded {
     animation: none;
+    transition: none;
   }
 }
