@@ -15,6 +15,7 @@ import './features/battle/wave-effects.css';
 import './features/navigation/transitions.css';
 import './features/deck-editor/styles.css';
 import './features/deck-editor/card-scale.css';
+import './features/deck-editor/mobile-performance.css';
 import './features/pack-shop/styles.css';
 import './features/tutorial/styles.css';
 import './features/tutorial/menu.css';
