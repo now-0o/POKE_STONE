@@ -26,6 +26,7 @@ import './features/mobile/battle-expanded.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
+import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/WakeBattleUi.jsx';
