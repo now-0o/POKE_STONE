@@ -1,0 +1,286 @@
+/* ============================================================
+   Mobile portrait battle — expanded board
+   Loaded after mobile/styles.css so portrait battle can use the full phone.
+   ============================================================ */
+
+@media (orientation: portrait) and (max-width: 700px) {
+  /*
+   * Battle is the only screen that should consume the complete viewport.
+   * Escaping .app padding gives the six field columns as much horizontal
+   * room as the device actually has, while safe-area padding protects notches.
+   */
+  .battle.battle-board {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    padding-top: max(4px, env(safe-area-inset-top));
+    padding-right: max(3px, env(safe-area-inset-right));
+    padding-bottom: max(5px, env(safe-area-inset-bottom));
+    padding-left: max(3px, env(safe-area-inset-left));
+    box-sizing: border-box;
+    gap: 5px;
+    overflow: visible !important;
+  }
+
+  /* Hero rows stay compact so the reclaimed space goes to the actual field. */
+  .battle-board .hero-cluster {
+    min-height: 42px;
+  }
+
+  .battle-board .hero-bar,
+  .battle-board .hero-bar.enemy-bar {
+    min-height: 42px;
+  }
+
+  /*
+   * Give each side a real battlefield instead of the previous 78~92px strip.
+   * Six columns remain fixed, but cards and their orbs now fit inside the zone.
+   */
+  .battle-board .field {
+    width: 100% !important;
+    height: clamp(105px, 15dvh, 126px) !important;
+    min-height: 105px !important;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-auto-columns: minmax(0, 1fr) !important;
+    gap: 2px !important;
+    padding: 11px 2px 15px !important;
+    border-radius: 13px;
+    overflow: visible !important;
+  }
+
+  .battle-board .field > .unit-pop,
+  .battle-board .field > .field-fixed-slot,
+  .battle-board .field-fixed-slot > .unit-pop {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    overflow: visible !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .battle-board .field-fixed-slot {
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .battle-board .field-unit {
+    width: min(100%, 62px) !important;
+    height: 82px !important;
+    min-height: 82px;
+    padding: 4px 3px 11px !important;
+    gap: 2px;
+    border-width: 2px;
+    border-radius: 9px;
+    overflow: visible;
+  }
+
+  .battle-board .unit-art {
+    width: 100%;
+    height: 43px !important;
+    min-height: 43px !important;
+    flex: 0 0 43px;
+    border-radius: 5px;
+  }
+
+  .battle-board .unit-art .card-sprite {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .battle-board .unit-name {
+    min-height: 10px;
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  .battle-board .unit-orb {
+    bottom: -9px !important;
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 10px !important;
+  }
+
+  .battle-board .unit-orb.orb-atk {
+    left: -5px !important;
+  }
+
+  .battle-board .unit-orb.orb-hp {
+    right: -5px !important;
+  }
+
+  .battle-board .taunt-badge {
+    top: -8px;
+    font-size: 7px;
+  }
+
+  .battle-board .status-overlay {
+    overflow: hidden;
+  }
+
+  /* The middle controls do not need to consume the space saved for the board. */
+  .battle-board .mid-bar {
+    min-height: 52px;
+  }
+
+  .battle-board .battle-log {
+    height: 52px;
+  }
+
+  /*
+   * Hand cards previously fit by their body only; HP/ATK orbs could extend past
+   * the wrapper and be clipped at the bottom of the viewport. The wrapper now
+   * includes that visual footprint and cards can be slightly larger as well.
+   */
+  .battle-board .hand {
+    min-height: 168px !important;
+    max-height: 196px;
+    flex: 1 1 auto;
+    align-content: flex-start;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 8px 22px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .battle-board .hand .hand-card-wrap {
+    width: 112px !important;
+    height: 164px !important;
+    flex: 0 0 112px !important;
+    overflow: visible !important;
+  }
+
+  .battle-board .hand .hand-card-wrap > .hand-card {
+    width: 134px !important;
+    height: 188px !important;
+    min-height: 188px !important;
+    scale: 0.82 !important;
+    transform-origin: top left !important;
+    overflow: visible;
+  }
+
+  .battle-board .hand .btn-discard-redraw {
+    bottom: 0;
+  }
+
+  .battle-board .target-hint {
+    bottom: calc(max(6px, env(safe-area-inset-bottom)) + 170px) !important;
+  }
+
+  /* Inspect stays above the enlarged battlefield and never inherits clipping. */
+  .battle-board .inspect-overlay {
+    overflow: visible !important;
+  }
+
+  .battle-board .inspect-overlay .hand-card {
+    scale: min(1.6, calc((100vw - 52px) / 134)) !important;
+  }
+
+  /* Wake/Candice labels should stay readable on the newly taller field. */
+  .wake-field-slot,
+  .candice-slot-zone {
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+}
+
+/* Narrow phones need width scaling, not a shorter/cropped field. */
+@media (orientation: portrait) and (max-width: 360px) {
+  .battle-board .field {
+    height: 108px !important;
+    min-height: 108px !important;
+    padding-inline: 1px !important;
+  }
+
+  .battle-board .field-unit {
+    width: min(100%, 52px) !important;
+    height: 78px !important;
+    min-height: 78px;
+  }
+
+  .battle-board .unit-art {
+    height: 39px !important;
+    min-height: 39px !important;
+    flex-basis: 39px;
+  }
+
+  .battle-board .unit-art .card-sprite {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .battle-board .hand .hand-card-wrap {
+    width: 104px !important;
+    height: 153px !important;
+    flex-basis: 104px !important;
+  }
+
+  .battle-board .hand .hand-card-wrap > .hand-card {
+    scale: 0.76 !important;
+  }
+}
+
+/* Short phones still keep complete cards; compress spacing and artwork first. */
+@media (orientation: portrait) and (max-width: 700px) and (max-height: 640px) {
+  .battle.battle-board {
+    gap: 2px;
+  }
+
+  .battle-board .field {
+    height: 92px !important;
+    min-height: 92px !important;
+    padding: 8px 2px 13px !important;
+  }
+
+  .battle-board .field-unit {
+    height: 70px !important;
+    min-height: 70px;
+    padding-top: 3px !important;
+  }
+
+  .battle-board .unit-art {
+    height: 34px !important;
+    min-height: 34px !important;
+    flex-basis: 34px;
+  }
+
+  .battle-board .unit-art .card-sprite {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .battle-board .mid-bar,
+  .battle-board .battle-log {
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .battle-board .hand {
+    min-height: 142px !important;
+    max-height: 150px;
+    padding-top: 6px !important;
+    padding-bottom: 17px !important;
+  }
+
+  .battle-board .hand .hand-card-wrap {
+    width: 96px !important;
+    height: 139px !important;
+    flex-basis: 96px !important;
+  }
+
+  .battle-board .hand .hand-card-wrap > .hand-card {
+    scale: 0.69 !important;
+  }
+
+  .battle-board .target-hint {
+    bottom: calc(max(5px, env(safe-area-inset-bottom)) + 145px) !important;
+  }
+}
