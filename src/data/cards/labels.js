@@ -5,6 +5,11 @@ if (CARD_MAP.recover) {
   CARD_MAP.recover.name = "HP회복";
 }
 
+if (CARD_MAP.fullrestore) {
+  CARD_MAP.fullrestore.text =
+    "아군 포켓몬 하나의 체력을 모두 회복하고 상태이상을 해제한다. 트레이너에게 사용하면 체력을 8 회복한다.";
+}
+
 if (ABILITY_TEXT.primordialsea) {
   ABILITY_TEXT.primordialsea =
     "하이드로펌프: 나왔을 때 비를 내리고, 상대 포켓몬 전체에게 물 타입 피해 2";
