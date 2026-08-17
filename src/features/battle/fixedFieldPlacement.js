@@ -55,7 +55,30 @@ function clearDropTargetClasses() {
     .querySelectorAll(
       ".candice-slot-zone.is-drop-target, .wake-field-slot.is-drop-target",
     )
-    .forEach((element) => element.classList.remove("is-drop-target"));
+    .forEach((element) => {
+      element.classList.remove("is-drop-target");
+      element.classList.remove("is-drop-blocked");
+    });
+}
+
+function isBlockedSlot(gimmick, slot) {
+  if (!Number.isInteger(slot)) return false;
+
+  if (gimmick === "whiteout") {
+    return Boolean(
+      document.querySelector(`.field-unit[data-candice-slot="${slot}"]`),
+    );
+  }
+
+  if (gimmick === "rising_tide") {
+    const occupied = Boolean(
+      document.querySelector(`.field-unit[data-wake-slot="${slot}"]`),
+    );
+    const zone = document.querySelectorAll(".wake-field-slot")[slot];
+    return occupied || Boolean(zone?.classList.contains("is-flooded"));
+  }
+
+  return false;
 }
 
 function showDropTarget(gimmick, slot) {
@@ -71,7 +94,13 @@ function showDropTarget(gimmick, slot) {
   if (!selector) return;
 
   const zones = document.querySelectorAll(selector);
-  zones[slot]?.classList.add("is-drop-target");
+  const target = zones[slot];
+  if (!target) return;
+
+  target.classList.add("is-drop-target");
+  if (isBlockedSlot(gimmick, slot)) {
+    target.classList.add("is-drop-blocked");
+  }
 }
 
 function isDraggingBattleCard() {
