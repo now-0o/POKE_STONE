@@ -2,6 +2,12 @@
   command = "npm run build"
   publish = "dist"
 
+# 빌드 시 생성한 로컬 스프라이트는 브라우저에 오래 캐시해 반복 다운로드를 줄인다.
+[[headers]]
+  for = "/sprites/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
 # 백엔드(EC2) API 프록시. 브라우저는 이 도메인(HTTPS)만 보고,
 # 실제 EC2 HTTP 연결은 Netlify 서버가 대신 해줘서 믹스드 콘텐츠 문제 없음.
 # <EC2_PUBLIC_IP>를 실제 IP로 바꿀 것.
