@@ -1,0 +1,44 @@
+/* 무청/맥실러 6칸 고정 필드에서 드래그 중 실제 소환될 칸을 표시한다. */
+.candice-slot-zone.is-drop-target,
+.wake-field-slot.is-drop-target {
+  border-color: rgba(245, 197, 66, 0.92) !important;
+  background:
+    linear-gradient(135deg, rgba(245, 197, 66, 0.16), rgba(255, 255, 255, 0.06)) !important;
+  box-shadow:
+    inset 0 0 18px rgba(245, 197, 66, 0.16),
+    0 0 12px rgba(245, 197, 66, 0.48) !important;
+}
+
+.candice-slot-zone.is-drop-target::before,
+.wake-field-slot.is-drop-target::before {
+  content: "소환";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  padding: 3px 6px;
+  border: 1px solid rgba(245, 197, 66, 0.66);
+  border-radius: 999px;
+  background: rgba(20, 18, 24, 0.76);
+  color: #ffe79a;
+  font-family: var(--display-font);
+  font-size: clamp(7px, 0.8vmin, 10px);
+  font-weight: 900;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* 수몰 칸은 드롭 위치로 가리켜도 사용 불가임을 우선해서 보여준다. */
+.wake-field-slot.is-flooded.is-drop-target {
+  border-color: rgba(255, 107, 107, 0.9) !important;
+  box-shadow:
+    inset 0 0 22px rgba(96, 190, 235, 0.25),
+    0 0 12px rgba(255, 95, 95, 0.4) !important;
+}
+
+.wake-field-slot.is-flooded.is-drop-target::before {
+  content: "수몰";
+  color: #ffd0d0;
+  border-color: rgba(255, 112, 112, 0.7);
+}
