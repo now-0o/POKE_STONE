@@ -60,18 +60,23 @@ function normalizeStevenMegaMetagross(game, side, card, target, logStart) {
   }
 }
 
-function fullyRestoreTrainer(game, side, card, target) {
-  if (card?.id !== FULL_RESTORE_ID || target?.uid !== "hero") return;
+function fullyRestoreTrainer(game, side, card, target, hpBeforePlay) {
+  if (
+    card?.id !== FULL_RESTORE_ID ||
+    target?.uid !== "hero" ||
+    !Number.isFinite(hpBeforePlay)
+  ) {
+    return;
+  }
 
   const player = game.players[side];
   if (!player || !Number.isFinite(player.maxHp)) return;
 
-  const before = player.hp;
   player.hp = player.maxHp;
-  const healed = Math.max(0, player.hp - before);
+  const healed = Math.max(0, player.hp - hpBeforePlay);
 
   // 기본 엔진은 트레이너 대상 풀회복약을 +8로 처리한다.
-  // 카드 의미에 맞게 최대 체력까지 회복시키고, 연출 수치도 실제 회복량으로 맞춘다.
+  // 카드 의미에 맞게 최대 체력까지 회복시키고, 연출 수치도 실제 총 회복량으로 맞춘다.
   if (game.lastAction?.cardId === FULL_RESTORE_ID) {
     if (!Array.isArray(game.lastAction.impacts)) {
       game.lastAction.impacts = [];
@@ -98,7 +103,7 @@ function fullyRestoreTrainer(game, side, card, target) {
     }
   }
 
-  // 기본 로그의 +8 회복량이 남지 않도록 마지막 카드 사용 로그도 실제 값으로 맞춘다.
+  // 기본 로그의 +8 회복량이 남지 않도록 실제 총 회복량으로 맞춘다.
   for (let i = game.log.length - 1; i >= 0; i -= 1) {
     const message = game.log[i];
     if (typeof message !== "string") continue;
@@ -131,6 +136,12 @@ export function canPlayCard(game, side, handIdx) {
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const { player, card } = handCardInfo(game, side, handIdx);
   const logStart = game.log.length;
+  const fullRestoreHeroHpBefore =
+    card?.id === FULL_RESTORE_ID &&
+    target?.uid === "hero" &&
+    Number.isFinite(player?.hp)
+      ? player.hp
+      : null;
   const trainerHealWithoutUnits =
     player?.field.length === 0 &&
     target?.uid === "hero" &&
@@ -144,7 +155,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
   if (!result) return result;
 
-  fullyRestoreTrainer(game, side, card, target);
+  fullyRestoreTrainer(game, side, card, target, fullRestoreHeroHpBefore);
   normalizeStevenMegaMetagross(game, side, card, target, logStart);
 
   return result;
