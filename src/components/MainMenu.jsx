@@ -35,6 +35,7 @@ export default function MainMenu({
   onBattle,
   onShop,
   onDeck,
+  onTutorial,
   onSaveChange,
   onLogout,
 }) {
@@ -414,6 +415,18 @@ export default function MainMenu({
             draggable={false}
           />
           컬렉션 · 덱
+        </button>
+
+        <button
+          className="btn-secondary with-icon tutorial-menu-btn"
+          onMouseEnter={() => playSfx("cursor")}
+          onClick={() => {
+            playSfx("click");
+            onTutorial?.();
+          }}
+        >
+          <span className="tutorial-menu-icon" aria-hidden="true">?</span>
+          게임 튜토리얼
         </button>
       </div>
 
