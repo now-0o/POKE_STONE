@@ -1,32 +1,16 @@
 // ============================================================
 // 오디오 매니저: BGM(화면별 전환+루프+크로스페이드) + 효과음(중첩 재생 가능)
 //
-// 설계 메모: BGM은 화면 전환마다 새 Audio 객체를 만들지 않고, 트랙을
-// 모듈 로드 시점에 한 번만 만들어서 재사용한다.
-//
-// 자동재생 복구는 'click' 이벤트 기준으로 한다 - 'pointerdown'은 브라우저가
-// "진짜 사용자 동작 확정"으로 안 쳐주는 경우가 많아서(드래그/스크롤 시작일 수도
-// 있으니) play()가 계속 막힘. 'click'과 'keydown'은 확실히 인정됨.
-// 추가로 이미 클릭 시점마다 호출되는 playSfx() 안에서도 같이 재시도해서
-// 이중으로 안전장치를 둔다.
+// BGM은 실제로 소리가 필요한 순간에만 Audio 객체를 만든다.
+// 첫 방문 기본 음소거 상태에서는 음원 파일을 요청하지 않고,
+// 음소거 해제 후 해당 화면의 BGM만 lazy-load해서 Netlify 트래픽을 줄인다.
 // ============================================================
 
 const BGM_FILES = {
   login: "/audio/bgm/login.mp3",
   main: "/audio/bgm/main.mp3",
   shop: "/audio/bgm/shop.mp3",
-
-  // 배틀 BGM
-  youngster: "/audio/bgm/youngster.mp3",
-  kanto: "/audio/bgm/kanto.mp3",
-  johto: "/audio/bgm/johto.mp3",
-  hoenn: "/audio/bgm/hoenn.mp3",
-  sinnoh: "/audio/bgm/sinnoh.mp3",
-  red_lance: "/audio/bgm/red_lance.mp3",
-  steven: "/audio/bgm/steven.mp3",
-
-  // 신오 챔피언 난천 전용. 난천 트레이너 구현 전에는 선택되지 않는다.
-  cynthia: "/audio/bgm/cynthia.mp3",
+  battle: "/audio/bgm/battle.mp3",
 };
 
 const SFX_FILES = {
@@ -50,7 +34,7 @@ const DEFAULT_VOLUME = 0.5;
 let muted = (() => {
   if (typeof localStorage === "undefined") return true;
   const raw = localStorage.getItem(MUTE_KEY);
-  if (raw === null) return true; // 첫 방문: 어차피 자동재생 안 될 걸 아니까 처음부터 음소거로 시작 (UI가 실제 상태와 안 어긋나게)
+  if (raw === null) return true; // 첫 방문: 처음부터 음소거로 시작
   return raw === "1";
 })();
 let volume = (() => {
@@ -64,27 +48,32 @@ let volume = (() => {
 
 let currentBgmKey = null;
 
-// 트랙별 Audio 엘리먼트를 미리 하나씩만 만들어서 재사용
-const bgmElements =
-  typeof Audio !== "undefined"
-    ? Object.fromEntries(
-        Object.entries(BGM_FILES).map(([key, src]) => {
-          const a = new Audio(src);
-          a.loop = true;
-          a.volume = 0;
-          return [key, a];
-        }),
-      )
-    : {};
+// 사용된 BGM만 여기에 생긴다. 모듈 로드 시점에는 Audio 객체가 0개다.
+const bgmElements = {};
+
+function getBgmElement(key) {
+  if (typeof Audio === "undefined") return null;
+  const src = BGM_FILES[key];
+  if (!src) return null;
+
+  if (!bgmElements[key]) {
+    const a = new Audio();
+    a.preload = "none";
+    a.loop = true;
+    a.volume = 0;
+    a.src = src;
+    bgmElements[key] = a;
+  }
+
+  return bgmElements[key];
+}
 
 function effectiveBgmVolume() {
   return muted ? 0 : BGM_BASE * volume;
 }
 
 // requestAnimationFrame 기반 부드러운 볼륨 램프.
-// 안전장치 포함: rAF 루프가 무슨 이유로든 끝까지 못 돌더라도(탭이 백그라운드로
-// 가거나 스로틀링되는 등) duration 이후엔 setTimeout이 목표 볼륨을 무조건
-// 강제로 맞춰버림 - "페이드 도중 0에 멈춰서 안 들리는" 상황 자체를 봉쇄.
+// 탭이 백그라운드로 가는 등 rAF가 멈춰도 timeout으로 목표 볼륨을 맞춘다.
 function fade(audio, toVolume, duration, onDone) {
   const fromVolume = audio.volume;
   const start = performance.now();
@@ -106,18 +95,21 @@ function fade(audio, toVolume, duration, onDone) {
   }
 
   requestAnimationFrame(step);
-  setTimeout(finish, duration + 150); // 안전망: rAF가 안 돌아도 결국엔 맞는 값으로 고정됨
+  setTimeout(finish, duration + 150);
 }
 
-// 현재 재생 중이어야 할 트랙이 멈춰있거나(자동재생 차단), 재생 중인데도
-// 볼륨이 잘못된 값(0 근처)에 고정돼 있으면(페이드 애니메이션 실패 등) 바로잡음.
-// 반드시 "진짜 사용자 동작"으로 인정되는 이벤트 핸들러 안에서 호출돼야 효과 있음.
+// 사용자 동작 시 자동재생 차단/페이드 실패를 복구한다.
+// muted 상태에서는 getBgmElement()조차 호출하지 않아 음원을 요청하지 않는다.
 function resumeBgmIfStuck() {
-  const active = bgmElements[currentBgmKey];
+  if (muted || !currentBgmKey) return;
+
+  const active = getBgmElement(currentBgmKey);
   if (!active) return;
-  if (active.paused && !muted) {
+
+  if (active.paused) {
     active.play().catch(() => {});
   }
+
   const target = effectiveBgmVolume();
   if (!active.paused && Math.abs(active.volume - target) > 0.02) {
     active.volume = target;
@@ -176,33 +168,23 @@ const SIGNATURE_CRY_FILE = {
   // 성도
   // =========================
   johto_falkner_pidgeotto: "pidgeotto",
-
   johto_bugsy_scyther: "scyther",
-
   johto_whitney_miltank: "miltank",
-
   johto_morty_gengar: "gengar",
-
   johto_chuck_poliwrath: "poliwrath",
-
   johto_jasmine_steelix: "steelix",
-
   johto_pryce_mamoswine: "mamoswine",
-
   johto_clair_kingdra: "kingdra",
 
   // 목호 - 세 카드 모두 같은 망나뇽 울음소리
   johto_lance_dragonite_thunder: "dragonite",
-
   johto_lance_dragonite_extremespeed: "dragonite",
-
   johto_lance_dragonite_outrage: "dragonite",
 };
 
 // 파일명이 카드 ID와 다른 경우만 매핑
 const CRY_FILE = {
   hooh: "hooh",
-
   ...SIGNATURE_CRY_FILE,
 };
 
@@ -216,10 +198,8 @@ export function playCry(pokemonId) {
   if (!isLegendCry && !isSignatureCry) return;
 
   const file = CRY_FILE[pokemonId] || pokemonId;
-
   const a = new Audio(`/audio/cry/${file}.ogg`);
   a.volume = 0.85 * getVolume();
-
   a.play().catch(() => {});
 }
 
@@ -231,20 +211,36 @@ export function isLegend(pokemonId) {
 }
 
 export function playBgm(key) {
-  if (key === currentBgmKey) return;
+  if (key === currentBgmKey) {
+    if (!muted) resumeBgmIfStuck();
+    return;
+  }
+
   const prevKey = currentBgmKey;
   currentBgmKey = key;
 
   const old = bgmElements[prevKey];
-  if (old)
+
+  // 음소거 중에는 이전 트랙도 멈추고 새 음원은 생성조차 하지 않는다.
+  if (muted) {
+    if (old) {
+      old.pause();
+      old.currentTime = 0;
+      old.volume = 0;
+    }
+    return;
+  }
+
+  if (old) {
     fade(old, 0, FADE_MS, () => {
       old.pause();
-      old.currentTime = 0; // 다음에 이 화면으로 돌아오면 처음부터 다시 시작하도록
+      old.currentTime = 0;
     });
+  }
 
-  const next = bgmElements[key];
+  const next = getBgmElement(key);
   if (!next) return;
-  next.play().catch(() => {}); // 막히더라도 다음 클릭에서 resumeBgmIfStuck가 재시도함
+  next.play().catch(() => {});
   fade(next, effectiveBgmVolume(), FADE_MS);
 }
 
@@ -261,9 +257,19 @@ export function playSfx(key) {
 export function toggleMute() {
   muted = !muted;
   localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+
   const active = bgmElements[currentBgmKey];
-  if (active) active.volume = effectiveBgmVolume();
-  if (!muted) resumeBgmIfStuck();
+  if (muted) {
+    // 음소거 시 다운로드/재생을 가능한 한 빨리 멈춘다.
+    if (active) {
+      active.pause();
+      active.currentTime = 0;
+      active.volume = 0;
+    }
+  } else {
+    resumeBgmIfStuck();
+  }
+
   return muted;
 }
 
@@ -279,6 +285,7 @@ export function setVolume(v) {
     muted = false;
     localStorage.setItem(MUTE_KEY, "0");
   }
+
   const active = bgmElements[currentBgmKey];
   if (active) active.volume = effectiveBgmVolume();
   resumeBgmIfStuck();

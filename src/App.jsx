@@ -26,71 +26,6 @@ import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
 const ADMIN_CODE = "stonemaster"; // 숨겨진 관리자 모드 진입 코드 (아무 화면에서나 그냥 타이핑)
 
-function getBattleBgmKey(trainer) {
-  if (!trainer) {
-    return "youngster";
-  }
-
-  // 난천 - 신오 챔피언 전용 BGM
-  // 실제 난천 트레이너가 추가되면 이 분기에서 자동으로 전용곡을 사용한다.
-  if (
-    trainer.id === "sinnoh_cynthia" ||
-    trainer.sprite === "cynthia" ||
-    trainer.name?.includes("난천")
-  ) {
-    return "cynthia";
-  }
-
-  // 성호
-  if (
-    trainer.sprite === "steven" ||
-    trainer.name?.includes("성호")
-  ) {
-    return "steven";
-  }
-
-  // 레드 / 목호
-  if (
-    trainer.sprite === "red" ||
-    trainer.sprite === "lance" ||
-    trainer.id === "champion" ||
-    trainer.id === "johto_lance"
-  ) {
-    return "red_lance";
-  }
-
-  // 신오 트레이너 배틀은 공통 신오 BGM
-  if (
-    trainer.region === "sinnoh" ||
-    trainer.id?.startsWith("sinnoh_")
-  ) {
-    return "sinnoh";
-  }
-
-  // 체육관 관장
-  if (trainer.title === "체육관 관장") {
-    if (
-      trainer.region === "hoenn" ||
-      trainer.id?.startsWith("hoenn_")
-    ) {
-      return "hoenn";
-    }
-
-    if (
-      trainer.region === "johto" ||
-      trainer.id?.startsWith("johto_")
-    ) {
-      return "johto";
-    }
-
-    // 관동은 기존 데이터에 region이 없는 카드가 있으므로 기본값
-    return "kanto";
-  }
-
-  // 반바지 꼬마 등 일반 트레이너
-  return "youngster";
-}
-
 export default function App() {
   const saveRef = useRef(null);
   const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck
@@ -111,26 +46,18 @@ export default function App() {
   const [volume, setVolumeState] = useState(getVolume());
 
   // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집 / 상점 / 배틀
+  // 배틀은 지역/트레이너 구분 없이 battle.mp3 한 곡만 사용한다.
   useEffect(() => {
-    if (
-      authStatus === "anon" ||
-      authStatus === "checking"
-    ) {
+    if (authStatus === "anon" || authStatus === "checking") {
       playBgm("login");
     } else if (screen === "shop") {
       playBgm("shop");
     } else if (screen === "battle") {
-      playBgm(
-        getBattleBgmKey(trainer),
-      );
+      playBgm("battle");
     } else {
       playBgm("main");
     }
-  }, [
-    authStatus,
-    screen,
-    trainer?.id,
-  ]);
+  }, [authStatus, screen]);
 
   // 앱 첫 로딩: 저장된 토큰이 있으면 유효한지 서버에 확인하고 세이브를 받아온다
   useEffect(() => {
