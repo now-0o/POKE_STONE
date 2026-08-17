@@ -5,6 +5,10 @@ export * from "./wake-balance.js";
 
 const CYNTHIA_GIMMICK = "champion_party";
 const CYNTHIA_MILOTIC_ID = "sinnoh_cynthia_milotic";
+const FULL_RESTORE_ID = "fullrestore";
+const STEVEN_METAGROSS_ID = "hoenn_steven_metagross";
+const STEVEN_METAGROSSITE_ID = "hoenn_steven_metagrossite";
+const STEVEN_MEGA_METAGROSS_NAME = "성호의 메가 메타그로스";
 const RELAXED_FRIENDLY_TARGET = "friendly-or-hero";
 
 function handCardInfo(game, side, handIdx) {
@@ -35,6 +39,76 @@ function withTrainerTargetAllowed(card, callback) {
   }
 }
 
+function normalizeStevenMegaMetagross(game, side, card, target, logStart) {
+  if (card?.id !== STEVEN_METAGROSSITE_ID) return;
+
+  const player = game.players[side];
+  const unit = target?.uid
+    ? player.field.find((entry) => entry.uid === target.uid)
+    : player.field.find((entry) => entry.cardId === STEVEN_METAGROSS_ID && entry.mega);
+
+  if (!unit || unit.cardId !== STEVEN_METAGROSS_ID || !unit.mega) return;
+
+  unit.name = STEVEN_MEGA_METAGROSS_NAME;
+
+  for (let i = logStart; i < game.log.length; i += 1) {
+    if (typeof game.log[i] !== "string") continue;
+    game.log[i] = game.log[i].replace(
+      "메가 성호의 메타그로스",
+      STEVEN_MEGA_METAGROSS_NAME,
+    );
+  }
+}
+
+function fullyRestoreTrainer(game, side, card, target) {
+  if (card?.id !== FULL_RESTORE_ID || target?.uid !== "hero") return;
+
+  const player = game.players[side];
+  if (!player || !Number.isFinite(player.maxHp)) return;
+
+  const before = player.hp;
+  player.hp = player.maxHp;
+  const healed = Math.max(0, player.hp - before);
+
+  // 기본 엔진은 트레이너 대상 풀회복약을 +8로 처리한다.
+  // 카드 의미에 맞게 최대 체력까지 회복시키고, 연출 수치도 실제 회복량으로 맞춘다.
+  if (game.lastAction?.cardId === FULL_RESTORE_ID) {
+    if (!Array.isArray(game.lastAction.impacts)) {
+      game.lastAction.impacts = [];
+    }
+
+    const impact = game.lastAction.impacts.find(
+      (entry) =>
+        entry?.type === "heal" &&
+        entry.side === side &&
+        entry.targetUid === "hero",
+    );
+
+    if (healed > 0) {
+      if (impact) {
+        impact.amount = healed;
+      } else {
+        game.lastAction.impacts.push({
+          type: "heal",
+          side,
+          targetUid: "hero",
+          amount: healed,
+        });
+      }
+    }
+  }
+
+  // 기본 로그의 +8 회복량이 남지 않도록 마지막 카드 사용 로그도 실제 값으로 맞춘다.
+  for (let i = game.log.length - 1; i >= 0; i -= 1) {
+    const message = game.log[i];
+    if (typeof message !== "string") continue;
+    if (!message.includes("풀회복약!")) continue;
+
+    game.log[i] = `풀회복약! ${player.name}의 체력이 ${healed} 회복됐다!`;
+    break;
+  }
+}
+
 export function canPlayCard(game, side, handIdx) {
   const normal = core.canPlayCard(game, side, handIdx);
   if (normal) return true;
@@ -56,20 +130,24 @@ export function canPlayCard(game, side, handIdx) {
 
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const { player, card } = handCardInfo(game, side, handIdx);
+  const logStart = game.log.length;
   const trainerHealWithoutUnits =
     player?.field.length === 0 &&
     target?.uid === "hero" &&
     canHealTrainer(card);
 
-  if (!trainerHealWithoutUnits) {
-    return core.playCard(game, side, handIdx, target, fieldIndex);
-  }
+  const result = trainerHealWithoutUnits
+    ? withTrainerTargetAllowed(card, () =>
+        core.playCard(game, side, handIdx, target, fieldIndex),
+      )
+    : core.playCard(game, side, handIdx, target, fieldIndex);
 
-  // 실제 회복 처리에는 이미 hero 분기가 있으므로, 카드 사용 가능 여부를 검사하는
-  // 동안만 friendly-pokemon 제약을 완화한다. 카드 데이터는 호출 직후 원복된다.
-  return withTrainerTargetAllowed(card, () =>
-    core.playCard(game, side, handIdx, target, fieldIndex),
-  );
+  if (!result) return result;
+
+  fullyRestoreTrainer(game, side, card, target);
+  normalizeStevenMegaMetagross(game, side, card, target, logStart);
+
+  return result;
 }
 
 function cynthiaMiloticAtEnemyTurnEnd(game) {
