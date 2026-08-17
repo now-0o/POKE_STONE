@@ -85,10 +85,16 @@ body[data-battlefield="snowpoint_snowfield"] {
   border: 1px solid rgba(196, 232, 248, 0.12);
   border-radius: 13px;
   background: rgba(178, 224, 244, 0.025);
+  opacity: 0.6;
+  transform: scale(0.96);
+  transform-origin: 50% 55%;
   transition:
+    opacity 0.28s ease,
+    transform 0.28s cubic-bezier(0.2, 0.82, 0.25, 1),
     border-color 0.22s ease,
     background 0.22s ease,
-    box-shadow 0.22s ease;
+    box-shadow 0.22s ease,
+    filter 0.22s ease;
 }
 
 .candice-slot-zone.is-whiteout {
@@ -99,7 +105,11 @@ body[data-battlefield="snowpoint_snowfield"] {
   box-shadow:
     inset 0 0 24px rgba(206, 244, 255, 0.2),
     0 0 16px rgba(119, 208, 246, 0.36);
-  animation: candice-slot-pulse 1.25s ease-in-out infinite;
+  opacity: 1;
+  transform: scale(1);
+  animation:
+    candice-slot-enter 0.3s cubic-bezier(0.2, 0.82, 0.25, 1) 1,
+    candice-slot-pulse 1.25s ease-in-out 0.3s infinite;
 }
 
 .candice-slot-zone.is-whiteout::after {
@@ -209,12 +219,23 @@ body[data-battlefield="snowpoint_snowfield"][data-candice-snow-warning="1"]
   }
 }
 
+@keyframes candice-slot-enter {
+  from {
+    opacity: 0.15;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes candice-slot-pulse {
   0%, 100% {
-    opacity: 0.78;
+    filter: brightness(0.96);
   }
   50% {
-    opacity: 1;
+    filter: brightness(1.08);
   }
 }
 
@@ -236,7 +257,9 @@ body[data-battlefield="snowpoint_snowfield"][data-candice-snow-warning="1"]
     display: none;
   }
 
+  .candice-slot-zone,
   .candice-slot-zone.is-whiteout {
     animation: none;
+    transition: none;
   }
 }
