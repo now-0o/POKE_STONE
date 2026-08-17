@@ -16,6 +16,7 @@ import './features/navigation/transitions.css';
 import './features/deck-editor/styles.css';
 import './features/deck-editor/card-scale.css';
 import './features/pack-shop/styles.css';
+import './features/tutorial/styles.css';
 import './features/region-carousel/styles.css';
 import './styles/sinnoh/index.css';
 
