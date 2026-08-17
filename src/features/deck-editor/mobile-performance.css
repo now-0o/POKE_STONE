@@ -1,0 +1,66 @@
+/* ============================================================
+   Mobile deck editor performance guard
+
+   The collection can contain a large number of HandCard instances. Each
+   normal HandCard normally prepares an infinite Web Animation for overflowing
+   card text even though touch devices have no hover interaction. Keeping those
+   animations plus holo layers alive for the whole collection can exhaust
+   mobile browser memory/GPU resources.
+
+   On touch devices the collection thumbnail stays lightweight. Long-press
+   inspect is intentionally excluded, so the full card text/effects remain
+   available when the player actually asks to inspect one card.
+   ============================================================ */
+
+@media (hover: none), (pointer: coarse) {
+  /*
+   * display:none makes scrollHeight/clientHeight both zero before
+   * AutoScrollCardText's delayed measurement, so it exits without creating a
+   * Web Animation for every collection card. The inspect card is not inside a
+   * collection-item and therefore keeps its full description.
+   */
+  .deck-editor .collection-item .card-text {
+    display: none !important;
+  }
+
+  /* Decorative effects that provide little value on a touch thumbnail but
+     create extra compositing layers for every owned card. */
+  .deck-editor .collection-item .holo-layer,
+  .deck-editor .collection-item .hand-card::before {
+    display: none !important;
+  }
+
+  .deck-editor .collection-item .hand-card,
+  .deck-editor .collection-item .hand-card.playable:hover,
+  .deck-editor .collection-item .hand-card.selected {
+    transition: none !important;
+    box-shadow: 1px 3px 7px rgba(0, 0, 0, 0.42) !important;
+  }
+
+  .deck-editor .collection-item .rarity-card-L {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.82),
+      1px 3px 8px rgba(0, 0, 0, 0.46) !important;
+  }
+
+  .deck-editor .collection-item .hand-card.playable:hover {
+    transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry)) !important;
+  }
+
+  /* Avoid keeping a blurred compositor surface over a long scrolling list. */
+  .deck-editor .editor-topbar,
+  .deck-editor .collection-pane,
+  .deck-editor .deck-pane {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* The actual inspect overlay remains full fidelity. */
+  .deck-editor .inspect-overlay .card-text {
+    display: block !important;
+  }
+
+  .deck-editor .inspect-overlay .holo-layer {
+    display: block !important;
+  }
+}
