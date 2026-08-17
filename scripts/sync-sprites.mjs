@@ -31,8 +31,10 @@ const pokemonIds = new Set([
 ]);
 
 function spriteRelativePath(url) {
+  // raw.githubusercontent.com/PokeAPI/sprites/master/sprites/... 처럼
+  // URL 안에 "sprites"가 두 번 등장하므로 마지막 /sprites/ 뒤만 사용한다.
   const marker = "/sprites/";
-  const index = url.indexOf(marker);
+  const index = url.lastIndexOf(marker);
   return index >= 0 ? url.slice(index + marker.length) : null;
 }
 
