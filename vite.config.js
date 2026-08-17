@@ -7,6 +7,11 @@ const gameEngineWrapper = path.resolve(
   'src/engine/gameplay-balance.js',
 );
 
+const pokeApiCardsModule = path.resolve(process.cwd(), 'src/data/cards.js');
+const pokeApiRawSpriteBase =
+  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites';
+const localSpriteBase = '/sprites';
+
 export default defineConfig({
   plugins: [
     {
@@ -27,6 +32,20 @@ export default defineConfig({
         }
 
         return null;
+      },
+    },
+    {
+      name: 'poke-stone-local-sprites',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = id.split('?')[0];
+        if (modulePath !== pokeApiCardsModule) return null;
+        if (!code.includes(pokeApiRawSpriteBase)) return null;
+
+        return {
+          code: code.split(pokeApiRawSpriteBase).join(localSpriteBase),
+          map: null,
+        };
       },
     },
     react(),
