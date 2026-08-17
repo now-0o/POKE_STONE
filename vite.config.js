@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const gameEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/wake-balance.js',
+  'src/engine/gameplay-balance.js',
 );
 
 export default defineConfig({
