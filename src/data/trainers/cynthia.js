@@ -14,7 +14,7 @@ export const CYNTHIA_TRAINER = {
   emoji: "👑",
   aiLevel: 6,
   stableDeck: false,
-  reward: 1500,
+  reward: 370,
   hp: 72,
   requires: "sinnoh_volkner",
   gymType: null,
