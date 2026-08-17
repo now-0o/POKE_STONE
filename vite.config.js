@@ -2,20 +2,20 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-const championEngineWrapper = path.resolve(
+const gameEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/cynthia/balance.js',
+  'src/engine/wake-balance.js',
 );
 
 export default defineConfig({
   plugins: [
     {
-      name: 'poke-stone-champion-engine-wrapper',
+      name: 'poke-stone-game-engine-wrapper',
       enforce: 'pre',
       resolveId(source, importer) {
         const importerPath = importer?.split('?')[0];
 
-        if (!importerPath || importerPath === championEngineWrapper) {
+        if (!importerPath || importerPath === gameEngineWrapper) {
           return null;
         }
 
@@ -23,7 +23,7 @@ export default defineConfig({
           source === '../engine/engine.js' ||
           source === './engine.js'
         ) {
-          return championEngineWrapper;
+          return gameEngineWrapper;
         }
 
         return null;
