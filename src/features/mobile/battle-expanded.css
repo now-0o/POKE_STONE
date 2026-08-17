@@ -1,64 +1,99 @@
 /* ============================================================
-   Mobile portrait battle — stacked board layout
+   Mobile portrait battle — authoritative layout
 
-   Portrait flow is intentionally explicit:
-   enemy profile -> enemy mana -> enemy field -> log/actions
-   -> player field -> player profile/mana -> hand.
+   IMPORTANT
+   The desktop UNIFIED BATTLE BOARD in styles.css positions the hero clusters,
+   fields, middle rail and hand absolutely. Portrait mode must reset every one
+   of those coordinates before applying its stacked flow.
 
-   Hand cards use real mobile dimensions instead of CSS scale so text stays
-   readable and the layout box always matches what the player sees.
+   Portrait order:
+   enemy profile + mana
+   enemy field
+   log / weather / actions
+   player field
+   player profile + mana
+   hand
    ============================================================ */
 
 @media (orientation: portrait) and (max-width: 700px) {
   html.battle-page-locked,
   body.battle-page-locked {
+    width: 100%;
+    height: 100%;
     overflow: hidden !important;
+    overscroll-behavior: none;
   }
 
+  /* ----------------------------------------------------------
+     0. Desktop absolute-position layout reset
+     ---------------------------------------------------------- */
   .battle.battle-board {
+    --mobile-profile-h: 58px;
+    --mobile-field-h: clamp(112px, 15.5dvh, 132px);
+    --mobile-mid-h: 54px;
+    --mobile-hand-min: 180px;
+
     position: fixed !important;
     inset: 0 !important;
+
     width: 100vw !important;
     max-width: none !important;
     height: 100dvh !important;
     min-height: 100dvh !important;
     max-height: 100dvh !important;
-    margin: 0 !important;
-    padding-top: max(4px, env(safe-area-inset-top));
-    padding-right: max(3px, env(safe-area-inset-right));
-    padding-bottom: max(4px, env(safe-area-inset-bottom));
-    padding-left: max(3px, env(safe-area-inset-left));
-    box-sizing: border-box;
 
+    margin: 0 !important;
+    padding:
+      max(3px, env(safe-area-inset-top))
+      max(3px, env(safe-area-inset-right))
+      max(3px, env(safe-area-inset-bottom))
+      max(3px, env(safe-area-inset-left));
+
+    box-sizing: border-box;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows:
-      auto
-      minmax(96px, 1fr)
-      50px
-      minmax(96px, 1fr)
-      auto
-      minmax(174px, 29dvh);
-    align-content: stretch;
-    gap: 3px !important;
+      var(--mobile-profile-h)
+      var(--mobile-field-h)
+      var(--mobile-mid-h)
+      var(--mobile-field-h)
+      var(--mobile-profile-h)
+      minmax(var(--mobile-hand-min), 1fr);
+    align-content: start;
+    align-items: stretch;
+    gap: 2px !important;
     overflow: hidden !important;
   }
 
-  /* Keep the six gameplay sections in a deterministic vertical order even if
-     overlay nodes are conditionally mounted before them. */
+  /* These four blocks are absolute on the desktop board. Reset all of the
+     desktop positioning properties, not only display/grid-row. */
+  .battle-board .hero-cluster,
+  .battle-board > .field,
+  .battle-board > .mid-bar,
+  .battle-board > .hand {
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+  }
+
   .battle-board .enemy-hero-cluster {
     grid-row: 1;
   }
 
-  .battle-board .enemy-field {
+  .battle-board > .enemy-field {
     grid-row: 2;
   }
 
-  .battle-board .mid-bar {
+  .battle-board > .mid-bar {
     grid-row: 3;
   }
 
-  .battle-board .my-field {
+  .battle-board > .my-field {
     grid-row: 4;
   }
 
@@ -66,185 +101,227 @@
     grid-row: 5;
   }
 
-  .battle-board .hand {
+  .battle-board > .hand {
     grid-row: 6;
   }
 
   /* ----------------------------------------------------------
-     Profile + mana: stack instead of sharing one narrow row.
+     1. Trainer profile + mana
+     The DOM already groups profile and mana inside hero-cluster.
      ---------------------------------------------------------- */
   .battle-board .hero-cluster {
-    width: 100%;
-    min-width: 0;
+    z-index: 30;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: var(--mobile-profile-h) !important;
     min-height: 0 !important;
+
     display: grid !important;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 40px 18px;
-    gap: 2px;
+    grid-template-rows: 39px 17px;
     align-items: stretch;
+    gap: 2px !important;
   }
 
+  /* Leave a small safe corner for the collapsed mute button only on enemy UI. */
   .battle-board .enemy-hero-cluster {
-    padding-right: 35px;
+    padding-right: 32px;
   }
 
   .battle-board .hero-bar,
-  .battle-board .hero-bar.enemy-bar {
-    width: 100%;
-    min-width: 0;
-    min-height: 40px !important;
-    height: 40px;
+  .battle-board .hero-bar.enemy-bar,
+  .battle-board .hero-bar.my-bar {
+    position: relative !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 39px !important;
+    min-height: 39px !important;
+
     padding: 3px 7px !important;
-    gap: 7px;
-    border-radius: 10px;
+    gap: 7px !important;
+    border-radius: 9px !important;
+
+    display: flex !important;
+    align-items: center !important;
     overflow: hidden;
   }
 
   .battle-board .hero-portrait {
     min-width: 0 !important;
-    height: 32px;
-    padding: 1px 5px;
-    flex-direction: row;
-    gap: 5px;
-    border-radius: 8px;
+    width: auto !important;
+    height: 31px !important;
+    padding: 1px 4px !important;
+
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    border-radius: 7px !important;
   }
 
   .battle-board .hero-portrait .trainer-sprite {
-    width: 28px !important;
-    height: 28px !important;
+    width: 27px !important;
+    height: 27px !important;
+    flex: 0 0 27px;
   }
 
   .battle-board .hero-hp {
-    font-size: 10px;
+    font-size: 10px !important;
+    line-height: 1;
     white-space: nowrap;
   }
 
   .battle-board .hero-info {
-    min-width: 0;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
   }
 
   .battle-board .hero-name {
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 11px;
+    font-size: 11px !important;
     line-height: 1.15;
   }
 
   .battle-board .hero-sub,
   .battle-board .eevee-quest-progress {
-    margin-top: 1px;
+    width: 100%;
+    margin-top: 1px !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 8.5px;
-    line-height: 1.15;
+    font-size: 8px !important;
+    line-height: 1.1;
   }
 
   .battle-board .hero-mana {
-    width: 100%;
-    min-width: 0;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 1px 7px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 7px;
-    background: rgba(5, 10, 24, 0.48);
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 17px !important;
+    min-height: 17px !important;
+    padding: 1px 6px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+
+    border-radius: 6px !important;
     overflow: hidden;
   }
 
+  .battle-board .hero-mana .mana-display,
   .battle-board .mana-display {
-    width: auto;
-    max-width: 100%;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-    gap: 2px;
+    width: auto !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    gap: 2px !important;
   }
 
   .battle-board .mana-pip {
-    width: 8px;
-    height: 8px;
-    flex: 0 0 8px;
+    width: 8px !important;
+    height: 8px !important;
+    flex: 0 0 8px !important;
   }
 
   .battle-board .mana-num {
-    margin-left: 3px;
-    font-size: 9px;
+    margin-left: 3px !important;
+    font-size: 9px !important;
   }
 
   /* ----------------------------------------------------------
-     Fields: use the full row. Six slots remain readable and aligned.
+     2. Enemy/player fields
      ---------------------------------------------------------- */
-  .battle-board .field {
+  .battle-board > .field {
+    z-index: 5;
     width: 100% !important;
-    height: 100% !important;
-    min-height: 96px !important;
-    max-height: none !important;
-    margin: 0 !important;
-    padding: 10px 2px 13px !important;
+    min-width: 0 !important;
+    height: var(--mobile-field-h) !important;
+    min-height: var(--mobile-field-h) !important;
+    max-height: var(--mobile-field-h) !important;
+
+    padding: 10px 2px 14px !important;
 
     display: grid !important;
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    grid-template-rows: minmax(0, 1fr);
-    grid-auto-flow: column;
+    grid-template-rows: minmax(0, 1fr) !important;
+    grid-auto-flow: column !important;
     grid-auto-columns: minmax(0, 1fr) !important;
-    align-items: center;
-    justify-items: center;
+    align-items: center !important;
+    justify-items: center !important;
+    justify-content: stretch !important;
     gap: 2px !important;
 
-    border-radius: 11px;
+    flex-wrap: nowrap !important;
+    border-radius: 10px !important;
     overflow: visible !important;
+  }
+
+  .battle-board > .enemy-field,
+  .battle-board > .my-field {
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
   }
 
   .battle-board .field > .unit-pop,
   .battle-board .field > .field-fixed-slot,
   .battle-board .field-fixed-slot > .unit-pop {
-    width: 100%;
-    min-width: 0;
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     overflow: visible !important;
   }
 
   .battle-board .field-fixed-slot {
-    position: relative;
-    min-width: 0;
-    overflow: visible !important;
+    position: relative !important;
+    flex: none !important;
   }
 
   .battle-board .field > .field-empty {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    font-size: 9px;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    align-self: center;
+    justify-self: center;
+    font-size: 9px !important;
   }
 
   .battle-board .field-unit {
     width: min(100%, 60px) !important;
-    height: 79px !important;
-    min-height: 79px;
+    height: 80px !important;
+    min-height: 80px !important;
+    margin: 0 !important;
     padding: 4px 3px 10px !important;
-    gap: 2px;
-    border-width: 2px;
-    border-radius: 8px;
-    overflow: visible;
+    gap: 2px !important;
+
+    border-width: 2px !important;
+    border-radius: 8px !important;
+    overflow: visible !important;
   }
 
   .battle-board .unit-art {
-    width: 100%;
+    width: 100% !important;
     height: 41px !important;
     min-height: 41px !important;
-    flex: 0 0 41px;
-    border-radius: 5px;
+    flex: 0 0 41px !important;
+    border-radius: 5px !important;
   }
 
   .battle-board .unit-art .card-sprite {
     width: 38px !important;
     height: 38px !important;
+    max-width: 95% !important;
+    max-height: 95% !important;
   }
 
   .battle-board .unit-name {
@@ -253,7 +330,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 8px;
+    font-size: 8px !important;
     line-height: 1.15;
   }
 
@@ -261,7 +338,7 @@
     bottom: -8px !important;
     width: 21px !important;
     height: 21px !important;
-    border-width: 1.5px;
+    border-width: 1.5px !important;
     font-size: 10px !important;
   }
 
@@ -274,99 +351,139 @@
   }
 
   .battle-board .taunt-badge {
-    top: -7px;
-    padding: 1px 4px;
-    font-size: 7px;
+    top: -7px !important;
+    padding: 1px 4px !important;
+    font-size: 7px !important;
   }
 
   .battle-board .status-overlay {
-    overflow: hidden;
+    overflow: hidden !important;
   }
 
   .battle-board .status-overlay span {
-    padding: 1px 3px;
-    font-size: 8px;
+    padding: 1px 3px !important;
+    font-size: 8px !important;
+  }
+
+  /* Obstacles use the exact same six-column footprint as units. */
+  .battle-board .field-obstacle {
+    width: min(100%, 60px) !important;
+    height: 80px !important;
+    min-height: 80px !important;
   }
 
   /* ----------------------------------------------------------
-     Log/actions row: everything stays in the dedicated middle strip.
+     3. Middle rail
      ---------------------------------------------------------- */
-  .battle-board .mid-bar {
-    width: 100%;
-    min-width: 0;
-    min-height: 50px !important;
-    height: 50px !important;
-    margin: 0;
+  .battle-board > .mid-bar {
+    z-index: 25;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: var(--mobile-mid-h) !important;
+    min-height: var(--mobile-mid-h) !important;
+
+    padding: 2px 0 !important;
     display: grid !important;
-    grid-template-columns: 64px minmax(0, 1fr) 74px;
-    align-items: stretch;
-    gap: 3px;
+    grid-template-columns: 58px minmax(0, 1fr) 72px !important;
+    align-items: stretch !important;
+    gap: 3px !important;
+
+    border: 0 !important;
+    background: transparent !important;
   }
 
   .battle-board .weather-indicator {
-    min-width: 0;
-    padding: 3px 5px;
-    border-radius: 8px;
-    justify-content: center;
-    white-space: normal;
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    padding: 3px 4px !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 3px !important;
+
+    border-radius: 8px !important;
+    white-space: normal !important;
     text-align: center;
-    font-size: 8px;
+    font-size: 8px !important;
     line-height: 1.2;
   }
 
   .battle-board .weather-dot {
-    width: 6px;
-    height: 6px;
-    flex: 0 0 6px;
+    width: 6px !important;
+    height: 6px !important;
+    flex: 0 0 6px !important;
   }
 
   .battle-board .battle-log {
-    order: initial;
-    width: auto;
-    min-width: 0;
-    height: 50px !important;
-    padding: 4px 6px;
-    border-radius: 8px;
-    font-size: 8.5px;
-    line-height: 1.35;
+    position: static !important;
+    order: initial !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 4px 6px !important;
+
+    overflow-y: auto !important;
+    border-radius: 8px !important;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
   }
 
   .battle-board .battle-actions {
-    min-width: 0;
-    height: 50px;
-    display: grid;
-    grid-template-rows: 28px 19px;
-    gap: 3px;
-    align-items: stretch;
+    position: static !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    height: 100% !important;
+
+    display: grid !important;
+    grid-template-rows: 29px 19px !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 2px !important;
+  }
+
+  .battle-board .btn-endturn,
+  .battle-board .btn-surrender {
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    line-height: 1 !important;
   }
 
   .battle-board .btn-endturn {
-    min-width: 0;
-    min-height: 0;
-    height: 28px;
-    padding: 3px 5px;
-    font-size: 9px;
+    height: 29px !important;
+    padding: 3px 4px !important;
+    font-size: 9px !important;
   }
 
   .battle-board .btn-surrender {
-    min-width: 0;
-    min-height: 0;
-    height: 19px;
-    padding: 1px 5px;
-    font-size: 7.5px;
+    height: 19px !important;
+    padding: 2px 4px !important;
+    font-size: 7.5px !important;
   }
 
   .battle-board .surrender-confirm {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    z-index: 1300;
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1300 !important;
+
     width: min(300px, calc(100vw - 28px));
     padding: 12px;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) !important;
+
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
+
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 12px;
     background: rgba(11, 16, 32, 0.97);
@@ -376,61 +493,85 @@
   }
 
   /* ----------------------------------------------------------
-     Hand: real mobile card dimensions, no scale-based shrinking.
+     4. Hand — real mobile dimensions, never desktop fan layout
      ---------------------------------------------------------- */
-  .battle-board .hand {
-    width: 100%;
-    min-width: 0;
-    min-height: 174px !important;
-    height: 100%;
+  .battle-board > .hand {
+    z-index: 40;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: var(--mobile-hand-min) !important;
     max-height: none !important;
-    margin: 0;
-    padding: 9px 8px 14px 16px !important;
 
+    padding: 10px 8px 18px 15px !important;
     display: flex !important;
     flex-wrap: nowrap !important;
-    align-items: flex-start;
-    align-content: flex-start;
-    justify-content: flex-start;
-    gap: 9px;
+    align-items: flex-start !important;
+    align-content: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 9px !important;
 
     overflow-x: auto !important;
     overflow-y: hidden !important;
+    pointer-events: auto !important;
+
     scroll-snap-type: x proximity;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    background: rgba(4, 8, 20, 0.22);
-    border-radius: 10px 10px 0 0;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
   }
 
-  .battle-board .hand::-webkit-scrollbar {
+  .battle-board > .hand::-webkit-scrollbar {
     display: none;
   }
 
-  .battle-board .hand .hand-card-wrap {
-    position: relative;
+  .battle-board .hand-card-wrap {
+    position: relative !important;
     width: 118px !important;
     height: 166px !important;
     flex: 0 0 118px !important;
+
     margin: 0 !important;
+    transform: none !important;
+    transform-origin: center !important;
+    transition: none !important;
     overflow: visible !important;
-    scroll-snap-align: center;
+    pointer-events: auto !important;
+    scroll-snap-align: start;
+  }
+
+  .battle-board .hand-card-wrap:first-child {
+    margin-left: 0 !important;
   }
 
   .battle-board .hand .hand-card-wrap > .hand-card {
     width: 118px !important;
     height: 166px !important;
     min-height: 166px !important;
+
     margin: 0 !important;
     scale: 1 !important;
+    transform: none !important;
     transform-origin: center !important;
-    padding: 6px 7px 6px;
-    gap: 2px;
-    border-width: 3px;
-    border-radius: 10px;
+
+    padding: 6px 7px 10px !important;
+    gap: 2px !important;
+    border-width: 3px !important;
+    border-radius: 10px !important;
     touch-action: pan-x;
-    overflow: visible;
+    overflow: visible !important;
+  }
+
+  .battle-board .hand .hand-card.playable:hover {
+    transform: none !important;
+  }
+
+  .battle-board .hand .hand-card.selected {
+    transform: translateY(-3px) !important;
   }
 
   .battle-board .hand .hand-card:not(:first-child),
@@ -442,94 +583,97 @@
   }
 
   .battle-board .hand .card-cost {
-    top: -8px;
-    left: -8px;
-    width: 29px;
-    height: 29px;
-    border-width: 2px;
-    font-size: 15px;
+    top: -8px !important;
+    left: -8px !important;
+    width: 29px !important;
+    height: 29px !important;
+    border-width: 2px !important;
+    font-size: 15px !important;
   }
 
   .battle-board .hand .card-topline {
-    min-height: 15px;
-    padding-left: 17px;
+    min-height: 15px !important;
+    padding-left: 17px !important;
   }
 
   .battle-board .hand .card-name {
-    font-size: 11.5px;
-    line-height: 1.12;
+    font-size: 11.5px !important;
+    line-height: 1.12 !important;
   }
 
   .battle-board .hand .card-stageline {
-    height: 13px;
-    min-height: 13px;
-    padding: 1px 4px;
-    font-size: 8px;
-    line-height: 11px;
+    height: 13px !important;
+    min-height: 13px !important;
+    padding: 1px 4px !important;
+    font-size: 8px !important;
+    line-height: 11px !important;
   }
 
   .battle-board .hand .card-art {
-    height: 54px;
-    min-height: 54px;
-    flex: 0 0 54px;
-    border-width: 1.5px;
+    height: 53px !important;
+    min-height: 53px !important;
+    flex: 0 0 53px !important;
+    border-width: 1.5px !important;
   }
 
-  .battle-board .hand .card-art .card-sprite {
-    width: 48px !important;
-    height: 48px !important;
+  .battle-board .hand .card-art img.card-sprite {
+    width: 47px !important;
+    height: 47px !important;
+    max-width: 90% !important;
+    max-height: 90% !important;
   }
 
   .battle-board .hand .card-typebadge {
-    padding: 1.5px 7px;
-    font-size: 8.5px;
+    padding: 1.5px 7px !important;
+    font-size: 8.5px !important;
   }
 
   .battle-board .hand .card-text {
-    min-height: 36px;
-    padding: 3px 4px;
-    font-size: 10px;
-    line-height: 1.28;
+    min-height: 34px !important;
+    padding: 3px 4px !important;
+    font-size: 9.5px !important;
+    line-height: 1.26 !important;
   }
 
   .battle-board .hand .hcard-orb {
-    bottom: -9px;
-    width: 27px;
-    height: 27px;
-    border-width: 2px;
-    font-size: 14px;
+    bottom: -9px !important;
+    width: 27px !important;
+    height: 27px !important;
+    border-width: 2px !important;
+    font-size: 14px !important;
   }
 
   .battle-board .hand .hcard-orb.orb-atk {
-    left: -7px;
+    left: -7px !important;
   }
 
   .battle-board .hand .hcard-orb.orb-hp {
-    right: -7px;
+    right: -7px !important;
   }
 
   .battle-board .hand .card-rarity-gem {
-    bottom: -6px;
-    width: 14px;
-    height: 14px;
+    bottom: -6px !important;
+    width: 14px !important;
+    height: 14px !important;
   }
 
   .battle-board .hand .btn-discard-redraw {
-    bottom: 0;
-    padding: 3px 6px;
-    font-size: 7.5px;
+    bottom: -1px !important;
+    padding: 3px 6px !important;
+    font-size: 7.5px !important;
   }
 
   /* ----------------------------------------------------------
-     Floating helpers stay above the hand instead of covering the profile.
+     5. Floating helpers / overlays
      ---------------------------------------------------------- */
   .battle-board .target-hint {
-    left: max(8px, env(safe-area-inset-left));
-    right: max(8px, env(safe-area-inset-right));
-    bottom: calc(max(5px, env(safe-area-inset-bottom)) + min(29dvh, 188px)) !important;
-    width: auto;
-    max-width: none;
-    transform: none;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    bottom: calc(max(5px, env(safe-area-inset-bottom)) + 176px) !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+
     justify-content: center;
     flex-wrap: wrap;
     gap: 4px 7px;
@@ -541,31 +685,34 @@
   }
 
   .battle-board .insert-marker {
-    top: 7px;
-    bottom: 9px;
-    width: 3px;
+    top: 7px !important;
+    bottom: 9px !important;
+    width: 3px !important;
   }
 
   .battle-board .inspect-overlay {
-    padding: 16px;
+    padding: 16px !important;
     overflow: visible !important;
   }
 
   .battle-board .inspect-overlay .hand-card {
+    width: 134px !important;
+    height: 188px !important;
+    min-height: 188px !important;
     scale: min(1.6, calc((100vw - 52px) / 134)) !important;
-    transform-origin: center;
+    transform-origin: center !important;
   }
 
   .battle-board .drag-ghost {
-    transform: translate(-50%, -66%) scale(1.04);
+    transform: translate(-50%, -66%) scale(1.04) !important;
   }
 
   .battle-board .enemy-reveal {
-    top: 40%;
+    top: 40% !important;
     scale: 0.9;
   }
 
-  /* Battle utilities collapse so the board itself owns the screen. */
+  /* Battle utilities collapse so they do not steal board space. */
   body.battle-page-locked .audio-controls {
     top: max(5px, env(safe-area-inset-top));
     right: max(5px, env(safe-area-inset-right));
@@ -589,8 +736,12 @@
     display: none !important;
   }
 
+  /* Intro remains viewport-centered independently from the board stack. */
   .battle-intro {
-    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      max(12px, env(safe-area-inset-bottom)) !important;
   }
 
   .battle-intro .intro-vs {
@@ -615,6 +766,7 @@
     line-height: 1.55;
   }
 
+  /* Wake/Candice overlays are measured from the real field rectangle. */
   .wake-field-slot,
   .candice-slot-zone {
     margin-top: 3px;
@@ -622,33 +774,27 @@
   }
 }
 
-/* Narrow phones: preserve readable text and reduce only card/field width. */
+/* ============================================================
+   Narrow portrait phones
+   Keep text readable; reduce width-dependent pieces first.
+   ============================================================ */
 @media (orientation: portrait) and (max-width: 360px) {
   .battle.battle-board {
-    grid-template-rows:
-      auto
-      minmax(90px, 1fr)
-      47px
-      minmax(90px, 1fr)
-      auto
-      166px;
+    --mobile-field-h: 106px;
+    --mobile-hand-min: 172px;
   }
 
-  .battle-board .field {
-    min-height: 90px !important;
-    padding-inline: 1px !important;
-  }
-
-  .battle-board .field-unit {
+  .battle-board .field-unit,
+  .battle-board .field-obstacle {
     width: min(100%, 51px) !important;
-    height: 73px !important;
-    min-height: 73px;
+    height: 74px !important;
+    min-height: 74px !important;
   }
 
   .battle-board .unit-art {
     height: 36px !important;
     min-height: 36px !important;
-    flex-basis: 36px;
+    flex-basis: 36px !important;
   }
 
   .battle-board .unit-art .card-sprite {
@@ -656,215 +802,156 @@
     height: 34px !important;
   }
 
-  .battle-board .mid-bar,
-  .battle-board .battle-log {
-    height: 47px !important;
-    min-height: 47px !important;
-  }
-
-  .battle-board .mid-bar {
-    grid-template-columns: 55px minmax(0, 1fr) 67px;
-  }
-
-  .battle-board .battle-actions {
-    height: 47px;
-    grid-template-rows: 27px 17px;
-  }
-
-  .battle-board .btn-endturn {
-    height: 27px;
-    font-size: 8.5px;
-  }
-
-  .battle-board .btn-surrender {
-    height: 17px;
-    font-size: 7px;
-  }
-
-  .battle-board .hand {
-    min-height: 166px !important;
-    padding-left: 14px !important;
-    padding-right: 6px !important;
-  }
-
-  .battle-board .hand .hand-card-wrap,
+  .battle-board .hand-card-wrap,
   .battle-board .hand .hand-card-wrap > .hand-card {
     width: 112px !important;
     height: 158px !important;
   }
 
-  .battle-board .hand .hand-card-wrap {
+  .battle-board .hand-card-wrap {
     flex-basis: 112px !important;
   }
 
   .battle-board .hand .card-art {
-    height: 49px;
-    min-height: 49px;
-    flex-basis: 49px;
+    height: 49px !important;
+    min-height: 49px !important;
+    flex-basis: 49px !important;
   }
 
-  .battle-board .hand .card-art .card-sprite {
+  .battle-board .hand .card-art img.card-sprite {
     width: 44px !important;
     height: 44px !important;
   }
 
   .battle-board .hand .card-name {
-    font-size: 11px;
+    font-size: 11px !important;
   }
 
   .battle-board .hand .card-text {
-    font-size: 9.5px;
+    font-size: 9.25px !important;
   }
 }
 
-/* Short portrait devices: compress profile/artwork before shrinking text. */
-@media (orientation: portrait) and (max-width: 700px) and (max-height: 650px) {
+/* ============================================================
+   Short portrait phones
+   Shrink chrome/art before shrinking the text.
+   ============================================================ */
+@media (orientation: portrait) and (max-width: 700px) and (max-height: 640px) {
   .battle.battle-board {
-    grid-template-rows:
-      auto
-      minmax(82px, 1fr)
-      43px
-      minmax(82px, 1fr)
-      auto
-      154px;
-    gap: 2px !important;
+    --mobile-profile-h: 51px;
+    --mobile-field-h: 96px;
+    --mobile-mid-h: 47px;
+    --mobile-hand-min: 158px;
+    gap: 1px !important;
   }
 
   .battle-board .hero-cluster {
-    grid-template-rows: 35px 16px;
-    gap: 1px;
+    grid-template-rows: 34px 15px;
   }
 
   .battle-board .hero-bar,
-  .battle-board .hero-bar.enemy-bar {
-    height: 35px;
-    min-height: 35px !important;
+  .battle-board .hero-bar.enemy-bar,
+  .battle-board .hero-bar.my-bar {
+    height: 34px !important;
+    min-height: 34px !important;
   }
 
   .battle-board .hero-portrait {
-    height: 29px;
+    height: 28px !important;
   }
 
   .battle-board .hero-portrait .trainer-sprite {
-    width: 24px !important;
-    height: 24px !important;
+    width: 23px !important;
+    height: 23px !important;
+    flex-basis: 23px !important;
   }
 
   .battle-board .hero-mana {
-    height: 16px;
+    height: 15px !important;
+    min-height: 15px !important;
   }
 
   .battle-board .mana-pip {
-    width: 7px;
-    height: 7px;
-    flex-basis: 7px;
+    width: 7px !important;
+    height: 7px !important;
+    flex-basis: 7px !important;
   }
 
-  .battle-board .field {
-    min-height: 82px !important;
-    padding: 7px 2px 11px !important;
-  }
-
-  .battle-board .field-unit {
-    height: 66px !important;
-    min-height: 66px;
-    padding-top: 3px !important;
+  .battle-board .field-unit,
+  .battle-board .field-obstacle {
+    height: 70px !important;
+    min-height: 70px !important;
   }
 
   .battle-board .unit-art {
-    height: 31px !important;
-    min-height: 31px !important;
-    flex-basis: 31px;
+    height: 33px !important;
+    min-height: 33px !important;
+    flex-basis: 33px !important;
   }
 
   .battle-board .unit-art .card-sprite {
-    width: 29px !important;
-    height: 29px !important;
+    width: 31px !important;
+    height: 31px !important;
   }
 
-  .battle-board .mid-bar,
-  .battle-board .battle-log {
-    height: 43px !important;
-    min-height: 43px !important;
-  }
-
-  .battle-board .mid-bar {
-    grid-template-columns: 52px minmax(0, 1fr) 64px;
+  .battle-board > .mid-bar {
+    grid-template-columns: 52px minmax(0, 1fr) 65px !important;
   }
 
   .battle-board .battle-actions {
-    height: 43px;
-    grid-template-rows: 25px 15px;
+    width: 65px !important;
+    min-width: 65px !important;
+    grid-template-rows: 26px 17px !important;
   }
 
   .battle-board .btn-endturn {
-    height: 25px;
-    font-size: 8px;
+    height: 26px !important;
+    font-size: 8px !important;
   }
 
   .battle-board .btn-surrender {
-    height: 15px;
-    font-size: 6.5px;
+    height: 17px !important;
+    font-size: 7px !important;
   }
 
-  .battle-board .hand {
-    min-height: 154px !important;
-    padding-top: 6px !important;
-    padding-bottom: 10px !important;
-  }
-
-  .battle-board .hand .hand-card-wrap,
+  .battle-board .hand-card-wrap,
   .battle-board .hand .hand-card-wrap > .hand-card {
-    width: 104px !important;
-    height: 146px !important;
+    width: 106px !important;
+    height: 150px !important;
   }
 
-  .battle-board .hand .hand-card-wrap {
-    flex-basis: 104px !important;
+  .battle-board .hand-card-wrap {
+    flex-basis: 106px !important;
   }
 
   .battle-board .hand .hand-card-wrap > .hand-card {
-    padding: 5px 6px;
-  }
-
-  .battle-board .hand .card-cost {
-    width: 27px;
-    height: 27px;
-    font-size: 14px;
-  }
-
-  .battle-board .hand .card-name {
-    font-size: 10.5px;
-  }
-
-  .battle-board .hand .card-stageline {
-    display: none;
+    padding: 5px 6px 9px !important;
   }
 
   .battle-board .hand .card-art {
-    height: 44px;
-    min-height: 44px;
-    flex-basis: 44px;
+    height: 45px !important;
+    min-height: 45px !important;
+    flex-basis: 45px !important;
   }
 
-  .battle-board .hand .card-art .card-sprite {
-    width: 40px !important;
-    height: 40px !important;
+  .battle-board .hand .card-art img.card-sprite {
+    width: 41px !important;
+    height: 41px !important;
   }
 
   .battle-board .hand .card-text {
-    min-height: 31px;
-    font-size: 9.5px;
-    line-height: 1.22;
+    min-height: 30px !important;
+    font-size: 9.25px !important;
+    line-height: 1.22 !important;
   }
 
   .battle-board .hand .hcard-orb {
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 12px !important;
   }
 
   .battle-board .target-hint {
-    bottom: calc(max(4px, env(safe-area-inset-bottom)) + 156px) !important;
+    bottom: calc(max(4px, env(safe-area-inset-bottom)) + 154px) !important;
   }
 }
