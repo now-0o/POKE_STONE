@@ -1,0 +1,19 @@
+.tutorial-menu-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  border: 1px solid rgba(245, 197, 66, 0.55);
+  border-radius: 50%;
+  color: var(--accent);
+  background: rgba(245, 197, 66, 0.1);
+  font-family: var(--display-font);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tutorial-menu-btn:hover .tutorial-menu-icon {
+  background: rgba(245, 197, 66, 0.18);
+}
