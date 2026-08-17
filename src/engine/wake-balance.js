@@ -34,7 +34,9 @@ function floodedSlots(game) {
 
 function applyWakeCapacity(game) {
   if (!isWakeBattle(game)) return;
-  game.players.player.fieldCapacity = FIELD_SLOT_COUNT - floodCount(game);
+  const count = floodCount(game);
+  game._wakeFloodLevel = count;
+  game.players.player.fieldCapacity = FIELD_SLOT_COUNT - count;
 }
 
 function normalizeWakeSlots(game) {
@@ -178,7 +180,7 @@ export function createGame(playerDeckIds, trainer) {
   disableLegacyWakeCounter(game);
   game._wakeFixedPlayerTurns = game.turn === "player" ? 1 : 0;
   game._wakeFixedFloodCount = 0;
-  game.players.player.fieldCapacity = FIELD_SLOT_COUNT;
+  applyWakeCapacity(game);
   normalizeWakeSlots(game);
   syncWakeVisual(game);
   return game;
