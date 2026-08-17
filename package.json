@@ -4,10 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "sync:sprites": "node scripts/sync-sprites.mjs",
-    "predev": "npm run sync:sprites",
     "dev": "vite",
-    "prebuild": "npm run sync:sprites",
     "build": "vite build",
     "preview": "vite preview"
   },
