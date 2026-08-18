@@ -29,7 +29,7 @@ const CRESS_DECK = [
   "oshawott", "oshawott", "dewott", "dewott", "samurott",
   "ducklett", "ducklett", "swanna", "swanna",
   "tirtouga", "tirtouga", "carracosta",
-  "frillish", "frillish", "jellicent",
+  "ducklett", "tirtouga", "carracosta",
   "scald", "scald", "surf", "hydropump", "raindance", "raindance",
   "voltswitch", "hyperball", "hyperball", "fullrestore", "shellbell",
 ];
@@ -89,7 +89,7 @@ export const UNOVA_TRAINERS = [
     deck: [
       "lillipup", "lillipup", "herdier", "herdier", "stoutland", "stoutland",
       "patrat", "patrat", "watchog", "watchog",
-      "audino", "audino", "minccino", "minccino", "cinccino", "cinccino",
+      "audino", "audino", "lillipup", "herdier", "patrat", "watchog",
       "purrloin", "liepard",
       "quickattack", "quickattack", "hyperbeam",
       "normalgem", "normalgem", "reflect", "lightscreen",
