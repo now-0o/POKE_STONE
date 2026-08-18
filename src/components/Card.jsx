@@ -54,11 +54,11 @@ export function Sprite({
   busted = false,
   spriteId = null,
 }) {
-  const [failed, setFailed] = useState(false);
+  const [failedUrl, setFailedUrl] = useState(null);
 
   const url = spriteUrl(cardId, mega, busted, spriteId);
 
-  if (!url || failed) {
+  if (!url || failedUrl === url) {
     return (
       <div className="card-emoji" style={{ fontSize: size * 0.7 }}>
         {emoji}
@@ -75,7 +75,7 @@ export function Sprite({
       height={size}
       loading="lazy"
       draggable={false}
-      onError={() => setFailed(true)}
+      onError={() => setFailedUrl(url)}
     />
   );
 }
@@ -142,6 +142,7 @@ function battleSpriteId(unit) {
   }
 
   if (unit.cardId === "arceus") {
+    if (unit.type === "노말") return 493;
     const suffix = ARCEUS_TYPE_SPRITE_SUFFIX[unit.type];
     return suffix ? `493-${suffix}` : 493;
   }
