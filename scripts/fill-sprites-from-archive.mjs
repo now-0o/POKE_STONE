@@ -224,10 +224,10 @@ async function main() {
     console.log("");
     console.log("✅ 포케스톤 스프라이트 준비 완료");
   } finally {
-    await rm(tempDir, {
-      recursive: true,
-      force: true,
-    });
+    // await rm(tempDir, {
+    //   recursive: true,
+    //   force: true,
+    // });
   }
 }
 
