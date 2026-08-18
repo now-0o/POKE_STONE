@@ -9,6 +9,25 @@ const gameEngineWrapper = path.resolve(
   'src/engine/gameplay-balance.js',
 );
 
+const baseEngineModule = normalizePath(
+  path.resolve(process.cwd(), 'src/engine/engine.js'),
+);
+const undocumentedRoarkDamageReduction = `  // ============================================================
+  // 강석 - 무쇠탄갱
+  // 강석의 바위 타입 포켓몬은 받는 피해 -1
+  // ============================================================
+  if (
+    !ignoreDefense &&
+    game.trainer?.gimmick === "mine_collapse" &&
+    unit.side === "enemy" &&
+    unit.type === "바위" &&
+    dmg > 0
+  ) {
+    dmg = Math.max(0, dmg - 1);
+  }
+
+`;
+
 const pokeApiCardsModule = normalizePath(
   path.resolve(process.cwd(), 'src/data/cards.js'),
 );
@@ -36,6 +55,20 @@ export default defineConfig({
         }
 
         return null;
+      },
+    },
+    {
+      name: 'poke-stone-remove-undocumented-roark-defense',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        if (modulePath !== baseEngineModule) return null;
+        if (!code.includes(undocumentedRoarkDamageReduction)) return null;
+
+        return {
+          code: code.replace(undocumentedRoarkDamageReduction, ''),
+          map: null,
+        };
       },
     },
     {
