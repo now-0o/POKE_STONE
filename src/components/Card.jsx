@@ -113,6 +113,46 @@ const DEOXYS_SPRITE_IDS = {
   speed: 10003,
 };
 
+const ARCEUS_TYPE_SPRITE_SUFFIX = {
+  노말: "normal",
+  불꽃: "fire",
+  물: "water",
+  전기: "electric",
+  풀: "grass",
+  얼음: "ice",
+  격투: "fighting",
+  독: "poison",
+  땅: "ground",
+  비행: "flying",
+  에스퍼: "psychic",
+  벌레: "bug",
+  바위: "rock",
+  고스트: "ghost",
+  드래곤: "dragon",
+  악: "dark",
+  강철: "steel",
+  페어리: "fairy",
+};
+
+function battleSpriteId(unit) {
+  if (!unit) return null;
+
+  if (unit.cardId === "deoxys" && unit.deoxysForm) {
+    return DEOXYS_SPRITE_IDS[unit.deoxysForm];
+  }
+
+  if (unit.cardId === "arceus") {
+    const suffix = ARCEUS_TYPE_SPRITE_SUFFIX[unit.type];
+    return suffix ? `493-${suffix}` : 493;
+  }
+
+  if (unit.cardId === "darmanitan" && unit._zenModeUsed) {
+    return 10017;
+  }
+
+  return unit.megaSpriteId || null;
+}
+
 // ---- 꾹 눌러 크게 보기 공용 훅 (컬렉션/카드팩 등) ----
 export function useInspect(delay = 250) {
   const [inspect, setInspect] = useState(null);
@@ -399,11 +439,7 @@ export function HandCard({
         <Sprite
           cardId={card.id}
           mega={unit ? unit.mega : false}
-          spriteId={
-            unit?.cardId === "deoxys" && unit?.deoxysForm
-              ? DEOXYS_SPRITE_IDS[unit.deoxysForm]
-              : unit?.megaSpriteId
-          }
+          spriteId={battleSpriteId(unit)}
           emoji={card.emoji}
           size={56}
           busted={unit?.cardId === "mimikyu" && unit.sturdyUsed}
@@ -548,11 +584,7 @@ export function FieldUnit({
           <Sprite
             cardId={unit.cardId}
             mega={unit.mega}
-            spriteId={
-              unit.cardId === "deoxys" && unit.deoxysForm
-                ? DEOXYS_SPRITE_IDS[unit.deoxysForm]
-                : unit.megaSpriteId
-            }
+            spriteId={battleSpriteId(unit)}
             emoji={unit.emoji}
             size={48}
             busted={unit.cardId === "mimikyu" && unit.sturdyUsed}
