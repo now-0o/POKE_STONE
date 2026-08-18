@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 // 확장 데이터는 App 모듈보다 먼저 등록한다.
+// 하나지방 카드도 같은 확장 레지스트리 순서로 로드한다.
 import './data/cards/sinnoh.js';
 import './data/cards/unova.js';
 import './data/trainers/sinnoh.js';
