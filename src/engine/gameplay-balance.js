@@ -1,5 +1,5 @@
 import * as core from "./wake-balance.js";
-import { CARD_MAP } from "../data/cards.js";
+import { ABILITY_TEXT, CARD_MAP } from "../data/cards.js";
 
 export * from "./wake-balance.js";
 
@@ -9,6 +9,21 @@ const STEVEN_METAGROSS_ID = "hoenn_steven_metagross";
 const STEVEN_METAGROSSITE_ID = "hoenn_steven_metagrossite";
 const STEVEN_MEGA_METAGROSS_NAME = "성호의 메가 메타그로스";
 const RELAXED_FRIENDLY_TARGET = "friendly-or-hero";
+
+const DITTO_ID = "ditto";
+const DITTO_COST = 4;
+const DITTO_STAT_PENALTY = 2;
+
+// 메타몽은 상대의 현재 능력치를 그대로 복사하는 구조라
+// 3코스트 일반 카드치고 후반 고스탯 포켓몬을 지나치게 효율적으로 복제했다.
+// 비용을 올리고, 변신 후 복사한 공격력/체력에서 각각 2를 깎아
+// 강한 상대를 활용하는 정체성은 유지하되 무조건적인 고효율 카드는 아니게 한다.
+if (CARD_MAP[DITTO_ID]) {
+  CARD_MAP[DITTO_ID].cost = DITTO_COST;
+}
+
+ABILITY_TEXT.transform =
+  "변신: 나왔을 때 무작위 상대 포켓몬의 능력치와 타입을 복사한 뒤 공격력과 체력이 각각 2 낮아진다";
 
 function handCardInfo(game, side, handIdx) {
   const player = game.players[side];
@@ -59,6 +74,26 @@ function normalizeStevenMegaMetagross(game, side, card, target, logStart) {
   }
 }
 
+function normalizeDitto(game, side, previousFieldUids) {
+  if (!previousFieldUids) return;
+
+  const player = game.players[side];
+  const unit = player.field.find(
+    (entry) => entry.cardId === DITTO_ID && !previousFieldUids.has(entry.uid),
+  );
+
+  if (!unit) return;
+
+  unit.atk = Math.max(1, unit.atk - DITTO_STAT_PENALTY);
+
+  const nextMaxHp = Math.max(1, unit.maxHp - DITTO_STAT_PENALTY);
+  unit.hp = Math.min(
+    nextMaxHp,
+    Math.max(1, unit.hp - DITTO_STAT_PENALTY),
+  );
+  unit.maxHp = nextMaxHp;
+}
+
 export function canPlayCard(game, side, handIdx) {
   const normal = core.canPlayCard(game, side, handIdx);
   if (normal) return true;
@@ -81,6 +116,10 @@ export function canPlayCard(game, side, handIdx) {
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const { player, card } = handCardInfo(game, side, handIdx);
   const logStart = game.log.length;
+  const dittoFieldUids =
+    card?.id === DITTO_ID && player
+      ? new Set(player.field.map((unit) => unit.uid))
+      : null;
   const trainerHealWithoutUnits =
     player?.field.length === 0 &&
     target?.uid === "hero" &&
@@ -95,6 +134,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   if (!result) return result;
 
   normalizeStevenMegaMetagross(game, side, card, target, logStart);
+  normalizeDitto(game, side, dittoFieldUids);
 
   return result;
 }
