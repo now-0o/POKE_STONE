@@ -1,238 +1,262 @@
-// ============================================================
-// 지방 선택 모바일 캐러셀 (모바일 터치 최적화)
-// - 데스크톱: 기존 카드 그리드 그대로
-// - 모바일: 한 장씩 스냅 + 터치 스와이프
-// - transform 기반 이동이라 레이아웃 리플로우 최소화
-// ============================================================
-
 const REGION_NAMES = ["관동지방", "성도지방", "호연지방", "신오지방", "하나지방"];
 
-let activeIndex = 0;
-let dots = [];
-let boundContainer = null;
-let scrollRaf = 0;
-let touchStartX = 0;
-let touchStartY = 0;
-let touchStartScrollLeft = 0;
-let touchDragging = false;
-let touchMoved = false;
+let lastActiveIndex = 0;
+let currentContainer = null;
+let cleanupCurrent = null;
 
-function isMobileCarousel() {
-  return window.matchMedia("(max-width: 760px)").matches;
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
-function getRegionContainer() {
-  return document.querySelector(".main-menu .region-select");
-}
+function enhanceRegionCarousel(container) {
+  if (!container || container.dataset.coverflowReady === "true") return;
 
-function getRegionCards(container) {
-  return container ? Array.from(container.querySelectorAll(":scope > .region-card")) : [];
-}
+  const cards = Array.from(container.querySelectorAll(":scope > .region-card"));
+  if (cards.length < 2) return;
 
-function getCardCenter(container, card) {
-  return card.offsetLeft + card.offsetWidth / 2 - container.clientWidth / 2;
-}
+  container.dataset.coverflowReady = "true";
+  container.classList.add("region-coverflow");
 
-function clampIndex(index, count) {
-  return Math.max(0, Math.min(count - 1, index));
-}
+  let activeIndex = clamp(lastActiveIndex, 0, cards.length - 1);
+  let visualIndex = activeIndex;
+  let dragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let startIndex = activeIndex;
+  let lastX = 0;
+  let suppressClickUntil = 0;
 
-function setActiveIndex(index, count) {
-  activeIndex = clampIndex(index, count);
-  dots.forEach((dot, i) => {
-    dot.classList.toggle("active", i === activeIndex);
-    dot.setAttribute("aria-current", i === activeIndex ? "true" : "false");
+  const dots = document.createElement("div");
+  dots.className = "region-coverflow-dots";
+
+  const dotButtons = cards.map((card, index) => {
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.setAttribute("aria-label", `${REGION_NAMES[index] || index + 1} 보기`);
+    dot.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      activeIndex = index;
+      lastActiveIndex = index;
+      visualIndex = index;
+      render();
+    });
+    dots.appendChild(dot);
+    return dot;
   });
-}
 
-function nearestCardIndex(container, cards) {
-  if (!cards.length) return 0;
-  const center = container.scrollLeft + container.clientWidth / 2;
-  let bestIndex = 0;
-  let bestDistance = Infinity;
+  const hint = document.createElement("div");
+  hint.className = "region-coverflow-hint";
+  hint.textContent = "드래그해서 지방을 넘겨보세요";
 
-  cards.forEach((card, index) => {
-    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-    const distance = Math.abs(cardCenter - center);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestIndex = index;
+  container.appendChild(hint);
+  container.appendChild(dots);
+
+  function render(position = visualIndex) {
+    const spacing = clamp(container.clientWidth * 0.215, 145, 235);
+
+    cards.forEach((card, index) => {
+      const offset = index - position;
+      const abs = Math.abs(offset);
+      const x = offset * spacing;
+      const y = Math.min(abs, 1.8) * 20;
+      const z = -Math.min(abs, 2.4) * 42;
+      const scale = Math.max(0.76, 1 - abs * 0.115);
+      const opacity = abs >= 2 ? 0 : Math.max(0.32, 1 - abs * 0.23);
+      const brightness = Math.max(0.52, 1 - abs * 0.25);
+      const saturation = Math.max(0.55, 1 - abs * 0.15);
+      const zIndex = 100 - Math.round(abs * 20);
+      const isActive = index === Math.round(position) && abs < 0.5;
+      const isHidden = abs >= 2;
+
+      card.style.setProperty("--cf-x", `${x}px`);
+      card.style.setProperty("--cf-y", `${y}px`);
+      card.style.setProperty("--cf-z", `${z}px`);
+      card.style.setProperty("--cf-scale", scale.toFixed(3));
+      card.style.setProperty("--cf-opacity", opacity.toFixed(3));
+      card.style.setProperty("--cf-brightness", brightness.toFixed(3));
+      card.style.setProperty("--cf-saturation", saturation.toFixed(3));
+      card.style.setProperty("--cf-z-index", String(zIndex));
+      card.style.pointerEvents = isHidden ? "none" : "";
+      card.classList.toggle("cf-active", isActive);
+      card.setAttribute("aria-current", isActive ? "true" : "false");
+      card.setAttribute("aria-hidden", isHidden ? "true" : "false");
+    });
+
+    dotButtons.forEach((dot, index) => {
+      dot.classList.toggle("active", index === Math.round(position));
+    });
+  }
+
+  function snapTo(index) {
+    activeIndex = clamp(index, 0, cards.length - 1);
+    lastActiveIndex = activeIndex;
+    visualIndex = activeIndex;
+    dragging = false;
+    container.classList.remove("is-dragging");
+    render();
+  }
+
+  function onPointerDown(event) {
+    if (event.button !== undefined && event.button !== 0) return;
+    if (event.target.closest(".region-coverflow-dots")) return;
+
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startY = event.clientY;
+    lastX = event.clientX;
+    startIndex = activeIndex;
+    dragging = false;
+  }
+
+  function onPointerMove(event) {
+    if (pointerId === null || event.pointerId !== pointerId) return;
+
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+
+    if (!dragging) {
+      if (Math.abs(dx) < 7) return;
+      if (Math.abs(dy) > Math.abs(dx) * 1.15) return;
+
+      dragging = true;
+      container.classList.add("is-dragging");
+
+      try {
+        container.setPointerCapture(pointerId);
+      } catch {
+        // pointer capture 미지원 환경에서도 드래그 유지
+      }
     }
-  });
 
-  return bestIndex;
-}
+    event.preventDefault();
+    lastX = event.clientX;
 
-function scrollToCard(container, cards, index, behavior = "smooth") {
-  if (!container || !cards.length) return;
-  const safeIndex = clampIndex(index, cards.length);
-  const target = Math.max(0, getCardCenter(container, cards[safeIndex]));
-
-  container.scrollTo({
-    left: target,
-    behavior,
-  });
-  setActiveIndex(safeIndex, cards.length);
-}
-
-function clearIndicators() {
-  const old = document.querySelector(".region-carousel-indicators");
-  old?.remove();
-  dots = [];
-}
-
-function makeIndicators(container, cards) {
-  clearIndicators();
-  if (!isMobileCarousel() || cards.length <= 1) return;
-
-  const wrap = document.createElement("div");
-  wrap.className = "region-carousel-indicators";
-  wrap.setAttribute("aria-label", "지방 선택 페이지");
-
-  dots = cards.map((_, index) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "region-carousel-dot";
-    button.setAttribute(
-      "aria-label",
-      `${REGION_NAMES[index] || `${index + 1}번째 지방`} 보기`,
-    );
-    button.addEventListener("click", () => scrollToCard(container, cards, index));
-    wrap.appendChild(button);
-    return button;
-  });
-
-  container.insertAdjacentElement("afterend", wrap);
-  setActiveIndex(nearestCardIndex(container, cards), cards.length);
-}
-
-function onScroll() {
-  if (!boundContainer || !isMobileCarousel()) return;
-  if (scrollRaf) cancelAnimationFrame(scrollRaf);
-
-  scrollRaf = requestAnimationFrame(() => {
-    const cards = getRegionCards(boundContainer);
-    if (cards.length) setActiveIndex(nearestCardIndex(boundContainer, cards), cards.length);
-  });
-}
-
-function onTouchStart(event) {
-  if (!boundContainer || !isMobileCarousel()) return;
-  const touch = event.touches?.[0];
-  if (!touch) return;
-
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
-  touchStartScrollLeft = boundContainer.scrollLeft;
-  touchDragging = false;
-  touchMoved = false;
-}
-
-function onTouchMove(event) {
-  if (!boundContainer || !isMobileCarousel()) return;
-  const touch = event.touches?.[0];
-  if (!touch) return;
-
-  const dx = touch.clientX - touchStartX;
-  const dy = touch.clientY - touchStartY;
-
-  if (!touchDragging) {
-    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    touchDragging = true;
+    const dragDistance = clamp(container.clientWidth * 0.2, 120, 210);
+    visualIndex = clamp(startIndex - dx / dragDistance, 0, cards.length - 1);
+    render(visualIndex);
   }
 
-  if (event.cancelable) event.preventDefault();
-  touchMoved = true;
-  boundContainer.scrollLeft = touchStartScrollLeft - dx;
-}
+  function finishPointer(event) {
+    if (
+      pointerId === null ||
+      (event?.pointerId != null && event.pointerId !== pointerId)
+    ) return;
 
-function onTouchEnd(event) {
-  if (!boundContainer || !isMobileCarousel()) return;
-  const cards = getRegionCards(boundContainer);
-  if (!cards.length) return;
+    const wasDragging = dragging;
+    const dx = (event?.clientX ?? lastX) - startX;
 
-  const changedTouch = event.changedTouches?.[0];
-  const endX = changedTouch?.clientX ?? touchStartX;
-  const deltaX = endX - touchStartX;
+    if (wasDragging) {
+      const threshold = clamp(container.clientWidth * 0.075, 42, 78);
+      let next = Math.round(visualIndex);
 
-  let targetIndex = nearestCardIndex(boundContainer, cards);
-  if (touchMoved && Math.abs(deltaX) > 42) {
-    targetIndex = deltaX < 0 ? activeIndex + 1 : activeIndex - 1;
+      if (next === startIndex && Math.abs(dx) > threshold) {
+        next = startIndex + (dx < 0 ? 1 : -1);
+      }
+
+      suppressClickUntil = Date.now() + 260;
+      snapTo(next);
+    } else {
+      container.classList.remove("is-dragging");
+      render(activeIndex);
+    }
+
+    if (pointerId !== null) {
+      try {
+        if (container.hasPointerCapture?.(pointerId)) {
+          container.releasePointerCapture(pointerId);
+        }
+      } catch {
+        // 무시
+      }
+    }
+
+    pointerId = null;
+    dragging = false;
   }
 
-  scrollToCard(boundContainer, cards, targetIndex);
-  touchDragging = false;
-  touchMoved = false;
-}
+  function onClickCapture(event) {
+    const card = event.target.closest(".region-card");
+    if (!card || !container.contains(card)) return;
 
-function unbindContainer() {
-  if (!boundContainer) return;
-  boundContainer.removeEventListener("scroll", onScroll);
-  boundContainer.removeEventListener("touchstart", onTouchStart);
-  boundContainer.removeEventListener("touchmove", onTouchMove);
-  boundContainer.removeEventListener("touchend", onTouchEnd);
-  boundContainer.removeEventListener("touchcancel", onTouchEnd);
-  boundContainer = null;
-}
+    const index = cards.indexOf(card);
+    if (index === -1) return;
 
-function bindContainer(container) {
-  if (boundContainer === container) {
-    const cards = getRegionCards(container);
-    if (dots.length !== cards.length) makeIndicators(container, cards);
-    return;
+    if (Date.now() < suppressClickUntil) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (index !== activeIndex) {
+      event.preventDefault();
+      event.stopPropagation();
+      snapTo(index);
+      return;
+    }
+
+    lastActiveIndex = index;
   }
 
-  unbindContainer();
-  boundContainer = container;
-  const cards = getRegionCards(container);
-  if (!cards.length) return;
-
-  container.addEventListener("scroll", onScroll, { passive: true });
-  container.addEventListener("touchstart", onTouchStart, { passive: true });
-  container.addEventListener("touchmove", onTouchMove, { passive: false });
-  container.addEventListener("touchend", onTouchEnd, { passive: true });
-  container.addEventListener("touchcancel", onTouchEnd, { passive: true });
-  makeIndicators(container, cards);
-
-  if (isMobileCarousel()) {
-    requestAnimationFrame(() => scrollToCard(container, cards, activeIndex, "auto"));
+  function onKeyDown(event) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      snapTo(activeIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      snapTo(activeIndex + 1);
+    }
   }
+
+  function onResize() {
+    visualIndex = activeIndex;
+    render();
+  }
+
+  container.addEventListener("pointerdown", onPointerDown);
+  container.addEventListener("pointermove", onPointerMove, { passive: false });
+  container.addEventListener("pointerup", finishPointer);
+  container.addEventListener("pointercancel", finishPointer);
+  container.addEventListener("click", onClickCapture, true);
+  container.addEventListener("keydown", onKeyDown);
+  window.addEventListener("resize", onResize);
+
+  render();
+
+  cleanupCurrent = () => {
+    container.removeEventListener("pointerdown", onPointerDown);
+    container.removeEventListener("pointermove", onPointerMove);
+    container.removeEventListener("pointerup", finishPointer);
+    container.removeEventListener("pointercancel", finishPointer);
+    container.removeEventListener("click", onClickCapture, true);
+    container.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("resize", onResize);
+  };
 }
 
 function syncRegionCarousel() {
-  const container = getRegionContainer();
-  if (!container) {
-    unbindContainer();
-    clearIndicators();
+  const container = document.querySelector(".main-menu .region-select");
+
+  if (container === currentContainer) return;
+
+  cleanupCurrent?.();
+  cleanupCurrent = null;
+  currentContainer = container;
+
+  if (container) enhanceRegionCarousel(container);
+}
+
+function startRegionCarousel() {
+  if (!document.body) {
+    window.addEventListener("DOMContentLoaded", startRegionCarousel, { once: true });
     return;
   }
 
-  bindContainer(container);
-}
-
-let syncQueued = false;
-function queueSync() {
-  if (syncQueued) return;
-  syncQueued = true;
-  requestAnimationFrame(() => {
-    syncQueued = false;
-    syncRegionCarousel();
-  });
-}
-
-function start() {
   syncRegionCarousel();
 
-  const observer = new MutationObserver(queueSync);
+  const observer = new MutationObserver(syncRegionCarousel);
   observer.observe(document.body, { childList: true, subtree: true });
-
-  window.addEventListener("resize", queueSync, { passive: true });
-  window.addEventListener("orientationchange", queueSync, { passive: true });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", start, { once: true });
-} else {
-  start();
-}
+startRegionCarousel();
