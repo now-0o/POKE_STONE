@@ -1,0 +1,64 @@
+name: Fix Arceus sprite rendering
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[fix-arceus-sprite]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Patch Card sprite behavior
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('src/components/Card.jsx')
+          s = path.read_text()
+
+          old = '''  const [failed, setFailed] = useState(false);\n\n  const url = spriteUrl(cardId, mega, busted, spriteId);\n\n  if (!url || failed) {'''
+          new = '''  const [failedUrl, setFailedUrl] = useState(null);\n\n  const url = spriteUrl(cardId, mega, busted, spriteId);\n\n  if (!url || failedUrl === url) {'''
+          if old not in s:
+              raise SystemExit('Sprite failed-state anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''      onError={() => setFailed(true)}'''
+          new = '''      onError={() => setFailedUrl(url)}'''
+          if old not in s:
+              raise SystemExit('Sprite onError anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''  if (unit.cardId === "arceus") {\n    const suffix = ARCEUS_TYPE_SPRITE_SUFFIX[unit.type];\n    return suffix ? `493-${suffix}` : 493;\n  }'''
+          new = '''  if (unit.cardId === "arceus") {\n    if (unit.type === "노말") return 493;\n    const suffix = ARCEUS_TYPE_SPRITE_SUFFIX[unit.type];\n    return suffix ? `493-${suffix}` : 493;\n  }'''
+          if old not in s:
+              raise SystemExit('Arceus sprite anchor not found')
+          s = s.replace(old, new, 1)
+
+          path.write_text(s)
+          PY
+
+          npm ci
+          npm run build
+
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/Card.jsx
+          git commit -m 'fix: refresh Arceus sprites on type change [fix-arceus-sprite]'
+          git push
