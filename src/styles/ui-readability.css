@@ -1,0 +1,145 @@
+/* ============================================================
+   전역 UI 가독성 보정
+   - 실제 카드(hand-card / field-unit / inspect card) 내부 타이포는 건드리지 않는다.
+   - 메뉴, 버튼, HUD, 로그, 모달, 튜토리얼, 필터 등 UI 텍스트만 확대한다.
+   ============================================================ */
+
+/* 공용 컨트롤 */
+.btn-primary { font-size: 19px; }
+.btn-primary.big { font-size: 23px; }
+.btn-secondary { font-size: 17px; }
+.btn-ghost { font-size: 16px; }
+.btn-ghost.small { font-size: 14px; }
+
+/* 메인 메뉴 */
+.game-subtitle { font-size: 14px; }
+.menu-money { font-size: 18px; }
+.region-title { font-size: 17px; }
+.region-name { font-size: 23px; }
+.region-sub { font-size: 13px; }
+.region-desc { font-size: 14px; line-height: 1.45; }
+.region-lock-text { font-size: 13px; line-height: 1.4; }
+.region-go { font-size: 15px; }
+.trainer-region-header strong { font-size: 20px; }
+.trainer-region-sub { font-size: 12px; }
+.trainer-name { font-size: 19px; }
+.trainer-meta { font-size: 14px; line-height: 1.4; }
+.trainer-go { font-size: 16px; }
+.menu-footer { font-size: 14px; }
+.screen-header h2 { font-size: 25px; }
+.money-display { font-size: 17px; }
+
+/* 배틀 - 카드 자체를 제외한 HUD / 안내 */
+.hero-hp { font-size: 16px; }
+.hero-name { font-size: 18px; }
+.hero-sub { font-size: 14px; line-height: 1.4; }
+.mana-num { font-size: 15px; }
+.field-empty { font-size: 15px; }
+.weather-indicator { font-size: 15px; }
+.battle-log { font-size: 14px; line-height: 1.62; }
+.btn-endturn { font-size: 17px; }
+.btn-surrender { font-size: 14px; }
+.surrender-confirm { font-size: 14px; }
+.target-hint { font-size: 15px; }
+.intro-side { font-size: 17px; }
+.intro-line { font-size: 17px; line-height: 1.55; }
+.intro-coin { font-size: 16px; }
+.result-line { font-size: 16px; line-height: 1.5; }
+.result-reward { font-size: 19px; }
+
+/* 체육관 기믹 설명 / HUD */
+.battle-gimmick-entry-tip { font-size: 14px !important; }
+.battle-gimmick-help-btn { font-size: 19px !important; }
+.battle-gimmick-modal-head span { font-size: 13px !important; }
+.battle-gimmick-modal-head strong { font-size: 20px !important; }
+.battle-gimmick-eyebrow { font-size: 13px !important; }
+.battle-gimmick-slide h2 { font-size: 25px !important; }
+.battle-gimmick-copy,
+.battle-gimmick-copy p { font-size: 15px !important; line-height: 1.65 !important; }
+.battle-gimmick-hint { font-size: 14px !important; line-height: 1.55 !important; }
+.maylene-combo-hud,
+.unova-minecart-hud,
+.unova-drayden-hud { font-size: 14px; }
+.unova-hud-title { font-size: 14px !important; }
+.unova-minecart-labels { font-size: 13px !important; }
+.unova-drayden-hud > strong { font-size: 15px !important; line-height: 1.45; }
+.unova-dominance-row { font-size: 13px !important; }
+
+/* 상점 - 카드 공개 영역의 카드 텍스트는 제외 */
+.pack-sublabel { font-size: 12px; }
+.pack-price { font-size: 14px; }
+.pack-note { font-size: 15px; line-height: 1.5; }
+
+/* 덱 편집 - 카드 본체는 제외하고 필터/메타/목록 UI만 */
+.deck-editor .collection-item .collection-meta { font-size: 14px; }
+.deck-editor .editor-topbar .filter-btn { font-size: 16px; }
+.deck-editor .ability-filter-box > summary { font-size: 15px; }
+.deck-editor .ability-filter-check,
+.deck-editor .ability-filter-reset { font-size: 14px; }
+.deck-editor .sort-btn { font-size: 15px; }
+.deck-editor input,
+.deck-editor select,
+.deck-editor .search-input { font-size: 15px; }
+
+/* 튜토리얼 */
+.tutorial-header > div > span { font-size: 11px; }
+.tutorial-progress { font-size: 13px; }
+.tutorial-nav-num { font-size: 10px; }
+.tutorial-nav i { font-size: 15px; }
+.tutorial-nav strong { font-size: 13px; }
+.tutorial-kicker { font-size: 11px; }
+.tutorial-lead p { font-size: 15px; line-height: 1.75; }
+.tutorial-rule-card h3,
+.tutorial-weather h3 { font-size: 15px; }
+.tutorial-rule-card p { font-size: 14px; line-height: 1.75; }
+.tutorial-tip { font-size: 13.5px; line-height: 1.65; }
+.tutorial-flow span { font-size: 12px; }
+
+/* 일반 폼/텍스트 입력은 모바일에서도 16px 근처를 확보 */
+input:not(.card-search-input),
+select,
+textarea { font-family: inherit; font-size: 16px; }
+
+/* 모바일에서도 기존보다 읽기 쉽게 유지하되 레이아웃 과밀은 방지 */
+@media (max-width: 760px) {
+  .btn-primary { font-size: 18px; }
+  .btn-primary.big { font-size: 21px; }
+  .btn-secondary { font-size: 16px; }
+  .btn-ghost { font-size: 15px; }
+  .btn-ghost.small { font-size: 13px; }
+
+  .region-name { font-size: 21px; }
+  .region-sub { font-size: 12px; }
+  .region-desc { font-size: 13px; }
+  .region-lock-text { font-size: 12px; }
+  .trainer-name { font-size: 18px; }
+  .trainer-meta { font-size: 13px; }
+
+  .battle-log { font-size: 13px; line-height: 1.58; }
+  .hero-name { font-size: 17px; }
+  .hero-sub { font-size: 13px; }
+  .target-hint { font-size: 14px; }
+
+  .battle-gimmick-copy,
+  .battle-gimmick-copy p { font-size: 14px !important; }
+  .battle-gimmick-hint { font-size: 13px !important; }
+
+  .tutorial-lead p { font-size: 14px; }
+  .tutorial-rule-card p { font-size: 13.5px; }
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .region-name { font-size: 19px !important; }
+  .region-desc,
+  .region-lock-text { font-size: 11px !important; }
+  .region-go { font-size: 13px !important; }
+
+  .trainer-name { font-size: 16px; }
+  .trainer-meta { font-size: 12px; }
+  .battle-log { font-size: 12px; }
+  .btn-endturn { font-size: 15px; }
+
+  .deck-editor .editor-topbar .filter-btn { font-size: 14px; }
+  .deck-editor .ability-filter-box > summary,
+  .deck-editor .sort-btn { font-size: 13px; }
+}
