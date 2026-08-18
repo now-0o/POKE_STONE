@@ -27,6 +27,10 @@ const REGION_LABELS = {
     name: "신오지방",
     sub: "SINNOH",
   },
+  unova: {
+    name: "하나지방",
+    sub: "UNOVA",
+  },
 };
 
 export default function MainMenu({
@@ -59,6 +63,14 @@ export default function MainMenu({
   const sinnohUnlocked =
     save.adminMode ||
     (hoennLastTrainer && (save.wins?.[hoennLastTrainer.id] || 0) > 0);
+
+  const sinnohTrainers = TRAINERS_BY_REGION.sinnoh || [];
+
+  const sinnohLastTrainer = sinnohTrainers[sinnohTrainers.length - 1];
+
+  const unovaUnlocked =
+    save.adminMode ||
+    (sinnohLastTrainer && (save.wins?.[sinnohLastTrainer.id] || 0) > 0);
 
   async function goFullscreen() {
     const el = document.documentElement;
@@ -98,6 +110,11 @@ export default function MainMenu({
     }
 
     if (region === "sinnoh" && !sinnohUnlocked) {
+      playSfx("buzzer");
+      return;
+    }
+
+    if (region === "unova" && !unovaUnlocked) {
       playSfx("buzzer");
       return;
     }
@@ -267,6 +284,32 @@ export default function MainMenu({
 
               <span className="region-go">
                 {sinnohUnlocked ? "선택 ▶" : "LOCK"}
+              </span>
+            </button>
+            <button
+              className={[
+                "region-card",
+                !unovaUnlocked ? "region-locked" : "region-unova",
+              ].join(" ")}
+              onMouseEnter={() => unovaUnlocked && playSfx("cursor")}
+              onClick={() => selectRegion("unova")}
+            >
+              <span className="region-info">
+                <span className="region-name">하나지방</span>
+
+                <span className="region-sub">UNOVA</span>
+
+                <span className="region-desc">최상급 AI · 전용 체육관 룰</span>
+
+                {!unovaUnlocked && (
+                  <span className="region-lock-text">
+                    🔒 신오지방 클리어 후 해금
+                  </span>
+                )}
+              </span>
+
+              <span className="region-go">
+                {unovaUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
           </div>
