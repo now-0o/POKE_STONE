@@ -35,8 +35,8 @@
 .hero-sub { font-size: 14px; line-height: 1.4; }
 .mana-num { font-size: 15px; }
 .field-empty { font-size: 15px; }
-.weather-indicator { font-size: 15px; }
-.battle-log { font-size: 14px; line-height: 1.62; }
+.weather-indicator { font-size: 17px; }
+.battle-log { font-size: 16px; line-height: 1.68; }
 .btn-endturn { font-size: 17px; }
 .btn-surrender { font-size: 14px; }
 .surrender-confirm { font-size: 14px; }
@@ -81,26 +81,12 @@
 .deck-editor select,
 .deck-editor .search-input { font-size: 15px; }
 
-/* 튜토리얼 */
-.tutorial-header > div > span { font-size: 11px; }
-.tutorial-progress { font-size: 13px; }
-.tutorial-nav-num { font-size: 10px; }
-.tutorial-nav i { font-size: 15px; }
-.tutorial-nav strong { font-size: 13px; }
-.tutorial-kicker { font-size: 11px; }
-.tutorial-lead p { font-size: 15px; line-height: 1.75; }
-.tutorial-rule-card h3,
-.tutorial-weather h3 { font-size: 15px; }
-.tutorial-rule-card p { font-size: 14px; line-height: 1.75; }
-.tutorial-tip { font-size: 13.5px; line-height: 1.65; }
-.tutorial-flow span { font-size: 12px; }
-
 /* 일반 폼/텍스트 입력은 모바일에서도 16px 근처를 확보 */
 input:not(.card-search-input),
 select,
 textarea { font-family: inherit; font-size: 16px; }
 
-/* 모바일에서도 기존보다 읽기 쉽게 유지하되 레이아웃 과밀은 방지 */
+/* 모바일에서는 레이아웃 과밀을 막기 위해 별도 크기를 유지 */
 @media (max-width: 760px) {
   .btn-primary { font-size: 18px; }
   .btn-primary.big { font-size: 21px; }
@@ -115,6 +101,7 @@ textarea { font-family: inherit; font-size: 16px; }
   .trainer-name { font-size: 18px; }
   .trainer-meta { font-size: 13px; }
 
+  .weather-indicator { font-size: 14px; }
   .battle-log { font-size: 13px; line-height: 1.58; }
   .hero-name { font-size: 17px; }
   .hero-sub { font-size: 13px; }
@@ -123,9 +110,6 @@ textarea { font-family: inherit; font-size: 16px; }
   .battle-gimmick-copy,
   .battle-gimmick-copy p { font-size: 14px !important; }
   .battle-gimmick-hint { font-size: 13px !important; }
-
-  .tutorial-lead p { font-size: 14px; }
-  .tutorial-rule-card p { font-size: 13.5px; }
 }
 
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
@@ -136,6 +120,7 @@ textarea { font-family: inherit; font-size: 16px; }
 
   .trainer-name { font-size: 16px; }
   .trainer-meta { font-size: 12px; }
+  .weather-indicator { font-size: 12px; }
   .battle-log { font-size: 12px; }
   .btn-endturn { font-size: 15px; }
 
