@@ -8,7 +8,8 @@ import { TRAINER_MAP } from "../trainers.js";
 // - 노말 관장: 고스트 타입에게 기본 공격이 전부 막히는 상황을 완화
 // - 고스트 관장: 노말 타입에게 기본 공격이 전부 막히는 상황을 완화
 //
-// 타입 정체성은 유지하고, 덱의 일부만 커버리지 카드로 구성한다.
+// 타입 정체성은 유지하되, 각 덱의 약 1/3(10장)을
+// 무효 상성을 뚫을 수 있는 포켓몬/기술 카드로 구성한다.
 // ============================================================
 
 function setBalancedDeck(trainerId, deck) {
@@ -36,8 +37,9 @@ function setBalancedDeck(trainerId, deck) {
 
 // ------------------------------------------------------------
 // 관동 - 마티스
-// 땅 타입이 전기 공격을 무효화하더라도 자력/강철 계열 느낌의
-// 아이언헤드와 전광석화로 대응할 수 있게 한다.
+// 카운터 10장:
+// 자포코일 x2 + 아이언헤드 x2 + 전광석화 x2 + 섀도볼 x2 + 파괴광선 x2
+// 전기 타입 중심은 유지하면서 땅 타입만으로 완봉하는 플레이를 방지한다.
 // ------------------------------------------------------------
 setBalancedDeck("ltsurge", [
   "surge_raichu",
@@ -45,31 +47,35 @@ setBalancedDeck("ltsurge", [
   "pikachu",
   "pikachu",
   "raichu",
+
   "magnemite",
   "magnemite",
   "magneton",
+  "magneton",
+
   "mareep",
   "mareep",
-  "flaaffy",
   "flaaffy",
   "ampharos",
-  "shinx",
+
   "shinx",
   "luxio",
   "luxray",
   "rotom",
-  "pachirisu",
-  "elekid",
   "electabuzz",
 
-  "thunderbolt",
-  "thunderbolt",
+  // 땅 타입 대응 10장
+  "magnezone",
+  "magnezone",
   "ironhead",
   "ironhead",
   "quickattack",
   "quickattack",
+  "shadowball",
+  "shadowball",
+  "hyperbeam",
+  "hyperbeam",
 
-  "pokeball",
   "pokeball",
   "potion",
   "superball",
@@ -77,14 +83,15 @@ setBalancedDeck("ltsurge", [
 
 // ------------------------------------------------------------
 // 성도 - 꼭두
-// 노말 중심은 유지하되 이브이 라인에서 블래키를 섞고
-// 악의파동으로 고스트 타입을 직접 처리할 수 있게 한다.
+// 카운터 10장:
+// 블래키 x2 + 델빌 x2 + 헬가 x2 + 악의파동 x2 + 섀도볼 x2
+// 노말 덱의 정체성은 유지하면서 고스트 단일 전략에 대응한다.
 // ------------------------------------------------------------
 setBalancedDeck("johto_whitney", [
   "johto_whitney_miltank",
 
-  "umbreon",
-  "umbreon",
+  "rattata",
+  "rattata",
   "raticate",
   "raticate",
 
@@ -99,34 +106,33 @@ setBalancedDeck("johto_whitney", [
   "miltank",
 
   "sentret",
-  "sentret",
   "furret",
-  "furret",
-
-  "teddiursa",
   "teddiursa",
   "ursaring",
-  "ursaring",
-
-  "buneary",
-  "lopunny",
   "ambipom",
 
+  // 고스트 타입 대응 10장
+  "umbreon",
+  "umbreon",
+  "houndour",
+  "houndour",
+  "houndoom",
+  "houndoom",
   "darkpulse",
   "darkpulse",
+  "shadowball",
+  "shadowball",
 
   "pokeball",
   "superball",
-
-  "potion",
   "fullrestore",
-  "lifeorb",
 ]);
 
 // ------------------------------------------------------------
 // 성도 - 유빈
-// 고스트 중심은 유지하되 델빌 계열과 악의파동 비중을 늘려
-// 노말 타입만 내는 전략에 완전히 봉쇄되지 않게 한다.
+// 카운터 10장:
+// 델빌 x2 + 헬가 x2 + 깜까미 + 블래키 + 악의파동 x4
+// 고스트 중심은 유지하되 노말 타입을 상대로 공격 수단이 꾸준히 잡히게 한다.
 // ------------------------------------------------------------
 setBalancedDeck("johto_morty", [
   "johto_morty_gengar",
@@ -136,9 +142,6 @@ setBalancedDeck("johto_morty", [
   "haunter",
   "haunter",
   "gengar",
-
-  "houndour",
-  "houndoom",
 
   "mimikyu",
   "mimikyu",
@@ -150,30 +153,32 @@ setBalancedDeck("johto_morty", [
   "dusknoir",
 
   "drifloon",
-  "drifloon",
   "drifblim",
-  "drifblim",
+  "misdreavus",
 
+  // 노말 타입 대응 10장
+  "houndour",
+  "houndour",
+  "houndoom",
+  "houndoom",
   "sableye",
   "umbreon",
+  "darkpulse",
+  "darkpulse",
+  "darkpulse",
+  "darkpulse",
 
   "shadowball",
-  "darkpulse",
-  "darkpulse",
-  "darkpulse",
-
   "pokeball",
-  "superball",
-
-  "potion",
   "fullheal",
   "gengarite",
 ]);
 
 // ------------------------------------------------------------
 // 호연 - 암페어
-// 전기/강철 계열 컨셉을 살려 아이언헤드 2장을 추가한다.
-// 땅 타입은 여전히 유리하지만 무조건적인 완봉은 어렵게 한다.
+// 카운터 10장:
+// 자포코일 x2 + 아이언헤드 x2 + 전광석화 x2 + 섀도볼 x2 + 파괴광선 x2
+// 전기/강철 계열 컨셉을 살리면서 땅 타입의 완전 봉쇄를 막는다.
 // ------------------------------------------------------------
 setBalancedDeck("hoenn_wattson", [
   "hoenn_wattson_manectric",
@@ -186,39 +191,41 @@ setBalancedDeck("hoenn_wattson", [
   "mareep",
   "mareep",
   "flaaffy",
-  "flaaffy",
-  "ampharos",
   "ampharos",
 
   "magnemite",
   "magnemite",
   "magneton",
   "magneton",
-  "magnezone",
-  "magnezone",
 
   "raikou",
 
   "thunderbolt",
   "thunderbolt",
-  "ironhead",
-  "ironhead",
-  "quickattack",
-  "quickattack",
 
   "manectite",
-
   "hyperball",
   "hyperball",
   "fullrestore",
-  "focussash",
-  "lifeorb",
+
+  // 땅 타입 대응 10장
+  "magnezone",
+  "magnezone",
+  "ironhead",
+  "ironhead",
+  "quickattack",
+  "quickattack",
+  "shadowball",
+  "shadowball",
+  "hyperbeam",
+  "hyperbeam",
 ]);
 
 // ------------------------------------------------------------
 // 호연 - 종길
-// 이브이 라인에 블래키를 섞고 악/고스트 기술을 채용한다.
-// 고스트가 노말/격투 공격을 모두 무효화하는 상황을 보완한다.
+// 카운터 10장:
+// 블래키 x2 + 델빌 x2 + 헬가 x2 + 악의파동 x3 + 섀도볼 x1
+// 노말/격투 공격을 모두 무효화하는 고스트 타입을 확실히 견제한다.
 // ------------------------------------------------------------
 setBalancedDeck("hoenn_norman", [
   "hoenn_norman_slaking",
@@ -231,33 +238,33 @@ setBalancedDeck("hoenn_norman", [
   "slaking",
 
   "kangaskhan",
-  "umbreon",
-
   "kangaskhanite",
 
   "snorlax",
   "snorlax",
 
   "tauros",
+  "tauros",
+
+  "porygon",
+  "porygon2",
+
+  "eevee",
+  "eevee",
+
+  "quickattack",
+  "hyperball",
+  "fullrestore",
+
+  // 고스트 타입 대응 10장
   "umbreon",
-
-  "porygon",
-  "porygon",
-  "porygon2",
-  "porygon2",
-
-  "eevee",
-  "eevee",
-
-  "quickattack",
-  "quickattack",
+  "umbreon",
+  "houndour",
+  "houndour",
+  "houndoom",
+  "houndoom",
+  "darkpulse",
   "darkpulse",
   "darkpulse",
   "shadowball",
-
-  "hyperball",
-  "hyperball",
-  "fullrestore",
-  "lifeorb",
-  "focussash",
 ]);
