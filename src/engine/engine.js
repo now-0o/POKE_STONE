@@ -147,6 +147,18 @@ function lowerAttack(game, unit, amount, sourceName = null) {
     return 0;
   }
 
+  if (hasAbility(unit, "contrary")) {
+    unit.atk += amount;
+    log(game, `${unit.name}의 심술꾸러기! 공격력 감소가 +${amount}로 뒤집혔다!`);
+    return 0;
+  }
+
+  if (hasAbility(unit, "defiant")) {
+    unit.atk += 1;
+    log(game, `${unit.name}의 오기! 공격력 감소 대신 공격력 +1!`);
+    return 0;
+  }
+
   const before = unit.atk;
 
   unit.atk = Math.max(0, unit.atk - amount);
@@ -641,6 +653,9 @@ function makePlayer(deckIds, name, hp = 40) {
     megaUsed: false,
     discardUsedThisTurn: false,
     _statusGuardTurns: 0,
+    _reflectCharges: 0,
+    _lightScreenCharges: 0,
+    _victoryStarTechniqueUsed: false,
     _productiveActionsThisTurn: 0,
     _brickTurns: 0,
   };
@@ -922,6 +937,7 @@ function startTurn(game, side) {
   p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
   p.mana = p.maxMana;
   p.discardUsedThisTurn = false;
+  p._victoryStarTechniqueUsed = false;
 
   // 기라티나 - 섀도다이브
   if (p._shadowForceExile) {
@@ -1278,7 +1294,7 @@ export function endTurn(game) {
   if (game.weather === "sand") {
     ["player", "enemy"].forEach((s) => {
       game.players[s].field.forEach((u) => {
-        if (!SAND_IMMUNE_TYPES.includes(u.type))
+        if (!SAND_IMMUNE_TYPES.includes(u.type) && !hasAbility(u, "overcoat"))
           applyDamage(game, u, 1, null, true);
       });
     });
@@ -1327,6 +1343,15 @@ export function effectiveCost(card, game, side = null, handCard = null) {
     if (card.id === "solarbeam") {
       cost -= 2;
     }
+  }
+
+  // 비크티니 - 승리의별: 매 턴 첫 기술 비용 -1
+  if (side && card.kind === "spell" && card.type === "기술") {
+    const me = game.players[side];
+    const victiniAlive = me.field.some(
+      (u) => u.hp > 0 && hasAbility(u, "victorystar"),
+    );
+    if (victiniAlive && !me._victoryStarTechniqueUsed) cost -= 1;
   }
 
   // 테오키스 노말폼 - 프레셔
@@ -1394,6 +1419,11 @@ export function effectiveAtk(unit, game) {
   // 메가마기라스
   if (game.weather === "sand" && hasAbility(unit, "sandforce")) {
     atk += 2;
+  }
+
+  // 아케오스 - 무기력
+  if (hasAbility(unit, "defeatist") && unit.hp <= Math.ceil(unit.maxHp / 2)) {
+    atk = Math.max(0, atk - 2);
   }
 
   // 천하장사
@@ -1487,8 +1517,15 @@ export function calcTypedDamage(base, attackType, defendType) {
   return base;
 }
 
-export function spellDamageAmount(card, game) {
+export function spellDamageAmount(card, game, side = null) {
   let amount = card.spell.amount;
+  if (side && Number(amount) > 0) {
+    const me = game.players[side];
+    const victiniAlive = me.field.some(
+      (u) => u.hp > 0 && hasAbility(u, "victorystar"),
+    );
+    if (victiniAlive && !me._victoryStarTechniqueUsed) amount += 1;
+  }
   const mt = card.moveType;
   if (game.weather === "rain") {
     if (mt === "물") amount += 1;
@@ -1667,6 +1704,24 @@ function applyDamage(
   }
 
   let dmg = amount;
+
+  // 풍선: 땅 타입 피해 1회 완전 면역 후 유지, 다른 실제 피해를 받으면 파괴
+  if (!typedIgnore && sourceType === "땅" && unit.item === "air_balloon") {
+    log(game, `${unit.name}의 풍선! 땅 타입 피해를 피했다!`);
+    return finishImpact(0);
+  }
+
+  // 현재 기술 카드 처리 중이면 빛의장막을 모든 대상에 동일하게 적용한다.
+  const screenOwner = game.players[unit.side];
+  if (
+    !ignoreDefense &&
+    game._activeTechniqueSide &&
+    unit.side === other(game._activeTechniqueSide) &&
+    (screenOwner?._lightScreenCharges || 0) > 0 &&
+    dmg > 0
+  ) {
+    dmg = Math.max(0, dmg - 2);
+  }
 
   // ============================================================
   // 강석 - 무쇠탄갱
@@ -1920,6 +1975,16 @@ function applyDamage(
   }
 
   unit.hp -= dmg;
+
+  if (dmg > 0 && unit.item === "air_balloon") {
+    unit.item = null;
+    log(game, `${unit.name}의 풍선이 터졌다!`);
+  }
+
+  if (!typedIgnore && sourceType === "악" && unit.hp > 0 && hasAbility(unit, "justified")) {
+    unit.atk += 1;
+    log(game, `${unit.name}의 정의의마음! 공격력 +1!`);
+  }
 
   tryAzelfMysticPower(game, unit, ignoreDefense);
 
@@ -3868,6 +3933,64 @@ function runBattlecry(game, side, unit) {
       break;
     }
 
+    // ============================================================
+    // 5세대 하나지방 신규 특성
+    // ============================================================
+    case "prankster": {
+      if (me.hand.length >= MAX_HAND) break;
+      const candidates = me.deck
+        .map((cardId, index) => ({ cardId, index, card: CARD_MAP[cardId] }))
+        .filter(({ card }) =>
+          card?.kind === "spell" &&
+          card.type === "기술" &&
+          !(Number(card.spell?.amount) > 0) &&
+          !["execute", "all_field_damage", "aoe", "aoe_status"].includes(card.spell?.effect),
+        );
+      if (candidates.length) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        me.deck.splice(pick.index, 1);
+        me.hand.push({ uid: nextUid(), cardId: pick.cardId });
+        log(game, `${unit.name}의 짓궂은마음! ${pick.card.name}을(를) 손으로 가져왔다!`);
+      } else {
+        log(game, `${unit.name}의 짓궂은마음! 가져올 비공격 기술이 없다.`);
+      }
+      break;
+    }
+
+    case "victorystar": {
+      if (me.hand.length >= MAX_HAND) break;
+      const candidates = me.deck
+        .map((cardId, index) => ({ cardId, index, card: CARD_MAP[cardId] }))
+        .filter(({ card }) => card?.kind === "spell" && card.type === "기술");
+      if (candidates.length) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        me.deck.splice(pick.index, 1);
+        me.hand.push({ uid: nextUid(), cardId: pick.cardId });
+        log(game, `${unit.name}의 승리의별! ${pick.card.name}을(를) 손으로 가져왔다!`);
+      }
+      break;
+    }
+
+    case "crossflame": {
+      [0, 2, 4].forEach((index) => {
+        const target = foe.field[index];
+        if (target?.hp > 0) applyTypedAbilityDamage(game, target, 4, "불꽃");
+      });
+      log(game, `${unit.name}의 크로스플레임! 상대 1·3·5번째 칸을 불태웠다!`);
+      cleanupDeaths(game);
+      break;
+    }
+
+    case "crossbolt": {
+      [1, 3, 5].forEach((index) => {
+        const target = foe.field[index];
+        if (target?.hp > 0) applyTypedAbilityDamage(game, target, 4, "전기");
+      });
+      log(game, `${unit.name}의 크로스썬더! 상대 2·4·6번째 칸을 강타했다!`);
+      cleanupDeaths(game);
+      break;
+    }
+
     case "formchange": {
       // AI는 알아서 하나 선택
       if (side === "enemy") {
@@ -3920,6 +4043,16 @@ function runBattlecry(game, side, unit) {
     unit.canAttack = true;
 
     log(game, `${unit.name}은(는) 쓱쓱으로 바로 움직일 수 있다!`);
+  }
+
+  // 모래헤치기 / 곡예
+  if (hasAbility(unit, "sandrush") && game.weather === "sand") {
+    unit.canAttack = true;
+    log(game, `${unit.name}의 모래헤치기! 바로 공격할 수 있다!`);
+  }
+  if (hasAbility(unit, "unburden") && !unit.item) {
+    unit.canAttack = true;
+    log(game, `${unit.name}의 곡예! 도구가 없어 바로 공격할 수 있다!`);
   }
 
   // 돌진
@@ -3978,7 +4111,22 @@ function markPlay(game, side, card, extra = null) {
   // 루브도 - 스케치용
   // 성공적으로 사용한 가장 최근 기술 카드 기록
   if (card.kind === "spell") {
-    game.players[side].lastSpellCardId = card.id;
+    const me = game.players[side];
+    me.lastSpellCardId = card.id;
+
+    if (card.type === "기술") {
+      const isDamageTechnique = Number(card.spell?.amount) > 0 ||
+        ["execute", "all_field_damage", "aoe", "aoe_status", "multi_damage", "piercing_damage", "damage_bounce", "damage_recall_friendly", "damage_grant_rush", "acrobatics"].includes(card.spell?.effect);
+      if (isDamageTechnique) {
+        const foe = game.players[other(side)];
+        if ((foe._lightScreenCharges || 0) > 0) {
+          foe._lightScreenCharges -= 1;
+          log(game, `${foe.name}의 빛의장막! 남은 횟수 ${foe._lightScreenCharges}!`);
+        }
+      }
+      me._victoryStarTechniqueUsed = true;
+    }
+    game._activeTechniqueSide = null;
   }
 
   game.animSeq = (game.animSeq || 0) + 1;
@@ -4254,6 +4402,9 @@ export function playCard(
   if (card.kind === "spell") {
     const s = card.spell;
     const foe = game.players[other(side)];
+    const damageTechnique = Number(s?.amount) > 0 ||
+      ["execute", "all_field_damage", "aoe", "aoe_status", "multi_damage", "piercing_damage", "damage_bounce", "damage_recall_friendly", "damage_grant_rush", "acrobatics"].includes(s?.effect);
+    game._activeTechniqueSide = card.type === "기술" && damageTechnique ? side : null;
 
     if (s.effect === "weather") {
       p.mana -= cost;
@@ -4408,6 +4559,97 @@ export function playCard(
     }
 
     // ============================================================
+    // 5세대 하나지방 신규 기술
+    // ============================================================
+    if (s.effect === "reflect" || s.effect === "light_screen") {
+      p.mana -= cost;
+      p.hand.splice(handIdx, 1);
+      if (s.effect === "reflect") {
+        p._reflectCharges = s.charges || 3;
+        log(game, `${card.name}! 다음 ${p._reflectCharges}회의 포켓몬 전투 피해를 줄인다!`);
+      } else {
+        p._lightScreenCharges = s.charges || 3;
+        log(game, `${card.name}! 다음 ${p._lightScreenCharges}회의 기술 피해를 줄인다!`);
+      }
+      markPlay(game, side, card);
+      return true;
+    }
+
+    if (s.effect === "buff_draw") {
+      if (!target) return false;
+      const u = p.field.find((x) => x.uid === target.uid);
+      if (!u) return false;
+      p.mana -= cost; p.hand.splice(handIdx, 1);
+      u.atk += s.atk || 0;
+      for (let i = 0; i < (s.draw || 0); i++) drawCard(game, side);
+      log(game, `${card.name}! ${u.name}의 공격력 +${s.atk || 0}, 카드 ${s.draw || 0}장 드로우!`);
+      markPlay(game, side, card, { targetUid: u.uid });
+      return true;
+    }
+
+    if (s.effect === "shell_smash") {
+      if (!target) return false;
+      const u = p.field.find((x) => x.uid === target.uid);
+      if (!u) return false;
+      p.mana -= cost; p.hand.splice(handIdx, 1);
+      u.hp -= s.hpLoss || 2;
+      u.atk += s.atk || 3;
+      log(game, `${card.name}! ${u.name}이(가) 체력 ${s.hpLoss || 2}를 잃고 공격력 +${s.atk || 3}!`);
+      cleanupDeaths(game, true);
+      markPlay(game, side, card, { targetUid: u.uid });
+      return true;
+    }
+
+    if (["damage_bounce", "multi_damage", "piercing_damage", "acrobatics", "damage_recall_friendly", "damage_grant_rush"].includes(s.effect)) {
+      if (!target || target.uid === "hero" && s.target === "enemy-pokemon") return false;
+      const u = target.uid === "hero" ? null : foe.field.find((x) => x.uid === target.uid);
+      if (target.uid !== "hero" && !u) return false;
+      p.mana -= cost; p.hand.splice(handIdx, 1);
+
+      let base = spellDamageAmount(card, game, side);
+      if (s.effect === "acrobatics" && p.field.every((ally) => !ally.item)) base += s.bonus || 2;
+      const hits = s.effect === "multi_damage" ? (s.hits || 2) : 1;
+      for (let i = 0; i < hits; i++) {
+        if (target.uid === "hero") {
+          foe.hp -= base;
+          recordImpact(game, { type: "damage", side: other(side), targetUid: "hero", amount: base });
+        } else if (u.hp > 0) {
+          const dmg = calcTypedDamageAgainstUnit(base, card.moveType, u);
+          applyDamage(game, u, dmg, card.moveType, false, s.effect === "piercing_damage");
+        }
+      }
+
+      if (s.effect === "damage_bounce" && u?.hp > 0 && foe.hand.length < MAX_HAND) {
+        const idx = foe.field.findIndex((x) => x.uid === u.uid);
+        if (idx !== -1) {
+          const [returned] = foe.field.splice(idx, 1);
+          foe.hand.push({ uid: nextUid(), cardId: returned.cardId });
+          log(game, `${card.name}! ${returned.name}을(를) 손으로 되돌렸다!`);
+        }
+      }
+
+      if (s.effect === "damage_recall_friendly") {
+        const candidates = p.field.filter((ally) => ally.hp > 0);
+        if (candidates.length && p.hand.length < MAX_HAND) {
+          const returned = [...candidates].sort((a, b) => a.hp - b.hp)[0];
+          const idx = p.field.findIndex((x) => x.uid === returned.uid);
+          p.field.splice(idx, 1);
+          p.hand.push({ uid: nextUid(), cardId: returned.cardId });
+          log(game, `${card.name}! ${returned.name}을(를) 손으로 되돌렸다!`);
+        }
+      }
+
+      if (s.effect === "damage_grant_rush") {
+        const ally = [...p.field].filter((x) => x.hp > 0).sort((a, b) => effectiveAtk(b, game) - effectiveAtk(a, game))[0];
+        if (ally) { ally.canAttack = true; log(game, `${card.name}! ${ally.name}이(가) 바로 공격할 수 있다!`); }
+      }
+
+      cleanupDeaths(game, true);
+      markPlay(game, side, card, { targetUid: target.uid });
+      return true;
+    }
+
+    // ============================================================
     // v6 신규 기술
     // ============================================================
 
@@ -4463,7 +4705,7 @@ export function playCard(
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
 
-      const base = spellDamageAmount(card, game);
+      const base = spellDamageAmount(card, game, side);
 
       const dmg = calcTypedDamageAgainstUnit(base, card.moveType, u);
 
@@ -4489,7 +4731,7 @@ export function playCard(
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
 
-      const base = spellDamageAmount(card, game);
+      const base = spellDamageAmount(card, game, side);
 
       foe.field.forEach((u) => {
         const dmg = calcTypedDamageAgainstUnit(base, card.moveType, u);
@@ -4515,7 +4757,7 @@ export function playCard(
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
 
-      const base = spellDamageAmount(card, game);
+      const base = spellDamageAmount(card, game, side);
 
       foe.field.forEach((u) => {
         const dmg = calcTypedDamageAgainstUnit(base, card.moveType, u);
@@ -4687,7 +4929,7 @@ export function playCard(
     if (s.effect === "aoe") {
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
-      const base = spellDamageAmount(card, game);
+      const base = spellDamageAmount(card, game, side);
       log(game, `${card.name}! 적 전체 공격!`);
       foe.field.forEach((u) => {
         const dmg = calcTypedDamageAgainstUnit(base, card.moveType, u);
@@ -4716,7 +4958,7 @@ export function playCard(
         return false;
       p.mana -= cost;
       p.hand.splice(handIdx, 1);
-      const base = spellDamageAmount(card, game);
+      const base = spellDamageAmount(card, game, side);
       if (target.uid === "hero") {
         foe.hp -= base;
 
@@ -5752,6 +5994,20 @@ export function attack(game, side, attackerUid, target) {
     }
   }
 
+  // 노말주얼: 다음 기본 공격 +2
+  if (atkDmg > 0 && atkUnit.item === "normal_gem") {
+    atkDmg += 2;
+    atkUnit.item = null;
+    log(game, `${atkUnit.name}의 노말주얼! 이번 공격 피해 +2!`);
+  }
+
+  // 리플렉터: 포켓몬 전투 피해 3회, 각 -2
+  if ((foe._reflectCharges || 0) > 0 && atkDmg > 0) {
+    atkDmg = Math.max(0, atkDmg - 2);
+    foe._reflectCharges -= 1;
+    log(game, `${foe.name}의 리플렉터! 피해 -2, 남은 횟수 ${foe._reflectCharges}!`);
+  }
+
   // 류옹의 맘모꾸리 - 얼음뭉치
   if (
     atkDmg > 0 &&
@@ -5771,6 +6027,12 @@ export function attack(game, side, attackerUid, target) {
     defenseAttackType,
     atkUnit,
   );
+
+  if ((p._reflectCharges || 0) > 0 && defDmg > 0) {
+    defDmg = Math.max(0, defDmg - 2);
+    p._reflectCharges -= 1;
+    log(game, `${p.name}의 리플렉터! 반격 피해 -2, 남은 횟수 ${p._reflectCharges}!`);
+  }
 
   // 첫 공격에서는 일반 전투 반격만 무효
   if (johto.extremeGuard || expansion.noCounter) {
@@ -5802,6 +6064,30 @@ export function attack(game, side, attackerUid, target) {
   // 신속이면 일반 반격 생략
   if (!johto.extremeGuard && !expansion.noCounter) {
     applyDamage(game, atkUnit, defDmg, defenseAttackType);
+  }
+
+  // 불비달마 - 달마모드: 공격 후 반격 피해를 받고 생존했을 때 1회 변신
+  if (
+    hasAbility(atkUnit, "zenmode") &&
+    !atkUnit._zenModeUsed &&
+    defDmg > 0 &&
+    atkUnit.hp > 0
+  ) {
+    atkUnit._zenModeUsed = true;
+    atkUnit.name = "불비달마 (달마모드)";
+    atkUnit.atk = 3;
+    atkUnit.baseAtk = 3;
+    atkUnit.maxHp = 9;
+    atkUnit.hp = 9;
+    atkUnit.secondaryAbility = "taunt";
+    log(game, `${atkUnit.name}! 공격형에서 방어형으로 변하고 도발을 얻었다!`);
+  }
+
+  // 깨어진갑옷
+  if (hasAbility(defUnit, "weakarmor") && damageDealt > 0 && defUnit.hp > 0 && (defUnit._weakArmorStacks || 0) < 2) {
+    defUnit._weakArmorStacks = (defUnit._weakArmorStacks || 0) + 1;
+    defUnit.atk += 1;
+    log(game, `${defUnit.name}의 깨어진갑옷! 공격력 +1!`);
   }
 
   // 마자용 - 카운터
@@ -5917,6 +6203,24 @@ export function attack(game, side, attackerUid, target) {
     `${atkUnit.name} ➜ ${defUnit.name} 공격! 피해 ${atkDmg}, 반격 ${defDmg}.${note}`,
   );
 
+  // 미라: 공격한 상대의 주특성을 미라로 바꾸고 연쇄 전염
+  if (hasAbility(defUnit, "mummy") && atkUnit.hp > 0 && atkUnit.ability !== "mummy") {
+    atkUnit.ability = "mummy";
+    log(game, `${defUnit.name}의 미라! ${atkUnit.name}의 특성이 미라로 변했다!`);
+  }
+
+  // 철가시
+  if (hasAbility(defUnit, "ironbarbs") && atkUnit.hp > 0 && damageDealt > 0) {
+    applyDamage(game, atkUnit, 1, null, true);
+    log(game, `${defUnit.name}의 철가시! ${atkUnit.name}에게 피해 1!`);
+  }
+
+  // 울퉁불퉁멧
+  if (defUnit.item === "rocky_helmet" && atkUnit.hp > 0 && damageDealt > 0) {
+    applyDamage(game, atkUnit, 1, null, true);
+    log(game, `${defUnit.name}의 울퉁불퉁멧! ${atkUnit.name}에게 피해 1!`);
+  }
+
   // 까칠한피부: 공격자에게 2
   if (defUnit.ability === "roughskin" && atkUnit.hp > 0) {
     applyDamage(game, atkUnit, 2, null);
@@ -5988,6 +6292,28 @@ export function attack(game, side, attackerUid, target) {
       game,
       `${atkUnit.name}의 프리즈드라이! ${defUnit.name}에게 얼음 상태이상!`,
     );
+  }
+
+  // 레드카드: 공격자를 손으로 반환
+  if (defUnit.item === "red_card" && damageDealt > 0 && atkUnit.hp > 0 && p.hand.length < MAX_HAND) {
+    const idx = p.field.findIndex((u) => u.uid === atkUnit.uid);
+    if (idx !== -1) {
+      p.field.splice(idx, 1);
+      p.hand.push({ uid: nextUid(), cardId: atkUnit.cardId });
+      defUnit.item = null;
+      log(game, `${defUnit.name}의 레드카드! ${atkUnit.name}을(를) 손으로 돌려보냈다!`);
+    }
+  }
+
+  // 탈출버튼: 피해를 받은 장착 포켓몬이 생존하면 자신의 손으로 반환
+  if (defUnit.item === "eject_button" && damageDealt > 0 && defUnit.hp > 0 && foe.hand.length < MAX_HAND) {
+    const idx = foe.field.findIndex((u) => u.uid === defUnit.uid);
+    if (idx !== -1) {
+      foe.field.splice(idx, 1);
+      foe.hand.push({ uid: nextUid(), cardId: defUnit.cardId });
+      defUnit.item = null;
+      log(game, `${defUnit.name}의 탈출버튼! 손으로 돌아갔다!`);
+    }
   }
 
   if (defUnit.hp <= 0 && atkUnit.hp > 0 && atkUnit.ability === "moxie") {

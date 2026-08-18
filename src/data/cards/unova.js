@@ -73,10 +73,10 @@ const UNOVA_POKEMON = [
 
   // 카밀레 / 전기
   P("blitzle", "줄뮤마", "전기", 1, 2, 1, "C", { ability: "static" }),
-  P("zebstrika", "제브라이카", "전기", 4, 7, 4, "R", { stage: 1, evolvesFrom: "blitzle", ability: "motor_drive" }),
+  P("zebstrika", "제브라이카", "전기", 4, 7, 4, "R", { stage: 1, evolvesFrom: "blitzle", ability: "motordrive" }),
   P("emolga", "에몽가", "전기", 3, 4, 4, "R", { ability: "voltabsorb" }),
   P("joltik", "파쪼옥", "벌레", 1, 1, 2, "C", { ability: "static" }),
-  P("galvantula", "전툴라", "전기", 4, 6, 5, "R", { stage: 1, evolvesFrom: "joltik", ability: "compoundeyes" }),
+  P("galvantula", "전툴라", "전기", 4, 6, 5, "R", { stage: 1, evolvesFrom: "joltik" }),
 
   // 야콘 / 모래
   P("roggenrola", "단굴", "바위", 1, 1, 3, "C", { ability: "sturdy" }),
