@@ -34,6 +34,7 @@ const pokeApiCardsModule = normalizePath(
 const pokeApiRawSpriteBase =
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites';
 const localSpriteBase = '/sprites';
+const legendaryMegaStoneRarity = /(kind:\s*"mega",[\s\S]*?\brarity:\s*)"L"/g;
 
 export default defineConfig({
   plugins: [
@@ -72,15 +73,24 @@ export default defineConfig({
       },
     },
     {
-      name: 'poke-stone-local-sprites',
+      name: 'poke-stone-card-transforms',
       enforce: 'pre',
       transform(code, id) {
         const modulePath = normalizePath(id.split('?')[0]);
         if (modulePath !== pokeApiCardsModule) return null;
-        if (!code.includes(pokeApiRawSpriteBase)) return null;
+
+        let nextCode = code;
+
+        if (nextCode.includes(pokeApiRawSpriteBase)) {
+          nextCode = nextCode.split(pokeApiRawSpriteBase).join(localSpriteBase);
+        }
+
+        nextCode = nextCode.replace(legendaryMegaStoneRarity, '$1"E"');
+
+        if (nextCode === code) return null;
 
         return {
-          code: code.split(pokeApiRawSpriteBase).join(localSpriteBase),
+          code: nextCode,
           map: null,
         };
       },
