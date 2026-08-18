@@ -5,7 +5,7 @@
 // ============================================================
 
 import * as base from "./engine.base.js";
-import { CARD_MAP } from "../data/cards.js";
+import { CARD_MAP, TYPE_CHART } from "../data/cards.js";
 
 export * from "./engine.base.js";
 
@@ -35,27 +35,7 @@ function cardIdOf(entry) {
 }
 
 function typeMultiplier(attackType, defendType) {
-  const chart = {
-    노말: { 바위: 0.5, 강철: 0.5, 고스트: 0 },
-    불꽃: { 풀: 1.5, 얼음: 1.5, 벌레: 1.5, 강철: 1.5, 불꽃: 0.5, 물: 0.5, 바위: 0.5, 드래곤: 0.5 },
-    물: { 불꽃: 1.5, 땅: 1.5, 바위: 1.5, 물: 0.5, 풀: 0.5, 드래곤: 0.5 },
-    풀: { 물: 1.5, 땅: 1.5, 바위: 1.5, 불꽃: 0.5, 풀: 0.5, 독: 0.5, 비행: 0.5, 벌레: 0.5, 드래곤: 0.5, 강철: 0.5 },
-    전기: { 물: 1.5, 비행: 1.5, 풀: 0.5, 전기: 0.5, 드래곤: 0.5, 땅: 0 },
-    얼음: { 풀: 1.5, 땅: 1.5, 비행: 1.5, 드래곤: 1.5, 불꽃: 0.5, 물: 0.5, 얼음: 0.5, 강철: 0.5 },
-    격투: { 노말: 1.5, 얼음: 1.5, 바위: 1.5, 악: 1.5, 강철: 1.5, 독: 0.5, 비행: 0.5, 에스퍼: 0.5, 벌레: 0.5, 페어리: 0.5, 고스트: 0 },
-    독: { 풀: 1.5, 페어리: 1.5, 독: 0.5, 땅: 0.5, 바위: 0.5, 고스트: 0.5, 강철: 0 },
-    땅: { 불꽃: 1.5, 전기: 1.5, 독: 1.5, 바위: 1.5, 강철: 1.5, 풀: 0.5, 벌레: 0.5, 비행: 0 },
-    비행: { 풀: 1.5, 격투: 1.5, 벌레: 1.5, 전기: 0.5, 바위: 0.5, 강철: 0.5 },
-    에스퍼: { 격투: 1.5, 독: 1.5, 에스퍼: 0.5, 강철: 0.5, 악: 0 },
-    벌레: { 풀: 1.5, 에스퍼: 1.5, 악: 1.5, 불꽃: 0.5, 격투: 0.5, 독: 0.5, 비행: 0.5, 고스트: 0.5, 강철: 0.5, 페어리: 0.5 },
-    바위: { 불꽃: 1.5, 얼음: 1.5, 비행: 1.5, 벌레: 1.5, 격투: 0.5, 땅: 0.5, 강철: 0.5 },
-    고스트: { 에스퍼: 1.5, 고스트: 1.5, 악: 0.5, 노말: 0 },
-    드래곤: { 드래곤: 1.5, 강철: 0.5, 페어리: 0 },
-    악: { 에스퍼: 1.5, 고스트: 1.5, 격투: 0.5, 악: 0.5, 페어리: 0.5 },
-    강철: { 얼음: 1.5, 바위: 1.5, 페어리: 1.5, 불꽃: 0.5, 물: 0.5, 전기: 0.5, 강철: 0.5 },
-    페어리: { 격투: 1.5, 드래곤: 1.5, 악: 1.5, 불꽃: 0.5, 독: 0.5, 강철: 0.5 },
-  };
-  return chart[attackType]?.[defendType] ?? 1;
+  return TYPE_CHART[attackType]?.[defendType] ?? 1;
 }
 
 function resolveStriatonTrainer(playerDeckIds, trainer) {
@@ -77,7 +57,6 @@ function resolveStriatonTrainer(playerDeckIds, trainer) {
   scored.sort((a, b) => b.score - a.score || Math.random() - 0.5);
   const pick = scored[0].entry;
 
-  // Battle 컴포넌트도 동일한 trainer 객체를 들고 있으므로 실제 객체를 갱신한다.
   Object.assign(trainer, {
     name: `성신시티 관장 ${pick.member}`,
     sprite: pick.sprite,
@@ -246,7 +225,7 @@ function landSkyla(game) {
     if (!targets.length) continue;
     const target = targets[Math.floor(Math.random() * targets.length)];
     const amount = hasAbility(unit, "skyla_divebomb") ? 4 : 2;
-    let damage = base.calcTypedDamage(amount, "비행", target.type);
+    const damage = base.calcTypedDamage(amount, "비행", target.type);
     target.hp = Math.max(0, target.hp - damage);
     game.logs.push(`${unit.name}의 착륙 급강하! ${target.name}에게 비행 피해 ${damage}!`);
   }
@@ -357,9 +336,9 @@ function resolveDraydenTrial(game) {
 
   let success = false;
   if (code === "attack_twice") success = (player._draydenTrialAttacks || 0) >= 2;
-  if (code === "use_technique") success = player._draydenTechniqueUsed === true;
-  if (code === "no_technique") success = player._draydenTechniqueUsed !== true;
-  if (code === "spend_mana") success = player.mana <= 1;
+  else if (code === "use_technique") success = player._draydenTechniqueUsed === true;
+  else if (code === "no_technique") success = player._draydenTechniqueUsed !== true;
+  else if (code === "spend_mana") success = player.mana <= 1;
 
   if (success) {
     game._draydenDominance = Math.max(0, (game._draydenDominance || 0) - 1);
@@ -464,23 +443,25 @@ export function effectiveAtk(unit, game) {
   return Math.max(0, value);
 }
 
-export function canPlayCard(game, side, handUid, targetUid = null) {
-  const handCard = game.players?.[side]?.hand?.find((entry) => entry.uid === handUid);
+export function canPlayCard(game, side, handIdx) {
+  const handCard = game.players?.[side]?.hand?.[handIdx];
   const card = CARD_MAP[handCard?.cardId];
-  const extra = lenoraExtraCost(card, game, side);
-  return withTemporaryCardCost(card, extra, () => base.canPlayCard(game, side, handUid, targetUid));
+  const extraCost = lenoraExtraCost(card, game, side);
+  return withTemporaryCardCost(card, extraCost, () =>
+    base.canPlayCard(game, side, handIdx),
+  );
 }
 
-export function playCard(game, side, handUid, targetUid = null, extra = null) {
+export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const player = game.players?.[side];
-  const handCard = player?.hand?.find((entry) => entry.uid === handUid);
+  const handCard = player?.hand?.[handIdx];
   const card = CARD_MAP[handCard?.cardId];
   const beforeUids = new Set((player?.field || []).map((u) => u.uid));
-  const costExtra = lenoraExtraCost(card, game, side);
+  const extraCost = lenoraExtraCost(card, game, side);
   const cocoonSnapshots = side === "player" ? protectCocoons(game) : [];
 
-  const result = withTemporaryCardCost(card, costExtra, () =>
-    base.playCard(game, side, handUid, targetUid, extra),
+  const result = withTemporaryCardCost(card, extraCost, () =>
+    base.playCard(game, side, handIdx, target, fieldIndex),
   );
 
   normalizeCocoons(game, cocoonSnapshots);
@@ -542,21 +523,21 @@ export function attack(game, side, attackerUid, target) {
   const attacker = game.players?.[side]?.field?.find((u) => u.uid === attackerUid);
   if (!attacker || !canAttack(game, side, attackerUid)) return false;
 
+  const targetSide = side === "player" ? "enemy" : "player";
+  const isHeroTarget = target?.uid === "hero";
+  const targetUnitBefore = isHeroTarget
+    ? null
+    : game.players[targetSide].field.find((u) => u.uid === target?.uid);
+
   if (
     game?.trainer?.gimmick === "skyla_airborne" &&
     side === "player" &&
-    target?.kind === "unit"
-  ) {
-    const targetUnit = game.players.enemy.field.find((u) => u.uid === target.uid);
-    if (targetUnit?._skylaAirborne) return false;
-  }
+    targetUnitBefore?._skylaAirborne
+  ) return false;
 
-  const targetSide = side === "player" ? "enemy" : "player";
-  const targetUnitBefore =
-    target?.kind === "unit"
-      ? game.players[targetSide].field.find((u) => u.uid === target.uid)
-      : null;
-  const targetHpBefore = targetUnitBefore?.hp ?? game.players[targetSide].hp;
+  const targetHpBefore = isHeroTarget
+    ? game.players[targetSide].hp
+    : targetUnitBefore?.hp ?? 0;
 
   const cocoonSnapshots = side === "player" ? protectCocoons(game) : [];
   const tauntChanges = disableAirborneTaunts(game);
@@ -585,8 +566,8 @@ export function attack(game, side, attackerUid, target) {
   try {
     result = base.attack(game, side, attackerUid, target);
   } finally {
-    const currentAttacker = game.players?.[side]?.field?.find((u) => u.uid === attackerUid);
-    if (currentAttacker) currentAttacker.atk -= temporaryAtk;
+    const current = game.players?.[side]?.field?.find((u) => u.uid === attackerUid);
+    if (current) current.atk -= temporaryAtk;
     restoreAirborneTaunts(tauntChanges);
   }
 
@@ -596,13 +577,12 @@ export function attack(game, side, attackerUid, target) {
     return result;
   }
 
-  const currentTarget =
-    target?.kind === "unit"
-      ? game.players[targetSide].field.find((u) => u.uid === target.uid)
-      : null;
-  const targetHpAfter = target?.kind === "unit"
-    ? Math.max(0, currentTarget?.hp ?? 0)
-    : game.players[targetSide].hp;
+  const currentTarget = isHeroTarget
+    ? null
+    : game.players[targetSide].field.find((u) => u.uid === target?.uid);
+  const targetHpAfter = isHeroTarget
+    ? game.players[targetSide].hp
+    : Math.max(0, currentTarget?.hp ?? 0);
   const dealt = Math.max(0, targetHpBefore - targetHpAfter);
 
   const currentAttacker = game.players?.[side]?.field?.find((u) => u.uid === attackerUid);
