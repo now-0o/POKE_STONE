@@ -6062,15 +6062,17 @@ export function attack(game, side, attackerUid, target) {
   const damageDealt = Math.max(0, defenderHpBefore - defUnit.hp);
 
   // 신속이면 일반 반격 생략
+  const attackerHpBeforeCounter = atkUnit.hp;
   if (!johto.extremeGuard && !expansion.noCounter) {
     applyDamage(game, atkUnit, defDmg, defenseAttackType);
   }
+  const retaliationDamageTaken = Math.max(0, attackerHpBeforeCounter - atkUnit.hp);
 
-  // 불비달마 - 달마모드: 공격 후 반격 피해를 받고 생존했을 때 1회 변신
+  // 불비달마 - 달마모드: 공격 후 실제 반격 피해로 체력이 깎이고 생존했을 때 1회 변신
   if (
     hasAbility(atkUnit, "zenmode") &&
     !atkUnit._zenModeUsed &&
-    defDmg > 0 &&
+    retaliationDamageTaken > 0 &&
     atkUnit.hp > 0
   ) {
     atkUnit._zenModeUsed = true;

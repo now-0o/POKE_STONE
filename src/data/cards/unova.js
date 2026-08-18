@@ -172,7 +172,7 @@ const UNOVA_SPELLS = [
     rarity: "R",
     emoji: "🔄",
     spell: { effect: "damage_recall_friendly", amount: 2, target: "enemy-any" },
-    text: "전기 피해 2를 준 뒤, 내 포켓몬 하나를 선택해 손으로 되돌릴 수 있다.",
+    text: "전기 피해 2를 준 뒤, 내 필드에서 체력이 가장 낮은 포켓몬 1장을 손으로 되돌린다.",
   },
   {
     id: "flamecharge",
@@ -184,7 +184,7 @@ const UNOVA_SPELLS = [
     rarity: "R",
     emoji: "🔥",
     spell: { effect: "damage_grant_rush", amount: 2, target: "enemy-any" },
-    text: "불꽃 피해 2를 주고 아군 포켓몬 하나에게 이번 턴 돌진을 부여한다.",
+    text: "불꽃 피해 2를 주고 공격력이 가장 높은 아군 포켓몬 하나에게 이번 턴 돌진을 부여한다.",
   },
   {
     id: "acrobatics",
