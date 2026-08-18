@@ -5,6 +5,8 @@ import ReactDOM from 'react-dom/client';
 // 하나지방 카드도 같은 확장 레지스트리 순서로 로드한다.
 import './data/cards/sinnoh.js';
 import './data/cards/unova.js';
+import './data/cards/unova-trainers.js';
+import './data/trainers/unova.js';
 import './data/trainers/sinnoh.js';
 import './data/cards/cynthia.js';
 import './data/trainers/cynthia.js';
@@ -24,6 +26,7 @@ import './features/tutorial/styles.css';
 import './features/tutorial/menu.css';
 import './features/region-carousel/styles.css';
 import './styles/sinnoh/index.css';
+import './styles/unova-battle.css';
 import './features/mobile/styles.css';
 import './features/mobile/battle-expanded.css';
 
@@ -32,6 +35,7 @@ import './features/battle/fixedFieldPlacement.js';
 import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
+import './components/battle/UnovaBattleUi.jsx';
 import './components/battle/WakeBattleUi.jsx';
 import './components/battle/CynthiaBattleUi.jsx';
 import './components/battle/CynthiaToxicSpikesUi.jsx';
