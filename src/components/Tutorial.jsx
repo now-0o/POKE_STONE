@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { playSfx } from "../audio.js";
 import { CARD_MAP, TYPE_COLORS } from "../data/cards.js";
 import { HandCard, Sprite } from "./Card.jsx";
+
+const DRAG_THRESHOLD = 8;
 
 const LESSONS = [
   {
     id: "summon",
     title: "포켓몬을 필드에 내기",
-    instruction: "손패의 파이리를 눌러 필드에 내보세요.",
+    instruction: "손패의 파이리를 내 필드로 드래그해서 놓으세요.",
   },
   {
     id: "turn",
@@ -16,33 +18,33 @@ const LESSONS = [
   },
   {
     id: "attack",
-    title: "포켓몬으로 공격하기",
-    instruction: "파이리를 먼저 누르고, 상대 이상해씨를 눌러 공격하세요.",
+    title: "드래그로 공격하기",
+    instruction: "파이리를 잡아 상대 이상해씨까지 드래그한 뒤 놓으세요.",
   },
   {
     id: "evolve",
     title: "진화하기",
-    instruction: "손패의 리자드를 누른 뒤 필드의 파이리를 눌러 진화하세요.",
+    instruction: "손패의 리자드를 필드의 파이리 위로 드래그해서 놓으세요.",
   },
   {
     id: "technique",
     title: "기술 카드 사용하기",
-    instruction: "화염방사를 누른 뒤 상대 이상해풀을 지정하세요.",
+    instruction: "화염방사를 상대 이상해풀 위로 드래그해서 놓으세요.",
   },
   {
     id: "status",
     title: "상태이상 만들기",
-    instruction: "냉동빔을 사용해 액스라이즈를 얼려보세요.",
+    instruction: "냉동빔을 액스라이즈 위로 드래그해서 얼려보세요.",
   },
   {
     id: "weather",
     title: "날씨 바꾸기",
-    instruction: "쾌청 카드를 사용해 날씨를 바꿔보세요.",
+    instruction: "쾌청 카드를 배틀 필드 쪽으로 드래그해서 사용하세요.",
   },
   {
     id: "taunt",
     title: "도발 상대하기",
-    instruction: "먼저 상대 트레이너를 직접 공격해보세요. 막히는 이유를 확인할 수 있습니다.",
+    instruction: "날쌩마를 상대 트레이너에게 드래그해 직접 공격을 먼저 시도해보세요.",
   },
   {
     id: "deck",
@@ -188,7 +190,7 @@ function statusLabel(status) {
   return "";
 }
 
-function MiniUnit({ value, selected, targetable, canAct, onClick }) {
+function MiniUnit({ value, selected, targetable, canAct, onClick, onPointerDown, dropZone }) {
   const card = CARD_MAP[value.cardId];
   if (!card) return null;
 
@@ -205,6 +207,9 @@ function MiniUnit({ value, selected, targetable, canAct, onClick }) {
       ].join(" ")}
       style={{ "--type-color": TYPE_COLORS[card.type] }}
       onClick={onClick}
+      onPointerDown={onPointerDown}
+      data-tutorial-drop={dropZone}
+      data-uid={value.uid}
     >
       {value.status && (
         <div className={`status-overlay status-${value.status}`}>
@@ -213,7 +218,7 @@ function MiniUnit({ value, selected, targetable, canAct, onClick }) {
       )}
       {card.ability === "taunt" && <div className="taunt-badge">도발</div>}
       <div className="unit-art">
-        <Sprite cardId={card.id} emoji={card.emoji} size={50} />
+        <Sprite cardId={card.id} emoji={card.emoji} size={44} />
       </div>
       <div className="unit-name">{card.name}</div>
       <div className="unit-orb orb-atk">{value.atk}</div>
@@ -256,6 +261,7 @@ function Hero({ enemy = false, hp, targetable, onClick }) {
         "tutorial-hero-bar",
       ].join(" ")}
       onClick={onClick}
+      data-tutorial-drop={enemy ? "enemy-hero" : "my-hero"}
     >
       <div className="hero-portrait">
         <span className="hero-name">{enemy ? "연습 상대" : "플레이어"}</span>
@@ -284,7 +290,7 @@ function DeckChallenge({ chosen, onPick }) {
       </div>
       <div className="tutorial-deck-candidates">
         {candidates.map((cardId) => (
-          <div key={cardId} className={chosen.includes(cardId) ? "tutorial-deck-picked" : ""}>
+          <div key={cardId} className={`tutorial-deck-card ${chosen.includes(cardId) ? "tutorial-deck-picked" : ""}`}>
             <HandCard
               cardId={cardId}
               playable={!chosen.includes(cardId)}
@@ -306,6 +312,13 @@ export default function Tutorial({ onBack }) {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [coachText, setCoachText] = useState(LESSONS[0].instruction);
   const [successText, setSuccessText] = useState("");
+  const [dragCard, setDragCard] = useState(null);
+  const [aimUid, setAimUid] = useState(null);
+
+  const dragInfo = useRef(null);
+  const aimInfo = useRef(null);
+  const aimLineRef = useRef(null);
+  const suppressClickUntil = useRef(0);
 
   const lesson = LESSONS[lessonIndex];
   const progress = ((lessonIndex + (done ? 1 : 0)) / LESSONS.length) * 100;
@@ -316,14 +329,12 @@ export default function Tutorial({ onBack }) {
     setScene((prev) => ({ ...prev, ...next }));
   }
 
-  function log(message) {
-    setScene((prev) => ({ ...prev, logs: [...prev.logs, message].slice(-5) }));
-  }
-
   function complete(message) {
     playSfx("click");
     setDone(true);
     setSuccessText(message);
+    setDragCard(null);
+    setAimUid(null);
   }
 
   function fail(message) {
@@ -339,167 +350,349 @@ export default function Tutorial({ onBack }) {
     setDone(false);
     setSelectedCard(null);
     setSelectedUnit(null);
+    setDragCard(null);
+    setAimUid(null);
     setSuccessText("");
     setCoachText(LESSONS[safe].instruction);
   }
 
-  function handleHand(cardId) {
+  function performSummon() {
+    replaceScene({
+      mana: 2,
+      hand: [],
+      player: [unit("charmander", "p1")],
+      logs: [...scene.logs, "파이리를 냈다! 마나 1을 사용했다."],
+    });
+    complete("좋아요. 기본 포켓몬은 손패에서 필드로 드래그해 소환할 수 있습니다.");
+  }
+
+  function performEvolve() {
+    const damageTaken = 2 - scene.player[0].hp;
+    const nextHp = Math.max(1, CARD_MAP.charmeleon.hp - damageTaken);
+    replaceScene({
+      mana: 2,
+      hand: [],
+      player: [unit("charmeleon", "p1", nextHp)],
+      logs: [...scene.logs, `파이리가 리자드로 진화했다! 받은 피해 ${damageTaken}은 유지된다.`],
+    });
+    setSelectedCard(null);
+    complete("진화 카드도 진화시킬 포켓몬 위로 직접 드래그할 수 있습니다. 받은 피해는 유지됩니다.");
+  }
+
+  function performTechnique() {
+    replaceScene({
+      mana: 2,
+      hand: [],
+      enemy: [],
+      logs: [...scene.logs, "화염방사! 불꽃 → 풀 약점 ×1.5, 피해 6!"],
+    });
+    setSelectedCard(null);
+    complete("대상이 필요한 기술은 손패에서 원하는 대상 위로 드래그해서 바로 사용할 수 있습니다.");
+  }
+
+  function performStatus(uid) {
+    const nextEnemy = scene.enemy.map((u) =>
+      u.uid === uid ? { ...u, hp: Math.max(1, u.hp - 5), status: "ice" } : u,
+    );
+    replaceScene({
+      mana: 3,
+      hand: [],
+      enemy: nextEnemy,
+      logs: [...scene.logs, "냉동빔! 얼음 → 드래곤 약점으로 피해 5. 액스라이즈가 얼어붙었다!"],
+    });
+    setSelectedCard(null);
+    complete("상태이상도 기술을 대상 위로 드래그해 적용합니다. 얼음 상태의 포켓몬은 공격할 수 없습니다.");
+  }
+
+  function performWeather() {
+    const boosted = scene.player.map((u) => ({ ...u, atk: u.cardId === "charmander" ? 2 : u.atk }));
+    replaceScene({
+      mana: 3,
+      hand: [],
+      weather: "sun",
+      player: boosted,
+      logs: [...scene.logs, "쾌청! 불꽃 포켓몬의 공격력이 올라갔다."],
+    });
+    complete("대상이 없는 기술은 배틀 필드로 드래그해 사용합니다. 날씨는 양쪽 필드 전체에 영향을 줍니다.");
+  }
+
+  function performAttack() {
+    replaceScene({
+      player: [unit("charmander", "p1", 1)],
+      enemy: [],
+      logs: [...scene.logs, "파이리의 공격! 불꽃 → 풀 약점으로 피해 2. 이상해씨의 반격으로 파이리도 피해 1!"],
+    });
+    setSelectedUnit(null);
+    complete("본게임처럼 공격할 포켓몬을 잡아 대상까지 드래그해 놓으면 공격합니다. 포켓몬끼리 싸우면 반격도 받습니다.");
+  }
+
+  function performTauntAttack() {
+    replaceScene({
+      enemy: [],
+      logs: [...scene.logs, "날쌩마가 도발 포켓몬 라프라스를 공격했다! 이제 트레이너 직접 공격 길이 열렸다."],
+    });
+    setSelectedUnit(null);
+    complete("도발 포켓몬이 있으면 그 포켓몬을 먼저 처리해야 상대 트레이너를 직접 공격할 수 있습니다.");
+  }
+
+  function resolveCardDrop(cardId, zone, uid) {
     if (done) return;
 
+    if (lesson.id === "summon" && cardId === "charmander" && zone === "my-field") {
+      performSummon();
+      return;
+    }
+
+    if (lesson.id === "evolve" && cardId === "charmeleon" && zone === "unit-player" && uid === "p1") {
+      performEvolve();
+      return;
+    }
+
+    if (lesson.id === "technique" && cardId === "flamethrower" && zone === "unit-enemy" && uid === "e1") {
+      performTechnique();
+      return;
+    }
+
+    if (lesson.id === "status" && cardId === "icebeam" && zone === "unit-enemy" && uid === "e1") {
+      performStatus(uid);
+      return;
+    }
+
+    if (lesson.id === "weather" && cardId === "sunnyday" && zone) {
+      performWeather();
+      return;
+    }
+
+    fail("카드를 안내된 위치까지 드래그한 뒤 그 위에서 놓아보세요.");
+  }
+
+  function onHandPointerDown(e, cardId) {
+    if (done || (e.button !== undefined && e.button !== 0)) return;
+
+    dragInfo.current = {
+      cardId,
+      startX: e.clientX,
+      startY: e.clientY,
+      moved: false,
+    };
+
+    const onMove = (ev) => {
+      const info = dragInfo.current;
+      if (!info) return;
+      const distance = Math.hypot(ev.clientX - info.startX, ev.clientY - info.startY);
+
+      if (!info.moved && distance > DRAG_THRESHOLD) {
+        info.moved = true;
+        setSelectedCard(null);
+      }
+
+      if (info.moved) {
+        setDragCard({ cardId: info.cardId, x: ev.clientX, y: ev.clientY });
+      }
+    };
+
+    const onUp = (ev) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+
+      const info = dragInfo.current;
+      dragInfo.current = null;
+      setDragCard(null);
+
+      if (!info?.moved) return;
+
+      suppressClickUntil.current = Date.now() + 250;
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const drop = el?.closest("[data-tutorial-drop]");
+      resolveCardDrop(info.cardId, drop?.dataset.tutorialDrop || null, drop?.dataset.uid || null);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
+  function updateAimLine(x, y) {
+    const line = aimLineRef.current;
+    const start = aimInfo.current;
+    if (!line || !start) return;
+    line.setAttribute("x1", start.cx);
+    line.setAttribute("y1", start.cy);
+    line.setAttribute("x2", x);
+    line.setAttribute("y2", y);
+  }
+
+  useEffect(() => {
+    if (aimUid && aimInfo.current) {
+      updateAimLine(aimInfo.current.x, aimInfo.current.y);
+    }
+  }, [aimUid]);
+
+  function resolveAttackDrop(uid, zone, targetUid) {
+    if (done) return;
+
+    if (lesson.id === "attack") {
+      if (zone === "unit-enemy" && targetUid === "e1") {
+        performAttack();
+      } else {
+        fail("공격 화살표를 상대 이상해씨까지 끌고 가서 놓으세요.");
+      }
+      return;
+    }
+
+    if (lesson.id === "taunt") {
+      if (zone === "enemy-hero") {
+        if (!scene.tauntBlockedOnce) {
+          playSfx("buzzer");
+          replaceScene({
+            tauntBlockedOnce: true,
+            logs: [...scene.logs, "직접 공격 실패! 도발 포켓몬이 있어 트레이너를 공격할 수 없다."],
+          });
+          setCoachText("도발 때문에 직접 공격이 막혔습니다. 이번에는 날쌩마를 라프라스까지 드래그하세요.");
+          return;
+        }
+        fail("라프라스를 먼저 처리해야 합니다.");
+        return;
+      }
+
+      if (zone === "unit-enemy" && targetUid === "e1" && scene.tauntBlockedOnce) {
+        performTauntAttack();
+        return;
+      }
+
+      fail(scene.tauntBlockedOnce ? "날쌩마를 라프라스 위까지 드래그하세요." : "먼저 상대 트레이너에게 직접 공격을 시도해보세요.");
+    }
+  }
+
+  function onPlayerUnitPointerDown(value, e) {
+    if (done || !playerCanAct || (e.button !== undefined && e.button !== 0)) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    aimInfo.current = {
+      uid: value.uid,
+      startX: e.clientX,
+      startY: e.clientY,
+      cx: rect.left + rect.width / 2,
+      cy: rect.top + rect.height / 2,
+      x: e.clientX,
+      y: e.clientY,
+      moved: false,
+    };
+
+    const onMove = (ev) => {
+      const info = aimInfo.current;
+      if (!info) return;
+      const distance = Math.hypot(ev.clientX - info.startX, ev.clientY - info.startY);
+
+      if (!info.moved && distance > DRAG_THRESHOLD) {
+        info.moved = true;
+        setSelectedUnit(null);
+        setAimUid(info.uid);
+      }
+
+      if (info.moved) {
+        info.x = ev.clientX;
+        info.y = ev.clientY;
+        updateAimLine(ev.clientX, ev.clientY);
+      }
+    };
+
+    const onUp = (ev) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+
+      const info = aimInfo.current;
+      aimInfo.current = null;
+      setAimUid(null);
+
+      if (!info?.moved) return;
+
+      suppressClickUntil.current = Date.now() + 250;
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const drop = el?.closest("[data-tutorial-drop]");
+      resolveAttackDrop(info.uid, drop?.dataset.tutorialDrop || null, drop?.dataset.uid || null);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
+  function handleHand(cardId) {
+    if (done || Date.now() < suppressClickUntil.current) return;
+
     if (lesson.id === "summon" && cardId === "charmander") {
-      replaceScene({
-        mana: 2,
-        hand: [],
-        player: [unit("charmander", "p1")],
-        logs: [...scene.logs, "파이리를 냈다! 마나 1을 사용했다."],
-      });
-      complete("좋아요. 기본 포켓몬은 비용만큼 마나를 내고 필드에 소환합니다.");
+      fail("이번 연습에서는 파이리를 클릭하지 말고 내 필드까지 드래그해보세요.");
       return;
     }
 
     if (lesson.id === "evolve" && cardId === "charmeleon") {
       playSfx("click");
       setSelectedCard(cardId);
-      setCoachText("이제 필드의 파이리를 눌러 진화 대상으로 지정하세요.");
+      setCoachText("클릭 방식도 가능하지만, 이번에는 리자드를 파이리 위로 드래그해서 놓아보세요.");
       return;
     }
 
     if (lesson.id === "technique" && cardId === "flamethrower") {
       playSfx("click");
       setSelectedCard(cardId);
-      setCoachText("화염방사의 대상을 정해야 합니다. 상대 이상해풀을 눌러보세요.");
+      setCoachText("클릭 선택도 가능하지만, 화염방사를 이상해풀 위로 직접 드래그해보세요.");
       return;
     }
 
     if (lesson.id === "status" && cardId === "icebeam") {
       playSfx("click");
       setSelectedCard(cardId);
-      setCoachText("냉동빔의 대상인 액스라이즈를 눌러보세요.");
+      setCoachText("냉동빔을 액스라이즈 위로 직접 드래그해서 놓아보세요.");
       return;
     }
 
     if (lesson.id === "weather" && cardId === "sunnyday") {
-      const boosted = scene.player.map((u) => ({ ...u, atk: u.cardId === "charmander" ? 2 : u.atk }));
-      replaceScene({
-        mana: 3,
-        hand: [],
-        weather: "sun",
-        player: boosted,
-        logs: [...scene.logs, "쾌청! 불꽃 포켓몬의 공격력이 올라갔다."],
-      });
-      complete("날씨는 양쪽 필드 전체에 영향을 줍니다. 쾌청에서는 불꽃 쪽이 유리해집니다.");
+      fail("쾌청은 대상이 없는 기술입니다. 카드를 배틀 필드 쪽으로 드래그해서 놓아보세요.");
       return;
     }
 
-    fail("지금 빛나는 카드와 포켓몬을 순서대로 눌러보세요.");
+    fail("이번 튜토리얼은 실제 배틀처럼 드래그 조작으로 진행해보세요.");
   }
 
   function handlePlayerUnit(uid) {
-    if (done) return;
+    if (done || Date.now() < suppressClickUntil.current) return;
 
-    if (lesson.id === "attack") {
-      playSfx("click");
+    if (lesson.id === "attack" || lesson.id === "taunt") {
       setSelectedUnit(uid);
-      setCoachText("좋습니다. 이제 상대 이상해씨를 눌러 공격하세요.");
+      fail("공격은 포켓몬을 클릭하는 대신 잡아서 상대까지 드래그해보세요.");
       return;
     }
 
     if (lesson.id === "evolve" && selectedCard === "charmeleon") {
-      const damageTaken = 2 - scene.player[0].hp;
-      const nextHp = Math.max(1, CARD_MAP.charmeleon.hp - damageTaken);
-      replaceScene({
-        mana: 2,
-        hand: [],
-        player: [unit("charmeleon", "p1", nextHp)],
-        logs: [...scene.logs, `파이리가 리자드로 진화했다! 받은 피해 ${damageTaken}은 유지된다.`],
-      });
-      setSelectedCard(null);
-      complete("진화해도 이미 받은 피해는 사라지지 않습니다. 최대 체력만 새 진화체 기준으로 바뀝니다.");
+      performEvolve();
       return;
     }
 
-    if (lesson.id === "taunt") {
-      playSfx("click");
-      setSelectedUnit(uid);
-      setCoachText(scene.tauntBlockedOnce ? "이제 도발 포켓몬 라프라스를 공격하세요." : "먼저 상대 트레이너를 눌러 직접 공격을 시도해보세요.");
-      return;
-    }
-
-    fail("지금 안내된 순서대로 조작해보세요.");
+    fail("지금 안내된 드래그 조작을 해보세요.");
   }
 
   function handleEnemyUnit(uid) {
-    if (done) return;
-
-    if (lesson.id === "attack" && selectedUnit) {
-      replaceScene({
-        player: [unit("charmander", "p1", 1)],
-        enemy: [],
-        logs: [...scene.logs, "파이리의 공격! 불꽃 → 풀 약점으로 피해 2. 이상해씨의 반격으로 파이리도 피해 1!"],
-      });
-      setSelectedUnit(null);
-      complete("포켓몬끼리 싸우면 상대도 반격합니다. 타입 약점은 피해를 더 크게 만듭니다.");
-      return;
-    }
+    if (done || Date.now() < suppressClickUntil.current) return;
 
     if (lesson.id === "technique" && selectedCard === "flamethrower") {
-      replaceScene({
-        mana: 2,
-        hand: [],
-        enemy: [],
-        logs: [...scene.logs, "화염방사! 불꽃 → 풀 약점 ×1.5, 피해 6!"],
-      });
-      setSelectedCard(null);
-      complete("기술 카드도 타입 상성이 적용됩니다. 기술은 포켓몬의 기본 공격과 별개로 사용할 수 있습니다.");
+      performTechnique();
       return;
     }
 
     if (lesson.id === "status" && selectedCard === "icebeam") {
-      const nextEnemy = scene.enemy.map((u) =>
-        u.uid === uid ? { ...u, hp: Math.max(1, u.hp - 5), status: "ice" } : u,
-      );
-      replaceScene({
-        mana: 3,
-        hand: [],
-        enemy: nextEnemy,
-        logs: [...scene.logs, "냉동빔! 얼음 → 드래곤 약점으로 피해 5. 액스라이즈가 얼어붙었다!"],
-      });
-      setSelectedCard(null);
-      complete("상태이상은 카드 위에 바로 표시됩니다. 얼음 상태의 포켓몬은 공격할 수 없습니다.");
+      performStatus(uid);
       return;
     }
 
-    if (lesson.id === "taunt" && selectedUnit && scene.tauntBlockedOnce) {
-      replaceScene({
-        enemy: [],
-        logs: [...scene.logs, "날쌩마가 도발 포켓몬 라프라스를 공격했다! 이제 트레이너 직접 공격 길이 열렸다."],
-      });
-      setSelectedUnit(null);
-      complete("도발 포켓몬이 있으면 그 포켓몬을 먼저 처리해야 상대 트레이너를 직접 공격할 수 있습니다.");
-      return;
-    }
-
-    fail("먼저 사용할 카드나 공격할 내 포켓몬을 선택하세요.");
+    fail("카드나 공격 포켓몬을 대상 위까지 드래그해서 놓아보세요.");
   }
 
   function handleEnemyHero() {
-    if (done) return;
-
-    if (lesson.id === "taunt") {
-      if (!scene.tauntBlockedOnce) {
-        playSfx("buzzer");
-        replaceScene({
-          tauntBlockedOnce: true,
-          logs: [...scene.logs, "직접 공격 실패! 도발 포켓몬이 있어 트레이너를 공격할 수 없다."],
-        });
-        setCoachText("도발 때문에 막혔습니다. 날쌩마를 누른 뒤 라프라스를 공격하세요.");
-        return;
-      }
-      fail("라프라스를 먼저 처리해야 합니다.");
-      return;
-    }
-
-    fail("이 연습에서는 상대 포켓몬을 먼저 지정하세요.");
+    if (done || Date.now() < suppressClickUntil.current) return;
+    fail("공격할 포켓몬을 잡아 상대 트레이너까지 드래그해서 놓아보세요.");
   }
 
   function handleEndTurn() {
@@ -531,11 +724,40 @@ export default function Tutorial({ onBack }) {
     }
   }
 
-  const targetEnemy = selectedUnit || selectedCard;
+  const draggingCardId = dragCard?.cardId || null;
+  const targetEnemy = selectedUnit || selectedCard || draggingCardId || aimUid;
   const deckMode = lesson.id === "deck";
 
   return (
     <div className="tutorial-screen tutorial-interactive">
+      {dragCard && (
+        <div className="tutorial-drag-ghost" style={{ left: dragCard.x, top: dragCard.y }}>
+          <HandCard cardId={dragCard.cardId} playable ghost />
+        </div>
+      )}
+
+      {aimUid && (
+        <svg className="tutorial-aim-svg" aria-hidden="true">
+          <defs>
+            <marker id="tutorial-aim-head" markerWidth="7" markerHeight="7" refX="4.5" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 z" fill="#f5c542" />
+            </marker>
+          </defs>
+          <line
+            ref={aimLineRef}
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="0"
+            stroke="#f5c542"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray="8 6"
+            markerEnd="url(#tutorial-aim-head)"
+          />
+        </svg>
+      )}
+
       <header className="tutorial-live-header">
         <button
           type="button"
@@ -560,7 +782,7 @@ export default function Tutorial({ onBack }) {
 
       <section className="tutorial-coach" aria-live="polite">
         <div className="tutorial-coach-number">{String(lessonIndex + 1).padStart(2, "0")}</div>
-        <div>
+        <div className="tutorial-coach-copy">
           <h1>{lesson.title}</h1>
           <p className={done ? "is-success" : ""}>{done ? successText : coachText}</p>
         </div>
@@ -583,97 +805,108 @@ export default function Tutorial({ onBack }) {
               </button>
             )
           ) : (
-            <span className="tutorial-do-badge">직접 해보세요</span>
+            <span className="tutorial-do-badge">드래그해서 해보세요</span>
           )}
         </div>
       </section>
 
-      {deckMode ? (
-        <DeckChallenge chosen={scene.deckChosen || []} onPick={handleDeckPick} />
-      ) : (
-        <div className="tutorial-battle-shell">
-          <div className="tutorial-battle-board">
-            <Hero
-              enemy
-              hp={scene.enemyHp}
-              targetable={lesson.id === "taunt" && !done}
-              onClick={handleEnemyHero}
-            />
+      <main className="tutorial-stage">
+        {deckMode ? (
+          <DeckChallenge chosen={scene.deckChosen || []} onPick={handleDeckPick} />
+        ) : (
+          <div className="tutorial-battle-shell">
+            <div className="tutorial-battle-board" data-tutorial-drop="board">
+              <Hero
+                enemy
+                hp={scene.enemyHp}
+                targetable={lesson.id === "taunt" && !done}
+                onClick={handleEnemyHero}
+              />
 
-            <div className="field enemy-field tutorial-field">
-              {scene.enemy.length ? (
-                scene.enemy.map((value) => (
-                  <MiniUnit
-                    key={value.uid}
-                    value={value}
-                    targetable={!!targetEnemy && !done}
-                    onClick={() => handleEnemyUnit(value.uid)}
-                  />
-                ))
-              ) : (
-                <span className="field-empty">상대 필드</span>
-              )}
-            </div>
-
-            <div className="mid-bar tutorial-mid-bar">
-              <Weather weather={scene.weather} />
-              <div className="battle-log tutorial-log">
-                {scene.logs.map((entry, index) => (
-                  <div key={`${entry}-${index}`}>• {entry}</div>
-                ))}
-              </div>
-              <button
-                type="button"
-                className={`btn-endturn ${lesson.id === "turn" && !done ? "tutorial-action-pulse" : "disabled"}`}
-                onClick={handleEndTurn}
-              >
-                턴 종료
-              </button>
-            </div>
-
-            <div className="field my-field tutorial-field">
-              {scene.player.length ? (
-                scene.player.map((value) => (
-                  <MiniUnit
-                    key={value.uid}
-                    value={value}
-                    selected={selectedUnit === value.uid}
-                    canAct={playerCanAct && !done}
-                    targetable={lesson.id === "evolve" && selectedCard === "charmeleon"}
-                    onClick={() => handlePlayerUnit(value.uid)}
-                  />
-                ))
-              ) : (
-                <span className="field-empty">내 필드</span>
-              )}
-            </div>
-
-            <Hero hp={scene.playerHp} />
-
-            <div className="tutorial-hand-zone">
-              <div className="tutorial-hand-head">
-                <strong>내 손패</strong>
-                <Mana current={scene.mana} max={scene.maxMana} />
-              </div>
-              <div className="hand tutorial-hand">
-                {scene.hand.length ? (
-                  scene.hand.map((cardId, index) => (
-                    <HandCard
-                      key={`${cardId}-${index}`}
-                      cardId={cardId}
-                      playable={!done}
-                      selected={selectedCard === cardId}
-                      onClick={() => handleHand(cardId)}
+              <div className="field enemy-field tutorial-field" data-tutorial-drop="enemy-field">
+                {scene.enemy.length ? (
+                  scene.enemy.map((value) => (
+                    <MiniUnit
+                      key={value.uid}
+                      value={value}
+                      targetable={!!targetEnemy && !done}
+                      onClick={() => handleEnemyUnit(value.uid)}
+                      dropZone="unit-enemy"
                     />
                   ))
                 ) : (
-                  <span className="tutorial-empty-hand">손패 없음</span>
+                  <span className="field-empty">상대 필드</span>
                 )}
+              </div>
+
+              <div className="mid-bar tutorial-mid-bar" data-tutorial-drop="board">
+                <Weather weather={scene.weather} />
+                <div className="battle-log tutorial-log">
+                  {scene.logs.slice(-3).map((entry, index) => (
+                    <div key={`${entry}-${index}`}>• {entry}</div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className={`btn-endturn ${lesson.id === "turn" && !done ? "tutorial-action-pulse" : "disabled"}`}
+                  onClick={handleEndTurn}
+                >
+                  턴 종료
+                </button>
+              </div>
+
+              <div
+                className={`field my-field tutorial-field ${draggingCardId === "charmander" ? "drop-ready" : ""}`}
+                data-tutorial-drop="my-field"
+              >
+                {scene.player.length ? (
+                  scene.player.map((value) => (
+                    <MiniUnit
+                      key={value.uid}
+                      value={value}
+                      selected={selectedUnit === value.uid || aimUid === value.uid}
+                      canAct={playerCanAct && !done}
+                      targetable={lesson.id === "evolve" && (selectedCard === "charmeleon" || draggingCardId === "charmeleon")}
+                      onClick={() => handlePlayerUnit(value.uid)}
+                      onPointerDown={(e) => onPlayerUnitPointerDown(value, e)}
+                      dropZone="unit-player"
+                    />
+                  ))
+                ) : (
+                  <span className="field-empty">포켓몬 카드를 여기로 드래그</span>
+                )}
+              </div>
+
+              <Hero hp={scene.playerHp} />
+
+              <div className="tutorial-hand-zone">
+                <div className="tutorial-hand-head">
+                  <strong>내 손패</strong>
+                  <Mana current={scene.mana} max={scene.maxMana} />
+                </div>
+                <div className="hand tutorial-hand">
+                  {scene.hand.length ? (
+                    scene.hand.map((cardId, index) => (
+                      <div className="tutorial-hand-card-wrap" key={`${cardId}-${index}`}>
+                        <HandCard
+                          cardId={cardId}
+                          playable={!done}
+                          selected={selectedCard === cardId}
+                          dragOrigin={draggingCardId === cardId}
+                          onClick={() => handleHand(cardId)}
+                          onPointerDown={(e) => onHandPointerDown(e, cardId)}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <span className="tutorial-empty-hand">손패 없음</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
 
       <div className="tutorial-live-footer">
         <button
