@@ -6,6 +6,7 @@ import './data/cards/sinnoh.js';
 import './data/trainers/sinnoh.js';
 import './data/cards/cynthia.js';
 import './data/trainers/cynthia.js';
+import './data/trainers/balance-overrides.js';
 import './data/cards/labels.js';
 import App from './App.jsx';
 
