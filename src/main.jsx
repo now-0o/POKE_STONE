@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 
 // 확장 데이터는 App 모듈보다 먼저 등록한다.
 import './data/cards/sinnoh.js';
+import './data/cards/unova.js';
 import './data/trainers/sinnoh.js';
 import './data/cards/cynthia.js';
 import './data/trainers/cynthia.js';
