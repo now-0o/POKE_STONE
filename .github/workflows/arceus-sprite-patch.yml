@@ -1,0 +1,64 @@
+name: Arceus and Zen sprite patch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[arceus-sprite]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply sprite mapping
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('src/components/Card.jsx')
+          s = path.read_text()
+
+          anchor = '''const DEOXYS_SPRITE_IDS = {\n  normal: 386,\n  attack: 10001,\n  defense: 10002,\n  speed: 10003,\n};\n'''
+          insert = '''const DEOXYS_SPRITE_IDS = {\n  normal: 386,\n  attack: 10001,\n  defense: 10002,\n  speed: 10003,\n};\n\nconst ARCEUS_TYPE_SPRITE_SUFFIX = {\n  노말: "normal",\n  불꽃: "fire",\n  물: "water",\n  전기: "electric",\n  풀: "grass",\n  얼음: "ice",\n  격투: "fighting",\n  독: "poison",\n  땅: "ground",\n  비행: "flying",\n  에스퍼: "psychic",\n  벌레: "bug",\n  바위: "rock",\n  고스트: "ghost",\n  드래곤: "dragon",\n  악: "dark",\n  강철: "steel",\n  페어리: "fairy",\n};\n\nfunction battleSpriteId(unit) {\n  if (!unit) return null;\n\n  if (unit.cardId === "deoxys" && unit.deoxysForm) {\n    return DEOXYS_SPRITE_IDS[unit.deoxysForm];\n  }\n\n  if (unit.cardId === "arceus") {\n    const suffix = ARCEUS_TYPE_SPRITE_SUFFIX[unit.type];\n    return suffix ? `493-${suffix}` : 493;\n  }\n\n  if (unit.cardId === "darmanitan" && unit._zenModeUsed) {\n    return 10017;\n  }\n\n  return unit.megaSpriteId || null;\n}\n'''
+          if anchor not in s:
+              raise SystemExit('DEOXYS anchor not found')
+          s = s.replace(anchor, insert, 1)
+
+          old_hand = '''          spriteId={\n            unit?.cardId === "deoxys" && unit?.deoxysForm\n              ? DEOXYS_SPRITE_IDS[unit.deoxysForm]\n              : unit?.megaSpriteId\n          }'''
+          new_hand = '''          spriteId={battleSpriteId(unit)}'''
+          if old_hand not in s:
+              raise SystemExit('Hand sprite anchor not found')
+          s = s.replace(old_hand, new_hand, 1)
+
+          old_field = '''            spriteId={\n              unit.cardId === "deoxys" && unit.deoxysForm\n                ? DEOXYS_SPRITE_IDS[unit.deoxysForm]\n                : unit.megaSpriteId\n            }'''
+          new_field = '''            spriteId={battleSpriteId(unit)}'''
+          if old_field not in s:
+              raise SystemExit('Field sprite anchor not found')
+          s = s.replace(old_field, new_field, 1)
+
+          path.write_text(s)
+          PY
+
+          npm ci
+          npm run build
+
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/Card.jsx
+          git commit -m 'feat: sync Arceus and Zen Mode sprites [arceus-sprite]'
+          git push
