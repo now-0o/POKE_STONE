@@ -80,7 +80,7 @@ function lenoraExtraCost(card, game, side) {
   if (side !== "player" || game?.trainer?.gimmick !== "lenora_review") return 0;
   const p = game.players.player;
   const kind = reviewCardKind(card);
-  return kind && kind === p._reviewPenaltyKind && !p._reviewPenaltyUsed ? 2 : 0;
+  return kind && kind === p._reviewPenaltyKind ? 1 : 0;
 }
 
 function withTemporaryCardCost(card, extra, fn) {
@@ -369,7 +369,7 @@ function recordLenoraTurn(game) {
   p._reviewKindsThisTurn = {};
   if (best) {
     const label = best === "pokemon" ? "포켓몬" : best === "technique" ? "기술" : "도구";
-    game.logs.push(`알로에의 복습 시험! 다음 턴 첫 ${label} 카드 비용 +2!`);
+    game.log.push(`알로에의 복습 시험! 다음 턴 ${label} 카드 전체 비용 +1!`);
   }
 }
 
@@ -414,7 +414,6 @@ export function createGame(playerDeckIds, trainer) {
   if (game.trainer?.gimmick === "lenora_review") {
     game.players.player._reviewKindsThisTurn = {};
     game.players.player._reviewPenaltyKind = null;
-    game.players.player._reviewPenaltyUsed = false;
   }
   if (game.trainer?.gimmick === "elesa_spotlight") chooseSpotlight(game, game.turn);
   if (game.trainer?.gimmick === "drayden_trials" && game.turn === "player") startDraydenTrial(game);
@@ -473,7 +472,6 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
       if (kind) {
         p._reviewKindsThisTurn = p._reviewKindsThisTurn || {};
         p._reviewKindsThisTurn[kind] = (p._reviewKindsThisTurn[kind] || 0) + 1;
-        if (kind === p._reviewPenaltyKind && !p._reviewPenaltyUsed) p._reviewPenaltyUsed = true;
       }
     }
 
@@ -646,10 +644,6 @@ export function endTurn(game) {
   if (game.trainer?.gimmick === "skyla_airborne") {
     if (endingSide === "enemy") launchSkyla(game);
     if (game.turn === "enemy") landSkyla(game);
-  }
-
-  if (game.trainer?.gimmick === "lenora_review" && game.turn === "player") {
-    game.players.player._reviewPenaltyUsed = false;
   }
 
   if (game.trainer?.gimmick === "drayden_trials") {
