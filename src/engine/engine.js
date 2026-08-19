@@ -632,7 +632,10 @@ export function attack(game, side, attackerUid, target) {
   const cocoonSnapshots = side === "player" ? protectCocoons(game) : [];
   const tauntChanges = disableAirborneTaunts(game);
 
-  let temporaryAtk = 0;
+  // 노말주얼은 대상이 포켓몬이든 트레이너든 다음 기본 공격에 발동한다.
+  // 포켓몬 대상은 base 엔진이 처리하므로 여기서는 트레이너 직접 공격만 보정한다.
+  const normalGemHeroBonus = isHeroTarget && attacker.item === "normal_gem" ? 2 : 0;
+  let temporaryAtk = normalGemHeroBonus;
   if (
     game.trainer?.gimmick === "elesa_spotlight" &&
     hasAbility(attacker, "elesa_centerstage") &&
@@ -665,6 +668,11 @@ export function attack(game, side, attackerUid, target) {
   if (!result) {
     syncUnovaState(game);
     return result;
+  }
+
+  if (normalGemHeroBonus > 0 && attacker.item === "normal_gem") {
+    attacker.item = null;
+    game.log.push(`${attacker.name}의 노말주얼! 이번 공격 피해 +2!`);
   }
 
   const currentTarget = isHeroTarget
