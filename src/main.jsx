@@ -63,6 +63,8 @@ import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
+// 아티 고치 카운트/우화 연출은 하나지방 DOM 효과가 등록된 뒤 적용한다.
+import './features/battle/burghCocoonRuntime.js';
 import './components/battle/WakeBattleUi.jsx';
 import './components/battle/CynthiaBattleUi.jsx';
 import './components/battle/CynthiaToxicSpikesUi.jsx';
