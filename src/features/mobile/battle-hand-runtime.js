@@ -223,12 +223,15 @@ function onPointerMove(event) {
 function holdInspectOpenWhileMoving(event) {
   if (!isMobileBattle()) return;
 
-  // Battle.jsx normally cancels a long-press inspect as soon as the pointer
-  // moves. Once the inspect overlay is already visible, movement is intentional
-  // (the user may be moving their finger away from text) and must not cancel it
-  // or convert the gesture into an attack/drag. Pointer-up is deliberately not
-  // intercepted, so releasing the finger still closes the inspect view.
-  if (document.querySelector(".battle-board .inspect-overlay")) {
+  // Long-press inspect gestures normally cancel when the pointer moves. Once
+  // an inspect overlay is visible, movement is intentional: the user may move
+  // their finger away from text to read the covered part. Stop only pointermove
+  // propagation; pointer-up/cancel still reaches the owner and closes the view.
+  if (
+    document.querySelector(
+      ".inspect-overlay, .mobile-v2-inspect-overlay, .mobile-landscape-inspect",
+    )
+  ) {
     event.stopImmediatePropagation();
   }
 }
@@ -322,8 +325,8 @@ if (typeof document !== "undefined") {
   document.addEventListener("click", onClickCapture, true);
   document.addEventListener("click", onClickBubble, false);
 
-  // Registered on window capture so it runs before Battle.jsx's temporary
-  // window-level pointermove listeners used by inspect/aim gestures.
+  // Registered on window capture so it runs before temporary window-level
+  // pointermove listeners created by the inspect/aim hooks.
   window.addEventListener("pointermove", holdInspectOpenWhileMoving, true);
 
   const observer = new MutationObserver((mutations) => {
