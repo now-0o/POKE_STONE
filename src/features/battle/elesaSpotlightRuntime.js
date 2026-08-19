@@ -20,6 +20,30 @@ function targetUidForTurn(state, units) {
   return units.find((unit) => spotlight.has(unit.dataset.uid))?.dataset.uid || null;
 }
 
+function syncCurrentSpotlightClass(state) {
+  if (state.gimmick !== "elesa_spotlight") return;
+
+  const currentUnits = fieldUnitElements(state.turn);
+  const targetUid = targetUidForTurn(state, currentUnits);
+
+  document
+    .querySelectorAll(".battle.battle-board .field-unit[data-uid]")
+    .forEach((unit) => {
+      unit.classList.toggle(
+        "unova-spotlight",
+        !!targetUid && unit.dataset.uid === targetUid,
+      );
+    });
+}
+
+function scheduleStaticSelectionSync(state) {
+  syncCurrentSpotlightClass(state);
+  window.requestAnimationFrame(() => {
+    syncCurrentSpotlightClass(state);
+    window.requestAnimationFrame(() => syncCurrentSpotlightClass(state));
+  });
+}
+
 function randomPoint(boardRect) {
   const padX = Math.max(70, boardRect.width * 0.12);
   const padY = Math.max(60, boardRect.height * 0.16);
@@ -130,6 +154,7 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
     if (token !== fxToken) return;
     fx.remove();
     target.classList.remove("unova-spotlight-lock-pop");
+    syncCurrentSpotlightClass(state);
   }, 1030);
 }
 
@@ -144,6 +169,9 @@ function syncElesaSpotlight(state = readState()) {
     lastTurn = state.turn || null;
     return;
   }
+
+  // 상태 이벤트가 여러 번 와도 현재 턴 대상 하나만 후광을 남긴다.
+  scheduleStaticSelectionSync(state);
 
   // 같은 턴 안에서 카드 사용/공격 때문에 상태 이벤트가 여러 번 와도
   // 탐색 연출은 턴 시작에 딱 한 번만 재생한다.
