@@ -1,31 +1,68 @@
 /* 모바일 배틀 보정
- * - 진화체 '버리고 뽑기' 버튼을 카드 하단이 아닌 상단에 둔다.
+ * - 진화체 '버리고 뽑기' 버튼을 카드 제스처 영역과 분리한다.
  */
 
 @media (pointer: coarse), (max-width: 1024px) {
   .battle-board > .hand .hand-card-wrap > .btn-discard-redraw {
-    top: -8px !important;
+    position: absolute !important;
     bottom: auto !important;
     left: 50% !important;
     right: auto !important;
-    transform: translateX(-50%) scale(.76) !important;
-    transform-origin: center bottom !important;
-    padding: 4px 7px !important;
+    min-width: 72px !important;
+    min-height: 26px !important;
+    padding: 5px 8px !important;
     border-radius: 999px !important;
     font-size: 8px !important;
-    line-height: 1.1 !important;
+    line-height: 1.05 !important;
     white-space: nowrap !important;
-    z-index: 64 !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    z-index: 900 !important;
   }
 
-  /* 펼친 손패에서는 카드 위에서 읽기 편한 크기로 보여준다. */
+  /* 버리기 가능한 카드의 컨트롤은 일반 카드보다 위에서 터치를 받는다. */
+  .battle-board > .hand .hand-card-wrap:has(> .btn-discard-redraw) {
+    z-index: calc(200 + var(--mobile-hand-index, 1)) !important;
+  }
+}
+
+/* 세로: 축소 손패에서도 버튼을 카드 윗부분과 확실히 분리한다. */
+@media (orientation: portrait) and (pointer: coarse),
+       (orientation: portrait) and (max-width: 700px) {
+  .battle-board > .hand .hand-card-wrap > .btn-discard-redraw {
+    top: -22px !important;
+    transform: translateX(-50%) scale(.82) !important;
+    transform-origin: center bottom !important;
+  }
+
   .battle-board.mobile-hand-open > .hand .hand-card-wrap > .btn-discard-redraw,
   .battle-board:has(> .hand .hand-card.selected)
     > .hand .hand-card-wrap:has(.hand-card.selected) > .btn-discard-redraw,
   .battle-board.mobile-hand-grabbing
     > .hand .hand-card-wrap.mobile-grabbed-card > .btn-discard-redraw {
-    top: -7px !important;
-    transform: translateX(-50%) scale(.92) !important;
-    z-index: 780 !important;
+    top: -24px !important;
+    transform: translateX(-50%) scale(.96) !important;
+    z-index: 980 !important;
+  }
+}
+
+/* 가로: 카드 상단과 버튼 사이에 충분한 빈 공간을 둬 버튼 터치가 카드 잡기로 이어지지 않게 한다. */
+@media (orientation: landscape) and (pointer: coarse),
+       (orientation: landscape) and (max-width: 1024px) and (max-height: 600px) {
+  .battle-board > .hand .hand-card-wrap > .btn-discard-redraw {
+    top: -36px !important;
+    transform: translateX(-50%) scale(.9) !important;
+    min-width: 78px !important;
+  }
+
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap > .btn-discard-redraw,
+  .battle-board:has(> .hand .hand-card.selected)
+    > .hand .hand-card-wrap:has(.hand-card.selected) > .btn-discard-redraw,
+  .battle-board.mobile-hand-grabbing
+    > .hand .hand-card-wrap.mobile-grabbed-card > .btn-discard-redraw {
+    top: -38px !important;
+    transform: translateX(-50%) scale(1) !important;
+    z-index: 980 !important;
   }
 }
