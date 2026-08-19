@@ -51,6 +51,8 @@ import './styles/mobile-pack-inspect-mainmenu-v1.css';
 // 하스스톤형 모바일 배틀 HUD/손패는 기존 모바일 배틀 규칙을 최종 대체한다.
 import './styles/mobile-battle-hearthstone-v3.css';
 import './styles/mobile-battle-hearthstone-v3-fixes.css';
+// V4는 손패 이동 애니메이션/프로필/필드 중앙정렬/코인토스를 최종 보정한다.
+import './styles/mobile-battle-hearthstone-v4.css';
 
 import './features/mobile/battle-hand-runtime.js';
 import './features/battle/runtime.js';
