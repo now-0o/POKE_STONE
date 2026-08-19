@@ -1,0 +1,31 @@
+/* 모바일 배틀 보정
+ * - 진화체 '버리고 뽑기' 버튼을 카드 하단이 아닌 상단에 둔다.
+ */
+
+@media (pointer: coarse), (max-width: 1024px) {
+  .battle-board > .hand .hand-card-wrap > .btn-discard-redraw {
+    top: -8px !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) scale(.76) !important;
+    transform-origin: center bottom !important;
+    padding: 4px 7px !important;
+    border-radius: 999px !important;
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    z-index: 64 !important;
+  }
+
+  /* 펼친 손패에서는 카드 위에서 읽기 편한 크기로 보여준다. */
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap > .btn-discard-redraw,
+  .battle-board:has(> .hand .hand-card.selected)
+    > .hand .hand-card-wrap:has(.hand-card.selected) > .btn-discard-redraw,
+  .battle-board.mobile-hand-grabbing
+    > .hand .hand-card-wrap.mobile-grabbed-card > .btn-discard-redraw {
+    top: -7px !important;
+    transform: translateX(-50%) scale(.92) !important;
+    z-index: 780 !important;
+  }
+}
