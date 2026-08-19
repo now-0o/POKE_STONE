@@ -129,8 +129,9 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   border: 1px solid rgba(245, 197, 66, 0.5);
   background: rgba(10, 15, 32, 0.72);
   color: var(--accent);
-  font-family: var(--display-font);
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 19px;
+  font-weight: 700;
   line-height: 1;
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.36),
@@ -150,16 +151,18 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   padding: 8px 12px;
   border: 1px solid rgba(245, 197, 66, 0.5);
   border-radius: 10px;
-  background: rgba(10, 15, 32, 0.9);
-  color: var(--accent);
+  background: rgba(10, 15, 32, 0.94);
+  color: #f3d96d;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 12px;
-  font-weight: 800;
-  line-height: 1.35;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
   white-space: nowrap;
-  text-shadow: 0 0 10px rgba(245, 197, 66, 0.22);
+  text-shadow: none;
   box-shadow:
     0 5px 18px rgba(0, 0, 0, 0.36),
-    0 0 16px rgba(245, 197, 66, 0.1);
+    0 0 10px rgba(245, 197, 66, 0.06);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: battle-gimmick-tip-in 0.32s ease-out both,
@@ -176,7 +179,7 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   transform: translateY(-50%) rotate(45deg);
   border-top: 1px solid rgba(245, 197, 66, 0.5);
   border-right: 1px solid rgba(245, 197, 66, 0.5);
-  background: rgba(10, 15, 32, 0.9);
+  background: rgba(10, 15, 32, 0.94);
 }
 
 .maylene-combo-hud {
@@ -198,28 +201,31 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   pointer-events: none;
   white-space: nowrap;
   transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
 
 .maylene-combo-label {
   color: #c7cbd8;
   font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .08em;
+  font-weight: 600;
+  letter-spacing: .04em;
 }
 
 .maylene-combo-hud strong {
   color: #f5c542;
-  font-family: var(--display-font);
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 15px;
+  font-weight: 700;
   line-height: 1;
+  text-shadow: none;
 }
 
 .maylene-combo-next {
   padding-left: 8px;
   border-left: 1px solid rgba(255,255,255,.12);
-  color: #9da4b5;
+  color: #b3b9c8;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .maylene-combo-hud.is-maxed {
@@ -229,12 +235,12 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
 }
 
 .maylene-combo-hud.is-maxed strong {
-  color: #ff9a70;
-  text-shadow: 0 0 10px rgba(255, 95, 58, .42);
+  color: #ffad8b;
+  text-shadow: none;
 }
 
 .maylene-combo-hud:not(.is-maxed) .maylene-combo-next:not(:empty) {
-  color: #ffd8a8;
+  color: #f0d0a8;
 }
 
 .battle-gimmick-modal {
@@ -268,6 +274,9 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
     inset 0 1px 0 rgba(255,255,255,.08);
   transform-origin: 50% 45%;
   animation: battle-gimmick-dialog-in 0.28s cubic-bezier(0.2, 0.85, 0.25, 1.12) both;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .battle-gimmick-modal-head {
@@ -289,18 +298,20 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
 }
 
 .battle-gimmick-modal-head span {
-  color: #b5bfd6;
+  color: #b9c2d5;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.06em;
 }
 
 .battle-gimmick-modal-head strong {
-  color: var(--accent);
-  font-family: var(--display-font);
+  color: #f3d569;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 19px;
-  line-height: 1.15;
-  text-shadow: 0 1px 8px rgba(245,197,66,.14);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-shadow: none;
 }
 
 .battle-gimmick-close {
@@ -314,7 +325,9 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.07);
   color: #f4f6fb;
+  font-family: Arial, sans-serif;
   font-size: 25px;
+  font-weight: 400;
   line-height: 1;
 }
 
@@ -344,20 +357,24 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   padding: 5px 10px;
   border: 1px solid rgba(245, 197, 66, 0.38);
   border-radius: 999px;
-  color: #ffe07a;
+  color: #e8cb62;
   background: rgba(245, 197, 66, 0.1);
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-shadow: none;
 }
 
 .battle-gimmick-slide h2 {
   margin-bottom: 17px;
   color: #ffffff;
-  font-family: var(--display-font);
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: clamp(22px, 3vw, 28px);
-  line-height: 1.15;
-  text-shadow: 0 2px 8px rgba(0,0,0,.38);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  text-shadow: none;
 }
 
 .battle-gimmick-copy {
@@ -375,12 +392,15 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 11px;
   background: rgba(255,255,255,.045);
-  color: #f0f3fa;
+  color: #eef1f7;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 15px;
-  font-weight: 650;
-  line-height: 1.62;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
   word-break: keep-all;
   overflow-wrap: break-word;
+  text-shadow: none;
 }
 
 .battle-gimmick-copy p::before {
@@ -395,12 +415,13 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   border: 1px solid rgba(245,197,66,.54);
   border-radius: 50%;
   background: rgba(245,197,66,.14);
-  color: #ffe27d;
-  font-family: var(--display-font);
+  color: #f4d66d;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
   box-shadow: none;
+  text-shadow: none;
 }
 
 .battle-gimmick-hint {
@@ -410,12 +431,15 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   border: 1px solid rgba(245, 197, 66, 0.36);
   border-radius: 11px;
   background: linear-gradient(135deg, rgba(245,197,66,.14), rgba(245,197,66,.07));
-  color: #fff0b8;
+  color: #f5e6ae;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.58;
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: 0;
   word-break: keep-all;
   overflow-wrap: break-word;
+  text-shadow: none;
 }
 
 .battle-gimmick-hint::before {
@@ -427,10 +451,11 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
   border-radius: 6px;
   background: #f5c542;
   color: #332600;
-  font-family: var(--display-font);
+  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
   font-size: 9px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
+  text-shadow: none;
 }
 
 @keyframes battle-gimmick-backdrop-in {
@@ -510,7 +535,7 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
     padding: 9px 10px 9px 34px;
     border-radius: 9px;
     font-size: 13.5px;
-    line-height: 1.55;
+    line-height: 1.65;
   }
 
   .battle-gimmick-copy p::before {
@@ -525,7 +550,7 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
     margin-top: 12px;
     padding: 11px 11px 11px 51px;
     font-size: 12.5px;
-    line-height: 1.5;
+    line-height: 1.6;
   }
 
   .battle-gimmick-hint::before {
@@ -623,7 +648,7 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
     padding: 7px 9px 7px 32px;
     border-radius: 8px;
     font-size: 12.5px;
-    line-height: 1.43;
+    line-height: 1.55;
   }
 
   .battle-gimmick-copy p::before {
@@ -638,7 +663,7 @@ body[data-wake-flood="2"] .battle-board[data-battlefield="pastoria_gym"] .my-fie
     margin-top: 8px;
     padding: 8px 9px 8px 47px;
     font-size: 11.5px;
-    line-height: 1.4;
+    line-height: 1.5;
   }
 
   .battle-gimmick-hint::before {
