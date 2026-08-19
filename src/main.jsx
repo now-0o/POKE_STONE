@@ -39,6 +39,8 @@ import './styles/mobile-deck-landscape.css';
 // 모바일 상점/공통 헤더 보정은 가장 마지막에 적용한다.
 import './styles/mobile-shop-unified.css';
 import './styles/mobile-shop-layout-v2.css';
+// 팩 개봉 카드/완료 UI는 모든 모바일 상점 규칙 뒤에서 최종 고정한다.
+import './styles/mobile-pack-open-v3.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
