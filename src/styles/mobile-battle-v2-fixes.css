@@ -1,0 +1,15 @@
+/* Final compatibility fixes for mobile-battle-v2.css. */
+
+@media (orientation: landscape) and (pointer: coarse),
+       (orientation: landscape) and (max-width: 1024px) and (max-height: 600px) {
+  /* Avoid CSS multiplication inside calc(); keep the supplied fan Y directly. */
+  .battle-board .hand-card-wrap {
+    transform: translateY(var(--fan-y, 0px)) rotate(var(--fan-angle, 0deg)) !important;
+  }
+
+  .battle-board .hand-card-wrap:active,
+  .battle-board .hand-card-wrap:has(.hand-card.selected),
+  .battle-board .hand-card-wrap:has(.hand-card.drag-origin) {
+    transform: translateY(-18px) rotate(0deg) !important;
+  }
+}
