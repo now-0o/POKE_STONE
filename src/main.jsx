@@ -48,7 +48,11 @@ import './styles/mobile-battle-v2.css';
 import './styles/mobile-battle-v2-fixes.css';
 // 팩 확대 카드와 트레이너 선택 스크롤은 모든 모바일 화면 규칙 뒤에서 최종 고정한다.
 import './styles/mobile-pack-inspect-mainmenu-v1.css';
+// 하스스톤형 모바일 배틀 HUD/손패는 기존 모바일 배틀 규칙을 최종 대체한다.
+import './styles/mobile-battle-hearthstone-v3.css';
+import './styles/mobile-battle-hearthstone-v3-fixes.css';
 
+import './features/mobile/battle-hand-runtime.js';
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
 import './features/battle/cynthiaSpeech.js';
