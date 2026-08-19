@@ -1,0 +1,402 @@
+/* Mobile polish v1
+ * 1) Pack-open inspect keeps native HandCard geometry so description remains visible.
+ * 2) Pack-open cards cannot be text/image-dragged or long-press selected by the browser.
+ * 3) Trainer-select main menu keeps chrome fixed and scrolls only the trainer list.
+ */
+
+@media (pointer: coarse), (max-width: 1024px) {
+  /* ----------------------------------------------------------
+     Pack opening: disable browser-native drag/selection affordances
+     ---------------------------------------------------------- */
+  .pack-shop .pack-open-area,
+  .pack-shop .pack-open-area *,
+  .pack-shop .inspect-overlay,
+  .pack-shop .inspect-overlay * {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+  }
+
+  .pack-shop .pack-open-area img,
+  .pack-shop .inspect-overlay img {
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+    pointer-events: none !important;
+  }
+
+  .pack-shop .pack-open-area .flip-card,
+  .pack-shop .pack-open-area .hand-card,
+  .pack-shop .inspect-overlay .hand-card {
+    touch-action: manipulation !important;
+  }
+
+  /* ----------------------------------------------------------
+     Pack inspect: native 134x188 card inside a centered overlay.
+     Only the whole card is enlarged; internals never get recomputed.
+     ---------------------------------------------------------- */
+  .pack-shop .inspect-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2200 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding:
+      max(18px, env(safe-area-inset-top, 0px))
+      max(18px, env(safe-area-inset-right, 0px))
+      max(18px, env(safe-area-inset-bottom, 0px))
+      max(18px, env(safe-area-inset-left, 0px)) !important;
+    overflow: hidden !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card {
+    width: 134px !important;
+    min-width: 134px !important;
+    max-width: 134px !important;
+    height: 188px !important;
+    min-height: 188px !important;
+    max-height: 188px !important;
+    flex: 0 0 188px !important;
+    margin: 0 !important;
+    padding: 7px 8px 6px !important;
+    gap: 3px !important;
+    border-width: 3px !important;
+    border-radius: 11px !important;
+    transform: none !important;
+    scale: 1.5 !important;
+    transform-origin: center center !important;
+    overflow: visible !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-topline {
+    min-height: 15px !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-name {
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-stageline {
+    height: 14px !important;
+    min-height: 14px !important;
+    max-height: 14px !important;
+    padding: 1px 5px !important;
+    font-size: 8.5px !important;
+    line-height: 12px !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-art {
+    height: 66px !important;
+    min-height: 66px !important;
+    max-height: 66px !important;
+    flex: 0 0 66px !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-typebadge {
+    padding: 2px 9px !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-text {
+    display: block !important;
+    width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    flex: 0 0 44px !important;
+    padding: 3px 5px !important;
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+    overflow: hidden !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-text-inner {
+    display: block !important;
+    width: 100% !important;
+    white-space: pre-line !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .card-cost {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 18px !important;
+    z-index: 9 !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card .hcard-orb,
+  .pack-shop .inspect-overlay > .hand-card .card-rarity-gem {
+    z-index: 9 !important;
+  }
+
+  /* ----------------------------------------------------------
+     Trainer selection: only trainer-list scrolls.
+     The title/resources/region header and lower utility area stay put.
+     ---------------------------------------------------------- */
+  .main-menu:has(> .trainer-region-header) {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 30 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    padding:
+      max(7px, env(safe-area-inset-top, 0px))
+      max(8px, env(safe-area-inset-right, 0px))
+      max(7px, env(safe-area-inset-bottom, 0px))
+      max(8px, env(safe-area-inset-left, 0px)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block,
+  .main-menu:has(> .trainer-region-header) > .menu-money,
+  .main-menu:has(> .trainer-region-header) > .trainer-region-header,
+  .main-menu:has(> .trainer-region-header) > .deck-warning,
+  .main-menu:has(> .trainer-region-header) > .menu-buttons,
+  .main-menu:has(> .trainer-region-header) > .menu-footer {
+    flex: 0 0 auto !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block .game-title {
+    font-size: clamp(27px, 8.5vw, 40px) !important;
+    line-height: 1 !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block .game-subtitle {
+    margin-top: 3px !important;
+    font-size: 7.5px !important;
+    letter-spacing: 0.28em !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-money {
+    margin: 7px 0 6px !important;
+    gap: 8px 14px !important;
+    flex-wrap: wrap !important;
+    font-size: 11px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-money .res-icon {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-region-header {
+    width: min(760px, 100%) !important;
+    min-height: 34px !important;
+    margin: 0 auto 5px !important;
+    padding: 2px 4px 5px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-region-header .btn-ghost {
+    min-height: 30px !important;
+    padding: 0 4px !important;
+    font-size: 10px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-region-header strong {
+    font-size: 13px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-region-header .trainer-region-sub {
+    font-size: 8px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: min(760px, 100%) !important;
+    max-width: 760px !important;
+    margin: 0 auto !important;
+    padding: 4px 3px 10px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .deck-warning {
+    margin: 4px auto !important;
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Keep the three utility destinations available without consuming a tall footer. */
+  .main-menu:has(> .trainer-region-header) > .menu-buttons {
+    width: min(760px, 100%) !important;
+    margin: 5px auto 3px !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-buttons .btn-secondary {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 4px 5px !important;
+    gap: 3px !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-buttons .res-icon,
+  .main-menu:has(> .trainer-region-header) > .menu-buttons .tutorial-menu-icon {
+    width: 15px !important;
+    height: 15px !important;
+    font-size: 10px !important;
+    flex: 0 0 15px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-footer {
+    min-height: 19px !important;
+    margin: 0 !important;
+    padding: 1px 0 0 !important;
+    font-size: 8px !important;
+    line-height: 1.45 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
+/* Portrait phones: one-column trainer list and comfortable touch rows. */
+@media (orientation: portrait) and (max-width: 700px) {
+  .main-menu:has(> .trainer-region-header) > .trainer-list {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-card {
+    min-height: 62px !important;
+    padding: 7px 9px !important;
+    gap: 9px !important;
+    border-radius: 11px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-sprite {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-name {
+    font-size: 12px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-meta,
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-go {
+    font-size: 9px !important;
+  }
+
+  .pack-shop .inspect-overlay > .hand-card {
+    scale: 1.55 !important;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 340px) {
+  .pack-shop .inspect-overlay > .hand-card {
+    scale: 1.42 !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-buttons .btn-secondary {
+    font-size: 8px !important;
+  }
+}
+
+@media (orientation: portrait) and (max-height: 650px) {
+  .pack-shop .inspect-overlay > .hand-card {
+    scale: 1.35 !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block .game-title {
+    font-size: 25px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block .game-subtitle {
+    display: none !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-money {
+    margin: 4px 0 !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-footer {
+    display: none !important;
+  }
+}
+
+/* Landscape mobile: same fixed chrome, but use two trainer columns and a shorter header/footer. */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .main-menu:has(> .trainer-region-header) {
+    padding-top: max(4px, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(4px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block .game-title {
+    font-size: 24px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .title-block .game-subtitle {
+    display: none !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-money {
+    margin: 2px 0 3px !important;
+    font-size: 9px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-region-header {
+    min-height: 28px !important;
+    margin-bottom: 3px !important;
+    padding-bottom: 3px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-card {
+    min-height: 50px !important;
+    padding: 5px 8px !important;
+    gap: 7px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-sprite {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-name {
+    font-size: 10px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-meta,
+  .main-menu:has(> .trainer-region-header) > .trainer-list .trainer-go {
+    font-size: 8px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-buttons {
+    margin-top: 3px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-buttons .btn-secondary {
+    min-height: 30px !important;
+    height: 30px !important;
+    font-size: 8px !important;
+  }
+
+  .main-menu:has(> .trainer-region-header) > .menu-footer {
+    display: none !important;
+  }
+}
