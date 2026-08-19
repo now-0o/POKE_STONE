@@ -1,7 +1,7 @@
 // ============================================================
 // 포케스톤 배틀 엔진 확장 래퍼
 // - 기존 엔진 전체는 engine.base.js에 그대로 보존한다.
-// - 하나지방 체육관 전용 룰만 이 파일에서 감싼다.
+// - 하나지방 체육관 전용 룰과 공통 핫픽스를 이 파일에서 감싼다.
 // ============================================================
 
 import * as base from "./engine.base.js";
@@ -36,6 +36,49 @@ function cardIdOf(entry) {
 
 function typeMultiplier(attackType, defendType) {
   return TYPE_CHART[attackType]?.[defendType] ?? 1;
+}
+
+// ============================================================
+// 공통 핫픽스 - 탈출버튼
+// 피해를 받고 살아남은 바로 그 행동 안에서 즉시 손으로 복귀시킨다.
+// base 엔진의 전투 방어자 전용 처리만으로는 반격/기술/특성 피해가 빠지므로
+// 외부 행동 진입점 전후의 HP를 비교해 모든 피해 경로를 동일하게 보정한다.
+// ============================================================
+function snapshotFieldHp(game) {
+  const snapshot = new Map();
+  for (const side of ["player", "enemy"]) {
+    for (const unit of game?.players?.[side]?.field || []) {
+      snapshot.set(unit.uid, { side, hp: unit.hp });
+    }
+  }
+  return snapshot;
+}
+
+function resolveImmediateEjectButtons(game, snapshot) {
+  if (!game || !snapshot?.size) return;
+
+  for (const side of ["player", "enemy"]) {
+    const player = game.players?.[side];
+    if (!player) continue;
+
+    for (const unit of [...player.field]) {
+      const before = snapshot.get(unit.uid);
+      if (!before || before.side !== side) continue;
+      if (unit.item !== "eject_button") continue;
+      if (unit.hp <= 0 || unit.hp >= before.hp) continue;
+      if (player.hand.length >= base.MAX_HAND) continue;
+
+      const index = player.field.findIndex((entry) => entry.uid === unit.uid);
+      if (index < 0) continue;
+
+      // 먼저 도구를 소모하고 필드에서 제거한다.
+      // 손에서는 cardId만 다시 사용하므로 피해/버프/상태는 재소환 시 초기화된다.
+      unit.item = null;
+      player.field.splice(index, 1);
+      player.hand.push({ uid: unit.uid, cardId: unit.cardId });
+      game.log.push(`${unit.name}의 탈출버튼! 피해를 버티고 즉시 손으로 돌아갔다!`);
+    }
+  }
 }
 
 function resolveStriatonTrainer(playerDeckIds, trainer) {
@@ -419,6 +462,14 @@ function resetDraydenExtraAttack(game) {
   });
 }
 
+function runBaseActionWithEject(game, action) {
+  const snapshot = snapshotFieldHp(game);
+  const result = action();
+  resolveImmediateEjectButtons(game, snapshot);
+  syncUnovaState(game);
+  return result;
+}
+
 export function createGame(playerDeckIds, trainer) {
   const resolvedTrainer = resolveStriatonTrainer(playerDeckIds, trainer);
   const game = base.createGame(playerDeckIds, resolvedTrainer);
@@ -467,6 +518,7 @@ export function canPlayCard(game, side, handIdx) {
 }
 
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
+  const damageSnapshot = snapshotFieldHp(game);
   const player = game.players?.[side];
   const handCard = player?.hand?.[handIdx];
   const card = CARD_MAP[handCard?.cardId];
@@ -504,6 +556,8 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     markBurghCocoon(game, side, card, beforeUids);
   }
 
+  // 기술/전투의 함성/특성 피해도 카드 처리 종료 전에 즉시 탈출한다.
+  resolveImmediateEjectButtons(game, damageSnapshot);
   syncUnovaState(game);
   return result;
 }
@@ -535,6 +589,7 @@ export function validAttackTargets(game, side, attackerUid = null) {
 }
 
 export function attack(game, side, attackerUid, target) {
+  const damageSnapshot = snapshotFieldHp(game);
   const attacker = game.players?.[side]?.field?.find((u) => u.uid === attackerUid);
   if (!attacker || !canAttack(game, side, attackerUid)) return false;
 
@@ -628,9 +683,44 @@ export function attack(game, side, attackerUid, target) {
     game.log.push(`${currentAttacker.name}의 용의 왕! 용의 위압으로 한 번 더 공격할 수 있다!`);
   }
 
+  // 방어자의 직접 피격뿐 아니라 공격자가 반격 피해를 받은 경우도 여기서 즉시 복귀한다.
+  // 야콘 광산차 등 attack 후처리에서 발생한 피해도 같은 스냅샷으로 함께 잡는다.
+  resolveImmediateEjectButtons(game, damageSnapshot);
+
   if (currentAttacker) bounceElesaSignature(game, currentAttacker);
   syncUnovaState(game);
   return result;
+}
+
+export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
+  return runBaseActionWithEject(game, () =>
+    base.attackFieldObstacle(game, side, attackerUid, obstacleId),
+  );
+}
+
+// 별도 선택/해결 함수 안에서 발생하는 피해도 동일한 탈출버튼 타이밍을 보장한다.
+export function resolveMoldbreaker(game, ...args) {
+  return runBaseActionWithEject(game, () => base.resolveMoldbreaker(game, ...args));
+}
+
+export function resolveMew(game, ...args) {
+  return runBaseActionWithEject(game, () => base.resolveMew(game, ...args));
+}
+
+export function resolveSpacialRend(game, ...args) {
+  return runBaseActionWithEject(game, () => base.resolveSpacialRend(game, ...args));
+}
+
+export function resolveMagmaStorm(game, ...args) {
+  return runBaseActionWithEject(game, () => base.resolveMagmaStorm(game, ...args));
+}
+
+export function resolvePhioneBraveCharge(game, ...args) {
+  return runBaseActionWithEject(game, () => base.resolvePhioneBraveCharge(game, ...args));
+}
+
+export function resolveManaphyBraveCharge(game, ...args) {
+  return runBaseActionWithEject(game, () => base.resolveManaphyBraveCharge(game, ...args));
 }
 
 export function endTurn(game) {
@@ -646,9 +736,13 @@ export function endTurn(game) {
     resolveDraydenTrial(game);
   }
 
+  const damageSnapshot = snapshotFieldHp(game);
   const cocoonSnapshots = protectCocoons(game);
   const result = base.endTurn(game);
   normalizeCocoons(game, cocoonSnapshots);
+
+  // 날씨/상태/턴 종료 효과 피해는 턴이 화면에 넘어가기 전에 바로 복귀시킨다.
+  resolveImmediateEjectButtons(game, damageSnapshot);
 
   if (game.trainer?.gimmick === "burgh_cocoon" && game.turn === "enemy") {
     evolveBurghCocoons(game);
@@ -661,6 +755,8 @@ export function endTurn(game) {
   if (game.trainer?.gimmick === "skyla_airborne") {
     if (endingSide === "enemy") launchSkyla(game);
     if (game.turn === "enemy") landSkyla(game);
+    // 풍란 착륙 급강하처럼 base.endTurn 이후 발생하는 추가 피해도 즉시 처리한다.
+    resolveImmediateEjectButtons(game, damageSnapshot);
   }
 
   if (game.trainer?.gimmick === "drayden_trials") {
