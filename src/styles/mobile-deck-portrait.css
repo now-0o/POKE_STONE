@@ -1,0 +1,14 @@
+@media (orientation: portrait) and (pointer: coarse) {
+  body.mobile-deck-editing .app {
+    display: block !important;
+  }
+
+  body.mobile-deck-editing::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  body.mobile-deck-editing .rotate-prompt {
+    display: none !important;
+  }
+}
