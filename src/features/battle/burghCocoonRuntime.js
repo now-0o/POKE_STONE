@@ -17,10 +17,40 @@ function unitElement(uid) {
 
 function updateCocoonLabel(uid, turns) {
   const unit = unitElement(uid);
-  if (!unit) return;
+  if (!unit) return false;
+
   const label = unit.querySelector(":scope > .unova-cocoon-overlay span");
-  if (!label) return;
-  label.textContent = `고치 · ${Math.max(1, turns)}턴 후`;
+  if (!label) return false;
+
+  const nextText = `고치 · ${Math.max(1, turns)}턴 후`;
+
+  // 같은 문자열을 다시 쓰지 않는다.
+  // textContent를 반복 갱신하면 DOM mutation이 연쇄적으로 발생할 수 있다.
+  if (label.textContent !== nextText) {
+    label.textContent = nextText;
+  }
+
+  return true;
+}
+
+function refreshActiveLabels() {
+  for (const uid of activeCocoons) {
+    updateCocoonLabel(uid, remainingTurns.get(uid) ?? 2);
+  }
+}
+
+function scheduleLabelRefresh() {
+  // UnovaBattleUi가 고치 overlay를 먼저 생성하므로 대부분 첫 호출에 끝난다.
+  // React/DOM 반영 순서가 늦는 경우만 대비해 정해진 횟수만 재시도한다.
+  refreshActiveLabels();
+
+  window.requestAnimationFrame(() => {
+    refreshActiveLabels();
+    window.requestAnimationFrame(refreshActiveLabels);
+  });
+
+  window.setTimeout(refreshActiveLabels, 80);
+  window.setTimeout(refreshActiveLabels, 180);
 }
 
 function playHatch(uid, attempt = 0) {
@@ -96,10 +126,6 @@ function syncBurghCocoons(state = readState()) {
     }
   }
 
-  for (const uid of currentCocoons) {
-    updateCocoonLabel(uid, remainingTurns.get(uid) ?? 2);
-  }
-
   for (const uid of [...remainingTurns.keys()]) {
     if (!currentCocoons.has(uid)) {
       const hatchedNow = enteredEnemyTurn && remainingTurns.get(uid) === 0;
@@ -110,11 +136,9 @@ function syncBurghCocoons(state = readState()) {
   activeCocoons = currentCocoons;
   lastTurn = state.turn || lastTurn;
 
-  window.requestAnimationFrame(() => {
-    for (const uid of currentCocoons) {
-      updateCocoonLabel(uid, remainingTurns.get(uid) ?? 2);
-    }
-  });
+  // 전역 MutationObserver를 두지 않는다.
+  // 상태 이벤트 직후 정해진 횟수만 갱신해 브라우저 잠김을 방지한다.
+  scheduleLabelRefresh();
 }
 
 function startBurghCocoonRuntime() {
@@ -126,17 +150,10 @@ function startBurghCocoonRuntime() {
   }
 
   syncBurghCocoons();
+
   window.addEventListener("unova-gym-state-change", (event) => {
     syncBurghCocoons(event.detail || readState());
   });
-
-  const observer = new MutationObserver(() => {
-    if (readState().gimmick !== "burgh_cocoon") return;
-    for (const uid of activeCocoons) {
-      updateCocoonLabel(uid, remainingTurns.get(uid) ?? 2);
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 startBurghCocoonRuntime();
