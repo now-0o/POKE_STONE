@@ -1,0 +1,192 @@
+/* Mobile shop/header polish. Loaded last so it wins over legacy responsive rules. */
+
+@media (pointer: coarse), (max-width: 1024px) {
+  /* Mobile does not need the floating audio / patch-note controls. */
+  .audio-controls,
+  .btn-patchnotes,
+  .patchnotes-panel {
+    display: none !important;
+  }
+
+  /* Card-pack shop header: same compact navy/gold language as the deck editor. */
+  .pack-shop > .screen-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 140 !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 6px 10px !important;
+    display: grid !important;
+    grid-template-columns: minmax(74px, 1fr) auto minmax(74px, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(10, 16, 32, 0.97) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(12px) !important;
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  .pack-shop > .screen-header h2 {
+    min-width: 0 !important;
+    margin: 0 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-family: var(--display-font) !important;
+    font-size: clamp(14px, 3.8vw, 18px) !important;
+    line-height: 1 !important;
+    color: var(--accent) !important;
+  }
+
+  /* Visually standardise PackShop's legacy "돌아가기" label to the deck editor's "뒤로". */
+  .pack-shop > .screen-header .btn-ghost {
+    justify-self: start !important;
+    min-height: 32px !important;
+    padding: 0 4px !important;
+    border: 0 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    font-size: 0 !important;
+    color: var(--text-dim) !important;
+  }
+
+  .pack-shop > .screen-header .btn-ghost::after {
+    content: "← 뒤로";
+    font-family: var(--body-font);
+    font-size: 12px;
+    line-height: 32px;
+  }
+
+  .pack-shop > .screen-header .pack-header-spacer {
+    min-width: 74px !important;
+  }
+
+  .pack-shop > .screen-header .money-display {
+    justify-self: end !important;
+    min-width: 74px !important;
+    justify-content: flex-end !important;
+    white-space: nowrap !important;
+    font-size: 12px !important;
+  }
+
+  .pack-shop > .screen-header .money-display .res-icon {
+    width: 18px !important;
+    height: 18px !important;
+    margin-right: 3px !important;
+    vertical-align: 0 !important;
+  }
+
+  .pack-shop .pack-buy-area {
+    padding-top: 12px !important;
+  }
+}
+
+/* Portrait mobile: two packs per row, centered as a compact shop grid. */
+@media (orientation: portrait) and (max-width: 1024px) {
+  .pack-shop:has(.pack-buy-area),
+  .pack-shop:has(.pack-open-area) {
+    padding-left: max(10px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .pack-shop .pack-buy-area {
+    width: 100% !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  .pack-shop .pack-section-label,
+  .pack-shop .pack-note {
+    width: min(100%, 350px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .pack-shop .pack-section-label {
+    text-align: center !important;
+  }
+
+  .pack-shop .pack-row {
+    width: min(100%, 350px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    justify-content: center !important;
+    align-items: start !important;
+    gap: 18px 10px !important;
+    overflow: visible !important;
+    flex-wrap: unset !important;
+    scroll-snap-type: none !important;
+  }
+
+  .pack-shop .pack-row > .pack-column {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: none !important;
+    gap: 8px !important;
+    justify-self: stretch !important;
+  }
+
+  .pack-shop .pack-row > .pack-column:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    width: calc((100% - 10px) / 2) !important;
+    justify-self: center !important;
+  }
+
+  .pack-shop .pack-column .pack-visual {
+    width: min(100%, 158px) !important;
+    max-width: 158px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .pack-shop .pack-column > .btn-primary {
+    width: min(100%, 158px) !important;
+    max-width: 158px !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 10px 5px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Landscape mobile: preserve the existing horizontal shop flow, but respect notches/rounded edges. */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .pack-shop:has(.pack-buy-area),
+  .pack-shop:has(.pack-open-area) {
+    padding-left: max(16px, calc(env(safe-area-inset-left, 0px) + 8px)) !important;
+    padding-right: max(16px, calc(env(safe-area-inset-right, 0px) + 8px)) !important;
+  }
+
+  .pack-shop > .screen-header {
+    min-height: 38px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .pack-shop > .screen-header h2 {
+    font-size: clamp(13px, 2.3vw, 17px) !important;
+  }
+
+  .pack-shop .pack-row,
+  .pack-shop .pack-cards {
+    scroll-padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    scroll-padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .pack-shop .pack-row {
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+}
