@@ -3,7 +3,7 @@
 .unova-spotlight-search-fx {
   position: absolute;
   inset: 0;
-  z-index: 1450;
+  z-index: 180;
   overflow: hidden;
   pointer-events: auto;
   border-radius: inherit;
