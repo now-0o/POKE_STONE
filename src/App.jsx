@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import MainMenu from "./components/MainMenu.jsx";
 import Battle from "./components/Battle.jsx";
 import PackShop from "./components/PackShop.jsx";
-import DeckEditor from "./components/DeckEditor.jsx";
+import DeckEditor from "./components/ResponsiveDeckEditor.jsx";
 import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
