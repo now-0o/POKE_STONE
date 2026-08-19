@@ -67,19 +67,19 @@ function layoutHand(hand) {
   const expandedStep =
     count > 1 ? Math.min(expandedStepMax, expandedSpan / (count - 1)) : 0;
 
-  // 평소 축소 손패는 기존처럼 작게 포개되, '버리고 뽑기'가 있는 경우에는
-  // 버튼이 다른 카드 wrap에 가려지지 않도록 손패를 왼쪽 방향으로 더 넓게 편다.
+  // 축소 손패는 기본 포개짐을 유지한다. 버리기 버튼이 있는 경우에도
+  // 버튼이 눌릴 정도만 살짝 넓히고, 손패가 화면을 길게 차지하지 않게 제한한다.
   const collapsedLimit = hasDiscardControls
     ? portrait
-      ? 188
-      : 176
+      ? 124
+      : 128
     : portrait
       ? 96
       : 112;
   const collapsedViewportRatio = hasDiscardControls
     ? portrait
-      ? 0.5
-      : 0.28
+      ? 0.34
+      : 0.22
     : portrait
       ? 0.25
       : 0.18;
@@ -94,7 +94,7 @@ function layoutHand(hand) {
     const offset = index - center;
     const angle = Math.max(-10, Math.min(10, offset * 2.15));
     // 축소 손패의 기준점은 우측 하단이므로 버리기 버튼이 있을 때는
-    // 마지막 카드를 기준(0)으로 두고 나머지를 왼쪽으로만 펼친다.
+    // 마지막 카드를 기준(0)으로 두고 나머지를 왼쪽으로만 살짝 펼친다.
     const collapsedOffset = hasDiscardControls
       ? (index - (count - 1)) * collapsedStep
       : offset * collapsedStep;
