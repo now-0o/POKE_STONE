@@ -35,7 +35,7 @@ function updateCocoonLabel(uid, turns) {
 
 function refreshActiveLabels() {
   for (const uid of activeCocoons) {
-    updateCocoonLabel(uid, remainingTurns.get(uid) ?? 2);
+    updateCocoonLabel(uid, remainingTurns.get(uid) ?? 3);
   }
 }
 
@@ -111,12 +111,12 @@ function syncBurghCocoons(state = readState()) {
   const enteredEnemyTurn = lastTurn === "player" && state.turn === "enemy";
 
   for (const uid of currentCocoons) {
-    if (!remainingTurns.has(uid)) remainingTurns.set(uid, 2);
+    if (!remainingTurns.has(uid)) remainingTurns.set(uid, 3);
   }
 
   if (enteredEnemyTurn) {
     for (const uid of activeCocoons) {
-      const before = remainingTurns.get(uid) ?? 2;
+      const before = remainingTurns.get(uid) ?? 3;
       const after = Math.max(0, before - 1);
       remainingTurns.set(uid, after);
 
