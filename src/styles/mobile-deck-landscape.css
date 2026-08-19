@@ -1,0 +1,547 @@
+/* Dedicated mobile landscape deck editor. Loaded after shared/mobile styles. */
+
+@media (orientation: landscape) and (pointer: coarse) {
+  body.mobile-deck-landscape-editing,
+  body.mobile-deck-landscape-editing *:not(input):not(textarea) {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+
+  body.mobile-deck-landscape-editing img {
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+  }
+
+  body.mobile-deck-landscape-editing .audio-controls,
+  body.mobile-deck-landscape-editing .btn-patchnotes,
+  body.mobile-deck-landscape-editing .patchnotes-panel {
+    display: none !important;
+  }
+
+  .mobile-landscape-deck-editor {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    width: 100vw;
+    height: 100dvh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 90% 42% at 45% -8%, rgba(45, 68, 120, 0.65), transparent 65%),
+      linear-gradient(180deg, #0b1020 0%, #0d1428 58%, #09101f 100%);
+    color: var(--text);
+    padding:
+      env(safe-area-inset-top, 0px)
+      env(safe-area-inset-right, 0px)
+      env(safe-area-inset-bottom, 0px)
+      env(safe-area-inset-left, 0px);
+  }
+
+  .mobile-landscape-top {
+    position: relative;
+    z-index: 20;
+    flex: 0 0 auto;
+    padding: 4px 7px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 16, 32, 0.97);
+  }
+
+  .mobile-landscape-title-row {
+    height: 30px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-landscape-title-row .btn-ghost {
+    min-height: 28px;
+    padding: 0 4px;
+    font-size: 11px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .mobile-landscape-title-row h2 {
+    min-width: 0;
+    margin: 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--display-font);
+    font-size: clamp(13px, 2.3vw, 17px);
+    color: var(--accent);
+  }
+
+  .mobile-landscape-count {
+    min-width: 118px;
+    text-align: right;
+    white-space: nowrap;
+    font-family: var(--display-font);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .mobile-landscape-count.ok {
+    color: #7ee0a3;
+  }
+
+  .mobile-landscape-control-row {
+    height: 34px;
+    margin-top: 3px;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(150px, 34%);
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mobile-landscape-search {
+    min-width: 0;
+    height: 32px;
+    margin: 0 !important;
+  }
+
+  .mobile-landscape-search .deck-search-input {
+    height: 32px;
+    min-height: 32px;
+    font-size: 11px;
+  }
+
+  .mobile-landscape-filter-toggle {
+    width: 100%;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.055);
+    color: var(--text);
+    font-size: 11px;
+  }
+
+  .mobile-landscape-filter-toggle span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-landscape-filter-toggle strong {
+    flex: 0 0 auto;
+    color: var(--accent);
+    font-size: 15px;
+    transition: transform 0.18s ease;
+  }
+
+  .mobile-landscape-filter-toggle.open strong {
+    transform: rotate(180deg);
+  }
+
+  .mobile-landscape-filter-dropdown {
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 7px;
+    right: 7px;
+    z-index: 50;
+    max-height: min(58dvh, 300px);
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 0 0 12px 12px;
+    background: rgba(13, 21, 41, 0.985);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.48);
+    overscroll-behavior: contain;
+  }
+
+  .mobile-landscape-filter-section + .mobile-landscape-filter-section,
+  .mobile-landscape-ability-box {
+    margin-top: 8px;
+  }
+
+  .mobile-landscape-filter-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-family: var(--display-font);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .mobile-landscape-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .mobile-landscape-chip-row .filter-btn,
+  .mobile-landscape-chip-row .sort-btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    padding: 6px 9px;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    writing-mode: horizontal-tb !important;
+  }
+
+  .mobile-landscape-ability-box {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .mobile-landscape-ability-box summary {
+    padding: 7px 9px;
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+
+  .mobile-landscape-ability-list {
+    max-height: 120px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 0 7px 7px;
+  }
+
+  .mobile-landscape-ability-check {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 10px;
+  }
+
+  .mobile-landscape-ability-check span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-landscape-ability-check.active {
+    background: rgba(245, 197, 66, 0.14);
+    color: var(--accent);
+  }
+
+  .mobile-landscape-filter-reset {
+    width: calc(100% - 14px);
+    height: 28px;
+    margin: 0 7px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 10px;
+  }
+
+  .mobile-landscape-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(190px, 28vw, 240px);
+    gap: 7px;
+    padding: 6px 7px 7px;
+    overflow: hidden;
+  }
+
+  .mobile-landscape-collection {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 5px 3px 5px;
+  }
+
+  .mobile-landscape-virtual-space {
+    position: relative;
+    width: 100%;
+    min-height: 1px;
+  }
+
+  .mobile-landscape-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 3px;
+    row-gap: 4px;
+    align-items: start;
+    will-change: transform;
+    overflow: visible;
+  }
+
+  .mobile-landscape-card-item {
+    height: 170px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: visible;
+    touch-action: pan-y;
+  }
+
+  .mobile-landscape-card-shell {
+    position: relative;
+    width: 108px;
+    height: 151px;
+    flex: 0 0 151px;
+    overflow: visible;
+  }
+
+  .mobile-landscape-card-shell > .hand-card {
+    position: absolute !important;
+    top: 8px !important;
+    left: calc(50% - 67px) !important;
+    width: 134px !important;
+    min-width: 134px !important;
+    max-width: 134px !important;
+    height: 188px !important;
+    min-height: 188px !important;
+    max-height: 188px !important;
+    flex: 0 0 188px !important;
+    transform: none !important;
+    scale: 0.75 !important;
+    transform-origin: top center !important;
+    overflow: visible !important;
+    border-width: 3px !important;
+    border-radius: 11px !important;
+    margin: 0 !important;
+    transition: none !important;
+  }
+
+  .mobile-landscape-card-shell > .hand-card .card-art {
+    height: 66px !important;
+    min-height: 66px !important;
+    max-height: 66px !important;
+    flex: 0 0 66px !important;
+  }
+
+  .mobile-landscape-card-shell > .hand-card .card-text {
+    display: block !important;
+    flex: 0 0 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 3px 5px !important;
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-landscape-card-shell > .hand-card .card-cost,
+  .mobile-landscape-card-shell > .hand-card .hcard-orb,
+  .mobile-landscape-card-shell > .hand-card .card-rarity-gem {
+    z-index: 8 !important;
+  }
+
+  .mobile-landscape-card-meta {
+    width: 100%;
+    margin-top: 0;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 9px;
+    line-height: 13px;
+    color: var(--text-dim);
+  }
+
+  .mobile-landscape-inspect {
+    z-index: 500 !important;
+    overflow: visible !important;
+  }
+
+  .mobile-landscape-inspect .hand-card {
+    width: 134px !important;
+    min-width: 134px !important;
+    height: 188px !important;
+    min-height: 188px !important;
+    overflow: visible !important;
+    border-width: 3px !important;
+    scale: 1.45 !important;
+    transform-origin: center center !important;
+  }
+
+  .mobile-landscape-inspect .card-text {
+    display: block !important;
+  }
+
+  .mobile-landscape-deck-pane {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .mobile-landscape-presets {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 4px;
+    padding: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .mobile-landscape-preset {
+    min-width: 0;
+    height: 38px;
+    padding: 3px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--text-dim);
+  }
+
+  .mobile-landscape-preset.active {
+    border-color: rgba(245, 197, 66, 0.72);
+    background: rgba(245, 197, 66, 0.13);
+    color: var(--accent);
+  }
+
+  .mobile-landscape-preset span {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    font-family: var(--display-font);
+    font-size: 9px;
+  }
+
+  .mobile-landscape-preset small {
+    font-size: 8px;
+  }
+
+  .mobile-landscape-deck-tools {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px;
+    padding: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .mobile-landscape-deck-tools input {
+    min-width: 0;
+    height: 28px;
+    padding: 0 7px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.055);
+    color: var(--text);
+    font-size: 10px;
+  }
+
+  .mobile-landscape-deck-tools button,
+  .mobile-landscape-deck-head button {
+    height: 28px;
+    padding: 0 7px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-dim);
+    font-size: 9px;
+  }
+
+  .mobile-landscape-deck-head {
+    flex: 0 0 auto;
+    min-height: 31px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--display-font);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .mobile-landscape-deck-head span {
+    text-align: right;
+  }
+
+  .mobile-landscape-deck-head button {
+    color: #ff8c88;
+  }
+
+  .mobile-landscape-deck-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px;
+  }
+
+  .mobile-landscape-deck-list .deck-row {
+    min-height: 31px !important;
+    margin-bottom: 3px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .mobile-landscape-deck-list .deck-row-name {
+    font-size: 10px;
+  }
+
+  .mobile-landscape-empty {
+    padding: 20px 8px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 10px;
+  }
+
+  @media (max-height: 390px) {
+    .mobile-landscape-title-row {
+      height: 27px;
+    }
+
+    .mobile-landscape-control-row {
+      height: 31px;
+    }
+
+    .mobile-landscape-search,
+    .mobile-landscape-search .deck-search-input,
+    .mobile-landscape-filter-toggle {
+      height: 29px;
+      min-height: 29px;
+    }
+
+    .mobile-landscape-body {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .mobile-landscape-card-item {
+      height: 163px;
+    }
+  }
+}
