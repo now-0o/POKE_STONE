@@ -1,0 +1,237 @@
+/* Portrait pack-opening v4
+ * - each grid cell owns its available width
+ * - front/back share the exact same 134x188 visual origin
+ * - mobile touch hover cannot shift the card back before the flip
+ * Loaded after mobile-pack-open-v3.css.
+ */
+
+@media (orientation: portrait) and (max-width: 1024px) {
+  .pack-shop .pack-open-area {
+    --pack-open-scale-width: 0.86;
+    --pack-open-scale-height: 0.82;
+    --pack-open-scale: min(var(--pack-open-scale-width), var(--pack-open-scale-height));
+    --pack-open-row: 170px;
+  }
+
+  /* Width-responsive scale: keep two cards comfortable on common 320-430px phones. */
+  @media (max-width: 340px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-width: 0.78;
+    }
+  }
+
+  @media (min-width: 341px) and (max-width: 380px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-width: 0.82;
+    }
+  }
+
+  @media (min-width: 381px) and (max-width: 420px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-width: 0.85;
+    }
+  }
+
+  @media (min-width: 421px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-width: 0.88;
+    }
+  }
+
+  /* Height is a separate cap so completion actions still fit without scrolling. */
+  @media (max-height: 720px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-height: 0.76;
+      --pack-open-row: 158px;
+    }
+  }
+
+  @media (max-height: 650px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-height: 0.70;
+      --pack-open-row: 147px;
+    }
+  }
+
+  @media (max-height: 590px) {
+    .pack-shop .pack-open-area {
+      --pack-open-scale-height: 0.64;
+      --pack-open-row: 135px;
+    }
+  }
+
+  .pack-shop:has(.pack-open-area) {
+    overflow: hidden !important;
+  }
+
+  .pack-shop .pack-open-area {
+    width: 100% !important;
+    height: calc(100dvh - 44px) !important;
+    min-height: 0 !important;
+    padding:
+      3px
+      max(8px, env(safe-area-inset-right, 0px))
+      max(4px, env(safe-area-inset-bottom, 0px))
+      max(8px, env(safe-area-inset-left, 0px)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+  }
+
+  /*
+   * No fixed 112px/104px columns. The viewport determines the two equal cells,
+   * while every card is centered inside its own cell.
+   */
+  .pack-shop .pack-open-area .pack-cards {
+    flex: 0 0 auto !important;
+    width: min(100%, 430px) !important;
+    max-width: 430px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: var(--pack-open-row) !important;
+    column-gap: clamp(2px, 1.4vw, 7px) !important;
+    row-gap: 0 !important;
+    justify-content: stretch !important;
+    align-items: start !important;
+    overflow: visible !important;
+    perspective: 900px !important;
+  }
+
+  .pack-shop .pack-open-area .pack-cards > .flip-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: var(--pack-open-row) !important;
+    min-height: var(--pack-open-row) !important;
+    justify-self: stretch !important;
+    position: relative !important;
+    display: grid !important;
+    place-items: start center !important;
+    overflow: visible !important;
+  }
+
+  .pack-shop .pack-open-area .pack-cards > .flip-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    width: 50% !important;
+    justify-self: center !important;
+  }
+
+  .pack-shop .pack-open-area .flip-inner {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    transform-style: preserve-3d !important;
+    transform-origin: 50% 50% !important;
+  }
+
+  .pack-shop .pack-open-area .flip-face {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: grid !important;
+    place-items: start center !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    overflow: visible !important;
+  }
+
+  /* Front and back have the same native origin and are scaled identically. */
+  .pack-shop .pack-open-area .pack-card-wrap,
+  .pack-shop .pack-open-area .card-back {
+    width: 134px !important;
+    min-width: 134px !important;
+    max-width: 134px !important;
+    transform-origin: top center !important;
+    scale: var(--pack-open-scale) !important;
+    margin: 0 !important;
+  }
+
+  .pack-shop .pack-open-area .card-back {
+    height: 188px !important;
+    min-height: 188px !important;
+    max-height: 188px !important;
+    border-width: 3px !important;
+    border-radius: 11px !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .pack-shop .pack-open-area .pack-card-wrap {
+    height: 205px !important;
+    min-height: 205px !important;
+    position: relative !important;
+  }
+
+  /* Touch browsers can leave :hover active after tapping; never let it move the back. */
+  .pack-shop .pack-open-area .flip-card:not(.flipped):hover .card-back,
+  .pack-shop .pack-open-area .flip-card:not(.flipped):active .card-back {
+    transform: none !important;
+    scale: var(--pack-open-scale) !important;
+  }
+
+  /* Settled cards no longer have flip-face, so center the same native shell explicitly. */
+  .pack-shop .pack-open-area .flip-card.settled {
+    display: grid !important;
+    place-items: start center !important;
+  }
+
+  .pack-shop .pack-open-area .flip-card.settled > .pack-card-wrap {
+    justify-self: center !important;
+  }
+
+  /* Keep the front card internals native; only the shell scales. */
+  .pack-shop .pack-open-area .pack-card-wrap > .hand-card {
+    width: 134px !important;
+    min-width: 134px !important;
+    max-width: 134px !important;
+    height: 188px !important;
+    min-height: 188px !important;
+    max-height: 188px !important;
+    flex: 0 0 188px !important;
+    transform: none !important;
+    scale: 1 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .pack-shop .pack-open-area .pack-card-wrap > .hand-card .card-art {
+    height: 66px !important;
+    min-height: 66px !important;
+    max-height: 66px !important;
+    flex: 0 0 66px !important;
+  }
+
+  .pack-shop .pack-open-area .pack-card-wrap > .hand-card .card-text {
+    display: block !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    flex: 0 0 44px !important;
+    padding: 3px 5px !important;
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+    overflow: hidden !important;
+  }
+
+  .pack-shop .pack-open-area .rarity-tag {
+    top: 191px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 9px !important;
+  }
+
+  /* Keep the footer compact and centered below the responsive card grid. */
+  .pack-shop .pack-open-area .reveal-actions,
+  .pack-shop .pack-open-area .pack-done {
+    flex: 0 0 auto !important;
+    width: min(100%, 340px) !important;
+    margin: 0 auto !important;
+  }
+}
