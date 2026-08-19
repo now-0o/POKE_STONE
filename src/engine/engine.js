@@ -130,9 +130,9 @@ function markBurghCocoon(game, side, card, beforeUids) {
   if (!unit) return;
   unit._burghCocoon = true;
   unit._burghEvolveTo = BURGH_COCOON_EVOLUTIONS[card.id];
-  unit._burghCocoonTurns = 2;
+  unit._burghCocoonTurns = 3;
   unit.canAttack = false;
-  game.log.push(`${card.name}이(가) 고치화했다! 두 번째 다음 아티 턴 시작에 우화한다!`);
+  game.log.push(`${card.name}이(가) 고치화했다! 세 번째 다음 아티 턴 시작에 우화한다!`);
 }
 
 function evolveBurghCocoons(game) {
