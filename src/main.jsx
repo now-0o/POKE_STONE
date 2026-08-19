@@ -32,6 +32,9 @@ import './features/mobile/styles.css';
 import './features/mobile/battle-expanded.css';
 // 모든 화면별/모바일 스타일 적용 뒤 비카드 UI 글자 가독성을 최종 보정한다.
 import './styles/ui-readability.css';
+// 모바일 덱 편집기는 공용 모바일 규칙보다 뒤에서 최종 보정한다.
+import './styles/mobile-deck-editor-v2.css';
+import './styles/mobile-deck-responsive-overrides.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
