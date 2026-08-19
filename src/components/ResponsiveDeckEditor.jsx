@@ -1,43 +1,77 @@
 import React, { useEffect, useState } from "react";
 import DeckEditor from "./DeckEditor.jsx";
-import MobileDeckEditor from "./MobileDeckEditorV2.jsx";
+import MobileDeckEditorPortrait from "./MobileDeckEditorPortrait.jsx";
 import "../styles/mobile-deck-portrait.css";
 
-function matchesMobileDeckEditor() {
-  if (typeof window === "undefined") return false;
+function getDeckEditorMode() {
+  if (typeof window === "undefined") return "desktop";
 
-  return (
+  const mobile =
     window.matchMedia("(pointer: coarse)").matches ||
-    window.matchMedia("(max-width: 1024px)").matches
-  );
+    window.matchMedia("(max-width: 1024px)").matches;
+
+  if (!mobile) return "desktop";
+
+  return window.matchMedia("(orientation: portrait)").matches
+    ? "portrait-mobile"
+    : "landscape-mobile";
 }
 
 export default function ResponsiveDeckEditor(props) {
-  const [mobile, setMobile] = useState(matchesMobileDeckEditor);
+  const [mode, setMode] = useState(getDeckEditorMode);
 
   useEffect(() => {
     const coarse = window.matchMedia("(pointer: coarse)");
     const narrow = window.matchMedia("(max-width: 1024px)");
-    const update = () => setMobile(matchesMobileDeckEditor());
+    const portrait = window.matchMedia("(orientation: portrait)");
+    const update = () => setMode(getDeckEditorMode());
 
     coarse.addEventListener?.("change", update);
     narrow.addEventListener?.("change", update);
+    portrait.addEventListener?.("change", update);
 
     return () => {
       coarse.removeEventListener?.("change", update);
       narrow.removeEventListener?.("change", update);
+      portrait.removeEventListener?.("change", update);
     };
   }, []);
 
   useEffect(() => {
-    if (!mobile) return undefined;
+    document.body.classList.remove(
+      "mobile-deck-editing",
+      "mobile-deck-landscape-editing",
+    );
 
-    document.body.classList.add("mobile-deck-editing");
+    if (mode === "portrait-mobile") {
+      document.body.classList.add("mobile-deck-editing");
+    } else if (mode === "landscape-mobile") {
+      document.body.classList.add("mobile-deck-landscape-editing");
+    }
 
     return () => {
-      document.body.classList.remove("mobile-deck-editing");
+      document.body.classList.remove(
+        "mobile-deck-editing",
+        "mobile-deck-landscape-editing",
+      );
     };
-  }, [mobile]);
+  }, [mode]);
 
-  return mobile ? <MobileDeckEditor {...props} /> : <DeckEditor {...props} />;
+  if (mode === "portrait-mobile") {
+    return <MobileDeckEditorPortrait {...props} />;
+  }
+
+  if (mode === "landscape-mobile") {
+    return (
+      <div
+        className="mobile-deck-landscape-shell"
+        onContextMenu={(event) => event.preventDefault()}
+        onDragStart={(event) => event.preventDefault()}
+      >
+        <DeckEditor {...props} />
+      </div>
+    );
+  }
+
+  return <DeckEditor {...props} />;
 }
