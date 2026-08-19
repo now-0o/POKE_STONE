@@ -1,0 +1,55 @@
+/* 배틀 필드 포켓몬 꾹 눌러 보기 - 장착 도구 정보 */
+.inspect-equipped-item {
+  display: none;
+}
+
+.battle-board .inspect-overlay .hand-card .inspect-equipped-item {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  width: 128px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 11px;
+  border: 1px solid rgba(113, 232, 255, 0.62);
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(12, 30, 47, 0.97), rgba(8, 18, 34, 0.98));
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.62), 0 0 15px rgba(74, 196, 224, 0.15);
+  color: #ecfaff;
+  text-align: left;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.battle-board .inspect-overlay .inspect-equipped-item-kicker {
+  font-family: var(--display-font);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  color: #71e8ff;
+}
+
+.battle-board .inspect-overlay .inspect-equipped-item strong {
+  font-family: var(--display-font);
+  font-size: 10px;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.battle-board .inspect-overlay .inspect-equipped-item p {
+  margin: 0;
+  font-size: 7.5px;
+  line-height: 1.5;
+  color: #c7dce6;
+  word-break: keep-all;
+}
+
+@media (max-width: 700px) {
+  .battle-board .inspect-overlay .hand-card .inspect-equipped-item {
+    left: 50%;
+    top: calc(100% + 10px);
+    width: 126px;
+    transform: translateX(-50%);
+  }
+}
