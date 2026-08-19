@@ -54,6 +54,8 @@ import './styles/mobile-battle-hearthstone-v3.css';
 import './styles/mobile-battle-hearthstone-v3-fixes.css';
 // V4는 손패 이동 애니메이션/프로필/필드 중앙정렬/코인토스를 최종 보정한다.
 import './styles/mobile-battle-hearthstone-v4.css';
+// 풍란 이륙은 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
+import './features/battle/skyla-airborne-card.css';
 
 import './features/mobile/battle-hand-runtime.js';
 import './features/battle/runtime.js';
