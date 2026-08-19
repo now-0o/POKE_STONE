@@ -28,6 +28,20 @@ function getHandCount(board) {
   );
 }
 
+function syncMobileBattleViewport() {
+  if (!isMobileBattle()) return;
+
+  const viewport = window.visualViewport;
+  const height = Math.round(viewport?.height || window.innerHeight || 0);
+
+  if (height > 0) {
+    document.documentElement.style.setProperty(
+      "--mobile-battle-vh",
+      `${height}px`,
+    );
+  }
+}
+
 function layoutHand(hand) {
   if (!hand) return;
 
@@ -206,6 +220,19 @@ function onPointerMove(event) {
   }
 }
 
+function holdInspectOpenWhileMoving(event) {
+  if (!isMobileBattle()) return;
+
+  // Battle.jsx normally cancels a long-press inspect as soon as the pointer
+  // moves. Once the inspect overlay is already visible, movement is intentional
+  // (the user may be moving their finger away from text) and must not cancel it
+  // or convert the gesture into an attack/drag. Pointer-up is deliberately not
+  // intercepted, so releasing the finger still closes the inspect view.
+  if (document.querySelector(".battle-board .inspect-overlay")) {
+    event.stopImmediatePropagation();
+  }
+}
+
 function onPointerUp() {
   document
     .querySelectorAll(".battle-board.mobile-field-interacting")
@@ -280,13 +307,24 @@ function refreshHands() {
   });
 }
 
+function refreshMobileBattleLayout() {
+  syncMobileBattleViewport();
+  requestAnimationFrame(refreshHands);
+}
+
 if (typeof document !== "undefined") {
+  syncMobileBattleViewport();
+
   document.addEventListener("pointerdown", onPointerDown, true);
   document.addEventListener("pointermove", onPointerMove, true);
   document.addEventListener("pointerup", onPointerUp, true);
   document.addEventListener("pointercancel", onPointerUp, true);
   document.addEventListener("click", onClickCapture, true);
   document.addEventListener("click", onClickBubble, false);
+
+  // Registered on window capture so it runs before Battle.jsx's temporary
+  // window-level pointermove listeners used by inspect/aim gestures.
+  window.addEventListener("pointermove", holdInspectOpenWhileMoving, true);
 
   const observer = new MutationObserver((mutations) => {
     if (!isMobileBattle()) return;
@@ -308,14 +346,21 @@ if (typeof document !== "undefined") {
     subtree: true,
   });
 
-  window.addEventListener(
-    "resize",
-    () => requestAnimationFrame(refreshHands),
-    { passive: true },
-  );
+  window.addEventListener("resize", refreshMobileBattleLayout, { passive: true });
+  window.visualViewport?.addEventListener("resize", refreshMobileBattleLayout, {
+    passive: true,
+  });
+  window.visualViewport?.addEventListener("scroll", refreshMobileBattleLayout, {
+    passive: true,
+  });
+
   window.addEventListener(
     "orientationchange",
-    () => requestAnimationFrame(refreshHands),
+    () => {
+      refreshMobileBattleLayout();
+      window.setTimeout(refreshMobileBattleLayout, 120);
+      window.setTimeout(refreshMobileBattleLayout, 360);
+    },
     { passive: true },
   );
 }
