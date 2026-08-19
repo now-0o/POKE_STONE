@@ -356,20 +356,24 @@ function recordLenoraTurn(game) {
   const p = game.players.player;
   const counts = p._reviewKindsThisTurn || {};
   const order = ["pokemon", "technique", "item"];
-  let best = null;
-  let bestCount = 0;
-  for (const kind of order) {
-    const value = counts[kind] || 0;
-    if (value > bestCount) {
-      best = kind;
-      bestCount = value;
-    }
+  const bestCount = Math.max(0, ...order.map((kind) => counts[kind] || 0));
+  const tied = bestCount > 0
+    ? order.filter((kind) => (counts[kind] || 0) === bestCount)
+    : [];
+
+  let best = tied[0] || null;
+  if (tied.length > 1) {
+    const sequence = p._reviewUseSequence || [];
+    best = [...sequence].reverse().find((kind) => tied.includes(kind)) || best;
   }
+
   p._reviewPenaltyKind = best;
   p._reviewKindsThisTurn = {};
+  p._reviewUseSequence = [];
   if (best) {
     const label = best === "pokemon" ? "포켓몬" : best === "technique" ? "기술" : "도구";
-    game.log.push(`알로에의 복습 시험! 다음 턴 ${label} 카드 전체 비용 +1!`);
+    const tieText = tied.length > 1 ? " 동률 판정: 마지막 사용 분류!" : "";
+    game.log.push(`알로에의 복습 시험!${tieText} 다음 턴 ${label} 카드 전체 비용 +1!`);
   }
 }
 
@@ -413,6 +417,7 @@ export function createGame(playerDeckIds, trainer) {
   if (game.trainer?.gimmick === "drayden_trials") game._draydenDominance = 0;
   if (game.trainer?.gimmick === "lenora_review") {
     game.players.player._reviewKindsThisTurn = {};
+    game.players.player._reviewUseSequence = [];
     game.players.player._reviewPenaltyKind = null;
   }
   if (game.trainer?.gimmick === "elesa_spotlight") chooseSpotlight(game, game.turn);
@@ -472,6 +477,8 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
       if (kind) {
         p._reviewKindsThisTurn = p._reviewKindsThisTurn || {};
         p._reviewKindsThisTurn[kind] = (p._reviewKindsThisTurn[kind] || 0) + 1;
+        p._reviewUseSequence = p._reviewUseSequence || [];
+        p._reviewUseSequence.push(kind);
       }
     }
 
