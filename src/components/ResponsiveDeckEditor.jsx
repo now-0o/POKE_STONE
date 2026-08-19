@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DeckEditor from "./DeckEditor.jsx";
 import MobileDeckEditorPortrait from "./MobileDeckEditorPortrait.jsx";
+import MobileDeckEditorLandscape from "./MobileDeckEditorLandscape.jsx";
 import "../styles/mobile-deck-portrait.css";
 
 function getDeckEditorMode() {
@@ -62,15 +63,7 @@ export default function ResponsiveDeckEditor(props) {
   }
 
   if (mode === "landscape-mobile") {
-    return (
-      <div
-        className="mobile-deck-landscape-shell"
-        onContextMenu={(event) => event.preventDefault()}
-        onDragStart={(event) => event.preventDefault()}
-      >
-        <DeckEditor {...props} />
-      </div>
-    );
+    return <MobileDeckEditorLandscape {...props} />;
   }
 
   return <DeckEditor {...props} />;
