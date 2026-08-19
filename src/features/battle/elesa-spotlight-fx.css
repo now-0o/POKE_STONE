@@ -7,7 +7,7 @@
   overflow: hidden;
   pointer-events: auto;
   border-radius: inherit;
-  animation: unova-spotlight-scene-in 1.09s ease both;
+  animation: unova-spotlight-scene-in 1.9s ease both;
 }
 
 .unova-spotlight-search-light {
@@ -47,7 +47,7 @@
   );
   filter: blur(.2px);
   mix-blend-mode: screen;
-  animation: unova-spotlight-cone-sway .48s ease-in-out infinite alternate;
+  animation: unova-spotlight-cone-sway .72s ease-in-out infinite alternate;
 }
 
 .unova-spotlight-search-ring {
@@ -72,7 +72,7 @@
   font-weight: 900;
   letter-spacing: .22em;
   text-shadow: 0 0 12px rgba(255, 218, 73, .76), 0 2px 4px rgba(0,0,0,.86);
-  animation: unova-spotlight-title 1.09s ease both;
+  animation: unova-spotlight-title 1.9s ease both;
 }
 
 .unova-spotlight-search-fx.is-locking .unova-spotlight-search-light {
@@ -102,19 +102,19 @@
 
 @keyframes unova-spotlight-scene-in {
   0% { opacity: 0; }
-  9% { opacity: 1; }
-  90% { opacity: 1; }
+  7% { opacity: 1; }
+  93% { opacity: 1; }
   100% { opacity: 0; }
 }
 
 @keyframes unova-spotlight-cone-sway {
-  from { transform: translateX(-50%) rotate(-1.8deg); opacity: .76; }
-  to { transform: translateX(-50%) rotate(1.8deg); opacity: 1; }
+  from { transform: translateX(-50%) rotate(-1.5deg); opacity: .78; }
+  to { transform: translateX(-50%) rotate(1.5deg); opacity: 1; }
 }
 
 @keyframes unova-spotlight-title {
-  0%, 8% { opacity: 0; transform: translate(-50%, -7px); }
-  20%, 78% { opacity: .95; transform: translate(-50%, 0); }
+  0%, 7% { opacity: 0; transform: translate(-50%, -7px); }
+  16%, 84% { opacity: .95; transform: translate(-50%, 0); }
   100% { opacity: 0; transform: translate(-50%, -3px); }
 }
 
