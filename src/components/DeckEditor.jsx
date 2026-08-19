@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useRef, useLayoutEffect } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   CARDS,
   CARD_MAP,
@@ -38,7 +44,8 @@ const TYPE_FILTERS = [
   "퀘스트",
 ];
 
-const MOBILE_PAGE_SIZE = 20;
+const MOBILE_INITIAL_RENDER = 28;
+const MOBILE_OVERSCAN_CARDS = 10;
 
 function getAbilityLabel(abilityId) {
   const text = ABILITY_TEXT[abilityId];
@@ -120,32 +127,29 @@ function isMobileCollectionDevice() {
   );
 }
 
+function sameVirtualWindow(a, b) {
+  return (
+    a.start === b.start &&
+    a.end === b.end &&
+    a.top === b.top &&
+    a.totalHeight === b.totalHeight
+  );
+}
+
 export default function DeckEditor({ save, onSaveChange, onBack }) {
   const [filter, setFilter] = useState("전체");
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState("cost");
   const [abilityFilters, setAbilityFilters] = useState([]);
-  const [mobilePage, setMobilePage] = useState(0);
+  const [virtualWindow, setVirtualWindow] = useState({
+    start: 0,
+    end: MOBILE_INITIAL_RENDER,
+    top: 0,
+    totalHeight: 0,
+  });
   const { inspect, press, clickSuppressed } = useInspect();
 
   const mobileLite = useMemo(() => isMobileCollectionDevice(), []);
-
-  function resetMobilePage() {
-    if (mobileLite) {
-      setMobilePage(0);
-    }
-  }
-
-  function toggleAbilityFilter(abilityId) {
-    resetMobilePage();
-    setAbilityFilters((prev) =>
-      prev.includes(abilityId)
-        ? prev.filter((id) => id !== abilityId)
-        : [...prev, abilityId],
-    );
-
-    playSfx("click");
-  }
 
   const activePreset = save.activeDeckPreset || 0;
   const presets = save.deckPresets || [];
@@ -252,21 +256,19 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
       });
   }, [save.collection, filter, searchMatchIds, abilityFilters, sortMode]);
 
-  const mobilePageCount = mobileLite
-    ? Math.max(1, Math.ceil(ownedCards.length / MOBILE_PAGE_SIZE))
-    : 1;
-  const safeMobilePage = Math.min(mobilePage, mobilePageCount - 1);
-  const visibleOwnedCards = mobileLite
-    ? ownedCards.slice(
-        safeMobilePage * MOBILE_PAGE_SIZE,
-        (safeMobilePage + 1) * MOBILE_PAGE_SIZE,
-      )
-    : ownedCards;
-
   const collectionGridRef = useRef(null);
   const collectionPaneRef = useRef(null);
   const previousCardRectsRef = useRef(new Map());
   const deckNameInputRef = useRef(null);
+  const virtualMetricsRef = useRef({ columns: 0, rowStep: 0 });
+  const virtualRafRef = useRef(null);
+
+  const visibleOwnedCards = mobileLite
+    ? ownedCards.slice(
+        Math.min(virtualWindow.start, ownedCards.length),
+        Math.min(virtualWindow.end, ownedCards.length),
+      )
+    : ownedCards;
 
   function captureCardPositions() {
     if (mobileLite) {
@@ -285,11 +287,194 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     previousCardRectsRef.current = rects;
   }
 
-  function changeMobilePage(nextPage) {
-    const clamped = Math.max(0, Math.min(nextPage, mobilePageCount - 1));
-    setMobilePage(clamped);
-    collectionPaneRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  function calculateVirtualWindow(columns, rowStep) {
+    const pane = collectionPaneRef.current;
+
+    if (!mobileLite || !pane || columns <= 0 || rowStep <= 0) {
+      return;
+    }
+
+    const totalRows = Math.ceil(ownedCards.length / columns);
+
+    if (totalRows === 0) {
+      const emptyWindow = { start: 0, end: 0, top: 0, totalHeight: 0 };
+      setVirtualWindow((prev) =>
+        sameVirtualWindow(prev, emptyWindow) ? prev : emptyWindow,
+      );
+      return;
+    }
+
+    const firstVisibleRow = Math.max(0, Math.floor(pane.scrollTop / rowStep));
+    const lastVisibleRow = Math.min(
+      totalRows - 1,
+      Math.floor((pane.scrollTop + Math.max(1, pane.clientHeight - 1)) / rowStep),
+    );
+    const overscanRows = Math.max(1, Math.ceil(MOBILE_OVERSCAN_CARDS / columns));
+    const startRow = Math.max(0, firstVisibleRow - overscanRows);
+    const endRow = Math.min(totalRows - 1, lastVisibleRow + overscanRows);
+
+    const nextWindow = {
+      start: startRow * columns,
+      end: Math.min(ownedCards.length, (endRow + 1) * columns),
+      top: startRow * rowStep,
+      totalHeight: totalRows * rowStep,
+    };
+
+    setVirtualWindow((prev) =>
+      sameVirtualWindow(prev, nextWindow) ? prev : nextWindow,
+    );
   }
+
+  function measureMobileGrid() {
+    if (!mobileLite) {
+      return;
+    }
+
+    const grid = collectionGridRef.current;
+    const children = grid ? Array.from(grid.children) : [];
+
+    if (!grid || children.length === 0) {
+      return;
+    }
+
+    const firstTop = children[0].offsetTop;
+    let columns = 0;
+
+    while (
+      columns < children.length &&
+      Math.abs(children[columns].offsetTop - firstTop) < 1
+    ) {
+      columns += 1;
+    }
+
+    columns = Math.max(1, columns);
+
+    let rowStep = 0;
+
+    if (children.length > columns) {
+      rowStep = children[columns].offsetTop - firstTop;
+    }
+
+    if (rowStep <= 0) {
+      const style = window.getComputedStyle(grid);
+      const gap = parseFloat(style.rowGap || style.gap || "0") || 0;
+      rowStep = children[0].offsetHeight + gap;
+    }
+
+    if (rowStep <= 0) {
+      return;
+    }
+
+    const previous = virtualMetricsRef.current;
+    virtualMetricsRef.current = { columns, rowStep };
+
+    if (previous.columns !== columns || previous.rowStep !== rowStep) {
+      calculateVirtualWindow(columns, rowStep);
+      return;
+    }
+
+    calculateVirtualWindow(columns, rowStep);
+  }
+
+  function resetMobileVirtualization() {
+    if (!mobileLite) {
+      return;
+    }
+
+    if (virtualRafRef.current !== null) {
+      cancelAnimationFrame(virtualRafRef.current);
+      virtualRafRef.current = null;
+    }
+
+    virtualMetricsRef.current = { columns: 0, rowStep: 0 };
+    collectionPaneRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    setVirtualWindow({
+      start: 0,
+      end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length || MOBILE_INITIAL_RENDER),
+      top: 0,
+      totalHeight: 0,
+    });
+  }
+
+  function handleCollectionScroll() {
+    if (!mobileLite || virtualRafRef.current !== null) {
+      return;
+    }
+
+    virtualRafRef.current = requestAnimationFrame(() => {
+      virtualRafRef.current = null;
+      const { columns, rowStep } = virtualMetricsRef.current;
+      calculateVirtualWindow(columns, rowStep);
+    });
+  }
+
+  useLayoutEffect(() => {
+    if (!mobileLite) {
+      return;
+    }
+
+    const pane = collectionPaneRef.current;
+
+    if (pane) {
+      pane.scrollTop = 0;
+    }
+
+    virtualMetricsRef.current = { columns: 0, rowStep: 0 };
+    setVirtualWindow({
+      start: 0,
+      end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length),
+      top: 0,
+      totalHeight: 0,
+    });
+  }, [mobileLite, ownedCards]);
+
+  useLayoutEffect(() => {
+    if (!mobileLite) {
+      return;
+    }
+
+    measureMobileGrid();
+  }, [
+    mobileLite,
+    ownedCards.length,
+    virtualWindow.start,
+    virtualWindow.end,
+  ]);
+
+  useEffect(() => {
+    if (!mobileLite) {
+      return undefined;
+    }
+
+    const onResize = () => {
+      if (virtualRafRef.current !== null) {
+        cancelAnimationFrame(virtualRafRef.current);
+      }
+
+      virtualRafRef.current = requestAnimationFrame(() => {
+        virtualRafRef.current = null;
+        virtualMetricsRef.current = { columns: 0, rowStep: 0 };
+        setVirtualWindow((prev) => ({
+          start: 0,
+          end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length),
+          top: 0,
+          totalHeight: 0,
+        }));
+        collectionPaneRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      });
+    };
+
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+
+      if (virtualRafRef.current !== null) {
+        cancelAnimationFrame(virtualRafRef.current);
+        virtualRafRef.current = null;
+      }
+    };
+  }, [mobileLite, ownedCards.length]);
 
   useLayoutEffect(() => {
     if (mobileLite) {
@@ -347,6 +532,18 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
     previousCardRectsRef.current = new Map();
   }, [ownedCards, mobileLite]);
+
+  function toggleAbilityFilter(abilityId) {
+    captureCardPositions();
+    resetMobileVirtualization();
+    setAbilityFilters((prev) =>
+      prev.includes(abilityId)
+        ? prev.filter((id) => id !== abilityId)
+        : [...prev, abilityId],
+    );
+
+    playSfx("click");
+  }
 
   function addToDeck(cardId) {
     if (clickSuppressed()) return;
@@ -457,6 +654,41 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     onSaveChange();
   }
 
+  function renderCollectionCards(cards) {
+    return cards.map((card) => {
+      const owned = save.collection[card.id];
+      const inDeck = deckCounts[card.id] || 0;
+      const max = Math.min(MAX_COPIES[card.rarity], owned);
+
+      return (
+        <div
+          key={card.id}
+          className="collection-item"
+          data-card-id={card.id}
+        >
+          <HandCard
+            cardId={card.id}
+            playable={
+              inDeck < max &&
+              save.deck.length < 30 &&
+              (save.adminMode ||
+                !isLegendaryPokemon(card) ||
+                legendaryPokemonCount < MAX_LEGENDARY_POKEMON)
+            }
+            onClick={() => addToDeck(card.id)}
+            onPointerDown={press({ cardId: card.id })}
+          />
+          <div className="collection-meta">
+            보유 {owned} · 덱 {inDeck}/{max}
+          </div>
+        </div>
+      );
+    });
+  }
+
+  const mobileVirtualized =
+    mobileLite && virtualWindow.totalHeight > 0 && ownedCards.length > 0;
+
   return (
     <div
       className="deck-editor"
@@ -500,7 +732,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             value={search}
             onChange={(e) => {
               captureCardPositions();
-              resetMobilePage();
+              resetMobileVirtualization();
               setSearch(e.target.value);
             }}
             placeholder="카드 이름 검색"
@@ -513,7 +745,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               className="deck-search-clear"
               onClick={() => {
                 captureCardPositions();
-                resetMobilePage();
+                resetMobileVirtualization();
                 setSearch("");
               }}
             >
@@ -532,7 +764,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               onClick={() => {
                 playSfx("click");
                 captureCardPositions();
-                resetMobilePage();
+                resetMobileVirtualization();
                 setFilter(t);
               }}
             >
@@ -572,7 +804,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               className="ability-filter-reset"
               onClick={() => {
                 playSfx("click");
-                resetMobilePage();
+                captureCardPositions();
+                resetMobileVirtualization();
                 setAbilityFilters([]);
               }}
             >
@@ -594,7 +827,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               onClick={() => {
                 playSfx("click");
                 captureCardPositions();
-                resetMobilePage();
+                resetMobileVirtualization();
                 setSortMode(key);
               }}
             >
@@ -616,6 +849,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         <div
           ref={collectionPaneRef}
           className="collection-pane"
+          onScroll={mobileLite ? handleCollectionScroll : undefined}
           style={{
             minHeight: 0,
             overflowY: "auto",
@@ -624,88 +858,36 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {mobileLite && ownedCards.length > 0 && (
+          {mobileLite ? (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
-                margin: "0 0 10px",
-                padding: "6px 8px",
-                fontSize: "11px",
-                opacity: 0.85,
+                position: "relative",
+                height: mobileVirtualized
+                  ? `${virtualWindow.totalHeight}px`
+                  : "auto",
+                minHeight: mobileVirtualized ? 0 : undefined,
               }}
             >
-              <span>
-                카드 {safeMobilePage * MOBILE_PAGE_SIZE + 1}-
-                {Math.min((safeMobilePage + 1) * MOBILE_PAGE_SIZE, ownedCards.length)} / {ownedCards.length}
-              </span>
-              <span>모바일 경량 모드</span>
+              <div
+                className="collection-grid"
+                ref={collectionGridRef}
+                style={
+                  mobileVirtualized
+                    ? {
+                        position: "absolute",
+                        top: `${virtualWindow.top}px`,
+                        left: 0,
+                        right: 0,
+                      }
+                    : undefined
+                }
+              >
+                {renderCollectionCards(visibleOwnedCards)}
+              </div>
             </div>
-          )}
-
-          <div className="collection-grid" ref={collectionGridRef}>
-            {visibleOwnedCards.map((card) => {
-              const owned = save.collection[card.id];
-              const inDeck = deckCounts[card.id] || 0;
-              const max = Math.min(MAX_COPIES[card.rarity], owned);
-
-              return (
-                <div
-                  key={card.id}
-                  className="collection-item"
-                  data-card-id={card.id}
-                >
-                  <HandCard
-                    cardId={card.id}
-                    playable={
-                      inDeck < max &&
-                      save.deck.length < 30 &&
-                      (save.adminMode ||
-                        !isLegendaryPokemon(card) ||
-                        legendaryPokemonCount < MAX_LEGENDARY_POKEMON)
-                    }
-                    onClick={() => addToDeck(card.id)}
-                    onPointerDown={press({ cardId: card.id })}
-                  />
-                  <div className="collection-meta">
-                    보유 {owned} · 덱 {inDeck}/{max}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {mobileLite && mobilePageCount > 1 && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                padding: "14px 6px 8px",
-              }}
-            >
-              <button
-                type="button"
-                className="btn-ghost small"
-                disabled={safeMobilePage === 0}
-                onClick={() => changeMobilePage(safeMobilePage - 1)}
-              >
-                ← 이전
-              </button>
-              <span style={{ minWidth: "58px", textAlign: "center", fontSize: "12px" }}>
-                {safeMobilePage + 1} / {mobilePageCount}
-              </span>
-              <button
-                type="button"
-                className="btn-ghost small"
-                disabled={safeMobilePage >= mobilePageCount - 1}
-                onClick={() => changeMobilePage(safeMobilePage + 1)}
-              >
-                다음 →
-              </button>
+          ) : (
+            <div className="collection-grid" ref={collectionGridRef}>
+              {renderCollectionCards(ownedCards)}
             </div>
           )}
         </div>
