@@ -1,0 +1,18 @@
+/* 손패 카드 코스트 증감 표시
+   - 상승: 빨강
+   - 하락: 청록
+   - 기본: 기존 흰색 유지 */
+
+.battle.battle-board .hand-card .card-cost.cost-increased {
+  color: #ff626c !important;
+  text-shadow:
+    0 1px 2px rgba(72, 0, 8, 0.95),
+    0 0 6px rgba(255, 74, 88, 0.72) !important;
+}
+
+.battle.battle-board .hand-card .card-cost.cost-reduced {
+  color: #71e8ff !important;
+  text-shadow:
+    0 1px 2px rgba(0, 38, 58, 0.95),
+    0 0 6px rgba(69, 218, 255, 0.72) !important;
+}
