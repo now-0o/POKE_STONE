@@ -1125,6 +1125,16 @@ export function aiStep(game) {
     return false;
   }
 
+  // 카밀레: 턴 시작 스포트라이트가 끝나기 전에는 AI가 행동하지 않는다.
+  // 카드 확대/기믹 설명 때문에 연출이 보류된 동안에도 동일하게 대기한다.
+  if (
+    game.trainer?.gimmick === "elesa_spotlight" &&
+    typeof window !== "undefined" &&
+    window.__pokeElesaSpotlightBusy
+  ) {
+    return false;
+  }
+
   const level = Math.max(1, game.trainer?.aiLevel || 1);
 
   // ========================================================
