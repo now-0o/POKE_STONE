@@ -1,0 +1,63 @@
+name: Elesa AI spotlight sync hotfix
+
+on:
+  push:
+    paths:
+      - .github/workflows/elesa-ai-sync-hotfix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch AI spotlight guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/engine/ai.js')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''export function aiStep(game) {
+            if (game.winner || game.turn !== SIDE) {
+              return false;
+            }
+
+            const level = Math.max(1, game.trainer?.aiLevel || 1);'''
+
+          new = '''export function aiStep(game) {
+            if (game.winner || game.turn !== SIDE) {
+              return false;
+            }
+
+            // 카밀레: 턴 시작 스포트라이트가 끝나기 전에는 AI가 행동하지 않는다.
+            // 카드 확대/기믹 설명 때문에 연출이 보류된 동안에도 동일하게 대기한다.
+            if (
+              game.trainer?.gimmick === "elesa_spotlight" &&
+              typeof window !== "undefined" &&
+              window.__pokeElesaSpotlightBusy
+            ) {
+              return false;
+            }
+
+            const level = Math.max(1, game.trainer?.aiLevel || 1);'''
+
+          if old not in text:
+              raise SystemExit('aiStep patch target not found')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Commit hotfix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/engine/ai.js
+          git diff --cached --quiet || git commit -m "fix: wait for Elesa spotlight before AI action"
+          git push
