@@ -1,0 +1,371 @@
+/* Mobile PackShop layout v2 — loaded after all previous shop/mobile rules. */
+
+@media (pointer: coarse), (max-width: 1024px) {
+  /* The shop owns the whole mobile viewport. Remove the 12px .app dead zone. */
+  .pack-shop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 42 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background:
+      radial-gradient(ellipse 90% 42% at 50% -8%, rgba(45, 68, 120, 0.65), transparent 65%),
+      linear-gradient(180deg, #0b1020 0%, #0d1428 58%, #09101f 100%) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pack-shop > .screen-header {
+    padding-left: max(10px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  /* All section captions use one mobile type scale. */
+  .pack-shop .pack-section-label,
+  .pack-shop .pack-section-label.pack-section-legend {
+    font-family: var(--display-font) !important;
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .pack-shop .pack-note {
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+  }
+}
+
+/* ---------------- Portrait purchase screen ---------------- */
+@media (orientation: portrait) and (max-width: 1024px) {
+  .pack-shop:has(.pack-buy-area) {
+    padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .pack-shop .pack-buy-area {
+    width: 100% !important;
+    min-height: calc(100dvh - 44px) !important;
+    padding: 10px 0 10px !important;
+    gap: 13px !important;
+    align-items: center !important;
+  }
+
+  .pack-shop .pack-section-label,
+  .pack-shop .pack-note {
+    width: min(100%, 344px) !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+  }
+
+  /* Explicit two-line legend explanation instead of accidental wrapping. */
+  .pack-shop .pack-section-label.pack-section-legend {
+    font-size: 0 !important;
+    min-height: 33px !important;
+    display: grid !important;
+    place-items: center !important;
+  }
+
+  .pack-shop .pack-section-label.pack-section-legend::after {
+    content: "✦ 레전드 테마팩\A레전드 확률 4% · 특정 레전드만 등장";
+    white-space: pre-line;
+    font-family: var(--display-font);
+    font-size: 11px;
+    line-height: 1.45;
+    color: #e0c060;
+  }
+
+  .pack-shop .pack-row {
+    width: min(100%, 344px) !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 13px 8px !important;
+    align-items: start !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  .pack-shop .pack-row > .pack-column {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: none !important;
+    gap: 7px !important;
+  }
+
+  .pack-shop .pack-row > .pack-column:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    width: calc((100% - 8px) / 2) !important;
+    justify-self: center !important;
+  }
+
+  /* Short, square-ish pack art instead of the tall desktop foil. */
+  .pack-shop .pack-column .pack-visual {
+    width: min(100%, 164px) !important;
+    height: 164px !important;
+    min-height: 164px !important;
+    max-height: 164px !important;
+    aspect-ratio: 1 / 1 !important;
+    margin: 0 auto !important;
+    padding: 11px 8px 9px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border-radius: 13px !important;
+    overflow: hidden !important;
+  }
+
+  .pack-shop .pack-visual .pack-foil-top,
+  .pack-shop .pack-visual .pack-foil-bottom {
+    height: 8px !important;
+  }
+
+  .pack-shop .pack-visual .pack-ball {
+    width: 48px !important;
+    height: 48px !important;
+    flex: 0 0 48px !important;
+    margin: 0 0 2px !important;
+  }
+
+  .pack-shop .pack-visual .pack-label {
+    font-size: 13px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .pack-shop .pack-visual .pack-sublabel {
+    max-width: 142px !important;
+    margin: 1px 0 !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Keep the price/card-count/guarantee block deliberately at two compact lines. */
+  .pack-shop .pack-visual .pack-price {
+    width: 132px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    margin: 3px auto 0 !important;
+    padding: 0 !important;
+    font-size: 8.5px !important;
+    line-height: 13px !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .pack-shop .pack-column > .btn-primary {
+    width: min(100%, 164px) !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    margin: 0 auto !important;
+    padding: 0 5px !important;
+    font-size: 11px !important;
+    line-height: 36px !important;
+  }
+}
+
+/* ---------------- Landscape purchase screen ---------------- */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .pack-shop:has(.pack-buy-area) {
+    padding-left: max(18px, calc(env(safe-area-inset-left, 0px) + 10px)) !important;
+    padding-right: max(18px, calc(env(safe-area-inset-right, 0px) + 10px)) !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .pack-shop .pack-buy-area {
+    min-height: calc(100dvh - 38px) !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    gap: 9px !important;
+  }
+
+  .pack-shop .pack-section-label,
+  .pack-shop .pack-section-label.pack-section-legend {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    text-align: left !important;
+  }
+
+  .pack-shop .pack-section-label.pack-section-legend::after {
+    content: none !important;
+  }
+
+  /* Legend caption must remain a single line in landscape. */
+  .pack-shop .pack-section-label.pack-section-legend {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .pack-shop .pack-row {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .pack-shop .pack-visual .pack-price {
+    white-space: nowrap !important;
+    font-size: 9px !important;
+  }
+}
+
+/* ---------------- Portrait pack opening ---------------- */
+@media (orientation: portrait) and (max-width: 1024px) {
+  .pack-shop:has(.pack-open-area) {
+    padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .pack-shop .pack-open-area {
+    width: 100% !important;
+    min-height: calc(100dvh - 44px) !important;
+    padding: 10px 0 10px !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+  }
+
+  .pack-shop .pack-open-area .pack-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, 146px) !important;
+    grid-auto-rows: 218px !important;
+    column-gap: 10px !important;
+    row-gap: 4px !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    justify-content: center !important;
+    align-items: start !important;
+    overflow: visible !important;
+  }
+
+  .pack-shop .pack-open-area .pack-cards > .flip-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    justify-self: center !important;
+  }
+
+  .pack-shop .pack-open-area .flip-card,
+  .pack-shop .pack-open-area .flip-inner {
+    width: 146px !important;
+    min-height: 214px !important;
+    height: 214px !important;
+  }
+
+  .pack-shop .pack-open-area .pack-card-wrap,
+  .pack-shop .pack-open-area .card-back {
+    scale: 0.94 !important;
+    transform-origin: top center !important;
+  }
+
+  .pack-shop .pack-open-area .rarity-tag {
+    font-size: 9px !important;
+  }
+
+  .pack-shop .pack-open-area .reveal-actions,
+  .pack-shop .pack-open-area .pack-done {
+    width: 100% !important;
+    margin-top: 2px !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+
+  .pack-shop .pack-open-area .reveal-hint,
+  .pack-shop .pack-open-area .pack-done p {
+    font-size: 10px !important;
+  }
+
+  .pack-shop .pack-open-area .btn-reveal-all,
+  .pack-shop .pack-open-area .pack-done .btn-primary,
+  .pack-shop .pack-open-area .pack-done .btn-secondary {
+    padding: 9px 16px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ---------------- Landscape pack opening ---------------- */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .pack-shop:has(.pack-open-area) {
+    padding-left: max(18px, calc(env(safe-area-inset-left, 0px) + 10px)) !important;
+    padding-right: max(18px, calc(env(safe-area-inset-right, 0px) + 10px)) !important;
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .pack-shop .pack-open-area {
+    width: 100% !important;
+    min-height: calc(100dvh - 38px) !important;
+    padding: 7px 0 6px !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+  }
+
+  .pack-shop .pack-open-area .pack-cards {
+    display: grid !important;
+    grid-template-columns: repeat(5, 118px) !important;
+    gap: 7px !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    justify-content: center !important;
+    align-items: start !important;
+    overflow: visible !important;
+  }
+
+  .pack-shop .pack-open-area .flip-card,
+  .pack-shop .pack-open-area .flip-inner {
+    width: 118px !important;
+    min-height: 164px !important;
+    height: 164px !important;
+  }
+
+  .pack-shop .pack-open-area .pack-card-wrap,
+  .pack-shop .pack-open-area .card-back {
+    scale: 0.78 !important;
+    transform-origin: top center !important;
+  }
+
+  .pack-shop .pack-open-area .rarity-tag {
+    font-size: 8px !important;
+  }
+
+  .pack-shop .pack-open-area .reveal-actions,
+  .pack-shop .pack-open-area .pack-done {
+    width: 100% !important;
+    margin-top: 0 !important;
+    padding-bottom: max(4px, env(safe-area-inset-bottom, 0px)) !important;
+    gap: 6px !important;
+    justify-content: center !important;
+  }
+
+  .pack-shop .pack-open-area .reveal-hint,
+  .pack-shop .pack-open-area .pack-done p {
+    font-size: 9px !important;
+  }
+
+  .pack-shop .pack-open-area .btn-reveal-all,
+  .pack-shop .pack-open-area .pack-done .btn-primary,
+  .pack-shop .pack-open-area .pack-done .btn-secondary {
+    min-height: 30px !important;
+    padding: 6px 13px !important;
+    font-size: 10px !important;
+  }
+}
