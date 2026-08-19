@@ -380,6 +380,7 @@ export function HandCard({
     ? effectiveCost(card, game, "player", handCard)
     : Math.max(0, card.cost - (handCard?.costReduction || 0));
   const discounted = cost < card.cost;
+  const increased = cost > card.cost;
   const shownAbility = unit ? unit.ability : card.ability;
   const shownSecondaryAbility = unit
     ? unit.secondaryAbility
@@ -418,7 +419,9 @@ export function HandCard({
       onMouseLeave={onMouseLeave}
       title={abilityText}
     >
-      <div className={`card-cost ${discounted ? "discounted" : ""}`}>
+      <div
+        className={`card-cost ${discounted ? "discounted" : ""} ${increased ? "increased" : ""}`}
+      >
         {cost}
       </div>
 

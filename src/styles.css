@@ -8852,3 +8852,15 @@ img.res-icon.small {
 .battle-board .field-obstacle.targetable:hover {
   filter: brightness(1.15);
 }
+
+/* 카드 코스트 증감 색상 구분 */
+.card-cost.discounted {
+  color: #d9fbff;
+  background: radial-gradient(circle at 35% 28%, #91f3ff, #2aa9d6 50%, #125b86 90%);
+  border-color: #a8f4ff;
+  text-shadow: 0 1px 2px rgba(0, 37, 57, 0.9), 0 0 5px rgba(90, 224, 255, 0.65);
+}
+.card-cost.increased {
+  color: #ff646f;
+  text-shadow: 0 1px 2px rgba(70, 0, 8, 0.95), 0 0 5px rgba(255, 65, 80, 0.65);
+}
