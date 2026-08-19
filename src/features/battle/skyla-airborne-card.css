@@ -1,0 +1,30 @@
+/* 풍란: 이륙 상태에서는 포켓몬 그림만이 아니라 필드 카드 전체가 떠오른다. */
+.field-unit.unova-airborne {
+  position: relative;
+  z-index: 8;
+  animation: unova-airborne-card-float 1.32s ease-in-out infinite alternate;
+  filter: drop-shadow(0 11px 8px rgba(47, 84, 117, .42));
+  will-change: translate;
+}
+
+/* 기존 unova-battle.css의 그림 단독 이동을 끄고 카드와 함께 움직이게 한다. */
+.field-unit.unova-airborne .unit-art {
+  transform: none !important;
+  animation: none !important;
+}
+
+@keyframes unova-airborne-card-float {
+  from {
+    translate: 0 -7px;
+  }
+  to {
+    translate: 0 -14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-unit.unova-airborne {
+    animation: none !important;
+    translate: 0 -10px;
+  }
+}
