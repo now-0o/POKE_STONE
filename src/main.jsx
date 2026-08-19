@@ -41,6 +41,8 @@ import './styles/mobile-shop-unified.css';
 import './styles/mobile-shop-layout-v2.css';
 // 팩 개봉 카드/완료 UI는 모든 모바일 상점 규칙 뒤에서 최종 고정한다.
 import './styles/mobile-pack-open-v3.css';
+// 세로 팩 개봉은 뷰포트 폭 기반 셀/앞뒤 공통 중심축으로 한 번 더 고정한다.
+import './styles/mobile-pack-open-portrait-v4.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
