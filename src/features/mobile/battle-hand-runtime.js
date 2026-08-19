@@ -49,7 +49,14 @@ function layoutHand(hand) {
   const count = wraps.length;
   if (!count) return;
 
+  const board = hand.closest(".battle-board");
   const portrait = window.matchMedia("(orientation: portrait)").matches;
+  const hasDiscardControls = wraps.some((wrap) =>
+    wrap.querySelector(":scope > .btn-discard-redraw"),
+  );
+
+  board?.classList.toggle("mobile-hand-has-discard", hasDiscardControls);
+
   const expandedMargin = portrait ? 54 : 74;
   const expandedMax = portrait ? 380 : 560;
   const expandedStepMax = portrait ? 54 : 64;
@@ -60,9 +67,25 @@ function layoutHand(hand) {
   const expandedStep =
     count > 1 ? Math.min(expandedStepMax, expandedSpan / (count - 1)) : 0;
 
+  // 평소 축소 손패는 기존처럼 작게 포개되, '버리고 뽑기'가 있는 경우에는
+  // 버튼이 다른 카드 wrap에 가려지지 않도록 손패를 왼쪽 방향으로 더 넓게 편다.
+  const collapsedLimit = hasDiscardControls
+    ? portrait
+      ? 188
+      : 176
+    : portrait
+      ? 96
+      : 112;
+  const collapsedViewportRatio = hasDiscardControls
+    ? portrait
+      ? 0.5
+      : 0.28
+    : portrait
+      ? 0.25
+      : 0.18;
   const collapsedSpan = Math.min(
-    portrait ? 96 : 112,
-    Math.max(0, window.innerWidth * (portrait ? 0.25 : 0.18)),
+    collapsedLimit,
+    Math.max(0, window.innerWidth * collapsedViewportRatio),
   );
   const collapsedStep = count > 1 ? collapsedSpan / (count - 1) : 0;
   const center = (count - 1) / 2;
@@ -70,6 +93,11 @@ function layoutHand(hand) {
   wraps.forEach((wrap, index) => {
     const offset = index - center;
     const angle = Math.max(-10, Math.min(10, offset * 2.15));
+    // 축소 손패의 기준점은 우측 하단이므로 버리기 버튼이 있을 때는
+    // 마지막 카드를 기준(0)으로 두고 나머지를 왼쪽으로만 펼친다.
+    const collapsedOffset = hasDiscardControls
+      ? (index - (count - 1)) * collapsedStep
+      : offset * collapsedStep;
 
     wrap.style.setProperty(
       "--mobile-expanded-x",
@@ -77,7 +105,7 @@ function layoutHand(hand) {
     );
     wrap.style.setProperty(
       "--mobile-collapsed-x",
-      `${offset * collapsedStep}px`,
+      `${collapsedOffset}px`,
     );
     wrap.style.setProperty("--mobile-hand-angle", `${angle}deg`);
     wrap.style.setProperty("--mobile-hand-index", String(index + 1));
@@ -156,6 +184,14 @@ function onPointerDown(event) {
 
   const board = getBoard(event.target);
   if (!board) return;
+
+  // '버리고 뽑기'는 카드 제스처가 아니라 독립 버튼이다.
+  // 여기서 손패 열기/카드 잡기/suppress-click 처리를 전부 건너뛰어
+  // 가로·세로 모두 버튼 터치가 카드 드래그로 변하지 않게 한다.
+  if (event.target.closest?.(".btn-discard-redraw")) {
+    suppressClickUntil.delete(board);
+    return;
+  }
 
   const hand = event.target.closest?.(".hand");
   if (hand && hand === getHand(board)) {
@@ -263,6 +299,12 @@ function onClickCapture(event) {
   const board = getBoard(event.target);
   if (!board || !event.target.closest?.(".hand")) return;
 
+  // 독립 컨트롤의 클릭은 첫 카드 탭 억제 로직의 영향을 받지 않는다.
+  if (event.target.closest?.(".btn-discard-redraw")) {
+    suppressClickUntil.delete(board);
+    return;
+  }
+
   const until = suppressClickUntil.get(board) || 0;
   if (Date.now() < until) {
     event.preventDefault();
@@ -348,14 +390,10 @@ if (typeof document !== "undefined") {
   const observer = new MutationObserver((mutations) => {
     if (!isMobileBattle()) return;
 
-    if (
-      mutations.some((mutation) =>
-        mutation.target instanceof Element
-          ? mutation.target.closest?.(".battle-board > .hand") ||
-            mutation.target.matches?.(".battle-board > .hand")
-          : false,
-      )
-    ) {
+    // 첫 배틀 진입 때 React가 battle subtree를 한 번에 붙이는 경우 mutation.target은
+    // hand가 아니라 #root일 수 있다. childList 변화가 있으면 손패 존재 여부를 다시
+    // 확인하도록 해서 초기 CSS 변수가 0인 채 한 장처럼 겹치는 상태를 방지한다.
+    if (mutations.some((mutation) => mutation.type === "childList")) {
       requestAnimationFrame(refreshHands);
     }
   });
@@ -364,6 +402,11 @@ if (typeof document !== "undefined") {
     childList: true,
     subtree: true,
   });
+
+  // 이미 첫 렌더가 진행 중인 경우까지 포함하는 유한 초기 동기화.
+  requestAnimationFrame(refreshHands);
+  window.setTimeout(refreshHands, 60);
+  window.setTimeout(refreshHands, 180);
 
   window.addEventListener("resize", refreshMobileBattleLayout, { passive: true });
   window.visualViewport?.addEventListener("resize", refreshMobileBattleLayout, {
