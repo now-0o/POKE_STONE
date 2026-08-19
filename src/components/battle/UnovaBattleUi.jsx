@@ -27,7 +27,7 @@ const GIMMICK_GUIDES = {
     lines: [
       "아티의 포켓몬은 모두 진화 전 상태로 등장한 뒤 즉시 고치화합니다.",
       "고치 상태에서는 공격할 수 없고 받는 피해가 약 절반으로 감소합니다.",
-      "고치가 된 뒤 두 번째 다음 아티 턴 시작까지 살아남으면 해당 계열의 최종진화체로 우화합니다. 받은 피해는 그대로 이어집니다.",
+      "고치가 된 뒤 세 번째 다음 아티 턴 시작까지 살아남으면 해당 계열의 최종진화체로 우화합니다. 받은 피해는 그대로 이어집니다.",
     ],
     hint: "힌트: 고치 상태가 가장 확실한 제거 타이밍입니다. 우화 전에 집중 공격하세요.",
   },
@@ -304,8 +304,9 @@ function syncUnitEffects() {
       element.classList.toggle("unova-airborne", isAirborne);
       element.classList.toggle("unova-frosted", frostValue > 0);
 
-      if (isSpotlight) ensureOverlay(element, "unova-spotlight-beam");
-      else removeOverlay(element, "unova-spotlight-beam");
+      // 카밀레의 선택 연출은 turn-start 런타임에서 처리한다.
+      // 선택 후에는 카드 자체의 후광만 남기고 천장형 고정 빛기둥은 만들지 않는다.
+      removeOverlay(element, "unova-spotlight-beam");
 
       if (isCocoon) ensureOverlay(element, "unova-cocoon-overlay", "고치");
       else removeOverlay(element, "unova-cocoon-overlay");
