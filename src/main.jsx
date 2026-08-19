@@ -38,6 +38,7 @@ import './styles/mobile-deck-responsive-overrides.css';
 import './styles/mobile-deck-landscape.css';
 // 모바일 상점/공통 헤더 보정은 가장 마지막에 적용한다.
 import './styles/mobile-shop-unified.css';
+import './styles/mobile-shop-layout-v2.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
