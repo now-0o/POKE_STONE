@@ -110,7 +110,7 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
     .map((unit) => centerInBoard(unit, boardRect));
 
   const pickPoint = () => {
-    if (otherUnitPoints.length && Math.random() < 0.76) {
+    if (otherUnitPoints.length && Math.random() < 0.8) {
       return otherUnitPoints[Math.floor(Math.random() * otherUnitPoints.length)];
     }
     return randomPoint(boardRect);
@@ -123,21 +123,22 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   light.style.left = `${p0.x}px`;
   light.style.top = `${p0.y}px`;
 
-  // 전체 길이는 AI 첫 행동(1.1초) 전에 끝내되,
-  // 훑는 지점을 줄이고 각 위치에 짧게 머물러 더 느리고 묵직하게 보이게 한다.
+  // 카밀레의 무대 조명은 빠르게 튀지 않고 천천히 훑는다.
+  // 두 후보 지점에서 충분히 머문 뒤 마지막 대상에 천천히 고정한다.
   light.animate(
     [
       { left: `${p0.x}px`, top: `${p0.y}px`, transform: "translate(-50%, -50%) scale(.90)", offset: 0 },
-      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.02)", offset: .27 },
-      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.00)", offset: .37 },
-      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(.97)", offset: .61 },
-      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(1.01)", offset: .70 },
-      { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1.12)", offset: .89 },
+      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.02)", offset: .24 },
+      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.00)", offset: .39 },
+      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(.98)", offset: .61 },
+      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(1.01)", offset: .76 },
+      { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1.10)", offset: .91 },
+      { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1.10)", offset: .97 },
       { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1)", offset: 1 },
     ],
     {
-      duration: 1080,
-      easing: "cubic-bezier(.26,.62,.18,1)",
+      duration: 1850,
+      easing: "cubic-bezier(.34,.48,.18,1)",
       fill: "forwards",
     },
   );
@@ -145,19 +146,19 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   window.setTimeout(() => {
     if (token !== fxToken) return;
     target.classList.add("unova-spotlight-lock-pop");
-  }, 950);
+  }, 1660);
 
   window.setTimeout(() => {
     if (token !== fxToken) return;
     fx.classList.add("is-locking");
-  }, 970);
+  }, 1690);
 
   window.setTimeout(() => {
     if (token !== fxToken) return;
     fx.remove();
     target.classList.remove("unova-spotlight-lock-pop");
     syncCurrentSpotlightClass(state);
-  }, 1090);
+  }, 1900);
 }
 
 function syncElesaSpotlight(state = readState()) {
