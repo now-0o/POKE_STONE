@@ -17,6 +17,7 @@ import App from './App.jsx';
 import './styles.css';
 import './features/battle/styles.css';
 import './features/battle/wave-effects.css';
+import './features/battle/cost-colors.css';
 import './features/navigation/transitions.css';
 import './features/deck-editor/styles.css';
 import './features/deck-editor/card-scale.css';
@@ -56,6 +57,7 @@ import './styles/mobile-battle-hearthstone-v4.css';
 
 import './features/mobile/battle-hand-runtime.js';
 import './features/battle/runtime.js';
+import './features/battle/costColorRuntime.js';
 import './features/battle/fixedFieldPlacement.js';
 import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
