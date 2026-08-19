@@ -35,6 +35,7 @@ import './styles/ui-readability.css';
 // 모바일 덱 편집기는 공용 모바일 규칙보다 뒤에서 최종 보정한다.
 import './styles/mobile-deck-editor-v2.css';
 import './styles/mobile-deck-responsive-overrides.css';
+import './styles/mobile-deck-landscape.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
