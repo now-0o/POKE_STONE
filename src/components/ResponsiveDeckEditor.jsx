@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import DeckEditor from "./DeckEditor.jsx";
-import MobileDeckEditor from "./MobileDeckEditor.jsx";
+import MobileDeckEditor from "./MobileDeckEditorV2.jsx";
 import "../styles/mobile-deck-portrait.css";
 
 function matchesMobileDeckEditor() {
