@@ -6,7 +6,6 @@ import {
   MAX_LEGENDARY_POKEMON,
   isLegendaryPokemon,
   TYPE_COLORS,
-  RARITY_NAME,
   DEX,
   ABILITY_TEXT,
 } from "../data/cards.js";
@@ -39,6 +38,8 @@ const TYPE_FILTERS = [
   "퀘스트",
 ];
 
+const MOBILE_PAGE_SIZE = 20;
+
 function getAbilityLabel(abilityId) {
   const text = ABILITY_TEXT[abilityId];
 
@@ -50,21 +51,11 @@ function getAbilityLabel(abilityId) {
 }
 
 function getCardAbilities(card) {
-  return [card.ability, card.secondaryAbility, card.mega?.ability].filter(
-    Boolean,
-  );
+  return [card.ability, card.secondaryAbility, card.mega?.ability].filter(Boolean);
 }
 
-/*
- * 진화 관계를 양방향으로 연결한다.
- *
- * 아차모 ↔ 영치코 ↔ 번치코
- *
- * 분기진화도 같은 진화 가족으로 취급.
- */
 function buildEvolutionFamilyMap() {
   const pokemonCards = CARDS.filter((card) => card.kind === "pokemon");
-
   const graph = new Map();
 
   pokemonCards.forEach((card) => {
@@ -77,7 +68,6 @@ function buildEvolutionFamilyMap() {
     }
 
     graph.get(card.id).add(card.evolvesFrom);
-
     graph.get(card.evolvesFrom).add(card.id);
   });
 
@@ -89,7 +79,6 @@ function buildEvolutionFamilyMap() {
     }
 
     const visited = new Set();
-
     const stack = [card.id];
 
     while (stack.length) {
@@ -120,14 +109,35 @@ function buildEvolutionFamilyMap() {
 
 const EVOLUTION_FAMILY_MAP = buildEvolutionFamilyMap();
 
+function isMobileCollectionDevice() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(max-width: 1024px)").matches
+  );
+}
+
 export default function DeckEditor({ save, onSaveChange, onBack }) {
   const [filter, setFilter] = useState("전체");
   const [search, setSearch] = useState("");
-  const [sortMode, setSortMode] = useState("cost"); // 'dex' | 'cost' | 'rarity_desc' | 'rarity_asc'
+  const [sortMode, setSortMode] = useState("cost");
   const [abilityFilters, setAbilityFilters] = useState([]);
+  const [mobilePage, setMobilePage] = useState(0);
   const { inspect, press, clickSuppressed } = useInspect();
 
+  const mobileLite = useMemo(() => isMobileCollectionDevice(), []);
+
+  function resetMobilePage() {
+    if (mobileLite) {
+      setMobilePage(0);
+    }
+  }
+
   function toggleAbilityFilter(abilityId) {
+    resetMobilePage();
     setAbilityFilters((prev) =>
       prev.includes(abilityId)
         ? prev.filter((id) => id !== abilityId)
@@ -138,7 +148,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   const activePreset = save.activeDeckPreset || 0;
-
   const presets = save.deckPresets || [];
 
   const deckCounts = useMemo(() => {
@@ -169,7 +178,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   const legendaryPokemonCount = useMemo(() => {
     return save.deck.reduce((count, id) => {
       const card = CARD_MAP[id];
-
       return count + (isLegendaryPokemon(card) ? 1 : 0);
     }, 0);
   }, [save.deck]);
@@ -182,11 +190,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     }
 
     const result = new Set();
-
-    /*
-     * 먼저 직접 검색에 걸린
-     * 카드를 찾는다.
-     */
     const directMatches = CARDS.filter(
       (card) =>
         card.name.toLowerCase().includes(q) ||
@@ -196,13 +199,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     directMatches.forEach((card) => {
       result.add(card.id);
 
-      /*
-       * 포켓몬이면
-       * 진화 가족 전체 추가
-       */
       if (card.kind === "pokemon") {
         const family = EVOLUTION_FAMILY_MAP.get(card.id);
-
         family?.forEach((id) => result.add(id));
       }
     });
@@ -211,72 +209,70 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }, [search]);
 
   const ownedCards = useMemo(() => {
-    return (
-      CARDS.filter((card) => (save.collection[card.id] || 0) > 0)
+    return CARDS.filter((card) => (save.collection[card.id] || 0) > 0)
+      .filter((card) => filter === "전체" || card.type === filter)
+      .filter((card) => {
+        if (abilityFilters.length === 0) {
+          return true;
+        }
 
-        // 타입 필터
-        .filter((card) => filter === "전체" || card.type === filter)
+        const abilities = getCardAbilities(card);
+        return abilityFilters.some((abilityId) => abilities.includes(abilityId));
+      })
+      .filter((card) => {
+        if (!searchMatchIds) {
+          return true;
+        }
 
-        // 특성 필터
-        .filter((card) => {
-          if (abilityFilters.length === 0) {
-            return true;
-          }
+        return searchMatchIds.has(card.id);
+      })
+      .sort((a, b) => {
+        const RARITY_ORDER = {
+          C: 0,
+          R: 1,
+          E: 2,
+          L: 3,
+        };
 
-          const abilities = getCardAbilities(card);
+        if (sortMode === "dex") {
+          const da = DEX[a.id] ?? 99999;
+          const db = DEX[b.id] ?? 99999;
+          return da - db || a.name.localeCompare(b.name);
+        }
 
-          return abilityFilters.some((abilityId) =>
-            abilities.includes(abilityId),
-          );
-        })
+        if (sortMode === "rarity_desc") {
+          return RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || a.cost - b.cost;
+        }
 
-        // 이름 + 진화체 검색
-        .filter((card) => {
-          if (!searchMatchIds) {
-            return true;
-          }
+        if (sortMode === "rarity_asc") {
+          return RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.cost - b.cost;
+        }
 
-          return searchMatchIds.has(card.id);
-        })
-
-        .sort((a, b) => {
-          const RARITY_ORDER = {
-            C: 0,
-            R: 1,
-            E: 2,
-            L: 3,
-          };
-
-          if (sortMode === "dex") {
-            const da = DEX[a.id] ?? 99999;
-
-            const db = DEX[b.id] ?? 99999;
-
-            return da - db || a.name.localeCompare(b.name);
-          }
-
-          if (sortMode === "rarity_desc") {
-            return (
-              RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || a.cost - b.cost
-            );
-          }
-
-          if (sortMode === "rarity_asc") {
-            return (
-              RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.cost - b.cost
-            );
-          }
-
-          return a.cost - b.cost || a.name.localeCompare(b.name);
-        })
-    );
+        return a.cost - b.cost || a.name.localeCompare(b.name);
+      });
   }, [save.collection, filter, searchMatchIds, abilityFilters, sortMode]);
 
+  const mobilePageCount = mobileLite
+    ? Math.max(1, Math.ceil(ownedCards.length / MOBILE_PAGE_SIZE))
+    : 1;
+  const safeMobilePage = Math.min(mobilePage, mobilePageCount - 1);
+  const visibleOwnedCards = mobileLite
+    ? ownedCards.slice(
+        safeMobilePage * MOBILE_PAGE_SIZE,
+        (safeMobilePage + 1) * MOBILE_PAGE_SIZE,
+      )
+    : ownedCards;
+
   const collectionGridRef = useRef(null);
+  const collectionPaneRef = useRef(null);
   const previousCardRectsRef = useRef(new Map());
   const deckNameInputRef = useRef(null);
 
   function captureCardPositions() {
+    if (mobileLite) {
+      return;
+    }
+
     const grid = collectionGridRef.current;
     if (!grid) return;
 
@@ -289,7 +285,18 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     previousCardRectsRef.current = rects;
   }
 
+  function changeMobilePage(nextPage) {
+    const clamped = Math.max(0, Math.min(nextPage, mobilePageCount - 1));
+    setMobilePage(clamped);
+    collectionPaneRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   useLayoutEffect(() => {
+    if (mobileLite) {
+      previousCardRectsRef.current = new Map();
+      return;
+    }
+
     const grid = collectionGridRef.current;
     if (!grid) return;
 
@@ -301,31 +308,19 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
     grid.querySelectorAll("[data-card-id]").forEach((el) => {
       const cardId = el.dataset.cardId;
-
       const newRect = el.getBoundingClientRect();
-
       const oldRect = previousRects.get(cardId);
 
-      /*
-       * 이전에도 있던 카드:
-       * 이전 위치에서 현재 위치까지 자연스럽게 이동
-       */
       if (oldRect) {
         const deltaX = oldRect.left - newRect.left;
-
         const deltaY = oldRect.top - newRect.top;
 
         if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
           el.getAnimations().forEach((animation) => animation.cancel());
-
           el.animate(
             [
-              {
-                transform: `translate(${deltaX}px, ${deltaY}px)`,
-              },
-              {
-                transform: "translate(0, 0)",
-              },
+              { transform: `translate(${deltaX}px, ${deltaY}px)` },
+              { transform: "translate(0, 0)" },
             ],
             {
               duration: 240,
@@ -337,21 +332,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         return;
       }
 
-      /*
-       * 검색/필터 변경으로 새로 나타난 카드
-       */
       el.getAnimations().forEach((animation) => animation.cancel());
-
       el.animate(
         [
-          {
-            opacity: 0,
-            transform: "translateY(8px) scale(0.96)",
-          },
-          {
-            opacity: 1,
-            transform: "translateY(0) scale(1)",
-          },
+          { opacity: 0, transform: "translateY(8px) scale(0.96)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" },
         ],
         {
           duration: 180,
@@ -361,17 +346,14 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     });
 
     previousCardRectsRef.current = new Map();
-  }, [ownedCards]);
+  }, [ownedCards, mobileLite]);
 
   function addToDeck(cardId) {
     if (clickSuppressed()) return;
 
     const card = CARD_MAP[cardId];
-
     const inDeck = save.deck.filter((id) => id === cardId).length;
-
     const owned = save.collection[cardId] || 0;
-
     const max = Math.min(MAX_COPIES[card.rarity], owned);
 
     if (save.deck.length >= 30 || inDeck >= max) {
@@ -379,7 +361,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
       return;
     }
 
-    // 전설/환상 포켓몬만 덱 전체 최대 3장
     if (
       !save.adminMode &&
       isLegendaryPokemon(card) &&
@@ -390,10 +371,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     }
 
     save.deck = [...save.deck, cardId];
-
     syncActivePreset(save.deck);
     persist(save);
-
     playSfx("pickup");
     onSaveChange();
   }
@@ -401,7 +380,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   function removeFromDeck(cardId) {
     const idx = save.deck.indexOf(cardId);
     if (idx === -1) return;
-    save.deck = [...save.deck.slice(0, idx), ...save.deck.slice(idx + 1)]; // 새 배열로 교체
+
+    save.deck = [...save.deck.slice(0, idx), ...save.deck.slice(idx + 1)];
     syncActivePreset(save.deck);
     persist(save);
     playSfx("putdown");
@@ -420,7 +400,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     onSaveChange();
   }
 
-  // 덱 목록 (그룹핑)
   const deckList = useMemo(() => {
     const ids = [...new Set(save.deck)];
     return ids
@@ -452,21 +431,13 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     }
 
     playSfx("click");
-
-    /*
-     * 현재 덱을 현재 프리셋에
-     * 마지막으로 저장
-     */
     syncActivePreset(save.deck);
 
     const nextPreset = save.deckPresets[index];
-
     save.activeDeckPreset = index;
-
     save.deck = [...(nextPreset?.deck || [])];
 
     persist(save);
-
     onSaveChange();
   }
 
@@ -483,7 +454,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     );
 
     persist(save);
-
     onSaveChange();
   }
 
@@ -522,15 +492,15 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             덱 {save.deck.length}/30 · 전설 {legendaryPokemonCount}/3
           </div>
         </div>
+
         <div className="deck-search-row">
           <span className="deck-search-icon">🔎</span>
-
           <input
             type="text"
             value={search}
             onChange={(e) => {
               captureCardPositions();
-
+              resetMobilePage();
               setSearch(e.target.value);
             }}
             placeholder="카드 이름 검색"
@@ -543,7 +513,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               className="deck-search-clear"
               onClick={() => {
                 captureCardPositions();
-
+                resetMobilePage();
                 setSearch("");
               }}
             >
@@ -551,6 +521,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             </button>
           )}
         </div>
+
         <div className="type-filters">
           {TYPE_FILTERS.map((t) => (
             <button
@@ -561,6 +532,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               onClick={() => {
                 playSfx("click");
                 captureCardPositions();
+                resetMobilePage();
                 setFilter(t);
               }}
             >
@@ -589,7 +561,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                   checked={abilityFilters.includes(id)}
                   onChange={() => toggleAbilityFilter(id)}
                 />
-
                 <span>{label}</span>
               </label>
             ))}
@@ -601,6 +572,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               className="ability-filter-reset"
               onClick={() => {
                 playSfx("click");
+                resetMobilePage();
                 setAbilityFilters([]);
               }}
             >
@@ -609,7 +581,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           )}
         </details>
 
-        {/* 정렬 */}
         <div className="sort-row">
           {[
             { key: "dex", label: "도감번호순" },
@@ -623,6 +594,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               onClick={() => {
                 playSfx("click");
                 captureCardPositions();
+                resetMobilePage();
                 setSortMode(key);
               }}
             >
@@ -641,8 +613,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           alignItems: "stretch",
         }}
       >
-        {/* 컬렉션 */}
         <div
+          ref={collectionPaneRef}
           className="collection-pane"
           style={{
             minHeight: 0,
@@ -652,14 +624,33 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             WebkitOverflowScrolling: "touch",
           }}
         >
+          {mobileLite && ownedCards.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+                margin: "0 0 10px",
+                padding: "6px 8px",
+                fontSize: "11px",
+                opacity: 0.85,
+              }}
+            >
+              <span>
+                카드 {safeMobilePage * MOBILE_PAGE_SIZE + 1}-
+                {Math.min((safeMobilePage + 1) * MOBILE_PAGE_SIZE, ownedCards.length)} / {ownedCards.length}
+              </span>
+              <span>모바일 경량 모드</span>
+            </div>
+          )}
+
           <div className="collection-grid" ref={collectionGridRef}>
-            {ownedCards.map((card) => {
+            {visibleOwnedCards.map((card) => {
               const owned = save.collection[card.id];
               const inDeck = deckCounts[card.id] || 0;
               const max = Math.min(MAX_COPIES[card.rarity], owned);
-              const legendaryBlocked =
-                isLegendaryPokemon(card) &&
-                legendaryPokemonCount >= MAX_LEGENDARY_POKEMON;
+
               return (
                 <div
                   key={card.id}
@@ -685,9 +676,40 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
               );
             })}
           </div>
+
+          {mobileLite && mobilePageCount > 1 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "14px 6px 8px",
+              }}
+            >
+              <button
+                type="button"
+                className="btn-ghost small"
+                disabled={safeMobilePage === 0}
+                onClick={() => changeMobilePage(safeMobilePage - 1)}
+              >
+                ← 이전
+              </button>
+              <span style={{ minWidth: "58px", textAlign: "center", fontSize: "12px" }}>
+                {safeMobilePage + 1} / {mobilePageCount}
+              </span>
+              <button
+                type="button"
+                className="btn-ghost small"
+                disabled={safeMobilePage >= mobilePageCount - 1}
+                onClick={() => changeMobilePage(safeMobilePage + 1)}
+              >
+                다음 →
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* 덱 영역 */}
         <div
           className="deck-pane"
           style={{
@@ -699,7 +721,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             overflow: "hidden",
           }}
         >
-          {/* 프리셋 영역 - 스크롤되지 않음 */}
           <div className="deck-preset-panel">
             <div className="deck-preset-tabs">
               {presets.map((preset, index) => (
@@ -711,11 +732,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                   onClick={() => selectPreset(index)}
                 >
                   <span className="deck-preset-name">{preset.name}</span>
-
                   <span className="deck-preset-count">
-                    {activePreset === index
-                      ? save.deck.length
-                      : preset.deck.length}
+                    {activePreset === index ? save.deck.length : preset.deck.length}
                     /30
                   </span>
                 </button>
@@ -724,7 +742,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
             <div className="deck-name-editor">
               <span>덱 이름</span>
-
               <input
                 ref={deckNameInputRef}
                 key={`${activePreset}-${presets[activePreset]?.name}`}
@@ -734,7 +751,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                   presets[activePreset]?.name || `덱 ${activePreset + 1}`
                 }
               />
-
               <button
                 type="button"
                 className="btn-secondary"
@@ -781,26 +797,20 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             </div>
           </div>
 
-          {/* 카드 리스트 - 여기만 스크롤 */}
           <div className="deck-card-list">
             {deckList.map(({ card, count }) => (
               <div
                 key={card.id}
                 className="deck-row"
-                style={{
-                  "--type-color": TYPE_COLORS[card.type],
-                }}
+                style={{ "--type-color": TYPE_COLORS[card.type] }}
                 onClick={() => removeFromDeck(card.id)}
                 title="클릭하면 1장 제거"
               >
                 <span className="deck-row-cost">{card.cost}</span>
-
                 <span className="deck-row-emoji">
                   <Sprite cardId={card.id} emoji={card.emoji} size={22} />
                 </span>
-
                 <span className="deck-row-name">{card.name}</span>
-
                 <span className="deck-row-count">×{count}</span>
               </div>
             ))}
