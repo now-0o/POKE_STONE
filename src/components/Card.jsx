@@ -8,6 +8,7 @@ import {
   trainerSpriteUrl,
 } from "../data/cards.js";
 import { effectiveCost, effectiveAtk } from "../engine/engine.js";
+import "../styles/battle-inspect-item.css";
 
 // ---- 3D 틸트 훅: 마우스 위치 -> CSS 변수 직접 갱신 (리렌더 없음) ----
 const MAX_TILT = 13;
@@ -152,6 +153,16 @@ function battleSpriteId(unit) {
   }
 
   return unit.megaSpriteId || null;
+}
+
+function equippedItemCard(unit) {
+  if (!unit?.item) return null;
+  return (
+    Object.values(CARD_MAP).find(
+      (candidate) =>
+        candidate?.kind === "item" && candidate.item?.effect === unit.item,
+    ) || null
+  );
 }
 
 // ---- 꾹 눌러 크게 보기 공용 훅 (컬렉션/카드팩 등) ----
@@ -399,6 +410,7 @@ export function HandCard({
   const { ref, onMouseMove, onMouseLeave } = useTilt();
   const holo = card.rarity !== "C";
   const isPokemon = card.kind === "pokemon";
+  const equippedItem = equippedItemCard(unit);
 
   return (
     <div
@@ -487,6 +499,15 @@ export function HandCard({
           </div>
         </>
       )}
+
+      {equippedItem && (
+        <aside className="inspect-equipped-item" aria-label={`장착 도구 ${equippedItem.name}`}>
+          <span className="inspect-equipped-item-kicker">장착 도구</span>
+          <strong>{equippedItem.name}</strong>
+          <p>{equippedItem.text || "장착 중인 도구입니다."}</p>
+        </aside>
+      )}
+
       <div className={`card-rarity-gem gem-${card.rarity}`} />
 
       {holo && <div className="holo-layer" aria-hidden="true" />}
