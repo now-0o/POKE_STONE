@@ -304,9 +304,25 @@ function refreshHands() {
   if (!isMobileBattle()) return;
 
   document.querySelectorAll(".battle-board > .hand").forEach((hand) => {
-    layoutHand(hand);
     const board = hand.closest(".battle-board");
-    if (board) lastHandCount.set(board, getHandCount(board));
+    if (!board) return;
+
+    const beforeCount = lastHandCount.get(board);
+    const afterCount = getHandCount(board);
+
+    // 카드 사용으로 손패 장수가 실제로 줄어든 순간을 DOM에서 직접 감지한다.
+    // 드래그 종료 타이밍보다 React 렌더가 늦어져도 이 경로에서 축소 손패를
+    // 닫고 남은 카드 수 기준으로 다시 중앙/간격을 계산한다.
+    if (beforeCount != null && afterCount < beforeCount) {
+      closeHand(board);
+      board.classList.remove("mobile-hand-grabbing");
+      hand
+        .querySelectorAll(":scope > .hand-card-wrap.mobile-grabbed-card")
+        .forEach((wrap) => wrap.classList.remove("mobile-grabbed-card"));
+    }
+
+    layoutHand(hand);
+    lastHandCount.set(board, afterCount);
   });
 }
 
