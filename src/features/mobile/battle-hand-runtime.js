@@ -4,6 +4,7 @@
 
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
 const suppressClickUntil = new WeakMap();
+const lastHandCount = new WeakMap();
 let handGesture = null;
 
 function isMobileBattle() {
@@ -70,6 +71,8 @@ function onPointerDown(event) {
 
     const cardWrap = event.target.closest?.(".hand-card-wrap");
     const wasOpen = board.classList.contains("mobile-hand-open");
+    const cardCount = hand.querySelectorAll(":scope > .hand-card-wrap").length;
+    lastHandCount.set(board, cardCount);
 
     if (!wasOpen && !board.querySelector(".hand-card.selected")) {
       openHand(board);
@@ -89,7 +92,7 @@ function onPointerDown(event) {
       startX: event.clientX,
       startY: event.clientY,
       moved: false,
-      cardCount: hand.querySelectorAll(":scope > .hand-card-wrap").length,
+      cardCount,
     };
     return;
   }
@@ -119,7 +122,8 @@ function onPointerUp() {
   });
 
   if (!handGesture) return;
-  const { board, moved } = handGesture;
+  const { board, moved, cardCount } = handGesture;
+  lastHandCount.set(board, cardCount);
   handGesture = null;
 
   if (moved) {
@@ -146,20 +150,26 @@ function onClickBubble(event) {
   const hand = board && event.target.closest?.(".hand");
   if (!board || !hand) return;
 
-  const beforeCount = handGesture?.cardCount ?? hand.querySelectorAll(":scope > .hand-card-wrap").length;
+  const beforeCount = lastHandCount.get(board) ?? hand.querySelectorAll(":scope > .hand-card-wrap").length;
   window.setTimeout(() => {
     if (!document.contains(board)) return;
     const selected = board.querySelector(".hand-card.selected");
     const dragging = board.querySelector(".drag-ghost");
-    const afterCount = getHand(board)?.querySelectorAll(":scope > .hand-card-wrap").length ?? 0;
+    const currentHand = getHand(board);
+    const afterCount = currentHand?.querySelectorAll(":scope > .hand-card-wrap").length ?? 0;
     if (selected || dragging || afterCount < beforeCount) closeHand(board);
-    layoutHand(getHand(board));
+    lastHandCount.set(board, afterCount);
+    layoutHand(currentHand);
   }, 0);
 }
 
 function refreshHands() {
   if (!isMobileBattle()) return;
-  document.querySelectorAll(".battle-board > .hand").forEach(layoutHand);
+  document.querySelectorAll(".battle-board > .hand").forEach((hand) => {
+    layoutHand(hand);
+    const board = hand.closest(".battle-board");
+    if (board) lastHandCount.set(board, hand.querySelectorAll(":scope > .hand-card-wrap").length);
+  });
 }
 
 if (typeof document !== "undefined") {
