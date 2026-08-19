@@ -110,7 +110,7 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
     .map((unit) => centerInBoard(unit, boardRect));
 
   const pickPoint = () => {
-    if (otherUnitPoints.length && Math.random() < 0.72) {
+    if (otherUnitPoints.length && Math.random() < 0.76) {
       return otherUnitPoints[Math.floor(Math.random() * otherUnitPoints.length)];
     }
     return randomPoint(boardRect);
@@ -119,23 +119,25 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   const p0 = randomPoint(boardRect);
   const p1 = pickPoint();
   const p2 = pickPoint();
-  const p3 = pickPoint();
 
   light.style.left = `${p0.x}px`;
   light.style.top = `${p0.y}px`;
 
+  // 전체 길이는 AI 첫 행동(1.1초) 전에 끝내되,
+  // 훑는 지점을 줄이고 각 위치에 짧게 머물러 더 느리고 묵직하게 보이게 한다.
   light.animate(
     [
-      { left: `${p0.x}px`, top: `${p0.y}px`, transform: "translate(-50%, -50%) scale(.88)", offset: 0 },
-      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.04)", offset: .23 },
-      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(.94)", offset: .47 },
-      { left: `${p3.x}px`, top: `${p3.y}px`, transform: "translate(-50%, -50%) scale(1.03)", offset: .68 },
-      { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1.12)", offset: .84 },
+      { left: `${p0.x}px`, top: `${p0.y}px`, transform: "translate(-50%, -50%) scale(.90)", offset: 0 },
+      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.02)", offset: .27 },
+      { left: `${p1.x}px`, top: `${p1.y}px`, transform: "translate(-50%, -50%) scale(1.00)", offset: .37 },
+      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(.97)", offset: .61 },
+      { left: `${p2.x}px`, top: `${p2.y}px`, transform: "translate(-50%, -50%) scale(1.01)", offset: .70 },
+      { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1.12)", offset: .89 },
       { left: `${targetPoint.x}px`, top: `${targetPoint.y}px`, transform: "translate(-50%, -50%) scale(1)", offset: 1 },
     ],
     {
-      duration: 920,
-      easing: "cubic-bezier(.22,.72,.16,1)",
+      duration: 1080,
+      easing: "cubic-bezier(.26,.62,.18,1)",
       fill: "forwards",
     },
   );
@@ -143,19 +145,19 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   window.setTimeout(() => {
     if (token !== fxToken) return;
     target.classList.add("unova-spotlight-lock-pop");
-  }, 760);
+  }, 950);
 
   window.setTimeout(() => {
     if (token !== fxToken) return;
     fx.classList.add("is-locking");
-  }, 790);
+  }, 970);
 
   window.setTimeout(() => {
     if (token !== fxToken) return;
     fx.remove();
     target.classList.remove("unova-spotlight-lock-pop");
     syncCurrentSpotlightClass(state);
-  }, 1030);
+  }, 1090);
 }
 
 function syncElesaSpotlight(state = readState()) {
@@ -183,7 +185,7 @@ function syncElesaSpotlight(state = readState()) {
 
   // 게임 상태 이벤트가 React DOM 반영보다 먼저 올 수 있어 소량 지연한다.
   window.requestAnimationFrame(() => {
-    window.setTimeout(() => playSelectionFx(state, 0, token), 20);
+    window.setTimeout(() => playSelectionFx(state, 0, token), 10);
   });
 }
 
