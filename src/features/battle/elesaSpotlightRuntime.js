@@ -22,46 +22,48 @@ function clearSpotlightClasses() {
     });
 }
 
+function visibleElement(element) {
+  if (!element || element.closest(".unova-spotlight-search-fx")) return false;
+
+  const style = window.getComputedStyle(element);
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    Number.parseFloat(style.opacity || "1") <= 0
+  ) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
 function hasForegroundOverlay() {
-  const explicit = document.querySelector(
+  // 카드 확대 / 실제 모달 / 확인창은 크기와 관계없이 우선한다.
+  const direct = document.querySelectorAll(
     ".inspect-overlay, [role=\"dialog\"], .modal-overlay, .confirm-overlay",
   );
 
-  if (explicit && !explicit.closest(".unova-spotlight-search-fx")) {
-    return true;
+  for (const element of direct) {
+    if (visibleElement(element)) return true;
   }
 
-  // 이름이 제각각인 도움말/기믹 설명 오버레이도 잡는다.
-  // 화면을 크게 덮는 고정 overlay/modal 계열만 확인해 일반 HUD는 제외한다.
-  const candidates = document.querySelectorAll(
-    '[class*="overlay"], [class*="modal"], [class*="dialog"]',
+  // 기믹 설명은 프로젝트 내에서 클래스명이 여러 형태일 수 있으므로
+  // help/info/guide/gimmick 계열 중 실제 팝업 크기인 것만 대기 대상으로 본다.
+  const descriptive = document.querySelectorAll(
+    '[class*="gimmick"], [class*="help"], [class*="guide"], [class*="info"], [class*="overlay"], [class*="modal"], [class*="dialog"]',
   );
 
-  for (const element of candidates) {
-    if (
-      element.classList.contains("unova-spotlight-search-fx") ||
-      element.closest(".unova-spotlight-search-fx")
-    ) {
-      continue;
-    }
-
-    const style = window.getComputedStyle(element);
-    if (
-      style.display === "none" ||
-      style.visibility === "hidden" ||
-      Number.parseFloat(style.opacity || "1") <= 0
-    ) {
-      continue;
-    }
+  for (const element of descriptive) {
+    if (!visibleElement(element)) continue;
 
     const rect = element.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) continue;
-
+    const popupSized = rect.width >= 180 && rect.height >= 110;
     const coversMeaningfulArea =
-      rect.width >= window.innerWidth * 0.28 &&
-      rect.height >= window.innerHeight * 0.18;
+      rect.width >= window.innerWidth * 0.22 &&
+      rect.height >= window.innerHeight * 0.14;
 
-    if (coversMeaningfulArea) return true;
+    if (popupSized || coversMeaningfulArea) return true;
   }
 
   return false;
