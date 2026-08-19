@@ -46,6 +46,8 @@ import './styles/mobile-pack-open-portrait-v4.css';
 // 모바일 배틀은 레거시 가로/세로 배치보다 마지막에 모바일 전용으로 재구성한다.
 import './styles/mobile-battle-v2.css';
 import './styles/mobile-battle-v2-fixes.css';
+// 팩 확대 카드와 트레이너 선택 스크롤은 모든 모바일 화면 규칙 뒤에서 최종 고정한다.
+import './styles/mobile-pack-inspect-mainmenu-v1.css';
 
 import './features/battle/runtime.js';
 import './features/battle/fixedFieldPlacement.js';
