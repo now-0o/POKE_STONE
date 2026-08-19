@@ -130,8 +130,9 @@ function markBurghCocoon(game, side, card, beforeUids) {
   if (!unit) return;
   unit._burghCocoon = true;
   unit._burghEvolveTo = BURGH_COCOON_EVOLUTIONS[card.id];
+  unit._burghCocoonTurns = 2;
   unit.canAttack = false;
-  game.logs.push(`${card.name}이(가) 고치화했다! 다음 아티 턴 시작에 우화한다!`);
+  game.log.push(`${card.name}이(가) 고치화했다! 두 번째 다음 아티 턴 시작에 우화한다!`);
 }
 
 function evolveBurghCocoons(game) {
@@ -139,6 +140,14 @@ function evolveBurghCocoons(game) {
 
   for (const unit of [...game.players.enemy.field]) {
     if (!unit?._burghCocoon || unit.hp <= 0) continue;
+
+    if (!Number.isInteger(unit._burghCocoonTurns)) unit._burghCocoonTurns = 1;
+    unit._burghCocoonTurns = Math.max(0, unit._burghCocoonTurns - 1);
+    if (unit._burghCocoonTurns > 0) {
+      game.log.push(`${unit.name}의 고치가 아직 단단하다. 다음 아티 턴 시작에 우화한다!`);
+      continue;
+    }
+
     const card = CARD_MAP[unit._burghEvolveTo];
     if (!card) continue;
 
@@ -157,7 +166,8 @@ function evolveBurghCocoons(game) {
     unit.stage = card.stage || 0;
     unit._burghCocoon = false;
     unit._burghEvolveTo = null;
-    game.logs.push(`고치가 갈라졌다! ${unit.name}(으)로 우화했다!`);
+    unit._burghCocoonTurns = null;
+    game.log.push(`고치가 갈라졌다! ${unit.name}(으)로 우화했다!`);
   }
 }
 
@@ -178,7 +188,7 @@ function chooseSpotlight(game, side) {
   }
   const chosen = pool[Math.floor(Math.random() * pool.length)];
   p._spotlightUid = chosen.uid;
-  game.logs.push(`스포트라이트 ON! ${chosen.name}만 이번 턴 전투 공격할 수 있다!`);
+  game.log.push(`스포트라이트 ON! ${chosen.name}만 이번 턴 전투 공격할 수 있다!`);
 }
 
 function bounceElesaSignature(game, unit) {
@@ -198,7 +208,7 @@ function bounceElesaSignature(game, unit) {
   enemy.field.splice(index, 1);
   enemy.hand.push({ uid: unit.uid, cardId: unit.cardId });
   enemy._spotlightUid = "__none__";
-  game.logs.push(`${unit.name}의 센터 스테이지! 공격을 마치고 카밀레의 손으로 돌아갔다!`);
+  game.log.push(`${unit.name}의 센터 스테이지! 공격을 마치고 카밀레의 손으로 돌아갔다!`);
 }
 
 function disableAirborneTaunts(game) {
@@ -227,7 +237,7 @@ function landSkyla(game) {
     const amount = hasAbility(unit, "skyla_divebomb") ? 4 : 2;
     const damage = base.calcTypedDamage(amount, "비행", target.type);
     target.hp = Math.max(0, target.hp - damage);
-    game.logs.push(`${unit.name}의 착륙 급강하! ${target.name}에게 비행 피해 ${damage}!`);
+    game.log.push(`${unit.name}의 착륙 급강하! ${target.name}에게 비행 피해 ${damage}!`);
   }
   if (airborne.length) base.cleanupDeaths(game);
 }
@@ -242,7 +252,7 @@ function launchSkyla(game) {
   const chosen = pool[Math.floor(Math.random() * pool.length)];
   chosen._skylaAirborne = true;
   enemy._skylaLastAirborneUid = chosen.uid;
-  game.logs.push(`${chosen.name}이(가) 이륙했다! 다음 플레이어 턴에는 전투 공격으로 지정할 수 없다!`);
+  game.log.push(`${chosen.name}이(가) 이륙했다! 다음 플레이어 턴에는 전투 공격으로 지정할 수 없다!`);
 }
 
 function minecartGroundDamage(game, target, amount) {
@@ -257,18 +267,18 @@ function advanceMinecart(game, side, steps) {
   if (game?.trainer?.gimmick !== "clay_minecart") return;
   const direction = side === "enemy" ? 1 : -1;
   game._clayMinecart = Math.max(-4, Math.min(4, (game._clayMinecart || 0) + direction * steps));
-  game.logs.push(`광산차 게이지 ${game._clayMinecart > 0 ? "+" : ""}${game._clayMinecart}!`);
+  game.log.push(`광산차 게이지 ${game._clayMinecart > 0 ? "+" : ""}${game._clayMinecart}!`);
 
   if (game._clayMinecart >= 4) {
     for (const unit of game.players.player.field) minecartGroundDamage(game, unit, 3);
-    game.logs.push("광산차가 야콘 쪽 끝에 닿았다! 낙반! 플레이어 필드 전체에 땅 피해 3!");
+    game.log.push("광산차가 야콘 쪽 끝에 닿았다! 낙반! 플레이어 필드 전체에 땅 피해 3!");
     game._clayMinecart = 0;
     base.cleanupDeaths(game);
   } else if (game._clayMinecart <= -4) {
     for (const unit of game.players.enemy.field) {
       if (unit.hp > 0) unit.hp = Math.max(0, unit.hp - 2);
     }
-    game.logs.push("광산차를 역으로 밀어냈다! 광맥 붕괴! 야콘 필드 전체 피해 2!");
+    game.log.push("광산차를 역으로 밀어냈다! 광맥 붕괴! 야콘 필드 전체 피해 2!");
     game._clayMinecart = 0;
     base.cleanupDeaths(game);
   }
@@ -283,12 +293,12 @@ function brycenAfterAttack(game, side, unit) {
     const frozen = base.applyStatus(game, unit, "ice");
     if (frozen) {
       unit._brycenFrost = 0;
-      game.logs.push(`${unit.name}에게 냉기가 누적되어 완전히 얼어붙었다!`);
+      game.log.push(`${unit.name}에게 냉기가 누적되어 완전히 얼어붙었다!`);
     } else {
       unit._brycenFrost = 1;
     }
   } else {
-    game.logs.push(`${unit.name}에게 냉기가 서렸다. 냉기 1/2.`);
+    game.log.push(`${unit.name}에게 냉기가 서렸다. 냉기 1/2.`);
   }
 }
 
@@ -299,7 +309,7 @@ function decayBrycenFrost(game, side) {
     if (unit.type === "얼음" || (unit._brycenFrost || 0) <= 0) continue;
     if (unit._brycenAttackedTurn !== turnKey) {
       unit._brycenFrost = Math.max(0, unit._brycenFrost - 1);
-      if (unit._brycenFrost === 0) game.logs.push(`${unit.name}의 냉기가 가라앉았다.`);
+      if (unit._brycenFrost === 0) game.log.push(`${unit.name}의 냉기가 가라앉았다.`);
     }
   }
 }
@@ -325,7 +335,7 @@ function startDraydenTrial(game) {
   game._draydenTrialText = DRAYDEN_TRIALS[code];
   player._draydenTrialAttacks = 0;
   player._draydenTechniqueUsed = false;
-  game.logs.push(`사간의 용의 시련: ${DRAYDEN_TRIALS[code]}!`);
+  game.log.push(`사간의 용의 시련: ${DRAYDEN_TRIALS[code]}!`);
 }
 
 function resolveDraydenTrial(game) {
@@ -342,10 +352,10 @@ function resolveDraydenTrial(game) {
 
   if (success) {
     game._draydenDominance = Math.max(0, (game._draydenDominance || 0) - 1);
-    game.logs.push(`용의 시련 성공! 용의 위압 ${game._draydenDominance}/4.`);
+    game.log.push(`용의 시련 성공! 용의 위압 ${game._draydenDominance}/4.`);
   } else {
     game._draydenDominance = Math.min(4, (game._draydenDominance || 0) + 1);
-    game.logs.push(`용의 시련 실패! 용의 위압 ${game._draydenDominance}/4!`);
+    game.log.push(`용의 시련 실패! 용의 위압 ${game._draydenDominance}/4!`);
   }
   game._draydenTrial = null;
   game._draydenTrialText = null;
@@ -615,7 +625,7 @@ export function attack(game, side, attackerUid, target) {
   ) {
     currentAttacker._draydenExtraUsed = true;
     currentAttacker.canAttack = true;
-    game.logs.push(`${currentAttacker.name}의 용의 왕! 용의 위압으로 한 번 더 공격할 수 있다!`);
+    game.log.push(`${currentAttacker.name}의 용의 왕! 용의 위압으로 한 번 더 공격할 수 있다!`);
   }
 
   if (currentAttacker) bounceElesaSignature(game, currentAttacker);
