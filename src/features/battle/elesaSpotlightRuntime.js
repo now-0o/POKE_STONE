@@ -8,6 +8,65 @@ function readState() {
   return window.__pokeUnovaGymState || {};
 }
 
+function setSpotlightBusy(busy) {
+  window.__pokeElesaSpotlightBusy = busy === true;
+}
+
+function clearSpotlightClasses() {
+  document
+    .querySelectorAll(
+      ".battle.battle-board .field-unit.unova-spotlight, .battle.battle-board .field-unit.unova-spotlight-lock-pop",
+    )
+    .forEach((unit) => {
+      unit.classList.remove("unova-spotlight", "unova-spotlight-lock-pop");
+    });
+}
+
+function hasForegroundOverlay() {
+  const explicit = document.querySelector(
+    ".inspect-overlay, [role=\"dialog\"], .modal-overlay, .confirm-overlay",
+  );
+
+  if (explicit && !explicit.closest(".unova-spotlight-search-fx")) {
+    return true;
+  }
+
+  // 이름이 제각각인 도움말/기믹 설명 오버레이도 잡는다.
+  // 화면을 크게 덮는 고정 overlay/modal 계열만 확인해 일반 HUD는 제외한다.
+  const candidates = document.querySelectorAll(
+    '[class*="overlay"], [class*="modal"], [class*="dialog"]',
+  );
+
+  for (const element of candidates) {
+    if (
+      element.classList.contains("unova-spotlight-search-fx") ||
+      element.closest(".unova-spotlight-search-fx")
+    ) {
+      continue;
+    }
+
+    const style = window.getComputedStyle(element);
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      Number.parseFloat(style.opacity || "1") <= 0
+    ) {
+      continue;
+    }
+
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) continue;
+
+    const coversMeaningfulArea =
+      rect.width >= window.innerWidth * 0.28 &&
+      rect.height >= window.innerHeight * 0.18;
+
+    if (coversMeaningfulArea) return true;
+  }
+
+  return false;
+}
+
 function fieldUnitElements(side) {
   const zone = side === "player" ? "unit-player" : "unit-enemy";
   return [...document.querySelectorAll(
@@ -61,12 +120,30 @@ function centerInBoard(element, boardRect) {
   };
 }
 
+function finishWithoutFx(state, token) {
+  if (token !== fxToken) return;
+  setSpotlightBusy(false);
+  scheduleStaticSelectionSync(state);
+}
+
 function playSelectionFx(state, attempt = 0, token = fxToken) {
   if (token !== fxToken) return;
 
+  // 카드 확대/기믹 설명 등 사용자가 읽고 있는 UI가 있으면
+  // 스포트라이트와 AI를 모두 기다리게 한다.
+  if (hasForegroundOverlay()) {
+    setSpotlightBusy(true);
+    window.setTimeout(() => playSelectionFx(state, attempt, token), 120);
+    return;
+  }
+
   const board = document.querySelector(".battle.battle-board");
   if (!board) {
-    if (attempt < 12) window.setTimeout(() => playSelectionFx(state, attempt + 1, token), 45);
+    if (attempt < 12) {
+      window.setTimeout(() => playSelectionFx(state, attempt + 1, token), 45);
+    } else {
+      finishWithoutFx(state, token);
+    }
     return;
   }
 
@@ -75,14 +152,18 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   const target = units.find((unit) => unit.dataset.uid === targetUid);
 
   if (!target) {
-    if (attempt < 12) window.setTimeout(() => playSelectionFx(state, attempt + 1, token), 45);
+    if (attempt < 12) {
+      window.setTimeout(() => playSelectionFx(state, attempt + 1, token), 45);
+    } else {
+      finishWithoutFx(state, token);
+    }
     return;
   }
 
+  setSpotlightBusy(true);
+  clearSpotlightClasses();
+
   board.querySelector(":scope > .unova-spotlight-search-fx")?.remove();
-  document.querySelectorAll(".field-unit.unova-spotlight-lock-pop").forEach((unit) => {
-    unit.classList.remove("unova-spotlight-lock-pop");
-  });
 
   const boardRect = board.getBoundingClientRect();
   const targetPoint = centerInBoard(target, boardRect);
@@ -102,6 +183,7 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   const light = fx.querySelector(".unova-spotlight-search-light");
   if (!light) {
     fx.remove();
+    finishWithoutFx(state, token);
     return;
   }
 
@@ -123,8 +205,6 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
   light.style.left = `${p0.x}px`;
   light.style.top = `${p0.y}px`;
 
-  // 카밀레의 무대 조명은 빠르게 튀지 않고 천천히 훑는다.
-  // 두 후보 지점에서 충분히 머문 뒤 마지막 대상에 천천히 고정한다.
   light.animate(
     [
       { left: `${p0.x}px`, top: `${p0.y}px`, transform: "translate(-50%, -50%) scale(.90)", offset: 0 },
@@ -158,6 +238,7 @@ function playSelectionFx(state, attempt = 0, token = fxToken) {
     fx.remove();
     target.classList.remove("unova-spotlight-lock-pop");
     syncCurrentSpotlightClass(state);
+    setSpotlightBusy(false);
   }, 1900);
 }
 
@@ -166,25 +247,32 @@ function syncElesaSpotlight(state = readState()) {
     activeTrainerId = state.trainerId || null;
     lastTurn = null;
     fxToken += 1;
+    clearSpotlightClasses();
   }
 
   if (state.gimmick !== "elesa_spotlight") {
     lastTurn = state.turn || null;
+    setSpotlightBusy(false);
+    clearSpotlightClasses();
     return;
   }
 
-  // 상태 이벤트가 여러 번 와도 현재 턴 대상 하나만 후광을 남긴다.
-  scheduleStaticSelectionSync(state);
-
-  // 같은 턴 안에서 카드 사용/공격 때문에 상태 이벤트가 여러 번 와도
-  // 탐색 연출은 턴 시작에 딱 한 번만 재생한다.
-  if (state.turn === lastTurn) return;
+  // 같은 턴의 후속 상태 갱신에서는 연출이 끝난 뒤에만 최종 후광을 유지한다.
+  if (state.turn === lastTurn) {
+    if (!window.__pokeElesaSpotlightBusy) {
+      scheduleStaticSelectionSync(state);
+    }
+    return;
+  }
 
   lastTurn = state.turn;
   fxToken += 1;
   const token = fxToken;
 
-  // 게임 상태 이벤트가 React DOM 반영보다 먼저 올 수 있어 소량 지연한다.
+  // 턴이 바뀐 순간부터 AI를 먼저 잠근다.
+  setSpotlightBusy(true);
+  clearSpotlightClasses();
+
   window.requestAnimationFrame(() => {
     window.setTimeout(() => playSelectionFx(state, 0, token), 10);
   });
