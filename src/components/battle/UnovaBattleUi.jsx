@@ -377,9 +377,11 @@ function syncUnitEffects() {
       else removeOverlay(element, "unova-airborne-badge");
 
       if (frostValue > 0) {
-        const overlay = ensureOverlay(element, "unova-frost-overlay", `❄ ${frostValue}/2`);
+        const nextLabel = `❄ ${frostValue}/2`;
+        const overlay = ensureOverlay(element, "unova-frost-overlay", nextLabel);
         const label = overlay.querySelector("span");
-        if (label) label.textContent = `❄ ${frostValue}/2`;
+        // textContent 변경도 childList mutation을 만들 수 있으므로 실제 값이 바뀔 때만 쓴다.
+        if (label && label.textContent !== nextLabel) label.textContent = nextLabel;
       } else {
         removeOverlay(element, "unova-frost-overlay");
       }
@@ -426,10 +428,8 @@ function startUnovaBattleUi() {
   }
 
   syncUnovaBattleUi();
-  window.addEventListener("unova-gym-state-change", () => {
-    syncUnitEffects();
-    syncUnovaBattleUi();
-  });
+  // syncUnovaBattleUi 안에서 syncUnitEffects까지 처리하므로 이벤트마다 한 번만 동기화한다.
+  window.addEventListener("unova-gym-state-change", syncUnovaBattleUi);
 
   const observer = new MutationObserver(syncUnovaBattleUi);
   observer.observe(document.body, { childList: true, subtree: true });
