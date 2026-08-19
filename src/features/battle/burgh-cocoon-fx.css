@@ -1,0 +1,157 @@
+/* 아티 고치 남은 턴 / 우화 연출 */
+
+.battle.battle-board .field-unit.unova-cocooned > .unova-cocoon-overlay span {
+  min-width: 72px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(31, 23, 10, 0.82);
+  border: 1px solid rgba(255, 224, 145, 0.72);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.battle.battle-board .field-unit.unova-hatching {
+  z-index: 18;
+  animation: burgh-hatched-unit 1.15s cubic-bezier(.2,.75,.2,1) both;
+}
+
+.battle.battle-board .field-unit.unova-hatching .unit-art .card-sprite,
+.battle.battle-board .field-unit.unova-hatching .unit-art .card-emoji {
+  animation: burgh-hatch-reveal 1.1s cubic-bezier(.18,.8,.22,1) both;
+}
+
+.unova-hatch-fx {
+  position: absolute;
+  inset: -34px;
+  z-index: 30;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.unova-hatch-flash {
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.98) 0%, rgba(255,239,164,.78) 32%, rgba(255,220,92,.18) 68%, transparent 76%);
+  animation: burgh-hatch-flash .72s ease-out both;
+}
+
+.unova-hatch-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 68px;
+  height: 68px;
+  margin: -34px 0 0 -34px;
+  border: 3px solid rgba(255, 231, 138, .9);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(255, 218, 76, .78);
+  animation: burgh-hatch-ring .9s ease-out both;
+}
+
+.unova-hatch-ring.ring-b {
+  animation-delay: .12s;
+}
+
+.unova-hatch-shell {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88px;
+  height: 112px;
+  margin: -62px 0 0 -44px;
+  background: url('/sprites/effects/unova-cocoon.svg') center/contain no-repeat;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,.55));
+  transform-origin: 50% 55%;
+}
+
+.unova-hatch-shell.shell-left {
+  clip-path: inset(0 50% 0 0);
+  animation: burgh-shell-left .82s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.unova-hatch-shell.shell-right {
+  clip-path: inset(0 0 0 50%);
+  animation: burgh-shell-right .82s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.unova-hatch-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: #fff2a7;
+  box-shadow: 0 0 8px rgba(255,231,112,.95);
+  animation: burgh-hatch-spark .9s ease-out both;
+}
+
+.unova-hatch-spark.spark-1 { --sx: -55px; --sy: -46px; }
+.unova-hatch-spark.spark-2 { --sx: 58px; --sy: -38px; animation-delay: .04s; }
+.unova-hatch-spark.spark-3 { --sx: -48px; --sy: 46px; animation-delay: .08s; }
+.unova-hatch-spark.spark-4 { --sx: 52px; --sy: 50px; animation-delay: .12s; }
+
+.unova-hatch-label {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  font-family: var(--display-font);
+  font-size: 16px;
+  color: #fff3b6;
+  text-shadow: 0 2px 3px rgba(0,0,0,.8), 0 0 12px rgba(255,216,72,.95);
+  white-space: nowrap;
+  animation: burgh-hatch-label 1.1s ease-out both;
+}
+
+@keyframes burgh-shell-left {
+  0%, 22% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  38% { transform: translate(-3px,0) rotate(-5deg) scale(1.04); opacity: 1; }
+  100% { transform: translate(-58px,-18px) rotate(-34deg) scale(.82); opacity: 0; }
+}
+
+@keyframes burgh-shell-right {
+  0%, 22% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  38% { transform: translate(3px,0) rotate(5deg) scale(1.04); opacity: 1; }
+  100% { transform: translate(58px,-18px) rotate(34deg) scale(.82); opacity: 0; }
+}
+
+@keyframes burgh-hatch-flash {
+  0%, 24% { transform: scale(.15); opacity: 0; }
+  43% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+@keyframes burgh-hatch-ring {
+  0%, 25% { transform: scale(.2); opacity: 0; }
+  42% { opacity: .95; }
+  100% { transform: scale(1.85); opacity: 0; }
+}
+
+@keyframes burgh-hatch-spark {
+  0%, 30% { transform: translate(-50%,-50%) scale(.2); opacity: 0; }
+  45% { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) rotate(160deg) scale(.65); opacity: 0; }
+}
+
+@keyframes burgh-hatch-reveal {
+  0%, 24% { transform: scale(.68); filter: brightness(2.8) saturate(.3); opacity: .28; }
+  45% { transform: scale(1.18); filter: brightness(2.2) saturate(1.2); opacity: 1; }
+  68% { transform: scale(.96); filter: brightness(1.25); }
+  100% { transform: scale(1); filter: brightness(1); opacity: 1; }
+}
+
+@keyframes burgh-hatched-unit {
+  0%, 28% { filter: drop-shadow(0 0 0 rgba(255,225,100,0)); }
+  48% { filter: drop-shadow(0 0 18px rgba(255,225,100,.95)); }
+  100% { filter: drop-shadow(0 0 0 rgba(255,225,100,0)); }
+}
+
+@keyframes burgh-hatch-label {
+  0%, 30% { transform: translate(-50%, 8px) scale(.7); opacity: 0; }
+  48% { transform: translate(-50%, 0) scale(1.08); opacity: 1; }
+  100% { transform: translate(-50%, -8px) scale(1); opacity: 0; }
+}
