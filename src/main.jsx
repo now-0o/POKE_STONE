@@ -65,6 +65,8 @@ import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
 // 아티 고치 카운트/우화 연출은 하나지방 DOM 효과가 등록된 뒤 적용한다.
 import './features/battle/burghCocoonRuntime.js';
+// 카밀레는 매 턴 선택 결과를 받은 뒤 무대를 훑고 대상에 고정되는 연출을 재생한다.
+import './features/battle/elesaSpotlightRuntime.js';
 import './components/battle/WakeBattleUi.jsx';
 import './components/battle/CynthiaBattleUi.jsx';
 import './components/battle/CynthiaToxicSpikesUi.jsx';
