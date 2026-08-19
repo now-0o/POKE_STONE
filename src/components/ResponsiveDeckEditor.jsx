@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DeckEditor from "./DeckEditor.jsx";
 import MobileDeckEditor from "./MobileDeckEditor.jsx";
+import "../styles/mobile-deck-portrait.css";
 
 function matchesMobileDeckEditor() {
   if (typeof window === "undefined") return false;
@@ -27,6 +28,16 @@ export default function ResponsiveDeckEditor(props) {
       narrow.removeEventListener?.("change", update);
     };
   }, []);
+
+  useEffect(() => {
+    if (!mobile) return undefined;
+
+    document.body.classList.add("mobile-deck-editing");
+
+    return () => {
+      document.body.classList.remove("mobile-deck-editing");
+    };
+  }, [mobile]);
 
   return mobile ? <MobileDeckEditor {...props} /> : <DeckEditor {...props} />;
 }
