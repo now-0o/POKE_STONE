@@ -1,0 +1,136 @@
+/* 카밀레: 턴 시작 시 무대 전체를 훑은 뒤 한 포켓몬에 스포트라이트 고정 */
+
+.unova-spotlight-search-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1450;
+  overflow: hidden;
+  pointer-events: auto;
+  border-radius: inherit;
+  animation: unova-spotlight-scene-in 1.03s ease both;
+}
+
+.unova-spotlight-search-light {
+  position: absolute;
+  width: 138px;
+  height: 92px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 226, .52) 0%,
+    rgba(255, 240, 148, .34) 42%,
+    rgba(255, 218, 83, .13) 66%,
+    rgba(255, 218, 83, 0) 76%
+  );
+  box-shadow:
+    0 0 0 220vmax rgba(2, 5, 14, .56),
+    0 0 26px rgba(255, 227, 99, .72),
+    inset 0 0 22px rgba(255, 255, 238, .48);
+  will-change: left, top, transform;
+}
+
+.unova-spotlight-search-cone {
+  position: absolute;
+  left: 50%;
+  bottom: 46%;
+  width: 190px;
+  height: 310px;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  clip-path: polygon(46% 0, 54% 0, 77% 100%, 23% 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,245,.08),
+    rgba(255,247,190,.20) 52%,
+    rgba(255,226,102,.34) 100%
+  );
+  filter: blur(.2px);
+  mix-blend-mode: screen;
+  animation: unova-spotlight-cone-sway .36s ease-in-out infinite alternate;
+}
+
+.unova-spotlight-search-ring {
+  position: absolute;
+  inset: 7px 10px;
+  border: 2px solid rgba(255, 247, 178, .86);
+  border-radius: 50%;
+  box-shadow:
+    0 0 18px rgba(255, 225, 85, .85),
+    inset 0 0 14px rgba(255,255,255,.54);
+  opacity: .84;
+}
+
+.unova-spotlight-search-title {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  transform: translateX(-50%);
+  color: rgba(255, 241, 165, .9);
+  font-family: var(--display-font);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: .22em;
+  text-shadow: 0 0 12px rgba(255, 218, 73, .76), 0 2px 4px rgba(0,0,0,.86);
+  animation: unova-spotlight-title 1.03s ease both;
+}
+
+.unova-spotlight-search-fx.is-locking .unova-spotlight-search-light {
+  filter: brightness(1.42) saturate(1.08);
+}
+
+.field-unit.unova-spotlight-lock-pop {
+  animation: unova-spotlight-lock-pop .48s cubic-bezier(.18,.8,.22,1) both !important;
+}
+
+/* 기존의 천장 등불 같은 고정 빛기둥은 사용하지 않는다. */
+.unova-spotlight-beam {
+  display: none !important;
+}
+
+/* 선택 후에는 빛기둥 대신 카드 자체의 테두리/후광으로만 대상 유지 */
+.field-unit.unova-spotlight {
+  box-shadow:
+    0 0 0 2px rgba(255, 248, 176, .96),
+    0 0 16px rgba(255, 226, 92, .90),
+    0 0 32px rgba(255, 194, 45, .48) !important;
+}
+
+.field-unit.unova-spotlight .unit-art {
+  filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 238, 139, .68));
+}
+
+@keyframes unova-spotlight-scene-in {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes unova-spotlight-cone-sway {
+  from { transform: translateX(-50%) rotate(-2.2deg); opacity: .72; }
+  to { transform: translateX(-50%) rotate(2.2deg); opacity: 1; }
+}
+
+@keyframes unova-spotlight-title {
+  0%, 8% { opacity: 0; transform: translate(-50%, -7px); }
+  20%, 76% { opacity: .95; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -3px); }
+}
+
+@keyframes unova-spotlight-lock-pop {
+  0% { transform: scale(1); filter: brightness(1); }
+  42% { transform: scale(1.10); filter: brightness(1.75) saturate(1.12); }
+  70% { transform: scale(.98); filter: brightness(1.22); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unova-spotlight-search-light,
+  .unova-spotlight-search-cone,
+  .unova-spotlight-search-title,
+  .field-unit.unova-spotlight-lock-pop {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
