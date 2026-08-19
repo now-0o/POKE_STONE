@@ -309,18 +309,33 @@ function minecartGroundDamage(game, target, amount) {
 function advanceMinecart(game, side, steps) {
   if (game?.trainer?.gimmick !== "clay_minecart") return;
   const direction = side === "enemy" ? 1 : -1;
-  game._clayMinecart = Math.max(-4, Math.min(4, (game._clayMinecart || 0) + direction * steps));
+  // 중앙 포함 7칸: -3 ~ +3. 양 끝에 닿는 즉시 폭발하고 중앙으로 복귀한다.
+  game._clayMinecart = Math.max(-3, Math.min(3, (game._clayMinecart || 0) + direction * steps));
   game.log.push(`광산차 게이지 ${game._clayMinecart > 0 ? "+" : ""}${game._clayMinecart}!`);
 
-  if (game._clayMinecart >= 4) {
+  if (game._clayMinecart >= 3) {
     for (const unit of game.players.player.field) minecartGroundDamage(game, unit, 3);
+    game._clayMinecartBurstSeq = (game._clayMinecartBurstSeq || 0) + 1;
+    game._clayMinecartBurst = {
+      id: game._clayMinecartBurstSeq,
+      targetSide: "player",
+      amount: 3,
+      damageType: "ground",
+    };
     game.log.push("광산차가 야콘 쪽 끝에 닿았다! 낙반! 플레이어 필드 전체에 땅 피해 3!");
     game._clayMinecart = 0;
     base.cleanupDeaths(game);
-  } else if (game._clayMinecart <= -4) {
+  } else if (game._clayMinecart <= -3) {
     for (const unit of game.players.enemy.field) {
       if (unit.hp > 0) unit.hp = Math.max(0, unit.hp - 2);
     }
+    game._clayMinecartBurstSeq = (game._clayMinecartBurstSeq || 0) + 1;
+    game._clayMinecartBurst = {
+      id: game._clayMinecartBurstSeq,
+      targetSide: "enemy",
+      amount: 2,
+      damageType: "fixed",
+    };
     game.log.push("광산차를 역으로 밀어냈다! 광맥 붕괴! 야콘 필드 전체 피해 2!");
     game._clayMinecart = 0;
     base.cleanupDeaths(game);
@@ -447,6 +462,7 @@ function syncUnovaState(game) {
     ),
     airborneUids: units.filter((u) => u._skylaAirborne).map((u) => u.uid),
     minecart: game._clayMinecart || 0,
+    minecartBurst: game._clayMinecartBurst || null,
     draydenTrial: game._draydenTrialText || null,
     draydenDominance: game._draydenDominance || 0,
   };
@@ -474,7 +490,11 @@ export function createGame(playerDeckIds, trainer) {
   const resolvedTrainer = resolveStriatonTrainer(playerDeckIds, trainer);
   const game = base.createGame(playerDeckIds, resolvedTrainer);
 
-  if (game.trainer?.gimmick === "clay_minecart") game._clayMinecart = 0;
+  if (game.trainer?.gimmick === "clay_minecart") {
+    game._clayMinecart = 0;
+    game._clayMinecartBurst = null;
+    game._clayMinecartBurstSeq = 0;
+  }
   if (game.trainer?.gimmick === "drayden_trials") game._draydenDominance = 0;
   if (game.trainer?.gimmick === "lenora_review") {
     game.players.player._reviewKindsThisTurn = {};

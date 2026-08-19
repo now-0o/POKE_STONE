@@ -231,7 +231,7 @@
 
 .unova-minecart-track {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   align-items: center;
   margin-top: 4px;
   height: 19px;
@@ -259,6 +259,141 @@
   0% { transform: scale(.65); }
   70% { transform: scale(1.25); }
   100% { transform: scale(1); }
+}
+
+
+/* 야콘 광산차는 필드 중앙을 가리지 않도록 작게 좌측 상단에 둔다. */
+.unova-minecart-hud {
+  z-index: 180;
+  left: 14px;
+  top: 76px;
+  transform: none;
+  width: min(220px, calc(100vw - 28px));
+  min-width: 0;
+  padding: 6px 9px 7px;
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+
+.unova-minecart-hud .unova-hud-title { margin-bottom: 2px; font-size: 9px; }
+.unova-minecart-hud .unova-minecart-labels { gap: 6px; font-size: 9px; }
+.unova-minecart-hud .unova-minecart-labels strong { font-size: 11px; }
+.unova-minecart-hud .unova-minecart-track { margin-top: 3px; height: 15px; }
+.unova-minecart-hud .unova-minecart-track span { font-size: 10px; }
+.unova-minecart-hud .unova-minecart-track span.active { font-size: 13px; }
+
+.unova-minecart-hud.is-bursting {
+  animation: unova-minecart-hud-impact .62s cubic-bezier(.18,.75,.2,1) both;
+}
+
+.unova-minecart-burst-label {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, 3px);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(52, 31, 17, .94);
+  border: 1px solid rgba(255, 202, 112, .8);
+  color: #ffe1a2;
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,.32);
+  animation: unova-minecart-burst-label .85s ease-out both;
+}
+
+.unova-minecart-impact-fx {
+  position: absolute;
+  z-index: 140;
+  height: 118px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff0c7;
+  text-align: center;
+  text-shadow: 0 2px 5px #2c1608, 0 0 10px rgba(255,184,83,.6);
+  animation: unova-minecart-impact-fade .92s ease-out both;
+}
+
+.unova-minecart-impact-fx strong { position: relative; z-index: 3; font-size: 18px; letter-spacing: .06em; }
+.unova-minecart-impact-fx > span { position: relative; z-index: 3; margin-top: 2px; font-size: 10px; font-weight: 900; }
+
+.unova-minecart-impact-ring,
+.unova-minecart-impact-dust {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+.unova-minecart-impact-ring {
+  width: 54px;
+  height: 22px;
+  border: 4px solid rgba(255, 209, 119, .9);
+  box-shadow: 0 0 18px rgba(255, 178, 74, .72);
+  animation: unova-minecart-impact-ring .7s ease-out both;
+}
+
+.unova-minecart-impact-dust {
+  width: 42px;
+  height: 42px;
+  background:
+    radial-gradient(circle at 20% 64%, rgba(194,136,75,.88) 0 8%, transparent 9%),
+    radial-gradient(circle at 40% 30%, rgba(230,177,105,.86) 0 11%, transparent 12%),
+    radial-gradient(circle at 67% 55%, rgba(173,111,57,.9) 0 10%, transparent 11%),
+    radial-gradient(circle at 82% 24%, rgba(239,194,123,.76) 0 7%, transparent 8%);
+  filter: blur(.2px) drop-shadow(0 3px 3px rgba(55,30,13,.45));
+  animation: unova-minecart-impact-dust .82s ease-out both;
+}
+
+.field-unit.unova-minecart-damage-hit {
+  animation: unova-minecart-unit-hit .48s cubic-bezier(.18,.75,.25,1) both !important;
+}
+
+@keyframes unova-minecart-hud-impact {
+  0% { transform: translateX(0) scale(1); filter: brightness(1); }
+  18% { transform: translateX(-5px) scale(1.04); filter: brightness(1.5); }
+  36% { transform: translateX(5px) scale(.98); }
+  54% { transform: translateX(-3px) scale(1.01); }
+  100% { transform: translateX(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes unova-minecart-burst-label {
+  0% { opacity: 0; transform: translate(-50%, -5px) scale(.8); }
+  22% { opacity: 1; transform: translate(-50%, 4px) scale(1.08); }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, 10px) scale(.98); }
+}
+
+@keyframes unova-minecart-impact-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(5.4, 2.8); }
+}
+
+@keyframes unova-minecart-impact-dust {
+  0% { opacity: 0; transform: translate(-50%, -25%) scale(.5); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -105%) scale(4.8); }
+}
+
+@keyframes unova-minecart-impact-fade {
+  0% { opacity: 0; }
+  12%, 68% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes unova-minecart-unit-hit {
+  0% { transform: translateY(0) rotate(0); filter: brightness(1); }
+  20% { transform: translateY(-5px) rotate(-1.5deg); filter: brightness(1.8) sepia(.4); }
+  42% { transform: translateY(3px) rotate(1.5deg); }
+  64% { transform: translateY(-2px) rotate(-.7deg); }
+  100% { transform: translateY(0) rotate(0); filter: brightness(1); }
 }
 
 /* 사간 HUD */
@@ -320,6 +455,15 @@
     top: 58px;
     padding: 7px 10px 8px;
     min-width: 78vw;
+  }
+
+  .unova-minecart-hud {
+    left: 8px;
+    top: 54px;
+    transform: none;
+    width: min(180px, 54vw);
+    min-width: 0;
+    padding: 5px 7px 6px;
   }
 
   .unova-spotlight-beam {

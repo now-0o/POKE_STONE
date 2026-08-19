@@ -44,7 +44,7 @@ const GIMMICK_GUIDES = {
     fieldName: "물풍경 광산차",
     lines: [
       "전투 공격으로 실제 피해를 줄 때마다 광산차가 공격한 쪽으로 1칸 움직입니다.",
-      "야콘 쪽 +4에 도달하면 플레이어 필드 전체에 땅 피해 3, 플레이어 쪽 -4에 도달하면 야콘 필드 전체에 피해 2가 발생하고 중앙으로 돌아옵니다.",
+      "야콘 쪽 +3에 도달하면 플레이어 필드 전체에 땅 피해 3, 플레이어 쪽 -3에 도달하면 야콘 필드 전체에 피해 2가 발생하고 중앙으로 돌아옵니다.",
       "야콘의 시그니처 몰드류는 전투 피해를 줄 때 광산차를 2칸 밀어냅니다.",
     ],
     hint: "힌트: 기술 피해만으로는 광산차 주도권을 가져올 수 없습니다. 전투 공격의 흐름을 잡으세요.",
@@ -85,15 +85,69 @@ function readGymState() {
     frostByUid: {},
     airborneUids: [],
     minecart: 0,
+    minecartBurst: null,
     draydenTrial: null,
     draydenDominance: 0,
   };
 }
 
-function MinecartHud({ value = 0 }) {
-  const positions = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+function MinecartHud({ value = 0, burst = null }) {
+  const positions = [-3, -2, -1, 0, 1, 2, 3];
+  const [burstFx, setBurstFx] = useState(null);
+
+  useEffect(() => {
+    if (!burst?.id) return undefined;
+
+    setBurstFx(burst);
+    const board = document.querySelector(".battle.battle-board");
+    const field = board?.querySelector(
+      burst.targetSide === "player" ? ".my-field" : ".enemy-field",
+    );
+    const selector =
+      burst.targetSide === "player"
+        ? '.field-unit[data-drop="unit-player"]'
+        : '.field-unit[data-drop="unit-enemy"]';
+    const units = board ? [...board.querySelectorAll(selector)] : [];
+
+    units.forEach((unit) => unit.classList.add("unova-minecart-damage-hit"));
+
+    let impact = null;
+    if (board && field) {
+      const boardRect = board.getBoundingClientRect();
+      const fieldRect = field.getBoundingClientRect();
+      impact = document.createElement("div");
+      impact.className = `unova-minecart-impact-fx target-${burst.targetSide}`;
+      impact.setAttribute("aria-hidden", "true");
+      impact.style.left = `${fieldRect.left - boardRect.left + fieldRect.width / 2}px`;
+      impact.style.top = `${fieldRect.top - boardRect.top + fieldRect.height / 2}px`;
+      impact.style.width = `${Math.max(220, fieldRect.width * 0.72)}px`;
+      impact.innerHTML = `
+        <div class="unova-minecart-impact-ring"></div>
+        <div class="unova-minecart-impact-dust"></div>
+        <strong>${burst.targetSide === "player" ? "낙반!" : "광맥 붕괴!"}</strong>
+        <span>${burst.targetSide === "player" ? "땅 피해 3" : "전체 피해 2"}</span>
+      `;
+      board.appendChild(impact);
+    }
+
+    const timer = window.setTimeout(() => {
+      setBurstFx(null);
+      units.forEach((unit) => unit.classList.remove("unova-minecart-damage-hit"));
+      impact?.remove();
+    }, 920);
+
+    return () => {
+      window.clearTimeout(timer);
+      units.forEach((unit) => unit.classList.remove("unova-minecart-damage-hit"));
+      impact?.remove();
+    };
+  }, [burst?.id]);
+
   return (
-    <div className="unova-minecart-hud" aria-live="polite">
+    <div
+      className={`unova-minecart-hud ${burstFx ? `is-bursting burst-${burstFx.targetSide}` : ""}`}
+      aria-live="polite"
+    >
       <div className="unova-hud-title">⛏️ 광산차</div>
       <div className="unova-minecart-labels">
         <span>플레이어</span>
@@ -111,6 +165,11 @@ function MinecartHud({ value = 0 }) {
           </span>
         ))}
       </div>
+      {burstFx && (
+        <div className="unova-minecart-burst-label" aria-hidden="true">
+          {burstFx.targetSide === "player" ? "쾅! 낙반" : "쾅! 광맥 붕괴"}
+        </div>
+      )}
     </div>
   );
 }
@@ -188,7 +247,10 @@ function GimmickHelp({ trainer }) {
       </div>
 
       {trainer.gimmick === "clay_minecart" && (
-        <MinecartHud value={gymState.minecart || 0} />
+        <MinecartHud
+          value={gymState.minecart || 0}
+          burst={gymState.minecartBurst || null}
+        />
       )}
 
       {trainer.gimmick === "drayden_trials" && (
