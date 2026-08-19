@@ -1,3 +1,9 @@
+body.mobile-deck-editing .audio-controls,
+body.mobile-deck-editing .btn-patchnotes,
+body.mobile-deck-editing .patchnotes-panel {
+  display: none !important;
+}
+
 @media (orientation: portrait) and (pointer: coarse) {
   body.mobile-deck-editing .app {
     display: block !important;
