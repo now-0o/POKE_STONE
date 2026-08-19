@@ -1,5 +1,5 @@
 /* Mobile Hearthstone-style hand interaction runtime.
- * Keeps Battle.jsx/game logic untouched and only manages presentation state.
+ * Battle/game logic remains in React. This file only owns mobile hand presentation state.
  */
 
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
@@ -8,7 +8,10 @@ const lastHandCount = new WeakMap();
 let handGesture = null;
 
 function isMobileBattle() {
-  return typeof window !== "undefined" && window.matchMedia(MOBILE_BATTLE_QUERY).matches;
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia(MOBILE_BATTLE_QUERY).matches
+  );
 }
 
 function getBoard(target) {
@@ -19,30 +22,63 @@ function getHand(board) {
   return board?.querySelector(":scope > .hand") || null;
 }
 
+function getHandCount(board) {
+  return (
+    getHand(board)?.querySelectorAll(":scope > .hand-card-wrap").length || 0
+  );
+}
+
 function layoutHand(hand) {
   if (!hand) return;
+
   const wraps = [...hand.querySelectorAll(":scope > .hand-card-wrap")];
   const count = wraps.length;
   if (!count) return;
 
-  const expandedSpan = Math.max(0, Math.min(window.innerWidth - 122, 320));
-  const expandedStep = count > 1 ? Math.min(48, expandedSpan / (count - 1)) : 0;
-  const collapsedSpan = Math.min(88, Math.max(0, window.innerWidth * 0.24));
+  const portrait = window.matchMedia("(orientation: portrait)").matches;
+  const expandedMargin = portrait ? 54 : 74;
+  const expandedMax = portrait ? 380 : 560;
+  const expandedStepMax = portrait ? 54 : 64;
+  const expandedSpan = Math.max(
+    0,
+    Math.min(window.innerWidth - expandedMargin, expandedMax),
+  );
+  const expandedStep =
+    count > 1 ? Math.min(expandedStepMax, expandedSpan / (count - 1)) : 0;
+
+  const collapsedSpan = Math.min(
+    portrait ? 96 : 112,
+    Math.max(0, window.innerWidth * (portrait ? 0.25 : 0.18)),
+  );
   const collapsedStep = count > 1 ? collapsedSpan / (count - 1) : 0;
   const center = (count - 1) / 2;
 
   wraps.forEach((wrap, index) => {
     const offset = index - center;
-    const angle = Math.max(-10, Math.min(10, offset * 2.4));
-    wrap.style.setProperty("--mobile-expanded-x", `${offset * expandedStep}px`);
-    wrap.style.setProperty("--mobile-collapsed-x", `${offset * collapsedStep}px`);
+    const angle = Math.max(-10, Math.min(10, offset * 2.15));
+
+    wrap.style.setProperty(
+      "--mobile-expanded-x",
+      `${offset * expandedStep}px`,
+    );
+    wrap.style.setProperty(
+      "--mobile-collapsed-x",
+      `${offset * collapsedStep}px`,
+    );
     wrap.style.setProperty("--mobile-hand-angle", `${angle}deg`);
     wrap.style.setProperty("--mobile-hand-index", String(index + 1));
   });
 }
 
 function openHand(board) {
-  if (!board || board.classList.contains("aiming") || board.querySelector(".drag-ghost")) return;
+  if (
+    !board ||
+    board.classList.contains("aiming") ||
+    board.querySelector(".drag-ghost")
+  ) {
+    return;
+  }
+
   layoutHand(getHand(board));
   board.classList.add("mobile-hand-open");
 }
@@ -52,16 +88,58 @@ function closeHand(board) {
   board.classList.remove("mobile-hand-open");
 }
 
+function clearGrabState(board, wrap) {
+  wrap?.classList.remove("mobile-grabbed-card");
+  board?.classList.remove("mobile-hand-grabbing");
+}
+
 function isEmptyFieldTap(target) {
   const field = target.closest?.(".field");
   if (!field) return false;
+
   return !target.closest?.(
     ".field-unit, .field-obstacle, .unit-pop, .field-fixed-slot:not(.is-empty), button, .target-hint",
   );
 }
 
+function settleAfterGesture(gesture) {
+  const { board, cardWrap, cardCount, moved } = gesture;
+
+  // React's pointer-up/drop handler runs after this document capture listener.
+  // Two animation frames + a short timeout gives it time to mutate the hand.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        if (!document.contains(board)) return;
+
+        const afterCount = getHandCount(board);
+        const selected = board.querySelector(".hand-card.selected");
+        const dragging = board.querySelector(".drag-ghost");
+        const cardWasUsed = afterCount < cardCount;
+
+        clearGrabState(board, cardWrap);
+
+        if (cardWasUsed) {
+          // A successful play returns the remaining hand to the lower-right stack.
+          closeHand(board);
+        } else if (selected) {
+          // Targeting keeps only the selected card visible; CSS centers/enlarges it.
+          closeHand(board);
+        } else if (!dragging && moved) {
+          // Cancelled/invalid drag: return to the expanded fan instead of collapsing.
+          openHand(board);
+        }
+
+        lastHandCount.set(board, afterCount);
+        layoutHand(getHand(board));
+      }, 24);
+    });
+  });
+}
+
 function onPointerDown(event) {
   if (!isMobileBattle()) return;
+
   const board = getBoard(event.target);
   if (!board) return;
 
@@ -71,16 +149,14 @@ function onPointerDown(event) {
 
     const cardWrap = event.target.closest?.(".hand-card-wrap");
     const wasOpen = board.classList.contains("mobile-hand-open");
-    const cardCount = hand.querySelectorAll(":scope > .hand-card-wrap").length;
+    const cardCount = getHandCount(board);
     lastHandCount.set(board, cardCount);
 
     if (!wasOpen && !board.querySelector(".hand-card.selected")) {
       openHand(board);
 
-      // The first tap only opens the hand; never accidentally play/drag a card.
-      // Stop pointerdown from reaching React, then consume the click generated by
-      // this same tap. Do not preventDefault here: iOS may otherwise skip that
-      // click and accidentally suppress the user's second tap instead.
+      // The first tap only expands the hand. Let the browser generate its click,
+      // then consume that click in capture so the card cannot accidentally play.
       if (cardWrap) {
         suppressClickUntil.set(board, Date.now() + 550);
         event.stopPropagation();
@@ -88,9 +164,15 @@ function onPointerDown(event) {
       return;
     }
 
+    if (cardWrap) {
+      board.classList.add("mobile-hand-grabbing");
+      cardWrap.classList.add("mobile-grabbed-card");
+    }
+
     handGesture = {
       board,
       hand,
+      cardWrap,
       startX: event.clientX,
       startY: event.clientY,
       moved: false,
@@ -113,31 +195,44 @@ function onPointerDown(event) {
 
 function onPointerMove(event) {
   if (!handGesture) return;
-  if (Math.hypot(event.clientX - handGesture.startX, event.clientY - handGesture.startY) > 10) {
+
+  if (
+    Math.hypot(
+      event.clientX - handGesture.startX,
+      event.clientY - handGesture.startY,
+    ) > 10
+  ) {
     handGesture.moved = true;
   }
 }
 
 function onPointerUp() {
-  document.querySelectorAll(".battle-board.mobile-field-interacting").forEach((board) => {
-    window.setTimeout(() => board.classList.remove("mobile-field-interacting"), 80);
-  });
+  document
+    .querySelectorAll(".battle-board.mobile-field-interacting")
+    .forEach((board) => {
+      window.setTimeout(
+        () => board.classList.remove("mobile-field-interacting"),
+        90,
+      );
+    });
 
   if (!handGesture) return;
-  const { board, moved, cardCount } = handGesture;
-  lastHandCount.set(board, cardCount);
-  handGesture = null;
 
-  if (moved) {
-    // A drag attempt collapses the hand; drag ghost/aim UI becomes the focus.
-    window.setTimeout(() => closeHand(board), 0);
-  }
+  const gesture = handGesture;
+  handGesture = null;
+  lastHandCount.set(gesture.board, gesture.cardCount);
+
+  // Do not immediately collapse here. We must first know whether the drop
+  // actually consumed the card. This fixes invalid/cancelled drag behavior.
+  settleAfterGesture(gesture);
 }
 
 function onClickCapture(event) {
   if (!isMobileBattle()) return;
+
   const board = getBoard(event.target);
   if (!board || !event.target.closest?.(".hand")) return;
+
   const until = suppressClickUntil.get(board) || 0;
   if (Date.now() < until) {
     event.preventDefault();
@@ -148,29 +243,40 @@ function onClickCapture(event) {
 
 function onClickBubble(event) {
   if (!isMobileBattle()) return;
+
   const board = getBoard(event.target);
   const hand = board && event.target.closest?.(".hand");
   if (!board || !hand) return;
 
-  const beforeCount = lastHandCount.get(board) ?? hand.querySelectorAll(":scope > .hand-card-wrap").length;
-  window.setTimeout(() => {
-    if (!document.contains(board)) return;
-    const selected = board.querySelector(".hand-card.selected");
-    const dragging = board.querySelector(".drag-ghost");
-    const currentHand = getHand(board);
-    const afterCount = currentHand?.querySelectorAll(":scope > .hand-card-wrap").length ?? 0;
-    if (selected || dragging || afterCount < beforeCount) closeHand(board);
-    lastHandCount.set(board, afterCount);
-    layoutHand(currentHand);
-  }, 0);
+  const beforeCount =
+    lastHandCount.get(board) ??
+    hand.querySelectorAll(":scope > .hand-card-wrap").length;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (!document.contains(board)) return;
+
+      const selected = board.querySelector(".hand-card.selected");
+      const dragging = board.querySelector(".drag-ghost");
+      const afterCount = getHandCount(board);
+
+      if (afterCount < beforeCount || selected || dragging) {
+        closeHand(board);
+      }
+
+      lastHandCount.set(board, afterCount);
+      layoutHand(getHand(board));
+    });
+  });
 }
 
 function refreshHands() {
   if (!isMobileBattle()) return;
+
   document.querySelectorAll(".battle-board > .hand").forEach((hand) => {
     layoutHand(hand);
     const board = hand.closest(".battle-board");
-    if (board) lastHandCount.set(board, hand.querySelectorAll(":scope > .hand-card-wrap").length);
+    if (board) lastHandCount.set(board, getHandCount(board));
   });
 }
 
@@ -184,10 +290,12 @@ if (typeof document !== "undefined") {
 
   const observer = new MutationObserver((mutations) => {
     if (!isMobileBattle()) return;
+
     if (
       mutations.some((mutation) =>
         mutation.target instanceof Element
-          ? mutation.target.closest?.(".battle-board > .hand") || mutation.target.matches?.(".battle-board > .hand")
+          ? mutation.target.closest?.(".battle-board > .hand") ||
+            mutation.target.matches?.(".battle-board > .hand")
           : false,
       )
     ) {
@@ -195,7 +303,19 @@ if (typeof document !== "undefined") {
     }
   });
 
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  window.addEventListener("resize", () => requestAnimationFrame(refreshHands), { passive: true });
-  window.addEventListener("orientationchange", () => requestAnimationFrame(refreshHands), { passive: true });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+
+  window.addEventListener(
+    "resize",
+    () => requestAnimationFrame(refreshHands),
+    { passive: true },
+  );
+  window.addEventListener(
+    "orientationchange",
+    () => requestAnimationFrame(refreshHands),
+    { passive: true },
+  );
 }
