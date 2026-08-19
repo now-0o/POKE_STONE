@@ -83,6 +83,22 @@
   }
 }
 
+/* The rest of the game can keep its landscape recommendation, but the shop itself supports portrait. */
+@media (orientation: portrait) and (pointer: coarse) {
+  body:has(.pack-shop) .app {
+    display: block !important;
+  }
+
+  body:has(.pack-shop)::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  body:has(.pack-shop) .rotate-prompt {
+    display: none !important;
+  }
+}
+
 /* Portrait mobile: two packs per row, centered as a compact shop grid. */
 @media (orientation: portrait) and (max-width: 1024px) {
   .pack-shop:has(.pack-buy-area),
