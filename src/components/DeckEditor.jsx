@@ -865,7 +865,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             </div>
           ) : (
             <div className="collection-grid" ref={collectionGridRef}>
-              {renderCollectionCards(ownedCards)}
+              {renderCollectionCards(ownedVariants)}
             </div>
           )}
         </div>
