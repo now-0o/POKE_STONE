@@ -16,6 +16,18 @@ import {
   ABILITY_TEXT,
 } from "../data/cards.js";
 import { persist } from "../state/save.js";
+import {
+  addDeckVariant,
+  buildOwnedVariants,
+  canAddDeckVariant,
+  clearDeckVariants,
+  getDeckVariantRows,
+  removeDeckVariant,
+  selectDeckPreset,
+  shinyInDeck,
+  shinyOwned,
+  syncActivePresetVariants,
+} from "../state/shiny.js";
 import { HandCard, Sprite, useInspect } from "./Card.jsx";
 import { playSfx } from "../audio.js";
 
@@ -256,6 +268,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
       });
   }, [save.collection, filter, searchMatchIds, abilityFilters, sortMode]);
 
+  const ownedVariants = useMemo(() => buildOwnedVariants(ownedCards, save), [ownedCards, save.shinyCollection]);
+
   const collectionGridRef = useRef(null);
   const collectionPaneRef = useRef(null);
   const previousCardRectsRef = useRef(new Map());
@@ -264,11 +278,11 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   const virtualRafRef = useRef(null);
 
   const visibleOwnedCards = mobileLite
-    ? ownedCards.slice(
-        Math.min(virtualWindow.start, ownedCards.length),
-        Math.min(virtualWindow.end, ownedCards.length),
+    ? ownedVariants.slice(
+        Math.min(virtualWindow.start, ownedVariants.length),
+        Math.min(virtualWindow.end, ownedVariants.length),
       )
-    : ownedCards;
+    : ownedVariants;
 
   function captureCardPositions() {
     if (mobileLite) {
@@ -294,7 +308,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
       return;
     }
 
-    const totalRows = Math.ceil(ownedCards.length / columns);
+    const totalRows = Math.ceil(ownedVariants.length / columns);
 
     if (totalRows === 0) {
       const emptyWindow = { start: 0, end: 0, top: 0, totalHeight: 0 };
@@ -315,7 +329,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
 
     const nextWindow = {
       start: startRow * columns,
-      end: Math.min(ownedCards.length, (endRow + 1) * columns),
+      end: Math.min(ownedVariants.length, (endRow + 1) * columns),
       top: startRow * rowStep,
       totalHeight: totalRows * rowStep,
     };
@@ -390,7 +404,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     collectionPaneRef.current?.scrollTo({ top: 0, behavior: "auto" });
     setVirtualWindow({
       start: 0,
-      end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length || MOBILE_INITIAL_RENDER),
+      end: Math.min(MOBILE_INITIAL_RENDER, ownedVariants.length || MOBILE_INITIAL_RENDER),
       top: 0,
       totalHeight: 0,
     });
@@ -422,7 +436,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     virtualMetricsRef.current = { columns: 0, rowStep: 0 };
     setVirtualWindow({
       start: 0,
-      end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length),
+      end: Math.min(MOBILE_INITIAL_RENDER, ownedVariants.length),
       top: 0,
       totalHeight: 0,
     });
@@ -456,7 +470,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         virtualMetricsRef.current = { columns: 0, rowStep: 0 };
         setVirtualWindow((prev) => ({
           start: 0,
-          end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length),
+          end: Math.min(MOBILE_INITIAL_RENDER, ownedVariants.length),
           top: 0,
           totalHeight: 0,
         }));
@@ -545,19 +559,9 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     playSfx("click");
   }
 
-  function addToDeck(cardId) {
+  function addToDeck(cardId, shiny = false) {
     if (clickSuppressed()) return;
-
     const card = CARD_MAP[cardId];
-    const inDeck = save.deck.filter((id) => id === cardId).length;
-    const owned = save.collection[cardId] || 0;
-    const max = Math.min(MAX_COPIES[card.rarity], owned);
-
-    if (save.deck.length >= 30 || inDeck >= max) {
-      playSfx("buzzer");
-      return;
-    }
-
     if (
       !save.adminMode &&
       isLegendaryPokemon(card) &&
@@ -566,74 +570,45 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
       playSfx("buzzer");
       return;
     }
-
-    save.deck = [...save.deck, cardId];
-    syncActivePreset(save.deck);
+    if (!addDeckVariant(save, cardId, shiny)) {
+      playSfx("buzzer");
+      return;
+    }
     persist(save);
     playSfx("pickup");
     onSaveChange();
   }
 
-  function removeFromDeck(cardId) {
-    const idx = save.deck.indexOf(cardId);
-    if (idx === -1) return;
-
-    save.deck = [...save.deck.slice(0, idx), ...save.deck.slice(idx + 1)];
-    syncActivePreset(save.deck);
+  function removeFromDeck(cardId, shiny = false) {
+    if (!removeDeckVariant(save, cardId, shiny)) return;
     persist(save);
     playSfx("putdown");
     onSaveChange();
   }
 
   function clearDeck() {
-    if (save.deck.length === 0) {
-      return;
-    }
-
-    save.deck = [];
-    syncActivePreset([]);
+    if (save.deck.length === 0) return;
+    clearDeckVariants(save);
     persist(save);
     playSfx("putdown");
     onSaveChange();
   }
 
-  const deckList = useMemo(() => {
-    const ids = [...new Set(save.deck)];
-    return ids
-      .map((id) => ({ card: CARD_MAP[id], count: deckCounts[id] }))
-      .sort(
-        (a, b) =>
-          a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name),
-      );
-  }, [save.deck, deckCounts]);
+  const deckList = useMemo(
+    () => getDeckVariantRows(save).sort(
+      (a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name) || Number(a.shiny) - Number(b.shiny),
+    ),
+    [save.deck, save.deckShiny],
+  );
 
-  function syncActivePreset(deck = save.deck) {
-    if (!Array.isArray(save.deckPresets)) {
-      return;
-    }
-
-    save.deckPresets = save.deckPresets.map((preset, index) =>
-      index === save.activeDeckPreset
-        ? {
-            ...preset,
-            deck: [...deck],
-          }
-        : preset,
-    );
+  function syncActivePreset() {
+    syncActivePresetVariants(save);
   }
 
   function selectPreset(index) {
-    if (index === save.activeDeckPreset) {
-      return;
-    }
-
+    if (index === save.activeDeckPreset) return;
     playSfx("click");
-    syncActivePreset(save.deck);
-
-    const nextPreset = save.deckPresets[index];
-    save.activeDeckPreset = index;
-    save.deck = [...(nextPreset?.deck || [])];
-
+    if (!selectDeckPreset(save, index)) return;
     persist(save);
     onSaveChange();
   }
@@ -655,31 +630,34 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   function renderCollectionCards(cards) {
-    return cards.map((card) => {
+    return cards.map(({ card, shiny }) => {
       const owned = save.collection[card.id];
       const inDeck = deckCounts[card.id] || 0;
       const max = Math.min(MAX_COPIES[card.rarity], owned);
+      const variantDeck = shiny ? shinyInDeck(save, card.id) : inDeck - shinyInDeck(save, card.id);
+      const variantOwned = shiny ? shinyOwned(save, card.id) : owned;
 
       return (
         <div
-          key={card.id}
-          className="collection-item"
-          data-card-id={card.id}
+          key={`${card.id}-${shiny ? "shiny" : "normal"}`}
+          className={`collection-item ${shiny ? "collection-item-shiny" : ""}`}
+          data-card-id={`${card.id}-${shiny ? "shiny" : "normal"}`}
         >
           <HandCard
             cardId={card.id}
+            shiny={shiny}
             playable={
-              inDeck < max &&
+              canAddDeckVariant(save, card.id, shiny) &&
               save.deck.length < 30 &&
               (save.adminMode ||
                 !isLegendaryPokemon(card) ||
                 legendaryPokemonCount < MAX_LEGENDARY_POKEMON)
             }
-            onClick={() => addToDeck(card.id)}
-            onPointerDown={press({ cardId: card.id })}
+            onClick={() => addToDeck(card.id, shiny)}
+            onPointerDown={press({ cardId: card.id, shiny })}
           />
           <div className="collection-meta">
-            보유 {owned} · 덱 {inDeck}/{max}
+            {shiny ? `✨ 이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}
           </div>
         </div>
       );
@@ -702,7 +680,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     >
       {inspect && (
         <div className="inspect-overlay">
-          <HandCard cardId={inspect.cardId} playable ghost />
+          <HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />
         </div>
       )}
 
@@ -980,19 +958,19 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
           </div>
 
           <div className="deck-card-list">
-            {deckList.map(({ card, count }) => (
+            {deckList.map(({ card, count, shiny }) => (
               <div
                 key={card.id}
                 className="deck-row"
                 style={{ "--type-color": TYPE_COLORS[card.type] }}
-                onClick={() => removeFromDeck(card.id)}
+                onClick={() => removeFromDeck(card.id, shiny)}
                 title="클릭하면 1장 제거"
               >
                 <span className="deck-row-cost">{card.cost}</span>
                 <span className="deck-row-emoji">
-                  <Sprite cardId={card.id} emoji={card.emoji} size={22} />
+                  <Sprite cardId={card.id} shiny={shiny} emoji={card.emoji} size={22} />
                 </span>
-                <span className="deck-row-name">{card.name}</span>
+                <span className="deck-row-name">{shiny ? `✨ ${card.name}` : card.name}</span>
                 <span className="deck-row-count">×{count}</span>
               </div>
             ))}

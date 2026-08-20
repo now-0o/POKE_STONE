@@ -75,7 +75,7 @@ function resolveImmediateEjectButtons(game, snapshot) {
       // 손에서는 cardId만 다시 사용하므로 피해/버프/상태는 재소환 시 초기화된다.
       unit.item = null;
       player.field.splice(index, 1);
-      player.hand.push({ uid: unit.uid, cardId: unit.cardId });
+      player.hand.push({ uid: unit.uid, cardId: unit.cardId, shiny: !!unit.shiny });
       game.log.push(`${unit.name}의 탈출버튼! 피해를 버티고 즉시 손으로 돌아갔다!`);
     }
   }
@@ -486,9 +486,9 @@ function runBaseActionWithEject(game, action) {
   return result;
 }
 
-export function createGame(playerDeckIds, trainer) {
+export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {
   const resolvedTrainer = resolveStriatonTrainer(playerDeckIds, trainer);
-  const game = base.createGame(playerDeckIds, resolvedTrainer);
+  const game = base.createGame(playerDeckIds, resolvedTrainer, playerDeckShiny);
 
   if (game.trainer?.gimmick === "clay_minecart") {
     game._clayMinecart = 0;

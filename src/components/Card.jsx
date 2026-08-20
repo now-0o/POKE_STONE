@@ -4,6 +4,7 @@ import {
   TYPE_COLORS,
   ABILITY_TEXT,
   RARITY_NAME,
+  DEX,
   spriteUrl,
   trainerSpriteUrl,
 } from "../data/cards.js";
@@ -54,12 +55,18 @@ export function Sprite({
   size,
   busted = false,
   spriteId = null,
+  shiny = false,
 }) {
   const [failedUrl, setFailedUrl] = useState(null);
 
-  const url = spriteUrl(cardId, mega, busted, spriteId);
+  const normalUrl = spriteUrl(cardId, mega, busted, spriteId);
+  const shinyKey = spriteId ?? DEX[cardId];
+  const shinyUrl = shiny && shinyKey != null
+    ? `/sprites/pokemon/shiny/${shinyKey}.png`
+    : null;
+  const url = shinyUrl && failedUrl !== shinyUrl ? shinyUrl : normalUrl;
 
-  if (!url || failedUrl === url) {
+  if (!url || failedUrl === normalUrl) {
     return (
       <div className="card-emoji" style={{ fontSize: size * 0.7 }}>
         {emoji}
@@ -385,6 +392,7 @@ export function HandCard({
   ghost,
   unit,
   handCard,
+  shiny = false,
 }) {
   const card = CARD_MAP[cardId];
   const cost = game
@@ -410,6 +418,7 @@ export function HandCard({
   const { ref, onMouseMove, onMouseLeave } = useTilt();
   const holo = card.rarity !== "C";
   const isPokemon = card.kind === "pokemon";
+  const shownShiny = unit ? !!unit.shiny : !!(shiny || handCard?.shiny);
   const equippedItem = equippedItemCard(unit);
 
   return (
@@ -423,6 +432,7 @@ export function HandCard({
         holo ? "holo" : "",
         dragOrigin ? "drag-origin" : "",
         ghost ? "ghost-card" : "",
+        shownShiny ? "shiny-card" : "",
       ].join(" ")}
       style={{ "--type-color": TYPE_COLORS[shownType] }}
       onClick={onClick}
@@ -436,6 +446,8 @@ export function HandCard({
       >
         {cost}
       </div>
+
+      {shownShiny && <div className="shiny-badge">✨ 이로치</div>}
 
       <div className="card-topline">
         <span className="card-name">{shownName}</span>
@@ -459,6 +471,7 @@ export function HandCard({
           emoji={card.emoji}
           size={56}
           busted={unit?.cardId === "mimikyu" && unit.sturdyUsed}
+          shiny={shownShiny}
         />
       </div>
 
@@ -577,6 +590,7 @@ export function FieldUnit({
           hasTaunt ? "taunt" : "",
           lunge ? `lunge-${lunge}` : "",
           hit ? "hit-flash" : "",
+          unit.shiny ? "shiny-unit" : "",
         ].join(" ")}
         style={{ "--type-color": TYPE_COLORS[unit.type] }}
         onClick={onClick}
@@ -613,6 +627,7 @@ export function FieldUnit({
             emoji={unit.emoji}
             size={48}
             busted={unit.cardId === "mimikyu" && unit.sturdyUsed}
+            shiny={!!unit.shiny}
           />
         </div>
         <div className="unit-name">{unit.name}</div>

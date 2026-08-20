@@ -1,0 +1,66 @@
+/* 이로치 카드 공통 연출 */
+.hand-card.shiny-card {
+  box-shadow:
+    0 0 0 1px rgba(255, 236, 135, .75),
+    0 0 16px rgba(255, 227, 92, .38),
+    0 8px 22px rgba(0, 0, 0, .42);
+}
+
+.hand-card.shiny-card::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent 25%, rgba(255,255,255,.18) 42%, transparent 58%);
+  mix-blend-mode: screen;
+}
+
+.shiny-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 8;
+  padding: 2px 5px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  color: #fff7c7;
+  background: rgba(55, 36, 8, .82);
+  border: 1px solid rgba(255, 226, 98, .85);
+  text-shadow: 0 1px 2px #000;
+}
+
+.field-unit.shiny-unit {
+  box-shadow: 0 0 13px rgba(255, 229, 102, .34);
+}
+
+.collection-item-shiny,
+.deck-row-shiny {
+  position: relative;
+}
+
+.deck-row-shiny {
+  box-shadow: inset 3px 0 rgba(255, 224, 94, .8);
+}
+
+.pack-card-shiny {
+  filter: drop-shadow(0 0 10px rgba(255, 231, 112, .6));
+}
+
+.shiny-pack-label {
+  color: #ffe66f;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(255, 221, 64, .65);
+}
+
+.shiny-flip.flipped .flip-inner,
+.shiny-flip.settled {
+  animation: shiny-pack-pop .75s ease-out;
+}
+
+@keyframes shiny-pack-pop {
+  0% { filter: brightness(1); }
+  35% { filter: brightness(1.8) drop-shadow(0 0 18px rgba(255, 235, 123, .95)); }
+  100% { filter: brightness(1); }
+}

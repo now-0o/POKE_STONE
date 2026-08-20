@@ -203,6 +203,7 @@ export default function App() {
             key={trainer.id + "-" + battleKeyRef.current}
             trainer={trainer}
             deck={save.deck}
+            deckShiny={save.deckShiny || {}}
             onFinish={finishBattle}
           />
         )}

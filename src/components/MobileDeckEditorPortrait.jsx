@@ -10,6 +10,18 @@ import {
   isLegendaryPokemon,
 } from "../data/cards.js";
 import { persist } from "../state/save.js";
+import {
+  addDeckVariant,
+  buildOwnedVariants,
+  canAddDeckVariant,
+  clearDeckVariants,
+  getDeckVariantRows,
+  removeDeckVariant,
+  selectDeckPreset,
+  shinyInDeck,
+  shinyOwned,
+  syncActivePresetVariants,
+} from "../state/shiny.js";
 import { playSfx } from "../audio.js";
 import { HandCard, Sprite, useInspect } from "./Card.jsx";
 
@@ -165,15 +177,14 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
       });
   }, [save.collection, filter, abilityFilters, searchMatchIds, sortMode]);
 
-  const deckList = useMemo(() => {
-    return [...new Set(save.deck)]
-      .map((id) => ({ card: CARD_MAP[id], count: deckCounts[id] }))
-      .filter(({ card }) => Boolean(card))
-      .sort(
-        (a, b) =>
-          a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name),
-      );
-  }, [save.deck, deckCounts]);
+  const ownedVariants = useMemo(() => buildOwnedVariants(ownedCards, save), [ownedCards, save.shinyCollection]);
+
+  const deckList = useMemo(
+    () => getDeckVariantRows(save).sort(
+      (a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name) || Number(a.shiny) - Number(b.shiny),
+    ),
+    [save.deck, save.deckShiny],
+  );
 
   useEffect(() => {
     const pane = collectionPaneRef.current;
@@ -216,7 +227,7 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
     });
   }
 
-  const totalRows = Math.ceil(ownedCards.length / COLUMNS);
+  const totalRows = Math.ceil(ownedVariants.length / COLUMNS);
   const firstVisibleRow = Math.max(0, Math.floor(scrollTop / CARD_ROW_HEIGHT));
   const visibleRows = Math.max(1, Math.ceil(viewportHeight / CARD_ROW_HEIGHT));
   const startRow = Math.max(0, firstVisibleRow - OVERSCAN_ROWS);
@@ -224,33 +235,20 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
     totalRows,
     firstVisibleRow + visibleRows + OVERSCAN_ROWS + 1,
   );
-  const visibleCards = ownedCards.slice(
+  const visibleCards = ownedVariants.slice(
     startRow * COLUMNS,
-    Math.min(ownedCards.length, endRow * COLUMNS),
+    Math.min(ownedVariants.length, endRow * COLUMNS),
   );
   const virtualTop = startRow * CARD_ROW_HEIGHT;
   const virtualHeight = totalRows * CARD_ROW_HEIGHT;
 
-  function syncActivePreset(deck = save.deck) {
-    if (!Array.isArray(save.deckPresets)) return;
-    save.deckPresets = save.deckPresets.map((preset, index) =>
-      index === save.activeDeckPreset ? { ...preset, deck: [...deck] } : preset,
-    );
+  function syncActivePreset() {
+    syncActivePresetVariants(save);
   }
 
-  function addToDeck(cardId) {
+  function addToDeck(cardId, shiny = false) {
     if (clickSuppressed()) return;
-
     const card = CARD_MAP[cardId];
-    const inDeck = save.deck.filter((id) => id === cardId).length;
-    const owned = save.collection[cardId] || 0;
-    const max = Math.min(MAX_COPIES[card.rarity], owned);
-
-    if (save.deck.length >= 30 || inDeck >= max) {
-      playSfx("buzzer");
-      return;
-    }
-
     if (
       !save.adminMode &&
       isLegendaryPokemon(card) &&
@@ -259,19 +257,17 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
       playSfx("buzzer");
       return;
     }
-
-    save.deck = [...save.deck, cardId];
-    syncActivePreset(save.deck);
+    if (!addDeckVariant(save, cardId, shiny)) {
+      playSfx("buzzer");
+      return;
+    }
     persist(save);
     playSfx("pickup");
     onSaveChange();
   }
 
-  function removeFromDeck(cardId) {
-    const index = save.deck.indexOf(cardId);
-    if (index === -1) return;
-    save.deck = [...save.deck.slice(0, index), ...save.deck.slice(index + 1)];
-    syncActivePreset(save.deck);
+  function removeFromDeck(cardId, shiny = false) {
+    if (!removeDeckVariant(save, cardId, shiny)) return;
     persist(save);
     playSfx("putdown");
     onSaveChange();
@@ -279,8 +275,7 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
 
   function clearDeck() {
     if (save.deck.length === 0) return;
-    save.deck = [];
-    syncActivePreset([]);
+    clearDeckVariants(save);
     persist(save);
     playSfx("putdown");
     onSaveChange();
@@ -289,10 +284,7 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
   function selectPreset(index) {
     if (index === save.activeDeckPreset) return;
     playSfx("click");
-    syncActivePreset(save.deck);
-    const nextPreset = save.deckPresets[index];
-    save.activeDeckPreset = index;
-    save.deck = [...(nextPreset?.deck || [])];
+    if (!selectDeckPreset(save, index)) return;
     persist(save);
     onSaveChange();
   }
@@ -315,29 +307,31 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
     );
   }
 
-  function renderCard(card) {
+  function renderCard({ card, shiny }) {
     const owned = save.collection[card.id] || 0;
     const inDeck = deckCounts[card.id] || 0;
     const max = Math.min(MAX_COPIES[card.rarity], owned);
+    const variantDeck = shiny ? shinyInDeck(save, card.id) : inDeck - shinyInDeck(save, card.id);
+    const variantOwned = shiny ? shinyOwned(save, card.id) : owned;
     const playable =
-      inDeck < max &&
-      save.deck.length < 30 &&
+      canAddDeckVariant(save, card.id, shiny) &&
       (save.adminMode ||
         !isLegendaryPokemon(card) ||
         legendaryPokemonCount < MAX_LEGENDARY_POKEMON);
 
     return (
-      <div key={card.id} className="mobile-v2-card-item" data-card-id={card.id}>
+      <div key={`${card.id}-${shiny ? "shiny" : "normal"}`} className={`mobile-v2-card-item ${shiny ? "collection-item-shiny" : ""}`} data-card-id={card.id}>
         <div className="mobile-portrait-card-shell">
           <HandCard
             cardId={card.id}
+            shiny={shiny}
             playable={playable}
-            onClick={() => addToDeck(card.id)}
-            onPointerDown={press({ cardId: card.id })}
+            onClick={() => addToDeck(card.id, shiny)}
+            onPointerDown={press({ cardId: card.id, shiny })}
           />
         </div>
         <div className="mobile-v2-card-meta">
-          보유 {owned} · 덱 {inDeck}/{max}
+          {shiny ? `✨ 이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}
         </div>
       </div>
     );
@@ -354,7 +348,7 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
     >
       {inspect && (
         <div className="inspect-overlay mobile-v2-inspect-overlay">
-          <HandCard cardId={inspect.cardId} playable ghost />
+          <HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />
         </div>
       )}
 
@@ -595,18 +589,18 @@ export default function MobileDeckEditorPortrait({ save, onSaveChange, onBack })
             {deckList.length === 0 ? (
               <div className="mobile-v2-empty">컬렉션의 카드를 눌러 덱에 추가하세요.</div>
             ) : (
-              deckList.map(({ card, count }) => (
+              deckList.map(({ card, count, shiny }) => (
                 <div
-                  key={card.id}
-                  className="deck-row"
+                  key={`${card.id}-${shiny ? "shiny" : "normal"}`}
+                  className={`deck-row ${shiny ? "deck-row-shiny" : ""}`}
                   style={{ "--type-color": TYPE_COLORS[card.type] }}
-                  onClick={() => removeFromDeck(card.id)}
+                  onClick={() => removeFromDeck(card.id, shiny)}
                 >
                   <span className="deck-row-cost">{card.cost}</span>
                   <span className="deck-row-emoji">
-                    <Sprite cardId={card.id} emoji={card.emoji} size={22} />
+                    <Sprite cardId={card.id} shiny={shiny} emoji={card.emoji} size={22} />
                   </span>
-                  <span className="deck-row-name">{card.name}</span>
+                  <span className="deck-row-name">{shiny ? `✨ ${card.name}` : card.name}</span>
                   <span className="deck-row-count">×{count}</span>
                 </div>
               ))

@@ -239,6 +239,21 @@ function applyTypedAbilityDamage(game, unit, baseDamage, attackType) {
   return applyDamage(game, unit, dmg, attackType);
 }
 
+function claimShinyFromDeck(player, cardId) {
+  if (!player?._shinyDeckRemaining || CARD_MAP[cardId]?.kind !== "pokemon") return false;
+  const remaining = player._shinyDeckRemaining[cardId] || 0;
+  if (remaining <= 0) return false;
+  player._shinyDeckRemaining[cardId] = remaining - 1;
+  if (player._shinyDeckRemaining[cardId] <= 0) delete player._shinyDeckRemaining[cardId];
+  return true;
+}
+
+function restoreShinyToDeck(player, cardId, shiny) {
+  if (!shiny || CARD_MAP[cardId]?.kind !== "pokemon") return;
+  player._shinyDeckRemaining = player._shinyDeckRemaining || {};
+  player._shinyDeckRemaining[cardId] = (player._shinyDeckRemaining[cardId] || 0) + 1;
+}
+
 function putStartingCard(player, cardId) {
   if (!cardId) return false;
 
@@ -249,6 +264,7 @@ function putStartingCard(player, cardId) {
   player.hand.push({
     uid: nextUid(),
     cardId,
+    shiny: claimShinyFromDeck(player, cardId),
   });
 
   return true;
@@ -454,6 +470,7 @@ function drawStableCard(game, side, silent = false) {
   p.hand.push({
     uid: nextUid(),
     cardId,
+    shiny: claimShinyFromDeck(p, cardId),
   });
 
   if (!silent) {
@@ -571,7 +588,7 @@ function spawnGardeniaVine(game) {
 }
 
 // ---------- 게임 생성 ----------
-export function createGame(playerDeckIds, trainer) {
+export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {
   const first = Math.random() < 0.5 ? "player" : "enemy"; // 코인토스로 선공 결정
   const second = first === "player" ? "enemy" : "player";
   const game = {
@@ -584,7 +601,7 @@ export function createGame(playerDeckIds, trainer) {
     pendingBattlecry: null,
     trainer,
     players: {
-      player: makePlayer(playerDeckIds, "나"),
+      player: makePlayer(playerDeckIds, "나", 40, playerDeckShiny),
       enemy: makePlayer(trainer.deck, trainer.name, trainer.hp),
     },
   };
@@ -633,7 +650,7 @@ export function createGame(playerDeckIds, trainer) {
   return game;
 }
 
-function makePlayer(deckIds, name, hp = 40) {
+function makePlayer(deckIds, name, hp = 40, shinyDeck = null) {
   return {
     name,
     hp,
@@ -641,6 +658,7 @@ function makePlayer(deckIds, name, hp = 40) {
     mana: 0,
     maxMana: 0,
     deck: shuffle(deckIds),
+    _shinyDeckRemaining: { ...(shinyDeck || {}) },
     hand: [],
     field: [],
     // 신오 이후 필드 기믹
@@ -725,7 +743,7 @@ export function drawCard(game, side, silent = false) {
     );
     return null;
   }
-  p.hand.push({ uid: nextUid(), cardId });
+  p.hand.push({ uid: nextUid(), cardId, shiny: claimShinyFromDeck(p, cardId) });
   if (!silent) log(game, `${p.name}이(가) 카드를 뽑았다.`);
   return cardId;
 }
@@ -2843,6 +2861,7 @@ function runBattlecry(game, side, unit) {
       const picks = cardIds.map((cardId) => ({
         uid: nextUid(),
         cardId,
+        shiny: claimShinyFromDeck(me, cardId),
       }));
 
       if (side === "enemy") {
@@ -2852,9 +2871,8 @@ function runBattlecry(game, side, unit) {
             (CARD_MAP[b.cardId]?.cost || 0) - (CARD_MAP[a.cardId]?.cost || 0),
         )[0];
 
-        const returnedIds = picks
-          .filter((pick) => pick.uid !== chosen.uid)
-          .map((pick) => pick.cardId);
+        const returnedPicks = picks.filter((pick) => pick.uid !== chosen.uid);
+        const returnedIds = returnedPicks.map((pick) => pick.cardId);
 
         if (me.hand.length < MAX_HAND) {
           me.hand.push({
@@ -2867,8 +2885,13 @@ function runBattlecry(game, side, unit) {
             `${unit.name}의 신비의힘·유크시! ${CARD_MAP[chosen.cardId]?.name}을(를) 손에 넣고 비용을 2 낮췄다!`,
           );
         } else {
+          returnedPicks.push(chosen);
           returnedIds.push(chosen.cardId);
         }
+
+        returnedPicks.forEach((pick) =>
+          restoreShinyToDeck(me, pick.cardId, pick.shiny),
+        );
 
         // 선택하지 않은 카드는 덱 아래로
         me.deck = [...returnedIds, ...me.deck];
@@ -4166,6 +4189,7 @@ export function playCard(
     p.mana -= cost;
     p.hand.splice(handIdx, 1);
     const unit = makeUnit(card, game, side);
+    unit.shiny = !!h.shiny;
     if (fieldIndex != null) {
       const at = Math.max(0, Math.min(fieldIndex, p.field.length));
       p.field.splice(at, 0, unit);
@@ -4196,6 +4220,7 @@ export function playCard(
     p.hand.splice(handIdx, 1);
     const damageTaken = base.maxHp - base.hp;
     base.cardId = card.id;
+    base.shiny = !!h.shiny;
     base.name = card.name;
     base.type = card.type;
     base.atk = card.atk;
@@ -4432,7 +4457,7 @@ export function playCard(
         const pick = idxs[Math.floor(Math.random() * idxs.length)];
         p.deck.splice(pick.i, 1);
         if (p.hand.length < MAX_HAND) {
-          p.hand.push({ uid: nextUid(), cardId: pick.id });
+          p.hand.push({ uid: nextUid(), cardId: pick.id, shiny: claimShinyFromDeck(p, pick.id) });
           log(game, `몬스터볼! ${CARD_MAP[pick.id].name}을(를) 손에 넣었다!`);
         }
       } else {
@@ -4464,6 +4489,7 @@ export function playCard(
         p.hand.push({
           uid: nextUid(),
           cardId: pick.id,
+          shiny: claimShinyFromDeck(p, pick.id),
         });
 
         drawn++;
@@ -4490,23 +4516,25 @@ export function playCard(
         .map((x) => ({
           uid: nextUid(),
           cardId: x.id,
+          shiny: false,
         }));
 
-      // 선택 후보를 덱에서 임시 제거
+      // 선택 후보를 덱에서 임시 제거하면서 이로치 복사본 여부도 함께 보존
       picks.forEach((pick) => {
         const index = p.deck.indexOf(pick.cardId);
 
         if (index !== -1) {
           p.deck.splice(index, 1);
+          pick.shiny = claimShinyFromDeck(p, pick.cardId);
         }
       });
 
       // AI는 자동 선택
       if (side === "enemy") {
         const chosen = picks[Math.floor(Math.random() * picks.length)];
-        const returnedIds = picks
-          .filter((pick) => pick.uid !== chosen.uid)
-          .map((pick) => pick.cardId);
+        const returned = picks.filter((pick) => pick.uid !== chosen.uid);
+        const returnedIds = returned.map((pick) => pick.cardId);
+        returned.forEach((pick) => restoreShinyToDeck(p, pick.cardId, pick.shiny));
 
         p.hand.push(chosen);
         p.deck = shuffle([...p.deck, ...returnedIds]);
@@ -4623,7 +4651,7 @@ export function playCard(
         const idx = foe.field.findIndex((x) => x.uid === u.uid);
         if (idx !== -1) {
           const [returned] = foe.field.splice(idx, 1);
-          foe.hand.push({ uid: nextUid(), cardId: returned.cardId });
+          foe.hand.push({ uid: nextUid(), cardId: returned.cardId, shiny: !!returned.shiny });
           log(game, `${card.name}! ${returned.name}을(를) 손으로 되돌렸다!`);
         }
       }
@@ -4634,7 +4662,7 @@ export function playCard(
           const returned = [...candidates].sort((a, b) => a.hp - b.hp)[0];
           const idx = p.field.findIndex((x) => x.uid === returned.uid);
           p.field.splice(idx, 1);
-          p.hand.push({ uid: nextUid(), cardId: returned.cardId });
+          p.hand.push({ uid: nextUid(), cardId: returned.cardId, shiny: !!returned.shiny });
           log(game, `${card.name}! ${returned.name}을(를) 손으로 되돌렸다!`);
         }
       }
@@ -4876,6 +4904,7 @@ export function playCard(
       foe.hand.push({
         uid: nextUid(),
         cardId: u.cardId,
+        shiny: !!u.shiny,
       });
 
       log(game, `${card.name}! ${u.name}을(를) 손으로 되돌렸다!`);
@@ -5241,6 +5270,7 @@ export function resolveMew(game, side, targetUid) {
     me.hand.push({
       uid: nextUid(),
       cardId: pick.cardId,
+      shiny: claimShinyFromDeck(me, pick.cardId),
     });
 
     log(game, `${CARD_MAP[pick.cardId]?.name}을(를) 손으로 가져왔다.`);
@@ -6301,7 +6331,7 @@ export function attack(game, side, attackerUid, target) {
     const idx = p.field.findIndex((u) => u.uid === atkUnit.uid);
     if (idx !== -1) {
       p.field.splice(idx, 1);
-      p.hand.push({ uid: nextUid(), cardId: atkUnit.cardId });
+      p.hand.push({ uid: nextUid(), cardId: atkUnit.cardId, shiny: !!atkUnit.shiny });
       defUnit.item = null;
       log(game, `${defUnit.name}의 레드카드! ${atkUnit.name}을(를) 손으로 돌려보냈다!`);
     }
@@ -6312,7 +6342,7 @@ export function attack(game, side, attackerUid, target) {
     const idx = foe.field.findIndex((u) => u.uid === defUnit.uid);
     if (idx !== -1) {
       foe.field.splice(idx, 1);
-      foe.hand.push({ uid: nextUid(), cardId: defUnit.cardId });
+      foe.hand.push({ uid: nextUid(), cardId: defUnit.cardId, shiny: !!defUnit.shiny });
       defUnit.item = null;
       log(game, `${defUnit.name}의 탈출버튼! 손으로 돌아갔다!`);
     }
