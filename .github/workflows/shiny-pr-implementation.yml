@@ -29,7 +29,6 @@ jobs:
           python3 <<'PY'
           from pathlib import Path
 
-          # Initial auto-patch generated one JSX template-literal edge case.
           for path in [
               Path('src/components/DeckEditor.jsx'),
               Path('src/components/MobileDeckEditorPortrait.jsx'),
@@ -42,11 +41,18 @@ jobs:
               )
               path.write_text(text)
 
+          # Desktop long-press/inspect must keep the selected shiny appearance too.
+          deck_editor = Path('src/components/DeckEditor.jsx')
+          text = deck_editor.read_text()
+          text = text.replace(
+              '<HandCard cardId={inspect.cardId} playable ghost />',
+              '<HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />',
+          )
+          deck_editor.write_text(text)
+
           path = Path('src/engine/engine.base.js')
           text = path.read_text()
 
-          # Uxie reveals/removes cards directly from the deck, so assign shiny
-          # identity when the picks leave the deck and return it for unchosen cards.
           text = text.replace(
               '''      const picks = cardIds.map((cardId) => ({\n        uid: nextUid(),\n        cardId,\n      }));''',
               '''      const picks = cardIds.map((cardId) => ({\n        uid: nextUid(),\n        cardId,\n        shiny: claimShinyFromDeck(me, cardId),\n      }));''',
@@ -59,8 +65,6 @@ jobs:
               '''        } else {\n          returnedIds.push(chosen.cardId);\n        }\n\n        // 선택하지 않은 카드는 덱 아래로\n        me.deck = [...returnedIds, ...me.deck];''',
               '''        } else {\n          returnedPicks.push(chosen);\n          returnedIds.push(chosen.cardId);\n        }\n\n        returnedPicks.forEach((pick) =>\n          restoreShinyToDeck(me, pick.cardId, pick.shiny),\n        );\n\n        // 선택하지 않은 카드는 덱 아래로\n        me.deck = [...returnedIds, ...me.deck];''',
           )
-
-          # resolveUxie: restore the shiny identity of unchosen revealed cards.
           text = text.replace(
               '''  const returnedIds = pending.picks\n    .filter((pick) => pick.uid !== chosen.uid)\n    .map((pick) => pick.cardId);''',
               '''  const returnedPicks = pending.picks.filter((pick) => pick.uid !== chosen.uid);\n  const returnedIds = returnedPicks.map((pick) => pick.cardId);''',
@@ -69,9 +73,6 @@ jobs:
               '''  // 선택하지 않은 카드는 덱 아래로 되돌린다.\n  p.deck = [...returnedIds, ...p.deck];''',
               '''  returnedPicks.forEach((pick) =>\n    restoreShinyToDeck(p, pick.cardId, pick.shiny),\n  );\n\n  // 선택하지 않은 카드는 덱 아래로 되돌린다.\n  p.deck = [...returnedIds, ...p.deck];''',
           )
-
-          # Other direct Pokémon tutors and all field -> hand return effects must
-          # preserve shiny rather than recreating a plain card.
           text = text.replace(
               '''    me.hand.push({\n      uid: nextUid(),\n      cardId: pick.cardId,\n    });\n\n    log(game, `${CARD_MAP[pick.cardId]?.name}을(를) 손으로 가져왔다.`);''',
               '''    me.hand.push({\n      uid: nextUid(),\n      cardId: pick.cardId,\n      shiny: claimShinyFromDeck(me, pick.cardId),\n    });\n\n    log(game, `${CARD_MAP[pick.cardId]?.name}을(를) 손으로 가져왔다.`);''',
@@ -113,5 +114,5 @@ jobs:
             echo "No source changes"
             exit 0
           fi
-          git commit -m "fix: preserve shiny variants through battle card movement"
+          git commit -m "fix: keep shiny appearance in card inspect"
           git push origin HEAD:${{ github.head_ref }}
