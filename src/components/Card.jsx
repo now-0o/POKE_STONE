@@ -447,6 +447,8 @@ export function HandCard({
         {cost}
       </div>
 
+      {shownShiny && <div className="shiny-badge">이로치</div>}
+
       <div className="card-topline">
         <span className="card-name">{shownName}</span>
       </div>
