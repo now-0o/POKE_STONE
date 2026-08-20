@@ -1,0 +1,141 @@
+name: Temporary shiny and deck virtualization update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/shiny-virtual-deck-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply requested changes
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          # 1) Shiny rate: 2%
+          shiny = Path('src/state/shiny.js')
+          text = shiny.read_text()
+          old = 'export const SHINY_DUPLICATE_CHANCE = 0.01;'
+          new = 'export const SHINY_DUPLICATE_CHANCE = 0.02;'
+          if old not in text:
+              raise SystemExit('shiny chance line not found')
+          shiny.write_text(text.replace(old, new, 1))
+
+          # 2) Pack copy and shiny duplicate refund behavior.
+          pack = Path('src/components/PackShop.jsx')
+          text = pack.read_text()
+          old = '            1% 확률로 이로치가 되며, 초과 일반 카드는 자동 환급돼요.'
+          new = '            2% 확률로 이로치가 되며, 초과 카드는 자동 환급돼요.'
+          if old not in text:
+              raise SystemExit('pack shiny chance text not found')
+          text = text.replace(old, new, 1)
+          old = '<span className="refund"> (중복 +{r.refunded}원)</span>'
+          new = '<span className="refund"> ({r.shiny ? "이로치 중복" : "중복"} +{r.refunded}원)</span>'
+          if old not in text:
+              raise SystemExit('pack refund label not found')
+          pack.write_text(text.replace(old, new, 1))
+
+          save = Path('src/state/save.js')
+          text = save.read_text()
+          old = '''    const shinyOwned = save.shinyCollection[card.id] || 0;\n    const canBecomeShiny =\n      owned > 0 &&\n      isShinyEligible(card) &&\n      shinyOwned < max;\n    const shiny = canBecomeShiny && Math.random() < SHINY_DUPLICATE_CHANCE;\n\n    if (shiny) {\n      if (owned < max) save.collection[card.id] = owned + 1;\n      save.shinyCollection[card.id] = Math.min(max, shinyOwned + 1);\n      results.push({ card, refunded: 0, shiny: true });\n    } else if (owned >= max) {'''
+          new = '''    const shinyOwned = save.shinyCollection[card.id] || 0;\n    const canRollShiny = owned > 0 && isShinyEligible(card);\n    const shiny = canRollShiny && Math.random() < SHINY_DUPLICATE_CHANCE;\n\n    if (shiny) {\n      if (shinyOwned >= max) {\n        const refund = (RARITY_REFUND[card.rarity] || 0) * 2;\n        save.money += refund;\n        refundTotal += refund;\n        results.push({ card, refunded: refund, shiny: true });\n      } else {\n        if (owned < max) save.collection[card.id] = owned + 1;\n        save.shinyCollection[card.id] = Math.min(max, shinyOwned + 1);\n        results.push({ card, refunded: 0, shiny: true });\n      }\n    } else if (owned >= max) {'''
+          if old not in text:
+              raise SystemExit('openPack shiny block not found')
+          save.write_text(text.replace(old, new, 1))
+
+          # 3) Desktop DeckEditor: use the existing measured virtual-window system
+          # on PC as well, so only viewport rows + overscan stay mounted.
+          deck = Path('src/components/DeckEditor.jsx')
+          text = deck.read_text()
+
+          old = '''  const visibleOwnedCards = mobileLite\n    ? ownedVariants.slice(\n        Math.min(virtualWindow.start, ownedVariants.length),\n        Math.min(virtualWindow.end, ownedVariants.length),\n      )\n    : ownedVariants;'''
+          new = '''  const visibleOwnedCards = ownedVariants.slice(\n    Math.min(virtualWindow.start, ownedVariants.length),\n    Math.min(virtualWindow.end, ownedVariants.length),\n  );'''
+          if old not in text:
+              raise SystemExit('visibleOwnedCards block not found')
+          text = text.replace(old, new, 1)
+
+          text = text.replace(
+              '    if (!mobileLite || !pane || columns <= 0 || rowStep <= 0) {',
+              '    if (!pane || columns <= 0 || rowStep <= 0) {',
+              1,
+          )
+          text = text.replace(
+              '''  function measureMobileGrid() {\n    if (!mobileLite) {\n      return;\n    }\n\n    const grid = collectionGridRef.current;''',
+              '''  function measureMobileGrid() {\n    const grid = collectionGridRef.current;''',
+              1,
+          )
+          text = text.replace(
+              '''  function resetMobileVirtualization() {\n    if (!mobileLite) {\n      return;\n    }\n\n    if (virtualRafRef.current !== null) {''',
+              '''  function resetMobileVirtualization() {\n    if (virtualRafRef.current !== null) {''',
+              1,
+          )
+          text = text.replace(
+              '''  function handleCollectionScroll() {\n    if (!mobileLite || virtualRafRef.current !== null) {''',
+              '''  function handleCollectionScroll() {\n    if (virtualRafRef.current !== null) {''',
+              1,
+          )
+          text = text.replace(
+              '''  useLayoutEffect(() => {\n    if (!mobileLite) {\n      return;\n    }\n\n    const pane = collectionPaneRef.current;''',
+              '''  useLayoutEffect(() => {\n    const pane = collectionPaneRef.current;''',
+              1,
+          )
+          text = text.replace(
+              '''  useLayoutEffect(() => {\n    if (!mobileLite) {\n      return;\n    }\n\n    measureMobileGrid();''',
+              '''  useLayoutEffect(() => {\n    measureMobileGrid();''',
+              1,
+          )
+          text = text.replace(
+              '''  useEffect(() => {\n    if (!mobileLite) {\n      return undefined;\n    }\n\n    const onResize = () => {''',
+              '''  useEffect(() => {\n    const onResize = () => {''',
+              1,
+          )
+
+          old = '''  const mobileVirtualized =\n    mobileLite && virtualWindow.totalHeight > 0 && ownedCards.length > 0;'''
+          new = '''  const collectionVirtualized =\n    virtualWindow.totalHeight > 0 && ownedVariants.length > 0;'''
+          if old not in text:
+              raise SystemExit('mobileVirtualized declaration not found')
+          text = text.replace(old, new, 1)
+
+          old = '          onScroll={mobileLite ? handleCollectionScroll : undefined}'
+          new = '          onScroll={handleCollectionScroll}'
+          if old not in text:
+              raise SystemExit('collection onScroll binding not found')
+          text = text.replace(old, new, 1)
+
+          old = '''          {mobileLite ? (\n            <div\n              style={{\n                position: "relative",\n                height: mobileVirtualized\n                  ? `${virtualWindow.totalHeight}px`\n                  : "auto",\n                minHeight: mobileVirtualized ? 0 : undefined,\n              }}\n            >\n              <div\n                className="collection-grid"\n                ref={collectionGridRef}\n                style={\n                  mobileVirtualized\n                    ? {\n                        position: "absolute",\n                        top: `${virtualWindow.top}px`,\n                        left: 0,\n                        right: 0,\n                      }\n                    : undefined\n                }\n              >\n                {renderCollectionCards(visibleOwnedCards)}\n              </div>\n            </div>\n          ) : (\n            <div className="collection-grid" ref={collectionGridRef}>\n              {renderCollectionCards(ownedVariants)}\n            </div>\n          )}'''
+          new = '''          <div\n            style={{\n              position: "relative",\n              height: collectionVirtualized\n                ? `${virtualWindow.totalHeight}px`\n                : "auto",\n              minHeight: collectionVirtualized ? 0 : undefined,\n            }}\n          >\n            <div\n              className="collection-grid"\n              ref={collectionGridRef}\n              style={\n                collectionVirtualized\n                  ? {\n                      position: "absolute",\n                      top: `${virtualWindow.top}px`,\n                      left: 0,\n                      right: 0,\n                    }\n                  : undefined\n              }\n            >\n              {renderCollectionCards(visibleOwnedCards)}\n            </div>\n          </div>'''
+          if old not in text:
+              raise SystemExit('desktop/mobile collection render branch not found')
+          text = text.replace(old, new, 1)
+
+          deck.write_text(text)
+          PY
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Commit source changes
+        run: |
+          git config user.name "poke-stone-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/state/shiny.js src/state/save.js src/components/PackShop.jsx src/components/DeckEditor.jsx
+          if git diff --cached --quiet; then
+            echo "No source changes"
+            exit 0
+          fi
+          git commit -m "feat: improve shiny duplicates and virtualize desktop deck collection"
+          git push origin main
