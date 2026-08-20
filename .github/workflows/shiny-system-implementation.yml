@@ -1,0 +1,869 @@
+name: Temporary shiny system implementation
+
+on:
+  push:
+    paths:
+      - '.github/shiny-system-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply shiny system
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def read(path):
+              return Path(path).read_text()
+
+          def write(path, text):
+              Path(path).parent.mkdir(parents=True, exist_ok=True)
+              Path(path).write_text(text)
+
+          def rep(path, old, new, count=1):
+              text = read(path)
+              actual = text.count(old)
+              if actual < count:
+                  raise SystemExit(f"{path}: expected at least {count} occurrence(s), found {actual}: {old[:100]!r}")
+              text = text.replace(old, new, count)
+              write(path, text)
+
+          # ------------------------------------------------------------
+          # Shared shiny/deck-variant helpers
+          # ------------------------------------------------------------
+          write('src/state/shiny.js', r'''import { CARD_MAP, DEX, MAX_COPIES } from "../data/cards.js";
+
+export const SHINY_DUPLICATE_CHANCE = 0.05;
+
+function clampInt(value, min, max) {
+  const n = Number.isFinite(Number(value)) ? Math.floor(Number(value)) : 0;
+  return Math.max(min, Math.min(max, n));
+}
+
+function countDeck(deck, cardId) {
+  return (deck || []).reduce((count, id) => count + (id === cardId ? 1 : 0), 0);
+}
+
+export function isShinyEligible(card) {
+  return card?.kind === "pokemon" && DEX[card.id] != null;
+}
+
+export function shinySpriteUrl(cardId, spriteId = null) {
+  const key = spriteId ?? DEX[cardId];
+  return key == null ? null : `/sprites/pokemon/shiny/${key}.png`;
+}
+
+function normalizeShinyMap(map, deck, shinyCollection) {
+  const next = {};
+  Object.entries(map || {}).forEach(([cardId, value]) => {
+    const card = CARD_MAP[cardId];
+    if (!card || !isShinyEligible(card)) return;
+    const deckCount = countDeck(deck, cardId);
+    const shinyOwned = clampInt(shinyCollection?.[cardId] || 0, 0, deckCount || 99);
+    const allowed = Math.min(deckCount, shinyOwned);
+    const amount = clampInt(value, 0, allowed);
+    if (amount > 0) next[cardId] = amount;
+  });
+  return next;
+}
+
+export function ensureShinyState(save) {
+  if (!save) return save;
+  if (!save.collection || typeof save.collection !== "object") save.collection = {};
+  if (!save.shinyCollection || typeof save.shinyCollection !== "object") {
+    save.shinyCollection = {};
+  }
+
+  const normalizedCollection = {};
+  Object.entries(save.shinyCollection).forEach(([cardId, value]) => {
+    const card = CARD_MAP[cardId];
+    if (!card || !isShinyEligible(card)) return;
+    const owned = Math.max(0, save.collection[cardId] || 0);
+    const max = Math.min(MAX_COPIES[card.rarity] ?? 2, owned);
+    const amount = clampInt(value, 0, max);
+    if (amount > 0) normalizedCollection[cardId] = amount;
+  });
+  save.shinyCollection = normalizedCollection;
+
+  save.deckShiny = normalizeShinyMap(
+    save.deckShiny,
+    Array.isArray(save.deck) ? save.deck : [],
+    save.shinyCollection,
+  );
+
+  if (Array.isArray(save.deckPresets)) {
+    save.deckPresets = save.deckPresets.map((preset) => ({
+      ...preset,
+      deckShiny: normalizeShinyMap(
+        preset?.deckShiny,
+        Array.isArray(preset?.deck) ? preset.deck : [],
+        save.shinyCollection,
+      ),
+    }));
+  }
+
+  return save;
+}
+
+export function shinyOwned(save, cardId) {
+  ensureShinyState(save);
+  return save?.shinyCollection?.[cardId] || 0;
+}
+
+export function shinyInDeck(save, cardId) {
+  ensureShinyState(save);
+  return save?.deckShiny?.[cardId] || 0;
+}
+
+export function normalInDeck(save, cardId) {
+  return Math.max(0, countDeck(save?.deck, cardId) - shinyInDeck(save, cardId));
+}
+
+export function canAddDeckVariant(save, cardId, shiny = false) {
+  ensureShinyState(save);
+  const card = CARD_MAP[cardId];
+  if (!card) return false;
+  const total = countDeck(save.deck, cardId);
+  const owned = save.collection[cardId] || 0;
+  const max = Math.min(MAX_COPIES[card.rarity] ?? 2, owned);
+  if (save.deck.length >= 30 || total >= max) return false;
+  if (shiny && shinyInDeck(save, cardId) >= shinyOwned(save, cardId)) return false;
+  return true;
+}
+
+export function addDeckVariant(save, cardId, shiny = false) {
+  if (!canAddDeckVariant(save, cardId, shiny)) return false;
+  save.deck = [...save.deck, cardId];
+  if (shiny) {
+    save.deckShiny = { ...save.deckShiny, [cardId]: shinyInDeck(save, cardId) + 1 };
+  }
+  syncActivePresetVariants(save);
+  return true;
+}
+
+export function removeDeckVariant(save, cardId, shiny = false) {
+  ensureShinyState(save);
+  const index = save.deck.indexOf(cardId);
+  if (index === -1) return false;
+  const shinyCount = shinyInDeck(save, cardId);
+  const normalCount = countDeck(save.deck, cardId) - shinyCount;
+  if (shiny && shinyCount <= 0) return false;
+  if (!shiny && normalCount <= 0) return false;
+
+  save.deck = [...save.deck.slice(0, index), ...save.deck.slice(index + 1)];
+  if (shiny) {
+    const next = shinyCount - 1;
+    save.deckShiny = { ...save.deckShiny };
+    if (next > 0) save.deckShiny[cardId] = next;
+    else delete save.deckShiny[cardId];
+  }
+  ensureShinyState(save);
+  syncActivePresetVariants(save);
+  return true;
+}
+
+export function clearDeckVariants(save) {
+  save.deck = [];
+  save.deckShiny = {};
+  syncActivePresetVariants(save);
+}
+
+export function syncActivePresetVariants(save) {
+  ensureShinyState(save);
+  if (!Array.isArray(save.deckPresets)) return;
+  const active = save.activeDeckPreset || 0;
+  save.deckPresets = save.deckPresets.map((preset, index) =>
+    index === active
+      ? { ...preset, deck: [...save.deck], deckShiny: { ...save.deckShiny } }
+      : preset,
+  );
+}
+
+export function selectDeckPreset(save, index) {
+  ensureShinyState(save);
+  if (!Array.isArray(save.deckPresets) || !save.deckPresets[index]) return false;
+  syncActivePresetVariants(save);
+  const next = save.deckPresets[index];
+  save.activeDeckPreset = index;
+  save.deck = [...(next.deck || [])];
+  save.deckShiny = { ...(next.deckShiny || {}) };
+  ensureShinyState(save);
+  return true;
+}
+
+export function getDeckVariantRows(save) {
+  ensureShinyState(save);
+  const ids = [...new Set(save.deck || [])];
+  const rows = [];
+  ids.forEach((cardId) => {
+    const card = CARD_MAP[cardId];
+    if (!card) return;
+    const total = countDeck(save.deck, cardId);
+    const shinyCount = shinyInDeck(save, cardId);
+    const normalCount = Math.max(0, total - shinyCount);
+    if (normalCount > 0) rows.push({ card, count: normalCount, shiny: false });
+    if (shinyCount > 0) rows.push({ card, count: shinyCount, shiny: true });
+  });
+  return rows;
+}
+
+export function buildOwnedVariants(cards, save) {
+  ensureShinyState(save);
+  return (cards || []).flatMap((card) => [
+    { card, shiny: false },
+    ...(shinyOwned(save, card.id) > 0 ? [{ card, shiny: true }] : []),
+  ]);
+}
+''')
+
+          # ------------------------------------------------------------
+          # Save / pack acquisition
+          # ------------------------------------------------------------
+          rep('src/state/save.js',
+              'import { STARTER_DECK } from "../data/starterDeck.js";\n',
+              'import { STARTER_DECK } from "../data/starterDeck.js";\nimport { ensureShinyState, isShinyEligible, SHINY_DUPLICATE_CHANCE } from "./shiny.js";\n')
+
+          rep('src/state/save.js',
+              '  const currentDeck = Array.isArray(save.deck) ? [...save.deck] : [];\n\n  const oldPresets = Array.isArray(save.deckPresets) ? save.deckPresets : [];',
+              '  const currentDeck = Array.isArray(save.deck) ? [...save.deck] : [];\n  const currentDeckShiny = { ...(save.deckShiny || {}) };\n\n  const oldPresets = Array.isArray(save.deckPresets) ? save.deckPresets : [];')
+
+          rep('src/state/save.js',
+              '      deck: Array.isArray(old?.deck) ? [...old.deck] : [],\n    };',
+              '      deck: Array.isArray(old?.deck) ? [...old.deck] : [],\n      deckShiny: { ...(old?.deckShiny || {}) },\n    };')
+
+          rep('src/state/save.js',
+              '  save.activeDeckPreset = active;\n\n  /*',
+              '  save.activeDeckPreset = active;\n  save.deckShiny = currentDeckShiny;\n  ensureShinyState(save);\n\n  /*')
+
+          rep('src/state/save.js',
+              '  save.deckPresets[active] = {\n    ...save.deckPresets[active],\n    deck: [...currentDeck],\n  };\n\n  return save;',
+              '  save.deckPresets[active] = {\n    ...save.deckPresets[active],\n    deck: [...currentDeck],\n    deckShiny: { ...save.deckShiny },\n  };\n\n  ensureShinyState(save);\n  return save;')
+
+          rep('src/state/save.js',
+              '    collection,\n    deck: [...STARTER_DECK],\n    wins: {},',
+              '    collection,\n    shinyCollection: {},\n    deck: [...STARTER_DECK],\n    deckShiny: {},\n    wins: {},')
+
+          rep('src/state/save.js',
+              'export function openPack(save, packId = "basic") {\n  const pack = PACKS[packId] || PACKS.basic;',
+              'export function openPack(save, packId = "basic") {\n  ensureShinyState(save);\n  const pack = PACKS[packId] || PACKS.basic;')
+
+          old_pack = '''    const owned = save.collection[card.id] || 0;
+    const max = MAX_COPIES[card.rarity];
+    if (owned >= max) {
+      const refund = RARITY_REFUND[card.rarity];
+      save.money += refund;
+      refundTotal += refund;
+      results.push({ card, refunded: refund });
+    } else {
+      save.collection[card.id] = owned + 1;
+      results.push({ card, refunded: 0 });
+    }'''
+          new_pack = '''    const owned = save.collection[card.id] || 0;
+    const max = MAX_COPIES[card.rarity];
+    const shinyOwned = save.shinyCollection[card.id] || 0;
+    const canBecomeShiny =
+      owned > 0 &&
+      isShinyEligible(card) &&
+      shinyOwned < max;
+    const shiny = canBecomeShiny && Math.random() < SHINY_DUPLICATE_CHANCE;
+
+    if (shiny) {
+      // 이미 최대 매수를 가지고 있어도 중복 카드가 이로치에 당첨되면
+      // 환급 대신 그 카드의 이로치 외형 사용권을 1장 늘린다.
+      if (owned < max) save.collection[card.id] = owned + 1;
+      save.shinyCollection[card.id] = Math.min(max, shinyOwned + 1);
+      results.push({ card, refunded: 0, shiny: true });
+    } else if (owned >= max) {
+      const refund = RARITY_REFUND[card.rarity];
+      save.money += refund;
+      refundTotal += refund;
+      results.push({ card, refunded: refund, shiny: false });
+    } else {
+      save.collection[card.id] = owned + 1;
+      results.push({ card, refunded: 0, shiny: false });
+    }'''
+          rep('src/state/save.js', old_pack, new_pack)
+
+          rep('src/state/save.js',
+              '  persist(save);\n  return { cards: results, refundTotal };',
+              '  ensureShinyState(save);\n  persist(save);\n  return { cards: results, refundTotal };')
+
+          rep('src/state/save.js',
+              'export function deckIsValid(save) {\n  if (save.deck.length !== 30) return false;',
+              'export function deckIsValid(save) {\n  ensureShinyState(save);\n  if (save.deck.length !== 30) return false;')
+
+          rep('src/state/save.js',
+              '  }\n  return true;\n}\n\n// 관리자 모드:',
+              '  }\n  for (const [cardId, count] of Object.entries(save.deckShiny || {})) {\n    const inDeck = save.deck.filter((id) => id === cardId).length;\n    if (count < 0 || count > inDeck || count > (save.shinyCollection[cardId] || 0)) return false;\n  }\n  return true;\n}\n\n// 관리자 모드:')
+
+          # ------------------------------------------------------------
+          # Card visuals / shiny sprite fallback
+          # ------------------------------------------------------------
+          rep('src/components/Card.jsx',
+              '  RARITY_NAME,\n  spriteUrl,',
+              '  RARITY_NAME,\n  DEX,\n  spriteUrl,')
+          rep('src/components/Card.jsx',
+              '  spriteId = null,\n}) {',
+              '  spriteId = null,\n  shiny = false,\n}) {')
+          rep('src/components/Card.jsx',
+              '  const url = spriteUrl(cardId, mega, busted, spriteId);\n\n  if (!url || failedUrl === url) {',
+              '  const normalUrl = spriteUrl(cardId, mega, busted, spriteId);\n  const shinyKey = spriteId ?? DEX[cardId];\n  const shinyUrl = shiny && shinyKey != null\n    ? `/sprites/pokemon/shiny/${shinyKey}.png`\n    : null;\n  const url = shinyUrl && failedUrl !== shinyUrl ? shinyUrl : normalUrl;\n\n  if (!url || failedUrl === normalUrl) {')
+          rep('src/components/Card.jsx',
+              '  handCard,\n}) {\n  const card = CARD_MAP[cardId];',
+              '  handCard,\n  shiny = false,\n}) {\n  const card = CARD_MAP[cardId];')
+          rep('src/components/Card.jsx',
+              '  const isPokemon = card.kind === "pokemon";\n  const equippedItem = equippedItemCard(unit);',
+              '  const isPokemon = card.kind === "pokemon";\n  const shownShiny = unit ? !!unit.shiny : !!(shiny || handCard?.shiny);\n  const equippedItem = equippedItemCard(unit);')
+          rep('src/components/Card.jsx',
+              '        ghost ? "ghost-card" : "",\n      ].join(" ")}',
+              '        ghost ? "ghost-card" : "",\n        shownShiny ? "shiny-card" : "",\n      ].join(" ")}')
+          rep('src/components/Card.jsx',
+              '          busted={unit?.cardId === "mimikyu" && unit.sturdyUsed}\n        />',
+              '          busted={unit?.cardId === "mimikyu" && unit.sturdyUsed}\n          shiny={shownShiny}\n        />')
+          rep('src/components/Card.jsx',
+              '      <div className="card-topline">',
+              '      {shownShiny && <div className="shiny-badge">✨ 이로치</div>}\n\n      <div className="card-topline">')
+          rep('src/components/Card.jsx',
+              '          hit ? "hit-flash" : "",\n        ].join(" ")}',
+              '          hit ? "hit-flash" : "",\n          unit.shiny ? "shiny-unit" : "",\n        ].join(" ")}')
+          rep('src/components/Card.jsx',
+              '            busted={unit.cardId === "mimikyu" && unit.sturdyUsed}\n          />',
+              '            busted={unit.cardId === "mimikyu" && unit.sturdyUsed}\n            shiny={!!unit.shiny}\n          />')
+
+          # ------------------------------------------------------------
+          # Pack opening shiny result
+          # ------------------------------------------------------------
+          rep('src/components/PackShop.jsx',
+              '<HandCard cardId={inspect.cardId} playable ghost />',
+              '<HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />')
+          rep('src/components/PackShop.jsx',
+              '<div className="pack-card-wrap">\n                  <HandCard\n                    cardId={r.card.id}\n                    playable\n                    onPointerDown={press({ cardId: r.card.id })}\n                  />',
+              '<div className={`pack-card-wrap ${r.shiny ? "pack-card-shiny" : ""}`}>\n                  <HandCard\n                    cardId={r.card.id}\n                    shiny={!!r.shiny}\n                    playable\n                    onPointerDown={press({ cardId: r.card.id, shiny: !!r.shiny })}\n                  />')
+          rep('src/components/PackShop.jsx',
+              '{RARITY_NAME[r.card.rarity]}\n                    {r.refunded > 0 && (',
+              '{RARITY_NAME[r.card.rarity]}\n                    {r.shiny && <span className="shiny-pack-label"> ✨ 이로치!</span>}\n                    {r.refunded > 0 && (')
+          rep('src/components/PackShop.jsx',
+              'className={`flip-card ${flipped.includes(i) ? "flipped" : ""} ${legendFlash === i ? "legend-flip" : ""}`}',
+              'className={`flip-card ${flipped.includes(i) ? "flipped" : ""} ${legendFlash === i ? "legend-flip" : ""} ${r.shiny ? "shiny-flip" : ""}`}')
+          rep('src/components/PackShop.jsx',
+              '같은 카드는 2장(레전드 1장)까지 보관됩니다. 초과분은 자동으로\n            환급돼요.',
+              '같은 카드는 2장(레전드 1장)까지 보관됩니다. 이미 가진 포켓몬이 다시 나오면\n            5% 확률로 이로치가 되며, 초과 일반 카드는 자동 환급돼요.')
+
+          # ------------------------------------------------------------
+          # App -> battle shiny selection
+          # ------------------------------------------------------------
+          rep('src/App.jsx',
+              '            trainer={trainer}\n            deck={save.deck}\n            onFinish={finishBattle}',
+              '            trainer={trainer}\n            deck={save.deck}\n            deckShiny={save.deckShiny || {}}\n            onFinish={finishBattle}')
+
+          rep('src/components/Battle.jsx',
+              'export default function Battle({ trainer, deck, onFinish }) {',
+              'export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {')
+          rep('src/components/Battle.jsx',
+              '    gameRef.current = createGame(deck, trainer);',
+              '    gameRef.current = createGame(deck, trainer, deckShiny);')
+
+          # ------------------------------------------------------------
+          # Engine: preserve shiny from deck -> hand -> field/evolution
+          # ------------------------------------------------------------
+          rep('src/engine/engine.base.js',
+              'function putStartingCard(player, cardId) {',
+              '''function claimShinyFromDeck(player, cardId) {
+  if (!player?._shinyDeckRemaining || CARD_MAP[cardId]?.kind !== "pokemon") return false;
+  const remaining = player._shinyDeckRemaining[cardId] || 0;
+  if (remaining <= 0) return false;
+  player._shinyDeckRemaining[cardId] = remaining - 1;
+  if (player._shinyDeckRemaining[cardId] <= 0) delete player._shinyDeckRemaining[cardId];
+  return true;
+}
+
+function restoreShinyToDeck(player, cardId, shiny) {
+  if (!shiny || CARD_MAP[cardId]?.kind !== "pokemon") return;
+  player._shinyDeckRemaining = player._shinyDeckRemaining || {};
+  player._shinyDeckRemaining[cardId] = (player._shinyDeckRemaining[cardId] || 0) + 1;
+}
+
+function putStartingCard(player, cardId) {''')
+          rep('src/engine/engine.base.js',
+              '  player.deck.splice(idx, 1);\n  player.hand.push({\n    uid: nextUid(),\n    cardId,\n  });',
+              '  player.deck.splice(idx, 1);\n  player.hand.push({\n    uid: nextUid(),\n    cardId,\n    shiny: claimShinyFromDeck(player, cardId),\n  });')
+          rep('src/engine/engine.base.js',
+              'export function createGame(playerDeckIds, trainer) {',
+              'export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {')
+          rep('src/engine/engine.base.js',
+              '      player: makePlayer(playerDeckIds, "나"),',
+              '      player: makePlayer(playerDeckIds, "나", 40, playerDeckShiny),')
+          rep('src/engine/engine.base.js',
+              'function makePlayer(deckIds, name, hp = 40) {',
+              'function makePlayer(deckIds, name, hp = 40, shinyDeck = null) {')
+          rep('src/engine/engine.base.js',
+              '    deck: shuffle(deckIds),\n    hand: [],',
+              '    deck: shuffle(deckIds),\n    _shinyDeckRemaining: { ...(shinyDeck || {}) },\n    hand: [],')
+          rep('src/engine/engine.base.js',
+              '  p.hand.push({ uid: nextUid(), cardId });',
+              '  p.hand.push({ uid: nextUid(), cardId, shiny: claimShinyFromDeck(p, cardId) });', 1)
+          rep('src/engine/engine.base.js',
+              '  p.hand.push({\n    uid: nextUid(),\n    cardId,\n  });\n\n  if (!silent) {',
+              '  p.hand.push({\n    uid: nextUid(),\n    cardId,\n    shiny: claimShinyFromDeck(p, cardId),\n  });\n\n  if (!silent) {')
+          rep('src/engine/engine.base.js',
+              '    const unit = makeUnit(card, game, side);\n    if (fieldIndex != null) {',
+              '    const unit = makeUnit(card, game, side);\n    unit.shiny = !!h.shiny;\n    if (fieldIndex != null) {')
+          rep('src/engine/engine.base.js',
+              '    base.cardId = card.id;\n    base.name = card.name;',
+              '    base.cardId = card.id;\n    base.shiny = !!h.shiny;\n    base.name = card.name;', 1)
+          rep('src/engine/engine.base.js',
+              '        p.deck.splice(pick.i, 1);\n        if (p.hand.length < MAX_HAND) {\n          p.hand.push({ uid: nextUid(), cardId: pick.id });',
+              '        p.deck.splice(pick.i, 1);\n        if (p.hand.length < MAX_HAND) {\n          p.hand.push({ uid: nextUid(), cardId: pick.id, shiny: claimShinyFromDeck(p, pick.id) });')
+          rep('src/engine/engine.base.js',
+              '        p.deck.splice(pick.i, 1);\n        p.hand.push({\n          uid: nextUid(),\n          cardId: pick.id,\n        });',
+              '        p.deck.splice(pick.i, 1);\n        p.hand.push({\n          uid: nextUid(),\n          cardId: pick.id,\n          shiny: claimShinyFromDeck(p, pick.id),\n        });')
+
+          old_hyper = '''      const picks = shuffle(pokeIdxs)
+        .slice(0, 3)
+        .map((x) => ({
+          uid: nextUid(),
+          cardId: x.id,
+        }));
+
+      // 선택 후보를 덱에서 임시 제거
+      picks.forEach((pick) => {
+        const index = p.deck.indexOf(pick.cardId);
+
+        if (index !== -1) {
+          p.deck.splice(index, 1);
+        }
+      });'''
+          new_hyper = '''      const picks = shuffle(pokeIdxs)
+        .slice(0, 3)
+        .map((x) => ({
+          uid: nextUid(),
+          cardId: x.id,
+          shiny: false,
+        }));
+
+      // 선택 후보를 덱에서 임시 제거하면서 이로치 복사본 여부도 함께 보존
+      picks.forEach((pick) => {
+        const index = p.deck.indexOf(pick.cardId);
+
+        if (index !== -1) {
+          p.deck.splice(index, 1);
+          pick.shiny = claimShinyFromDeck(p, pick.cardId);
+        }
+      });'''
+          rep('src/engine/engine.base.js', old_hyper, new_hyper)
+          rep('src/engine/engine.base.js',
+              '''        const returnedIds = picks
+          .filter((pick) => pick.uid !== chosen.uid)
+          .map((pick) => pick.cardId);
+
+        p.hand.push(chosen);
+        p.deck = shuffle([...p.deck, ...returnedIds]);''',
+              '''        const returned = picks.filter((pick) => pick.uid !== chosen.uid);
+        const returnedIds = returned.map((pick) => pick.cardId);
+        returned.forEach((pick) => restoreShinyToDeck(p, pick.cardId, pick.shiny));
+
+        p.hand.push(chosen);
+        p.deck = shuffle([...p.deck, ...returnedIds]);''')
+
+          # resolveHyperball: preserve shiny for returned choices
+          text = read('src/engine/engine.base.js')
+          old = '''  const returned = pending.picks.filter((pick) => pick.uid !== pickUid);
+
+  p.hand.push(chosen);
+  p.deck = shuffle([...p.deck, ...returned.map((pick) => pick.cardId)]);'''
+          if old in text:
+              text = text.replace(old, '''  const returned = pending.picks.filter((pick) => pick.uid !== pickUid);
+
+  returned.forEach((pick) => restoreShinyToDeck(p, pick.cardId, pick.shiny));
+  p.hand.push(chosen);
+  p.deck = shuffle([...p.deck, ...returned.map((pick) => pick.cardId)]);''', 1)
+              write('src/engine/engine.base.js', text)
+
+          # Wrapper forwards shiny selection and preserves shiny on eject.
+          rep('src/engine/engine.js',
+              '      player.hand.push({ uid: unit.uid, cardId: unit.cardId });',
+              '      player.hand.push({ uid: unit.uid, cardId: unit.cardId, shiny: !!unit.shiny });')
+          rep('src/engine/engine.js',
+              'export function createGame(playerDeckIds, trainer) {\n  const resolvedTrainer = resolveStriatonTrainer(playerDeckIds, trainer);\n  const game = base.createGame(playerDeckIds, resolvedTrainer);',
+              'export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {\n  const resolvedTrainer = resolveStriatonTrainer(playerDeckIds, trainer);\n  const game = base.createGame(playerDeckIds, resolvedTrainer, playerDeckShiny);')
+
+          # ------------------------------------------------------------
+          # Deck editor helpers (desktop / portrait / landscape)
+          # ------------------------------------------------------------
+          helper_import = '''import {
+  addDeckVariant,
+  buildOwnedVariants,
+  canAddDeckVariant,
+  clearDeckVariants,
+  getDeckVariantRows,
+  removeDeckVariant,
+  selectDeckPreset,
+  shinyInDeck,
+  shinyOwned,
+  syncActivePresetVariants,
+} from "../state/shiny.js";
+'''
+          for path in ['src/components/DeckEditor.jsx', 'src/components/MobileDeckEditorPortrait.jsx', 'src/components/MobileDeckEditorLandscape.jsx']:
+              rep(path, 'import { persist } from "../state/save.js";\n', 'import { persist } from "../state/save.js";\n' + helper_import)
+
+          # Desktop owned variants + virtual list
+          rep('src/components/DeckEditor.jsx',
+              '  const collectionGridRef = useRef(null);',
+              '  const ownedVariants = useMemo(() => buildOwnedVariants(ownedCards, save), [ownedCards, save.shinyCollection]);\n\n  const collectionGridRef = useRef(null);')
+          rep('src/components/DeckEditor.jsx',
+              '  const visibleOwnedCards = mobileLite\n    ? ownedCards.slice(\n        Math.min(virtualWindow.start, ownedCards.length),\n        Math.min(virtualWindow.end, ownedCards.length),\n      )\n    : ownedCards;',
+              '  const visibleOwnedCards = mobileLite\n    ? ownedVariants.slice(\n        Math.min(virtualWindow.start, ownedVariants.length),\n        Math.min(virtualWindow.end, ownedVariants.length),\n      )\n    : ownedVariants;')
+          # lengths used for virtualization
+          t = read('src/components/DeckEditor.jsx')
+          t = t.replace('Math.ceil(ownedCards.length / columns)', 'Math.ceil(ownedVariants.length / columns)')
+          t = t.replace('Math.min(ownedCards.length, (endRow + 1) * columns)', 'Math.min(ownedVariants.length, (endRow + 1) * columns)')
+          t = t.replace('end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length || MOBILE_INITIAL_RENDER)', 'end: Math.min(MOBILE_INITIAL_RENDER, ownedVariants.length || MOBILE_INITIAL_RENDER)')
+          t = t.replace('end: Math.min(MOBILE_INITIAL_RENDER, ownedCards.length),', 'end: Math.min(MOBILE_INITIAL_RENDER, ownedVariants.length),')
+          write('src/components/DeckEditor.jsx', t)
+
+          # Replace desktop action functions
+          start = read('src/components/DeckEditor.jsx')
+          a = start.index('  function addToDeck(cardId) {')
+          b = start.index('  function renamePreset(', a)
+          replacement = r'''  function syncActivePreset() {
+    syncActivePresetVariants(save);
+  }
+
+  function addToDeck(cardId, shiny = false) {
+    if (clickSuppressed()) return;
+    const card = CARD_MAP[cardId];
+    if (
+      !save.adminMode &&
+      isLegendaryPokemon(card) &&
+      legendaryPokemonCount >= MAX_LEGENDARY_POKEMON
+    ) {
+      playSfx("buzzer");
+      return;
+    }
+    if (!addDeckVariant(save, cardId, shiny)) {
+      playSfx("buzzer");
+      return;
+    }
+    persist(save);
+    playSfx("pickup");
+    onSaveChange();
+  }
+
+  function removeFromDeck(cardId, shiny = false) {
+    if (!removeDeckVariant(save, cardId, shiny)) return;
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
+  function clearDeck() {
+    if (save.deck.length === 0) return;
+    clearDeckVariants(save);
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
+  const deckList = useMemo(() =>
+    getDeckVariantRows(save).sort(
+      (a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name) || Number(a.shiny) - Number(b.shiny),
+    ),
+  [save.deck, save.deckShiny]);
+
+  function syncActivePreset() {
+    syncActivePresetVariants(save);
+  }
+
+  function selectPreset(index) {
+    if (index === save.activeDeckPreset) return;
+    playSfx("click");
+    if (!selectDeckPreset(save, index)) return;
+    persist(save);
+    onSaveChange();
+  }
+
+'''
+          # Avoid duplicate earlier deckList/sync sections by replacing larger block precisely later
+          # Instead use targeted regex-like slicing from addToDeck through renamePreset, then remove duplicate deckList block before it.
+          # Find the earlier deckList block and sync function start.
+          decklist_start = start.index('  const deckList = useMemo(() => {')
+          actions_start = start.index('  function addToDeck(cardId) {')
+          rename_start = start.index('  function renamePreset(', actions_start)
+          # Keep content before actions, but remove old deckList block only if it occurs after actions (it does in current file).
+          old_segment = start[actions_start:rename_start]
+          # Construct action segment without deckList duplication.
+          action_segment = r'''  function addToDeck(cardId, shiny = false) {
+    if (clickSuppressed()) return;
+    const card = CARD_MAP[cardId];
+    if (
+      !save.adminMode &&
+      isLegendaryPokemon(card) &&
+      legendaryPokemonCount >= MAX_LEGENDARY_POKEMON
+    ) {
+      playSfx("buzzer");
+      return;
+    }
+    if (!addDeckVariant(save, cardId, shiny)) {
+      playSfx("buzzer");
+      return;
+    }
+    persist(save);
+    playSfx("pickup");
+    onSaveChange();
+  }
+
+  function removeFromDeck(cardId, shiny = false) {
+    if (!removeDeckVariant(save, cardId, shiny)) return;
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
+  function clearDeck() {
+    if (save.deck.length === 0) return;
+    clearDeckVariants(save);
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
+  const deckList = useMemo(
+    () => getDeckVariantRows(save).sort(
+      (a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name) || Number(a.shiny) - Number(b.shiny),
+    ),
+    [save.deck, save.deckShiny],
+  );
+
+  function syncActivePreset() {
+    syncActivePresetVariants(save);
+  }
+
+  function selectPreset(index) {
+    if (index === save.activeDeckPreset) return;
+    playSfx("click");
+    if (!selectDeckPreset(save, index)) return;
+    persist(save);
+    onSaveChange();
+  }
+
+'''
+          start = start[:actions_start] + action_segment + start[rename_start:]
+          # remove the now-duplicated old deckList + sync/select block that follows clearDeck in original if present
+          marker1 = '  const deckList = useMemo(() => {'
+          pos = start.find(marker1, actions_start + len(action_segment))
+          if pos != -1:
+              end = start.find('  function renamePreset(', pos)
+              if end != -1:
+                  start = start[:pos] + start[end:]
+          write('src/components/DeckEditor.jsx', start)
+
+          # Desktop render collection entries
+          text = read('src/components/DeckEditor.jsx')
+          text = text.replace('  function renderCollectionCards(cards) {\n    return cards.map((card) => {', '  function renderCollectionCards(cards) {\n    return cards.map(({ card, shiny }) => {', 1)
+          text = text.replace('      const owned = save.collection[card.id];\n      const inDeck = deckCounts[card.id] || 0;\n      const max = Math.min(MAX_COPIES[card.rarity], owned);', '      const owned = save.collection[card.id];\n      const inDeck = deckCounts[card.id] || 0;\n      const max = Math.min(MAX_COPIES[card.rarity], owned);\n      const variantDeck = shiny ? shinyInDeck(save, card.id) : inDeck - shinyInDeck(save, card.id);\n      const variantOwned = shiny ? shinyOwned(save, card.id) : owned;')
+          text = text.replace('          key={card.id}\n          className="collection-item"\n          data-card-id={card.id}', '          key={`${card.id}-${shiny ? "shiny" : "normal"}`}\n          className={`collection-item ${shiny ? "collection-item-shiny" : ""}`}\n          data-card-id={`${card.id}-${shiny ? "shiny" : "normal"}`}')
+          text = text.replace('            cardId={card.id}\n            playable={\n              inDeck < max &&', '            cardId={card.id}\n            shiny={shiny}\n            playable={\n              canAddDeckVariant(save, card.id, shiny) &&')
+          text = text.replace('            onClick={() => addToDeck(card.id)}\n            onPointerDown={press({ cardId: card.id })}', '            onClick={() => addToDeck(card.id, shiny)}\n            onPointerDown={press({ cardId: card.id, shiny })}')
+          text = text.replace('            보유 {owned} · 덱 {inDeck}/{max}', '            {shiny ? `✨ 이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}')
+          text = text.replace('{deckList.map(({ card, count }) => (', '{deckList.map(({ card, count, shiny }) => (')
+          text = text.replace('key={card.id}\n                  className="deck-row"', 'key={`${card.id}-${shiny ? "shiny" : "normal"}`}\n                  className={`deck-row ${shiny ? "deck-row-shiny" : ""}`}')
+          text = text.replace('onClick={() => removeFromDeck(card.id)}', 'onClick={() => removeFromDeck(card.id, shiny)}')
+          text = text.replace('<Sprite cardId={card.id} emoji={card.emoji} size={22} />', '<Sprite cardId={card.id} shiny={shiny} emoji={card.emoji} size={22} />')
+          text = text.replace('<span className="deck-row-name">{card.name}</span>', '<span className="deck-row-name">{shiny ? `✨ ${card.name}` : card.name}</span>')
+          write('src/components/DeckEditor.jsx', text)
+
+          # Generic mobile editor patcher
+          def patch_mobile(path, item_class, shell_class, meta_class):
+              text = read(path)
+              # owned variants after ownedCards
+              anchor = '  const deckList = useMemo(() => {'
+              idx = text.index(anchor)
+              text = text[:idx] + '  const ownedVariants = useMemo(() => buildOwnedVariants(ownedCards, save), [ownedCards, save.shinyCollection]);\n\n' + text[idx:]
+              # deck list block
+              ds = text.index('  const deckList = useMemo(() => {')
+              de = text.index('\n\n  useEffect(() => {', ds)
+              text = text[:ds] + '''  const deckList = useMemo(
+    () => getDeckVariantRows(save).sort(
+      (a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name) || Number(a.shiny) - Number(b.shiny),
+    ),
+    [save.deck, save.deckShiny],
+  );''' + text[de:]
+              # virtualization source
+              text = text.replace('Math.ceil(ownedCards.length / COLUMNS)', 'Math.ceil(ownedVariants.length / COLUMNS)')
+              text = text.replace('Math.min(ownedCards.length, endRow * COLUMNS)', 'Math.min(ownedVariants.length, endRow * COLUMNS)')
+              text = text.replace('const visibleCards = ownedCards.slice(', 'const visibleCards = ownedVariants.slice(')
+              # action block sync->rename
+              s = text.index('  function syncActivePreset(')
+              e = text.index('  function renamePreset(', s)
+              action = r'''  function syncActivePreset() {
+    syncActivePresetVariants(save);
+  }
+
+  function addToDeck(cardId, shiny = false) {
+    if (clickSuppressed()) return;
+    const card = CARD_MAP[cardId];
+    if (
+      !save.adminMode &&
+      isLegendaryPokemon(card) &&
+      legendaryPokemonCount >= MAX_LEGENDARY_POKEMON
+    ) {
+      playSfx("buzzer");
+      return;
+    }
+    if (!addDeckVariant(save, cardId, shiny)) {
+      playSfx("buzzer");
+      return;
+    }
+    persist(save);
+    playSfx("pickup");
+    onSaveChange();
+  }
+
+  function removeFromDeck(cardId, shiny = false) {
+    if (!removeDeckVariant(save, cardId, shiny)) return;
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
+  function clearDeck() {
+    if (save.deck.length === 0) return;
+    clearDeckVariants(save);
+    persist(save);
+    playSfx("putdown");
+    onSaveChange();
+  }
+
+  function selectPreset(index) {
+    if (index === save.activeDeckPreset) return;
+    playSfx("click");
+    if (!selectDeckPreset(save, index)) return;
+    persist(save);
+    onSaveChange();
+  }
+
+'''
+              text = text[:s] + action + text[e:]
+              # renderCard now variant entry
+              text = text.replace('  function renderCard(card) {', '  function renderCard({ card, shiny }) {', 1)
+              text = text.replace('    const max = Math.min(MAX_COPIES[card.rarity], owned);\n    const playable =\n      inDeck < max &&\n      save.deck.length < 30 &&', '    const max = Math.min(MAX_COPIES[card.rarity], owned);\n    const variantDeck = shiny ? shinyInDeck(save, card.id) : inDeck - shinyInDeck(save, card.id);\n    const variantOwned = shiny ? shinyOwned(save, card.id) : owned;\n    const playable =\n      canAddDeckVariant(save, card.id, shiny) &&')
+              text = text.replace(f'<div key={{card.id}} className="{item_class}"', f'<div key={{`${{card.id}}-${{shiny ? "shiny" : "normal"}}`}} className={{`{item_class} ${{shiny ? "collection-item-shiny" : ""}}`}}')
+              text = text.replace('            cardId={card.id}\n            playable={playable}\n            onClick={() => addToDeck(card.id)}\n            onPointerDown={press({ cardId: card.id })}', '            cardId={card.id}\n            shiny={shiny}\n            playable={playable}\n            onClick={() => addToDeck(card.id, shiny)}\n            onPointerDown={press({ cardId: card.id, shiny })}')
+              text = text.replace(f'        <div className="{meta_class}">\n          보유 {{owned}} · 덱 {{inDeck}}/{{max}}\n        </div>', f'        <div className="{meta_class}">\n          {{shiny ? `✨ 이로치 ${{variantOwned}} · 덱 ${{variantDeck}}/${{variantOwned}}` : `보유 ${{owned}} · 덱 ${{variantDeck}}/${{max}}`}}\n        </div>')
+              # inspect overlay retains variant
+              text = text.replace('<HandCard cardId={inspect.cardId} playable ghost />', '<HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />')
+              # deck list rows
+              text = text.replace('deckList.map(({ card, count }) => (', 'deckList.map(({ card, count, shiny }) => (')
+              text = text.replace('key={card.id}\n                  className="deck-row"', 'key={`${card.id}-${shiny ? "shiny" : "normal"}`}\n                  className={`deck-row ${shiny ? "deck-row-shiny" : ""}`}')
+              text = text.replace('onClick={() => removeFromDeck(card.id)}', 'onClick={() => removeFromDeck(card.id, shiny)}')
+              text = text.replace('<Sprite cardId={card.id} emoji={card.emoji} size={22} />', '<Sprite cardId={card.id} shiny={shiny} emoji={card.emoji} size={22} />')
+              text = text.replace('<span className="deck-row-name">{card.name}</span>', '<span className="deck-row-name">{shiny ? `✨ ${card.name}` : card.name}</span>')
+              write(path, text)
+
+          patch_mobile('src/components/MobileDeckEditorPortrait.jsx', 'mobile-v2-card-item', 'mobile-portrait-card-shell', 'mobile-v2-card-meta')
+          patch_mobile('src/components/MobileDeckEditorLandscape.jsx', 'mobile-landscape-card-item', 'mobile-landscape-card-shell', 'mobile-landscape-card-meta')
+
+          # ------------------------------------------------------------
+          # CSS / import
+          # ------------------------------------------------------------
+          write('src/styles/shiny.css', r'''/* 이로치 카드 공통 연출 */
+.hand-card.shiny-card {
+  box-shadow:
+    0 0 0 1px rgba(255, 236, 135, .75),
+    0 0 16px rgba(255, 227, 92, .38),
+    0 8px 22px rgba(0, 0, 0, .42);
+}
+
+.hand-card.shiny-card::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent 25%, rgba(255,255,255,.18) 42%, transparent 58%);
+  mix-blend-mode: screen;
+}
+
+.shiny-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 8;
+  padding: 2px 5px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  color: #fff7c7;
+  background: rgba(55, 36, 8, .82);
+  border: 1px solid rgba(255, 226, 98, .85);
+  text-shadow: 0 1px 2px #000;
+}
+
+.field-unit.shiny-unit {
+  box-shadow: 0 0 13px rgba(255, 229, 102, .34);
+}
+
+.collection-item-shiny,
+.deck-row-shiny {
+  position: relative;
+}
+
+.deck-row-shiny {
+  box-shadow: inset 3px 0 rgba(255, 224, 94, .8);
+}
+
+.pack-card-shiny {
+  filter: drop-shadow(0 0 10px rgba(255, 231, 112, .6));
+}
+
+.shiny-pack-label {
+  color: #ffe66f;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(255, 221, 64, .65);
+}
+
+.shiny-flip.flipped .flip-inner,
+.shiny-flip.settled {
+  animation: shiny-pack-pop .75s ease-out;
+}
+
+@keyframes shiny-pack-pop {
+  0% { filter: brightness(1); }
+  35% { filter: brightness(1.8) drop-shadow(0 0 18px rgba(255, 235, 123, .95)); }
+  100% { filter: brightness(1); }
+}
+''')
+          rep('src/main.jsx',
+              "import './styles/ui-readability.css';\n",
+              "import './styles/ui-readability.css';\nimport './styles/shiny.css';\n")
+
+          PY
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name "poke-stone-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "feat: add shiny card collection and deck variants"
+          git push
