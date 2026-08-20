@@ -1,6 +1,6 @@
 import { CARD_MAP, DEX, MAX_COPIES } from "../data/cards.js";
 
-export const SHINY_DUPLICATE_CHANCE = 0.05;
+export const SHINY_DUPLICATE_CHANCE = 0.01;
 
 function clampInt(value, min, max) {
   const n = Number.isFinite(Number(value)) ? Math.floor(Number(value)) : 0;
