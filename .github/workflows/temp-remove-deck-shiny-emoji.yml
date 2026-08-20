@@ -1,0 +1,51 @@
+name: Temporary remove deck shiny emoji
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/remove-deck-shiny-emoji-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Remove deck editor shiny emoji
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('src/components/DeckEditor.jsx')
+          text = p.read_text()
+          old_meta = '            {shiny ? `✨ 이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}'
+          new_meta = '            {shiny ? `이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}'
+          old_row = '                <span className="deck-row-name">{shiny ? `✨ ${card.name}` : card.name}</span>'
+          new_row = '                <span className="deck-row-name">{card.name}</span>'
+          if old_meta not in text:
+              raise SystemExit('shiny collection meta not found')
+          if old_row not in text:
+              raise SystemExit('shiny deck row name not found')
+          text = text.replace(old_meta, new_meta, 1).replace(old_row, new_row, 1)
+          p.write_text(text)
+          PY
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Commit source change
+        run: |
+          git config user.name "poke-stone-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/components/DeckEditor.jsx
+          git commit -m "fix: remove shiny emoji from deck editor labels"
+          git push origin HEAD:${{ github.head_ref }}
