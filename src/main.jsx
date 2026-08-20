@@ -60,6 +60,8 @@ import './styles/mobile-battle-controls-fix.css';
 import './features/battle/skyla-airborne-card.css';
 
 import './features/mobile/battle-hand-runtime.js';
+// 대상 선택이 없는 기술은 클릭/터치 즉발을 막고 드롭으로만 사용한다.
+import './features/battle/dragOnlyTechniqueRuntime.js';
 import './features/battle/runtime.js';
 import './features/battle/costColorRuntime.js';
 import './features/battle/fixedFieldPlacement.js';
