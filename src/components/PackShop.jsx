@@ -130,7 +130,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
     <div className="pack-shop">
       {inspect && (
         <div className="inspect-overlay">
-          <HandCard cardId={inspect.cardId} playable ghost />
+          <HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />
         </div>
       )}
       <div className="screen-header">
@@ -299,8 +299,8 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               ))}
           </div>
           <p className="pack-note">
-            같은 카드는 2장(레전드 1장)까지 보관됩니다. 초과분은 자동으로
-            환급돼요.
+            같은 카드는 2장(레전드 1장)까지 보관됩니다. 이미 가진 포켓몬이 다시 나오면
+            5% 확률로 이로치가 되며, 초과 일반 카드는 자동 환급돼요.
           </p>
         </div>
       )}
@@ -310,14 +310,16 @@ export default function PackShop({ save, onSaveChange, onBack }) {
           <div className="pack-cards" key={packRound}>
             {result.cards.map((r, i) => {
               const front = (
-                <div className="pack-card-wrap">
+                <div className={`pack-card-wrap ${r.shiny ? "pack-card-shiny" : ""}`}>
                   <HandCard
                     cardId={r.card.id}
+                    shiny={!!r.shiny}
                     playable
-                    onPointerDown={press({ cardId: r.card.id })}
+                    onPointerDown={press({ cardId: r.card.id, shiny: !!r.shiny })}
                   />
                   <div className={`rarity-tag rarity-${r.card.rarity}`}>
                     {RARITY_NAME[r.card.rarity]}
+                    {r.shiny && <span className="shiny-pack-label"> ✨ 이로치!</span>}
                     {r.refunded > 0 && (
                       <span className="refund"> (중복 +{r.refunded}원)</span>
                     )}
@@ -335,7 +337,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
               return (
                 <div
                   key={i}
-                  className={`flip-card ${flipped.includes(i) ? "flipped" : ""} ${legendFlash === i ? "legend-flip" : ""}`}
+                  className={`flip-card ${flipped.includes(i) ? "flipped" : ""} ${legendFlash === i ? "legend-flip" : ""} ${r.shiny ? "shiny-flip" : ""}`}
                   onClick={() => flipCard(i)}
                 >
                   <div className="flip-inner">

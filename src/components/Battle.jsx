@@ -596,7 +596,7 @@ function buildVisualField(player) {
   return slots;
 }
 
-export default function Battle({ trainer, deck, onFinish }) {
+export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
   const gameRef = useRef(null);
   const [, forceRender] = useState(0);
   const [selectedHand, setSelectedHand] = useState(null); // 탭 방식 기술 타겟팅 (폴백)
@@ -652,7 +652,7 @@ export default function Battle({ trainer, deck, onFinish }) {
   }, [trainer.gymType]);
 
   if (!gameRef.current) {
-    gameRef.current = createGame(deck, trainer);
+    gameRef.current = createGame(deck, trainer, deckShiny);
   }
   const game = gameRef.current;
 

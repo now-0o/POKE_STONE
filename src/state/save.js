@@ -14,6 +14,7 @@ import {
   MAX_COPIES,
 } from "../data/cards.js";
 import { STARTER_DECK } from "../data/starterDeck.js";
+import { ensureShinyState, isShinyEligible, SHINY_DUPLICATE_CHANCE } from "./shiny.js";
 
 const SAVE_KEY = "pkm_stone_v1";
 export const LOSE_REWARD = 30;
@@ -24,6 +25,7 @@ export function ensureDeckPresets(save) {
   if (!save) return save;
 
   const currentDeck = Array.isArray(save.deck) ? [...save.deck] : [];
+  const currentDeckShiny = { ...(save.deckShiny || {}) };
 
   const oldPresets = Array.isArray(save.deckPresets) ? save.deckPresets : [];
 
@@ -42,10 +44,13 @@ export function ensureDeckPresets(save) {
       name: old?.name?.trim() || (index === 0 ? "기본 덱" : `덱 ${index + 1}`),
 
       deck: Array.isArray(old?.deck) ? [...old.deck] : [],
+      deckShiny: { ...(old?.deckShiny || {}) },
     };
   });
 
   save.activeDeckPreset = active;
+  save.deckShiny = currentDeckShiny;
+  ensureShinyState(save);
 
   /*
    * 현재 실제 사용 중인 save.deck을
@@ -54,8 +59,10 @@ export function ensureDeckPresets(save) {
   save.deckPresets[active] = {
     ...save.deckPresets[active],
     deck: [...currentDeck],
+    deckShiny: { ...save.deckShiny },
   };
 
+  ensureShinyState(save);
   return save;
 }
 
@@ -99,7 +106,9 @@ export function newSave() {
   const save = {
     money: 100,
     collection,
+    shinyCollection: {},
     deck: [...STARTER_DECK],
+    deckShiny: {},
     wins: {},
     packsOpened: 0,
   };
@@ -191,6 +200,7 @@ function rollRarityFrom(weights) {
 }
 
 export function openPack(save, packId = "basic") {
+  ensureShinyState(save);
   const pack = PACKS[packId] || PACKS.basic;
   if (save.money < pack.price) return null;
   save.money -= pack.price;
@@ -236,23 +246,36 @@ export function openPack(save, packId = "basic") {
     }
     const owned = save.collection[card.id] || 0;
     const max = MAX_COPIES[card.rarity];
-    if (owned >= max) {
+    const shinyOwned = save.shinyCollection[card.id] || 0;
+    const canBecomeShiny =
+      owned > 0 &&
+      isShinyEligible(card) &&
+      shinyOwned < max;
+    const shiny = canBecomeShiny && Math.random() < SHINY_DUPLICATE_CHANCE;
+
+    if (shiny) {
+      if (owned < max) save.collection[card.id] = owned + 1;
+      save.shinyCollection[card.id] = Math.min(max, shinyOwned + 1);
+      results.push({ card, refunded: 0, shiny: true });
+    } else if (owned >= max) {
       const refund = RARITY_REFUND[card.rarity];
       save.money += refund;
       refundTotal += refund;
-      results.push({ card, refunded: refund });
+      results.push({ card, refunded: refund, shiny: false });
     } else {
       save.collection[card.id] = owned + 1;
-      results.push({ card, refunded: 0 });
+      results.push({ card, refunded: 0, shiny: false });
     }
   });
 
+  ensureShinyState(save);
   persist(save);
   return { cards: results, refundTotal };
 }
 
 // ---------- 덱 검증 ----------
 export function deckIsValid(save) {
+  ensureShinyState(save);
   if (save.deck.length !== 30) return false;
   const counts = {};
   for (const id of save.deck) {
@@ -263,6 +286,10 @@ export function deckIsValid(save) {
       counts[id] > Math.min(MAX_COPIES[card.rarity], save.collection[id] || 0)
     )
       return false;
+  }
+  for (const [cardId, count] of Object.entries(save.deckShiny || {})) {
+    const inDeck = save.deck.filter((id) => id === cardId).length;
+    if (count < 0 || count > inDeck || count > (save.shinyCollection[cardId] || 0)) return false;
   }
   return true;
 }
