@@ -277,12 +277,10 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   const virtualMetricsRef = useRef({ columns: 0, rowStep: 0 });
   const virtualRafRef = useRef(null);
 
-  const visibleOwnedCards = mobileLite
-    ? ownedVariants.slice(
-        Math.min(virtualWindow.start, ownedVariants.length),
-        Math.min(virtualWindow.end, ownedVariants.length),
-      )
-    : ownedVariants;
+  const visibleOwnedCards = ownedVariants.slice(
+    Math.min(virtualWindow.start, ownedVariants.length),
+    Math.min(virtualWindow.end, ownedVariants.length),
+  );
 
   function captureCardPositions() {
     if (mobileLite) {
@@ -304,7 +302,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   function calculateVirtualWindow(columns, rowStep) {
     const pane = collectionPaneRef.current;
 
-    if (!mobileLite || !pane || columns <= 0 || rowStep <= 0) {
+    if (!pane || columns <= 0 || rowStep <= 0) {
       return;
     }
 
@@ -340,10 +338,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   function measureMobileGrid() {
-    if (!mobileLite) {
-      return;
-    }
-
     const grid = collectionGridRef.current;
     const children = grid ? Array.from(grid.children) : [];
 
@@ -391,10 +385,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   function resetMobileVirtualization() {
-    if (!mobileLite) {
-      return;
-    }
-
     if (virtualRafRef.current !== null) {
       cancelAnimationFrame(virtualRafRef.current);
       virtualRafRef.current = null;
@@ -411,7 +401,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   function handleCollectionScroll() {
-    if (!mobileLite || virtualRafRef.current !== null) {
+    if (virtualRafRef.current !== null) {
       return;
     }
 
@@ -423,10 +413,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }
 
   useLayoutEffect(() => {
-    if (!mobileLite) {
-      return;
-    }
-
     const pane = collectionPaneRef.current;
 
     if (pane) {
@@ -443,10 +429,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   }, [mobileLite, ownedCards]);
 
   useLayoutEffect(() => {
-    if (!mobileLite) {
-      return;
-    }
-
     measureMobileGrid();
   }, [
     mobileLite,
@@ -456,10 +438,6 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
   ]);
 
   useEffect(() => {
-    if (!mobileLite) {
-      return undefined;
-    }
-
     const onResize = () => {
       if (virtualRafRef.current !== null) {
         cancelAnimationFrame(virtualRafRef.current);
@@ -664,8 +642,8 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     });
   }
 
-  const mobileVirtualized =
-    mobileLite && virtualWindow.totalHeight > 0 && ownedCards.length > 0;
+  const collectionVirtualized =
+    virtualWindow.totalHeight > 0 && ownedVariants.length > 0;
 
   return (
     <div
@@ -827,7 +805,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
         <div
           ref={collectionPaneRef}
           className="collection-pane"
-          onScroll={mobileLite ? handleCollectionScroll : undefined}
+          onScroll={handleCollectionScroll}
           style={{
             minHeight: 0,
             overflowY: "auto",
@@ -836,38 +814,32 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {mobileLite ? (
+          <div
+            style={{
+              position: "relative",
+              height: collectionVirtualized
+                ? `${virtualWindow.totalHeight}px`
+                : "auto",
+              minHeight: collectionVirtualized ? 0 : undefined,
+            }}
+          >
             <div
-              style={{
-                position: "relative",
-                height: mobileVirtualized
-                  ? `${virtualWindow.totalHeight}px`
-                  : "auto",
-                minHeight: mobileVirtualized ? 0 : undefined,
-              }}
+              className="collection-grid"
+              ref={collectionGridRef}
+              style={
+                collectionVirtualized
+                  ? {
+                      position: "absolute",
+                      top: `${virtualWindow.top}px`,
+                      left: 0,
+                      right: 0,
+                    }
+                  : undefined
+              }
             >
-              <div
-                className="collection-grid"
-                ref={collectionGridRef}
-                style={
-                  mobileVirtualized
-                    ? {
-                        position: "absolute",
-                        top: `${virtualWindow.top}px`,
-                        left: 0,
-                        right: 0,
-                      }
-                    : undefined
-                }
-              >
-                {renderCollectionCards(visibleOwnedCards)}
-              </div>
+              {renderCollectionCards(visibleOwnedCards)}
             </div>
-          ) : (
-            <div className="collection-grid" ref={collectionGridRef}>
-              {renderCollectionCards(ownedVariants)}
-            </div>
-          )}
+          </div>
         </div>
 
         <div

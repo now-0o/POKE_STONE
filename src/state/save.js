@@ -247,16 +247,20 @@ export function openPack(save, packId = "basic") {
     const owned = save.collection[card.id] || 0;
     const max = MAX_COPIES[card.rarity];
     const shinyOwned = save.shinyCollection[card.id] || 0;
-    const canBecomeShiny =
-      owned > 0 &&
-      isShinyEligible(card) &&
-      shinyOwned < max;
-    const shiny = canBecomeShiny && Math.random() < SHINY_DUPLICATE_CHANCE;
+    const canRollShiny = owned > 0 && isShinyEligible(card);
+    const shiny = canRollShiny && Math.random() < SHINY_DUPLICATE_CHANCE;
 
     if (shiny) {
-      if (owned < max) save.collection[card.id] = owned + 1;
-      save.shinyCollection[card.id] = Math.min(max, shinyOwned + 1);
-      results.push({ card, refunded: 0, shiny: true });
+      if (shinyOwned >= max) {
+        const refund = (RARITY_REFUND[card.rarity] || 0) * 2;
+        save.money += refund;
+        refundTotal += refund;
+        results.push({ card, refunded: refund, shiny: true });
+      } else {
+        if (owned < max) save.collection[card.id] = owned + 1;
+        save.shinyCollection[card.id] = Math.min(max, shinyOwned + 1);
+        results.push({ card, refunded: 0, shiny: true });
+      }
     } else if (owned >= max) {
       const refund = RARITY_REFUND[card.rarity];
       save.money += refund;

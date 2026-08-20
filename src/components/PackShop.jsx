@@ -300,7 +300,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
           </div>
           <p className="pack-note">
             같은 카드는 2장(레전드 1장)까지 보관됩니다. 이미 가진 포켓몬이 다시 나오면
-            1% 확률로 이로치가 되며, 초과 일반 카드는 자동 환급돼요.
+            2% 확률로 이로치가 되며, 초과 카드는 자동 환급돼요.
           </p>
         </div>
       )}
@@ -321,7 +321,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
                     {RARITY_NAME[r.card.rarity]}
                     {r.shiny && <span className="shiny-pack-label"> · 이로치!</span>}
                     {r.refunded > 0 && (
-                      <span className="refund"> (중복 +{r.refunded}원)</span>
+                      <span className="refund"> ({r.shiny ? "이로치 중복" : "중복"} +{r.refunded}원)</span>
                     )}
                   </div>
                 </div>
