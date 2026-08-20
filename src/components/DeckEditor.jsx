@@ -680,7 +680,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
     >
       {inspect && (
         <div className="inspect-overlay">
-          <HandCard cardId={inspect.cardId} playable ghost />
+          <HandCard cardId={inspect.cardId} shiny={!!inspect.shiny} playable ghost />
         </div>
       )}
 
