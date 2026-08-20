@@ -635,7 +635,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
             onPointerDown={press({ cardId: card.id, shiny })}
           />
           <div className="collection-meta">
-            {shiny ? `✨ 이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}
+            {shiny ? `이로치 ${variantOwned} · 덱 ${variantDeck}/${variantOwned}` : `보유 ${owned} · 덱 ${variantDeck}/${max}`}
           </div>
         </div>
       );
@@ -942,7 +942,7 @@ export default function DeckEditor({ save, onSaveChange, onBack }) {
                 <span className="deck-row-emoji">
                   <Sprite cardId={card.id} shiny={shiny} emoji={card.emoji} size={22} />
                 </span>
-                <span className="deck-row-name">{shiny ? `✨ ${card.name}` : card.name}</span>
+                <span className="deck-row-name">{card.name}</span>
                 <span className="deck-row-count">×{count}</span>
               </div>
             ))}
