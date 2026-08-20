@@ -1,8 +1,8 @@
 name: Temporary restore shiny badge
 
 on:
-  push:
-    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
     paths:
       - '.github/restore-shiny-badge-trigger.txt'
 
@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -43,4 +43,4 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add src/components/Card.jsx
           git commit -m "fix: restore shiny badge without emoji"
-          git push origin main
+          git push origin HEAD:${{ github.head_ref }}
