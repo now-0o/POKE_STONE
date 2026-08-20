@@ -299,9 +299,18 @@ export function activateAdminMode(save) {
   save.money = 999999;
   save.adminMode = true;
 
+  save.shinyCollection = {};
+
   CARDS.forEach((c) => {
-    save.collection[c.id] = MAX_COPIES[c.rarity] ?? 2;
+    const maxCopies = MAX_COPIES[c.rarity] ?? 2;
+    save.collection[c.id] = maxCopies;
+
+    if (isShinyEligible(c)) {
+      save.shinyCollection[c.id] = maxCopies;
+    }
   });
+
+  ensureShinyState(save);
 
   // 퀘스트 카드 강제 지급
   if (CARD_MAP["letsgo_eevee"]) {

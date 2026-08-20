@@ -319,7 +319,7 @@ export default function PackShop({ save, onSaveChange, onBack }) {
                   />
                   <div className={`rarity-tag rarity-${r.card.rarity}`}>
                     {RARITY_NAME[r.card.rarity]}
-                    {r.shiny && <span className="shiny-pack-label"> ✨ 이로치!</span>}
+                    {r.shiny && <span className="shiny-pack-label"> · 이로치!</span>}
                     {r.refunded > 0 && (
                       <span className="refund"> (중복 +{r.refunded}원)</span>
                     )}
