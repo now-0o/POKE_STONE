@@ -1,0 +1,142 @@
+/* 사간 - 용의 위압 상승 시 필드로 퍼지는 짧은 드래곤 피어 연출 */
+.unova-drayden-hud.is-fear-pulsing {
+  animation: unova-drayden-fear-hud .72s cubic-bezier(.2,.78,.22,1) both;
+}
+
+.unova-drayden-hud.is-fear-pulsing::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px solid rgba(205, 132, 255, .9);
+  border-radius: 14px;
+  box-shadow:
+    0 0 10px rgba(189, 91, 255, .72),
+    0 0 24px rgba(111, 54, 205, .48);
+  pointer-events: none;
+  animation: unova-drayden-fear-hud-ring .78s ease-out both;
+}
+
+.unova-dragon-fear-field {
+  --fear-alpha: .18;
+  --fear-ring-alpha: .72;
+  position: absolute;
+  z-index: 165;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  animation: unova-dragon-fear-field-fade .9s ease-out both;
+}
+
+.unova-dragon-fear-field.fear-level-2 {
+  --fear-alpha: .21;
+  --fear-ring-alpha: .78;
+}
+
+.unova-dragon-fear-field.fear-level-3 {
+  --fear-alpha: .25;
+  --fear-ring-alpha: .86;
+}
+
+.unova-dragon-fear-field.fear-level-4 {
+  --fear-alpha: .29;
+  --fear-ring-alpha: .94;
+}
+
+.unova-dragon-fear-field::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 112px;
+  height: 112px;
+  border: 2px solid rgba(199, 116, 255, var(--fear-ring-alpha));
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 10px rgba(158, 82, 230, .13),
+    0 0 0 24px rgba(111, 53, 190, .08),
+    0 0 34px rgba(196, 93, 255, .55);
+  transform: translate(-50%, -50%) scale(.22);
+  filter: blur(.1px);
+  animation: unova-dragon-fear-wave .84s cubic-bezier(.13,.67,.24,1) both;
+}
+
+.unova-dragon-fear-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 50% 38%,
+      rgba(205, 126, 255, calc(var(--fear-alpha) * 1.15)) 0%,
+      rgba(111, 54, 188, var(--fear-alpha)) 18%,
+      transparent 52%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(45, 16, 74, calc(var(--fear-alpha) * .7)),
+      transparent 22%,
+      transparent 78%,
+      rgba(45, 16, 74, calc(var(--fear-alpha) * .7))
+    );
+  mix-blend-mode: screen;
+  animation: unova-dragon-fear-vignette .86s ease-out both;
+}
+
+@keyframes unova-drayden-fear-hud {
+  0% { transform: translateX(0) scale(1); filter: brightness(1); }
+  18% { transform: translateX(-3px) scale(1.035); filter: brightness(1.45) saturate(1.25); }
+  34% { transform: translateX(3px) scale(1.015); }
+  50% { transform: translateX(-2px) scale(1.025); }
+  72% { transform: translateX(1px) scale(1.008); }
+  100% { transform: translateX(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes unova-drayden-fear-hud-ring {
+  0% { opacity: 0; transform: scale(.92); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+
+@keyframes unova-dragon-fear-wave {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.22);
+  }
+  14% { opacity: 1; }
+  58% { opacity: .72; }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(7.2, 4.25);
+  }
+}
+
+@keyframes unova-dragon-fear-vignette {
+  0% { opacity: 0; filter: brightness(1); }
+  22% { opacity: 1; filter: brightness(1.08) saturate(1.18); }
+  58% { opacity: .68; }
+  100% { opacity: 0; filter: brightness(1); }
+}
+
+@keyframes unova-dragon-fear-field-fade {
+  0% { opacity: 0; }
+  12%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unova-drayden-hud.is-fear-pulsing {
+    animation: none;
+    filter: brightness(1.16);
+  }
+
+  .unova-drayden-hud.is-fear-pulsing::after,
+  .unova-dragon-fear-field::before,
+  .unova-dragon-fear-field::after {
+    animation: none;
+  }
+
+  .unova-dragon-fear-field {
+    display: none;
+  }
+}
