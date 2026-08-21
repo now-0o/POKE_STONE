@@ -9,6 +9,7 @@ import './data/cards/unova-legendary-overrides.js';
 import './data/cards/unova-trainers.js';
 import './data/trainers/unova.js';
 import './data/trainers/unova-reward-overrides.js';
+import './data/trainers/unova-n.js';
 import './data/trainers/sinnoh.js';
 import './data/cards/cynthia.js';
 import './data/trainers/cynthia.js';
@@ -61,6 +62,8 @@ import './styles/mobile-battle-hearthstone-v3-fixes.css';
 import './styles/mobile-battle-hearthstone-v4.css';
 // 진화체 버리고 뽑기 등 모바일 배틀 컨트롤 위치를 V4 뒤에서 최종 보정한다.
 import './styles/mobile-battle-controls-fix.css';
+// N 친밀도 숫자/사슬 전향 연출은 모바일 배틀 최종 레이아웃 위에 표시한다.
+import './features/battle/n-bond.css';
 // 풍란 공중날기는 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
 import './features/battle/skyla-airborne-card.css';
 
@@ -76,6 +79,8 @@ import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
 // 사간의 용의 위압이 상승할 때 필드로 퍼지는 드래곤 피어 연출을 재생한다.
 import './features/battle/draydenFearRuntime.js';
+// N의 친밀도 표시와 전향/복귀 사슬, 페이즈 전설 등장 연출을 재생한다.
+import './features/battle/nBondRuntime.js';
 import './features/battle/unovaLegendaryRuntime.js';
 // 탈출버튼/레드카드로 필드에서 손으로 돌아갈 때 퇴장 연출을 추가한다.
 import './features/battle/returnItemAnimationRuntime.js';
