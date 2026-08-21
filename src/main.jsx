@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 // 하나지방 카드도 같은 확장 레지스트리 순서로 로드한다.
 import './data/cards/sinnoh.js';
 import './data/cards/unova.js';
+import './data/cards/unova-legendary-overrides.js';
 import './data/cards/unova-trainers.js';
 import './data/trainers/unova.js';
 import './data/trainers/sinnoh.js';
@@ -57,7 +58,7 @@ import './styles/mobile-battle-hearthstone-v3-fixes.css';
 import './styles/mobile-battle-hearthstone-v4.css';
 // 진화체 버리고 뽑기 등 모바일 배틀 컨트롤 위치를 V4 뒤에서 최종 보정한다.
 import './styles/mobile-battle-controls-fix.css';
-// 풍란 이륙은 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
+// 풍란 공중날기는 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
 import './features/battle/skyla-airborne-card.css';
 
 import './features/mobile/battle-hand-runtime.js';
@@ -70,6 +71,7 @@ import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
+import './features/battle/unovaLegendaryRuntime.js';
 // 아티 고치 카운트/우화 연출은 하나지방 DOM 효과가 등록된 뒤 적용한다.
 import './features/battle/burghCocoonRuntime.js';
 // 카밀레는 매 턴 선택 결과를 받은 뒤 무대를 훑고 대상에 고정되는 연출을 재생한다.
