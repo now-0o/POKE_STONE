@@ -1,3 +1,6 @@
+import "./battle-screen-counters.css";
+import "./unovaMoveFxRuntime.js";
+
 function syncEndTurnLabel() {
   const button = document.querySelector(".battle.battle-board .btn-endturn");
   if (!button) return;
@@ -9,6 +12,78 @@ function syncEndTurnLabel() {
   if (label && button.textContent !== label) {
     button.textContent = label;
   }
+}
+
+function getBattleGame() {
+  return window.__pokeNState?.game || null;
+}
+
+function screenCharge(player, key) {
+  const value = Number(player?.[key]) || 0;
+  return Math.max(0, Math.floor(value));
+}
+
+function screenCounterMarkup(player) {
+  const reflect = screenCharge(player, "_reflectCharges");
+  const lightScreen = screenCharge(player, "_lightScreenCharges");
+  const parts = [];
+
+  if (reflect > 0) {
+    parts.push(
+      `<span class="battle-screen-counter is-reflect" title="리플렉터 남은 방어 횟수"><span aria-hidden="true">🪞</span><span>리플렉터</span><strong>${reflect}</strong></span>`,
+    );
+  }
+
+  if (lightScreen > 0) {
+    parts.push(
+      `<span class="battle-screen-counter is-light-screen" title="빛의장막 남은 방어 횟수"><span aria-hidden="true">✨</span><span>빛의장막</span><strong>${lightScreen}</strong></span>`,
+    );
+  }
+
+  return parts.join("");
+}
+
+function syncBattleScreenCounterForSide(side, player) {
+  const info = document.querySelector(
+    side === "player"
+      ? ".battle.battle-board .my-hero-cluster .hero-info"
+      : ".battle.battle-board .enemy-hero-cluster .hero-info",
+  );
+
+  if (!info) return;
+
+  const html = screenCounterMarkup(player);
+  let counters = info.querySelector(
+    `.battle-screen-counters[data-screen-side="${side}"]`,
+  );
+
+  if (!html) {
+    counters?.remove();
+    return;
+  }
+
+  if (!counters) {
+    counters = document.createElement("div");
+    counters.className = "battle-screen-counters";
+    counters.dataset.screenSide = side;
+    counters.setAttribute(
+      "aria-label",
+      side === "player" ? "내 장막 남은 횟수" : "상대 장막 남은 횟수",
+    );
+    info.appendChild(counters);
+  }
+
+  if (counters.innerHTML !== html) {
+    counters.innerHTML = html;
+  }
+}
+
+function syncBattleScreenCounters() {
+  const game = getBattleGame();
+  if (!game?.players) return;
+
+  syncBattleScreenCounterForSide("enemy", game.players.enemy);
+  syncBattleScreenCounterForSide("player", game.players.player);
 }
 
 function getCandiceFieldContentRect() {
@@ -116,6 +191,7 @@ function syncBattlePageState() {
   document.body.classList.toggle("battle-page-locked", locked);
 
   syncEndTurnLabel();
+  syncBattleScreenCounters();
   queueCandiceOverlayAlignment();
 }
 
@@ -124,8 +200,10 @@ function startBattleRuntime() {
 
   window.addEventListener("battle-turn-change", () => {
     syncEndTurnLabel();
+    syncBattleScreenCounters();
     queueCandiceOverlayAlignment();
   });
+  window.addEventListener("unova-n-state-change", syncBattleScreenCounters);
   window.addEventListener(
     "candice-whiteout-change",
     queueCandiceOverlayAlignment,
