@@ -94,16 +94,29 @@ export function canAddDeckVariant(save, cardId, shiny = false) {
   const owned = save.collection[cardId] || 0;
   const max = Math.min(MAX_COPIES[card.rarity] ?? 2, owned);
   if (save.deck.length >= 30 || total >= max) return false;
-  if (shiny && shinyInDeck(save, cardId) >= shinyOwned(save, cardId)) return false;
+  if (shiny && (save.deckShiny?.[cardId] || 0) >= (save.shinyCollection?.[cardId] || 0)) {
+    return false;
+  }
   return true;
 }
 
 export function addDeckVariant(save, cardId, shiny = false) {
   if (!canAddDeckVariant(save, cardId, shiny)) return false;
+
+  // 이로치 수를 덱 배열 변경 전에 확정한다.
+  // 덱을 먼저 바꾼 뒤 shinyInDeck()을 호출하면 ensureShinyState()가
+  // 중간 상태를 정규화하게 되어 저장 타이밍에 따라 일반 카드로 내려갈 수 있다.
+  const previousShinyCount = save.deckShiny?.[cardId] || 0;
+
   save.deck = [...save.deck, cardId];
+  save.deckShiny = { ...(save.deckShiny || {}) };
+
   if (shiny) {
-    save.deckShiny = { ...save.deckShiny, [cardId]: shinyInDeck(save, cardId) + 1 };
+    save.deckShiny[cardId] = previousShinyCount + 1;
   }
+
+  // 최종 상태에서 한 번만 정규화하고 활성 프리셋에도 같은 스냅샷을 저장한다.
+  ensureShinyState(save);
   syncActivePresetVariants(save);
   return true;
 }
@@ -112,18 +125,20 @@ export function removeDeckVariant(save, cardId, shiny = false) {
   ensureShinyState(save);
   const index = save.deck.indexOf(cardId);
   if (index === -1) return false;
-  const shinyCount = shinyInDeck(save, cardId);
+  const shinyCount = save.deckShiny?.[cardId] || 0;
   const normalCount = countDeck(save.deck, cardId) - shinyCount;
   if (shiny && shinyCount <= 0) return false;
   if (!shiny && normalCount <= 0) return false;
 
   save.deck = [...save.deck.slice(0, index), ...save.deck.slice(index + 1)];
+  save.deckShiny = { ...(save.deckShiny || {}) };
+
   if (shiny) {
     const next = shinyCount - 1;
-    save.deckShiny = { ...save.deckShiny };
     if (next > 0) save.deckShiny[cardId] = next;
     else delete save.deckShiny[cardId];
   }
+
   ensureShinyState(save);
   syncActivePresetVariants(save);
   return true;
@@ -166,7 +181,7 @@ export function getDeckVariantRows(save) {
     const card = CARD_MAP[cardId];
     if (!card) return;
     const total = countDeck(save.deck, cardId);
-    const shinyCount = shinyInDeck(save, cardId);
+    const shinyCount = save.deckShiny?.[cardId] || 0;
     const normalCount = Math.max(0, total - shinyCount);
     if (normalCount > 0) rows.push({ card, count: normalCount, shiny: false });
     if (shinyCount > 0) rows.push({ card, count: shinyCount, shiny: true });
