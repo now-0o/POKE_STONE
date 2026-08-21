@@ -18,6 +18,9 @@ const battleModule = normalizePath(
 const baseAiModule = normalizePath(
   path.resolve(process.cwd(), 'src/engine/ai.js'),
 );
+const baseEngineCoreModule = normalizePath(
+  path.resolve(process.cwd(), 'src/engine/engine.base.js'),
+);
 
 const baseEngineModule = normalizePath(
   path.resolve(process.cwd(), 'src/engine/engine.js'),
@@ -84,6 +87,35 @@ export default defineConfig({
         const after = `    let candidates = me.field.filter((u) => !u.item);\n\n    const effect = card.item?.effect;\n\n    if (effect === "air_balloon") {\n      candidates = candidates.filter(\n        (u) => u.type !== "비행" && !hasAbility(u, "levitate"),\n      );\n    }\n\n    if (!candidates.length) return null;`;
         if (!code.includes(before)) return null;
         return { code: code.replace(before, after), map: null };
+      },
+    },
+    {
+      name: 'poke-stone-invalid-card-battle-guard',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        let nextCode = code;
+
+        if (modulePath === baseEngineCoreModule) {
+          nextCode = nextCode.replace(
+            'export function effectiveCost(card, game, side = null, handCard = null) {\n  let cost = card.cost;',
+            'export function effectiveCost(card, game, side = null, handCard = null) {\n  if (!card) return Number.POSITIVE_INFINITY;\n  let cost = card.cost;',
+          );
+          nextCode = nextCode.replace(
+            '  const card = CARD_MAP[h.cardId];\n  if (effectiveCost(card, game, side, h) > p.mana) {',
+            '  const card = CARD_MAP[h.cardId];\n  if (!card) return false;\n  if (effectiveCost(card, game, side, h) > p.mana) {',
+          );
+        }
+
+        if (modulePath === battleModule) {
+          nextCode = nextCode.replace(
+            '        {me.hand.map((h, idx) => {\n          const c = CARD_MAP[h.cardId];\n          const playableNow = myTurn && canPlayCard(game, "player", idx);',
+            '        {me.hand.map((h, idx) => {\n          const c = CARD_MAP[h.cardId];\n          if (!c) return null;\n          const playableNow = myTurn && canPlayCard(game, "player", idx);',
+          );
+        }
+
+        if (nextCode === code) return null;
+        return { code: nextCode, map: null };
       },
     },
     {
