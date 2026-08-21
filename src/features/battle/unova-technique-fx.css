@@ -1,0 +1,393 @@
+/* ============================================================
+   5세대 하나지방 기술 연출 + 리플렉터/빛의장막 HUD
+   Battle.jsx의 기존 move-fx 파이프라인 위에 카드별 개성만 추가한다.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   리플렉터 / 빛의장막 남은 횟수
+   ------------------------------------------------------------ */
+.battle-board .battle-screen-counters {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  z-index: 46;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.battle-board .battle-screen-counter {
+  min-height: 22px;
+  padding: 3px 8px 3px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  font-family: var(--display-font);
+  font-size: 9px;
+  line-height: 1;
+  color: #f8fbff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.23);
+  backdrop-filter: blur(5px);
+}
+
+.battle-board .battle-screen-counter strong {
+  min-width: 14px;
+  font-size: 12px;
+  text-align: center;
+  color: #fff;
+}
+
+.battle-board .battle-screen-counter.is-reflect {
+  background: linear-gradient(135deg, rgba(123, 76, 210, 0.9), rgba(49, 28, 101, 0.94));
+  border-color: rgba(214, 185, 255, 0.68);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.34),
+    0 0 12px rgba(171, 116, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.battle-board .battle-screen-counter.is-light-screen {
+  background: linear-gradient(135deg, rgba(55, 166, 226, 0.9), rgba(24, 69, 137, 0.95));
+  border-color: rgba(173, 235, 255, 0.72);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.34),
+    0 0 12px rgba(93, 208, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+/* ------------------------------------------------------------
+   열탕: 물줄기 끝에 뜨거운 수증기
+   ------------------------------------------------------------ */
+.move-fx.move-scald .move-beam-glow {
+  filter: brightness(1.18) drop-shadow(0 0 7px rgba(220, 250, 255, 0.82));
+}
+
+.move-fx.move-scald .move-travel-impact::before,
+.move-fx.move-scald .move-travel-impact::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.8) 0 12%, rgba(215,245,255,.5) 30%, transparent 68%);
+  opacity: 0;
+  animation: unova-scald-steam var(--move-duration, 460ms) ease-out forwards;
+}
+
+.move-fx.move-scald .move-travel-impact::after {
+  animation-delay: 70ms;
+  transform: translate(12px, -6px) scale(.75);
+}
+
+@keyframes unova-scald-steam {
+  0%, 35% { opacity: 0; transform: translate(-50%, -20%) scale(.35); }
+  58% { opacity: .95; }
+  100% { opacity: 0; transform: translate(-50%, -125%) scale(1.45); }
+}
+
+/* ------------------------------------------------------------
+   볼트체인지: 더 날카로운 전기 궤적
+   ------------------------------------------------------------ */
+.move-fx.move-volt-switch {
+  filter: drop-shadow(0 0 8px rgba(93, 219, 255, 0.95));
+}
+
+.move-fx.move-volt-switch .move-bolt-core {
+  stroke-width: 2.8;
+}
+
+/* ------------------------------------------------------------
+   니트로차지: 불꽃을 두른 돌진
+   ------------------------------------------------------------ */
+.move-zone-fx.move-flame-charge .move-zone-core {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 205, 92, 0.88);
+  background:
+    radial-gradient(circle, rgba(255,255,255,.9) 0 8%, rgba(255,154,51,.6) 24%, rgba(225,45,13,.34) 48%, transparent 70%);
+  box-shadow:
+    0 0 17px rgba(255, 109, 28, .9),
+    inset 0 0 16px rgba(255, 223, 112, .6);
+  animation: unova-flame-charge var(--move-duration, 380ms) cubic-bezier(.18,.8,.2,1) forwards !important;
+}
+
+@keyframes unova-flame-charge {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.2) rotate(-25deg); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1.12) rotate(8deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.55) rotate(28deg); }
+}
+
+/* ------------------------------------------------------------
+   애크러뱃: 교차하는 공기 칼날
+   ------------------------------------------------------------ */
+.move-zone-fx.move-acrobatics .move-zone-core,
+.move-zone-fx.move-dragon-tail .move-zone-core,
+.move-zone-fx.move-sacred-sword .move-zone-core {
+  width: 116px;
+  height: 116px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.move-zone-fx.move-acrobatics .move-zone-core::before,
+.move-zone-fx.move-acrobatics .move-zone-core::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 96px;
+  height: 15px;
+  border-radius: 100%;
+  background: linear-gradient(90deg, transparent, rgba(235,250,255,.95) 25%, #fff 50%, rgba(180,230,255,.92) 76%, transparent);
+  box-shadow: 0 0 10px rgba(194, 239, 255, .86);
+  opacity: 0;
+  animation: unova-air-slash var(--move-duration, 420ms) ease-out forwards;
+}
+
+.move-zone-fx.move-acrobatics .move-zone-core::before { transform: translate(-50%, -50%) rotate(36deg); }
+.move-zone-fx.move-acrobatics .move-zone-core::after { transform: translate(-50%, -50%) rotate(-36deg); animation-delay: 45ms; }
+
+@keyframes unova-air-slash {
+  0% { opacity: 0; width: 20px; }
+  35% { opacity: 1; width: 112px; }
+  100% { opacity: 0; width: 145px; }
+}
+
+/* ------------------------------------------------------------
+   드래곤테일: 굵은 용의 꼬리 궤적
+   ------------------------------------------------------------ */
+.move-zone-fx.move-dragon-tail .move-zone-core::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 118px;
+  height: 34px;
+  border-radius: 70% 20% 70% 20%;
+  border-top: 8px solid var(--move-main);
+  border-right: 5px solid var(--move-light);
+  box-shadow: 0 -4px 12px color-mix(in srgb, var(--move-main) 72%, transparent);
+  opacity: 0;
+  transform-origin: 18% 50%;
+  animation: unova-dragon-tail var(--move-duration, 420ms) cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes unova-dragon-tail {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-75deg) scale(.35); }
+  42% { opacity: 1; transform: translate(-50%, -50%) rotate(12deg) scale(1.08); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(62deg) scale(1.28); }
+}
+
+/* ------------------------------------------------------------
+   나비춤: 반짝이는 회전 날개
+   ------------------------------------------------------------ */
+.move-zone-fx.move-quiver .move-zone-core {
+  width: 106px;
+  height: 106px;
+  border: 2px solid rgba(255, 222, 255, .7);
+  border-radius: 50%;
+  background:
+    conic-gradient(from 20deg, transparent 0 12%, rgba(255,190,245,.65) 13% 22%, transparent 23% 38%, rgba(173,225,255,.68) 39% 49%, transparent 50% 65%, rgba(255,235,157,.62) 66% 76%, transparent 77% 100%);
+  box-shadow: 0 0 18px rgba(240, 185, 255, .62);
+  animation: unova-quiver-dance var(--move-duration, 650ms) ease-out forwards !important;
+}
+
+@keyframes unova-quiver-dance {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(0deg); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(150deg); }
+  100% { opacity: 0; transform: translate(-50%, -72%) scale(1.25) rotate(330deg); }
+}
+
+/* ------------------------------------------------------------
+   껍질깨기: 중앙에서 갈라지는 암석 파편
+   ------------------------------------------------------------ */
+.move-zone-fx.move-shell-smash .move-zone-core {
+  width: 86px;
+  height: 72px;
+  border: 4px solid #d7b77c;
+  border-radius: 46% 54% 48% 52%;
+  background:
+    linear-gradient(64deg, transparent 44%, rgba(72,44,26,.9) 45% 51%, transparent 52%),
+    linear-gradient(-58deg, transparent 45%, rgba(72,44,26,.8) 46% 51%, transparent 52%),
+    radial-gradient(circle at 40% 34%, #f0d9a6, #a77849 70%);
+  box-shadow: 0 0 13px rgba(225, 187, 124, .62);
+  animation: unova-shell-smash var(--move-duration, 560ms) ease-out forwards !important;
+}
+
+@keyframes unova-shell-smash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.65); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  55% { transform: translate(-50%, -50%) scale(.92) rotate(-4deg); filter: brightness(1.7); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.48) rotate(12deg); filter: brightness(.8); }
+}
+
+/* ------------------------------------------------------------
+   기어소서: 맞물려 도는 강철 기어
+   ------------------------------------------------------------ */
+.move-zone-fx.move-gear-grind .move-zone-core {
+  width: 88px;
+  height: 88px;
+  border: 8px dashed rgba(225, 238, 250, .96);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #27384a 0 16%, transparent 17% 34%, rgba(198,216,232,.95) 35% 48%, #65788d 49% 62%, transparent 63%);
+  box-shadow:
+    0 0 15px rgba(180, 216, 244, .82),
+    inset 0 0 10px rgba(255,255,255,.45);
+  animation: unova-gear-grind var(--move-duration, 560ms) cubic-bezier(.2,.75,.2,1) forwards !important;
+}
+
+.move-zone-fx.move-gear-grind .move-zone-core::after {
+  content: "";
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  left: 62%;
+  top: 62%;
+  border: 6px dashed rgba(185, 208, 228, .96);
+  border-radius: 50%;
+  background: radial-gradient(circle, #233142 0 18%, transparent 19% 38%, rgba(170,194,216,.9) 39% 55%, transparent 56%);
+  animation: unova-gear-secondary var(--move-duration, 560ms) linear forwards;
+}
+
+@keyframes unova-gear-grind {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.35) rotate(0deg); }
+  32% { opacity: 1; }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1.12) rotate(440deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35) rotate(620deg); }
+}
+
+@keyframes unova-gear-secondary {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(-720deg); }
+}
+
+/* ------------------------------------------------------------
+   성스러운칼: 밝은 검격 한 번
+   ------------------------------------------------------------ */
+.move-zone-fx.move-sacred-sword .move-zone-core::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 132px;
+  height: 13px;
+  border-radius: 999px 18px 18px 999px;
+  background: linear-gradient(90deg, transparent 0 5%, #fff 18% 62%, var(--move-light) 74%, transparent 100%);
+  box-shadow: 0 0 14px var(--move-main);
+  opacity: 0;
+  animation: unova-sacred-sword var(--move-duration, 460ms) cubic-bezier(.18,.82,.2,1) forwards;
+}
+
+@keyframes unova-sacred-sword {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-54deg) scaleX(.2); }
+  38% { opacity: 1; transform: translate(-50%, -50%) rotate(-54deg) scaleX(1.08); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-54deg) scaleX(1.45); }
+}
+
+/* ------------------------------------------------------------
+   리플렉터 / 빛의장막: 필드 앞에 잠깐 펼쳐지는 장벽
+   ------------------------------------------------------------ */
+.move-zone-fx.move-reflect .move-zone-core,
+.move-zone-fx.move-light-screen .move-zone-core {
+  width: min(330px, 48vw);
+  height: 118px;
+  border-radius: 18px;
+  opacity: 0;
+  transform-style: preserve-3d;
+  animation: unova-screen-open var(--move-duration, 680ms) cubic-bezier(.18,.82,.2,1) forwards !important;
+}
+
+.move-zone-fx.move-reflect .move-zone-core {
+  border: 3px solid rgba(221, 190, 255, .9);
+  background: linear-gradient(135deg, rgba(201,164,255,.17), rgba(105,65,188,.3));
+  box-shadow:
+    inset 0 0 24px rgba(223, 193, 255, .32),
+    0 0 24px rgba(164, 102, 255, .62);
+}
+
+.move-zone-fx.move-light-screen .move-zone-core {
+  border: 3px solid rgba(188, 244, 255, .94);
+  background: linear-gradient(135deg, rgba(197,246,255,.18), rgba(67,168,230,.28));
+  box-shadow:
+    inset 0 0 24px rgba(215, 250, 255, .35),
+    0 0 25px rgba(74, 205, 255, .62);
+}
+
+.move-zone-fx.move-reflect .move-zone-core::before,
+.move-zone-fx.move-light-screen .move-zone-core::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(255,255,255,.54);
+  border-radius: 13px;
+  background: repeating-linear-gradient(115deg, transparent 0 28px, rgba(255,255,255,.09) 29px 31px);
+}
+
+@keyframes unova-screen-open {
+  0% { opacity: 0; transform: translate(-50%, -50%) perspective(500px) rotateY(78deg) scale(.55); }
+  32% { opacity: 1; transform: translate(-50%, -50%) perspective(500px) rotateY(-6deg) scale(1.04); }
+  72% { opacity: .95; transform: translate(-50%, -50%) perspective(500px) rotateY(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) perspective(500px) rotateY(0deg) scale(1.08); }
+}
+
+@media (pointer: coarse), (max-width: 720px) {
+  .battle-board .battle-screen-counters {
+    left: 50%;
+    top: calc(100% + 2px);
+    transform: translateX(-50%);
+    flex-direction: row;
+    gap: 3px;
+  }
+
+  .battle-board .my-hero-cluster .battle-screen-counters {
+    top: auto;
+    bottom: calc(100% + 2px);
+  }
+
+  .battle-board .battle-screen-counter {
+    min-height: 18px;
+    padding: 2px 5px;
+    gap: 3px;
+    font-size: 7px;
+  }
+
+  .battle-board .battle-screen-counter strong {
+    min-width: 11px;
+    font-size: 9px;
+  }
+
+  .move-zone-fx.move-reflect .move-zone-core,
+  .move-zone-fx.move-light-screen .move-zone-core {
+    width: min(250px, 70vw);
+    height: 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .move-fx.move-scald *,
+  .move-zone-fx.move-flame-charge *,
+  .move-zone-fx.move-acrobatics *,
+  .move-zone-fx.move-dragon-tail *,
+  .move-zone-fx.move-quiver *,
+  .move-zone-fx.move-shell-smash *,
+  .move-zone-fx.move-gear-grind *,
+  .move-zone-fx.move-sacred-sword *,
+  .move-zone-fx.move-reflect *,
+  .move-zone-fx.move-light-screen * {
+    animation-duration: 80ms !important;
+  }
+}
