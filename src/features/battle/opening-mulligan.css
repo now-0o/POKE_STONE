@@ -1,0 +1,321 @@
+.opening-mulligan {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(76, 122, 190, 0.24), transparent 34%),
+    linear-gradient(180deg, rgba(9, 16, 28, 0.96), rgba(3, 8, 16, 0.985));
+  color: #f8fbff;
+}
+
+.opening-mulligan-panel {
+  width: min(980px, 100%);
+  padding: 30px 28px 26px;
+  border: 1px solid rgba(189, 219, 255, 0.24);
+  border-radius: 28px;
+  background: rgba(14, 24, 40, 0.9);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.opening-mulligan-heading {
+  text-align: center;
+}
+
+.opening-mulligan-kicker {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: rgba(169, 208, 255, 0.78);
+}
+
+.opening-mulligan-heading h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1;
+}
+
+.opening-mulligan-order {
+  margin: 10px 0 0;
+  font-weight: 800;
+  color: #9fd1ff;
+}
+
+.opening-mulligan-help {
+  margin: 8px auto 0;
+  max-width: 620px;
+  color: rgba(236, 244, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.opening-mulligan-cards {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(12px, 2.2vw, 24px);
+  margin: 28px auto 24px;
+}
+
+.opening-mulligan-card {
+  position: relative;
+  width: 180px;
+  max-width: 22vw;
+  cursor: pointer;
+  border-radius: 18px;
+  outline: none;
+  transform: translateY(0) scale(1);
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.opening-mulligan-card > .hand-card {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  transform: none !important;
+  pointer-events: none;
+}
+
+.opening-mulligan-card:hover,
+.opening-mulligan-card:focus-visible {
+  transform: translateY(-8px) scale(1.025);
+}
+
+.opening-mulligan-card.is-selected {
+  transform: translateY(12px) scale(0.96);
+  filter: saturate(0.82) brightness(0.78);
+}
+
+.opening-mulligan-card.is-selected::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: 4;
+  border: 3px solid rgba(108, 186, 255, 0.95);
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 3px rgba(19, 81, 146, 0.35),
+    0 0 28px rgba(69, 167, 255, 0.55);
+  pointer-events: none;
+}
+
+.opening-mulligan-choice {
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 78px;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: rgba(5, 14, 25, 0.94);
+  border: 1px solid rgba(177, 211, 248, 0.28);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.36);
+  color: rgba(224, 237, 252, 0.74);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.opening-mulligan-card.is-selected .opening-mulligan-choice {
+  background: #1f78c8;
+  color: #fff;
+}
+
+.opening-mulligan-choice strong {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.opening-mulligan-cards.is-done .opening-mulligan-card {
+  cursor: default;
+  animation: opening-mulligan-arrive 520ms cubic-bezier(.18,.82,.18,1) both;
+}
+
+.opening-mulligan-cards.is-done .opening-mulligan-card:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.opening-mulligan-cards.is-done .opening-mulligan-card:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.opening-mulligan-cards.is-done .opening-mulligan-card:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.opening-mulligan-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.opening-mulligan-selected-count {
+  min-height: 20px;
+  color: rgba(229, 240, 255, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.opening-mulligan-actions button {
+  min-width: 178px;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid rgba(191, 223, 255, 0.4);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #338bd7, #1767af);
+  box-shadow:
+    0 10px 26px rgba(0, 80, 155, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.opening-mulligan-actions button:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes opening-mulligan-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 700px) {
+  .opening-mulligan {
+    padding: 12px;
+  }
+
+  .opening-mulligan-panel {
+    padding: 20px 12px 22px;
+    border-radius: 20px;
+  }
+
+  .opening-mulligan-help {
+    max-width: 330px;
+    font-size: 12px;
+  }
+
+  .opening-mulligan-cards {
+    gap: 5px;
+    margin-top: 22px;
+    margin-bottom: 26px;
+  }
+
+  .opening-mulligan-card {
+    width: min(23vw, 150px);
+    max-width: none;
+  }
+
+  .opening-mulligan-card:hover,
+  .opening-mulligan-card:focus-visible {
+    transform: translateY(-3px) scale(1.01);
+  }
+
+  .opening-mulligan-card.is-selected {
+    transform: translateY(9px) scale(0.94);
+  }
+
+  .opening-mulligan-choice {
+    bottom: -16px;
+    min-width: 56px;
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+
+  .opening-mulligan-choice strong {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 520px) and (orientation: portrait) {
+  .opening-mulligan-heading h2 {
+    font-size: 26px;
+  }
+
+  .opening-mulligan-order {
+    font-size: 13px;
+  }
+
+  .opening-mulligan-cards.count-4 {
+    width: 100%;
+  }
+
+  .opening-mulligan-card {
+    width: 23vw;
+  }
+
+  .opening-mulligan-card > .hand-card {
+    transform-origin: top center !important;
+  }
+
+  .opening-mulligan-actions button {
+    min-height: 44px;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .opening-mulligan {
+    padding: 8px 14px;
+  }
+
+  .opening-mulligan-panel {
+    width: min(920px, 100%);
+    padding: 12px 18px 14px;
+  }
+
+  .opening-mulligan-kicker {
+    margin-bottom: 2px;
+  }
+
+  .opening-mulligan-heading h2 {
+    font-size: 25px;
+  }
+
+  .opening-mulligan-order,
+  .opening-mulligan-help {
+    margin-top: 4px;
+  }
+
+  .opening-mulligan-cards {
+    margin: 12px auto 16px;
+    gap: 14px;
+  }
+
+  .opening-mulligan-card {
+    width: 126px;
+  }
+
+  .opening-mulligan-actions {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 0;
+  }
+
+  .opening-mulligan-actions button {
+    min-height: 40px;
+  }
+}
