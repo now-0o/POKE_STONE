@@ -420,16 +420,20 @@ function drawScore(game, card) {
 function prepareSituationalNextDraw(game) {
   const me = game.players[SIDE];
   if (!me.deck?.length) return;
+
+  // 덱 보정은 AI의 부족한 장기 판단을 보완하는 장치일 뿐,
+  // 매 턴 정답 카드를 확정적으로 제공하는 장치가 아니다.
+  // 60%에서만 상황 보정을 시도하고, 실패한 40%는 덱 순서를 전혀 건드리지 않는다.
+  const assist = 0.60;
+  if (Math.random() >= assist) return;
+
   const scored = me.deck
     .map((entry, idx) => ({ idx, entry, card: CARD_MAP[cardIdOf(entry)] }))
     .map((entry) => ({ ...entry, score: drawScore(game, entry.card) }))
     .sort((a, b) => b.score - a.score);
 
   if (!scored.length) return;
-  const assist = Math.max(0.75, Math.min(0.99, Number(game.trainer?.consistencyAssist) || 0.95));
-  const pick = Math.random() < assist
-    ? scored[0]
-    : scored[Math.floor(Math.random() * Math.min(3, scored.length))];
+  const pick = scored[0];
   if (!pick || pick.idx === me.deck.length - 1) return;
 
   const [entry] = me.deck.splice(pick.idx, 1);
