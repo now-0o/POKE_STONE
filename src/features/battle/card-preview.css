@@ -1,71 +1,82 @@
-/* 배틀 중 카드 미리보기는 손패 카드 자체 레이아웃을 바꾸지 않고
-   표준 134x188 카드 전체를 확대해서 보여준다. */
-.drag-ghost .hand-card,
-.enemy-reveal .hand-card {
-  width: 134px !important;
-  height: 188px !important;
-  min-height: 188px !important;
-  max-width: none !important;
-  flex: 0 0 134px !important;
+/*
+ * 배틀 카드도 덱 편집 카드 리스트의 원본 HandCard 레이아웃을 기준으로 한다.
+ * 프리뷰에서 별도 width/height를 강제하지 않아 현재 뷰포트의 표준 카드 비율을 그대로 사용한다.
+ */
+
+/* 모바일 손패에서 별도로 고정했던 설명칸/패딩/프레임을 원본 카드 레이아웃과 맞춘다. */
+@media (pointer: coarse), (max-width: 1024px) {
+  html body .battle-board > .hand .hand-card-wrap > .hand-card {
+    flex: 0 0 134px !important;
+    padding: 7px 8px 14px !important;
+    border-width: 4px !important;
+    border-radius: 12px !important;
+  }
+
+  html body .battle-board > .hand .hand-card-wrap > .hand-card .card-text {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+  }
 }
 
-/* 드래그 중에는 기존보다 훨씬 크게. 내부 레이아웃/설명칸 비율은 표준 카드 그대로 유지한다. */
+/* 드래그 카드는 표준 카드 자체를 통째로 확대한다. 내부 비율은 손대지 않는다. */
 .drag-ghost {
-  transform: translate(-50%, -62%) scale(1.82) !important;
+  transform: translate(-50%, -62%) scale(1.58) !important;
   transform-origin: center center;
 }
 
-/* 상대가 낸 카드 공개 연출도 같은 표준 카드 레이아웃을 통째로 확대한다. */
+/* 상대 카드 사용 공개는 '확대 보기'가 아니라 잠깐 눈에 들어오는 정도만 키운다. */
 .enemy-reveal {
-  top: 42% !important;
-  animation: reveal-card-large 1.28s ease-out forwards !important;
+  top: 40% !important;
+  animation: reveal-card-standard 1.18s ease-out forwards !important;
 }
 
-@keyframes reveal-card-large {
+@keyframes reveal-card-standard {
   0% {
-    transform: translate(-50%, -50%) scale(0.58) rotate(-8deg);
+    transform: translate(-50%, -50%) scale(0.72) rotate(-5deg);
     opacity: 0;
   }
   16% {
-    transform: translate(-50%, -50%) scale(1.86) rotate(1.5deg);
+    transform: translate(-50%, -50%) scale(1.2) rotate(1deg);
     opacity: 1;
   }
-  27% {
-    transform: translate(-50%, -50%) scale(1.72) rotate(0deg);
+  28% {
+    transform: translate(-50%, -50%) scale(1.12) rotate(0deg);
     opacity: 1;
   }
   76% {
-    transform: translate(-50%, -50%) scale(1.72) rotate(0deg);
+    transform: translate(-50%, -50%) scale(1.12) rotate(0deg);
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -66%) scale(1.58) rotate(0deg);
+    transform: translate(-50%, -58%) scale(1.06) rotate(0deg);
     opacity: 0;
   }
 }
 
-/* 작은 화면에서도 충분히 크게 보이되 화면 밖으로 잘리지 않게 조정. */
 @media (max-width: 640px) {
+  /* 모바일에서도 표준 반응형 HandCard 크기를 그대로 쓰고 전체만 확대한다. */
   .drag-ghost {
-    transform: translate(-50%, -62%) scale(1.62) !important;
+    transform: translate(-50%, -62%) scale(1.52) !important;
   }
 
-  @keyframes reveal-card-large {
+  @keyframes reveal-card-standard {
     0% {
-      transform: translate(-50%, -50%) scale(0.52) rotate(-7deg);
+      transform: translate(-50%, -50%) scale(0.72) rotate(-4deg);
       opacity: 0;
     }
     16% {
-      transform: translate(-50%, -50%) scale(1.68) rotate(1deg);
+      transform: translate(-50%, -50%) scale(1.14) rotate(1deg);
       opacity: 1;
     }
-    27%,
+    28%,
     76% {
-      transform: translate(-50%, -50%) scale(1.56) rotate(0deg);
+      transform: translate(-50%, -50%) scale(1.06) rotate(0deg);
       opacity: 1;
     }
     100% {
-      transform: translate(-50%, -64%) scale(1.44) rotate(0deg);
+      transform: translate(-50%, -56%) scale(1.02) rotate(0deg);
       opacity: 0;
     }
   }
