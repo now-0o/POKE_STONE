@@ -119,6 +119,39 @@ export default defineConfig({
       },
     },
     {
+      name: 'poke-stone-opening-mulligan',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        if (modulePath !== battleModule) return null;
+
+        let nextCode = code;
+
+        nextCode = nextCode.replace(
+          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";',
+          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport OpeningMulligan from "../features/battle/OpeningMulligan.jsx";',
+        );
+
+        nextCode = nextCode.replace(
+          '  const [intro, setIntro] = useState("vs"); // \'vs\' -> \'coin\' -> false\n  const [confirmSurrender, setConfirmSurrender] = useState(false);',
+          '  const [intro, setIntro] = useState("vs"); // \'vs\' -> \'coin\' -> false\n  const [mulliganOpen, setMulliganOpen] = useState(true);\n  const [confirmSurrender, setConfirmSurrender] = useState(false);',
+        );
+
+        nextCode = nextCode.replace(
+          '    if (intro !== false || game.winner || game.turn !== "enemy") return;',
+          '    if (intro !== false || mulliganOpen || game.winner || game.turn !== "enemy") return;',
+        );
+
+        nextCode = nextCode.replace(
+          '  const resultOverlay = game.winner && (',
+          `  if (mulliganOpen) {\n    return (\n      <OpeningMulligan\n        game={game}\n        onComplete={() => {\n          setMulliganOpen(false);\n          rerender();\n        }}\n      />\n    );\n  }\n\n  const resultOverlay = game.winner && (`,
+        );
+
+        if (nextCode === code) return null;
+        return { code: nextCode, map: null };
+      },
+    },
+    {
       name: 'poke-stone-volt-switch-replay-ui',
       enforce: 'pre',
       transform(code, id) {
