@@ -31,6 +31,7 @@ import './features/region-carousel/styles.css';
 import './styles/sinnoh/index.css';
 import './styles/unova-battle.css';
 import './styles/unova-drayden-hud-fix.css';
+import './features/battle/drayden-fear.css';
 import './features/mobile/styles.css';
 import './features/mobile/battle-expanded.css';
 // 모든 화면별/모바일 스타일 적용 뒤 비카드 UI 글자 가독성을 최종 보정한다.
@@ -72,6 +73,8 @@ import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
+// 사간의 용의 위압이 상승할 때 필드로 퍼지는 드래곤 피어 연출을 재생한다.
+import './features/battle/draydenFearRuntime.js';
 import './features/battle/unovaLegendaryRuntime.js';
 // 탈출버튼/레드카드로 필드에서 손으로 돌아갈 때 퇴장 연출을 추가한다.
 import './features/battle/returnItemAnimationRuntime.js';
