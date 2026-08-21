@@ -6,7 +6,7 @@ const normalizePath = (value) => value.replace(/\\/g, '/');
 
 const gameEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/gameplay-balance.js',
+  'src/engine/unova-legendary-balance.js',
 );
 
 const baseEngineModule = normalizePath(
