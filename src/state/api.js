@@ -36,7 +36,9 @@ function setAuth(token, username) {
 async function req(path, opts = {}) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  // 큐에 들어간 저장 요청은 호출 당시 계정 토큰을 headers로 넘긴다.
+  // 명시 토큰이 있을 때 현재 로그인 토큰으로 덮어쓰지 않는다.
+  if (token && !headers.Authorization) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
   let body = null;
   try { body = await res.json(); } catch { /* 응답 본문 없음 */ }
@@ -67,13 +69,15 @@ export async function fetchSave() {
 }
 
 export function pushSave(save) {
-  // 호출 순간의 세이브를 문자열로 고정한다. 이후 같은 save 객체가 mutate되어도
-  // 이미 큐에 들어간 요청의 deckShiny/deckPresets가 바뀌지 않는다.
+  // 호출 순간의 세이브와 계정을 함께 고정한다. 이후 같은 save 객체가 mutate되거나
+  // 로그아웃/재로그인이 일어나도 이미 큐에 들어간 저장이 다른 계정으로 넘어가지 않는다.
   const body = JSON.stringify({ data: save });
+  const token = getToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const write = saveWriteQueue
     .catch(() => undefined)
-    .then(() => req('/save', { method: 'PUT', body }));
+    .then(() => req('/save', { method: 'PUT', body, headers }));
 
   saveWriteQueue = write;
   return write;
