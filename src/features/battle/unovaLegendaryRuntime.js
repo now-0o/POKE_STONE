@@ -23,9 +23,19 @@ function ensureStyle() {
     .unova-sealed-hand-hud { position: fixed; left: 50%; bottom: 112px; z-index: 2250; transform: translateX(-50%); max-width: min(680px, 92vw); padding: 8px 12px; border: 1px solid rgba(182, 224, 255, .68); border-radius: 999px; color: #eef9ff; background: rgba(24, 55, 91, .94); box-shadow: 0 8px 26px rgba(0,0,0,.3); font-size: 12px; font-weight: 800; pointer-events: none; }
     .field-unit.unova-skyla-impact-hit { animation: unova-skyla-impact-hit .56s ease both !important; }
     .unova-skyla-damage-number { position: absolute; z-index: 80; left: 50%; top: 34%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 1000; color: #fff; text-shadow: 0 2px 3px #000, 0 0 12px rgba(150, 220, 255, .9); pointer-events: none; animation: unova-skyla-damage-number .75s ease-out forwards; }
+    .field-unit.unova-cobalion-original-target { animation: unova-cobalion-original-target .22s ease both !important; }
+    .field-unit.unova-cobalion-guard-focus { z-index: 120 !important; animation: unova-cobalion-guard-focus .58s cubic-bezier(.2,.8,.2,1) both !important; }
+    .field-unit.unova-cobalion-guard-hit { animation: unova-cobalion-guard-hit .34s ease both !important; }
+    .unova-cobalion-guard-label { position: absolute; z-index: 150; left: 50%; top: -25px; transform: translateX(-50%); padding: 4px 9px; border-radius: 999px; border: 1px solid rgba(225,245,255,.9); background: rgba(35,78,104,.96); color: #f5fcff; box-shadow: 0 5px 18px rgba(0,0,0,.35), 0 0 18px rgba(134,218,255,.65); font-size: 10px; font-weight: 1000; white-space: nowrap; pointer-events: none; animation: unova-cobalion-label .58s ease both; }
+    .unova-cobalion-guard-beam { position: fixed; z-index: 2390; height: 4px; transform-origin: left center; border-radius: 999px; pointer-events: none; background: linear-gradient(90deg, rgba(255,255,255,.15), rgba(161,226,255,.95), rgba(255,255,255,.8)); box-shadow: 0 0 11px rgba(115,211,255,.85); animation: unova-cobalion-beam .38s ease-out forwards; }
     @keyframes unova-skyla-impact-hit { 0% { transform: translate(0, 0) rotate(0); filter: brightness(1); } 22% { transform: translate(-7px, 2px) rotate(-2deg); filter: brightness(1.7); } 45% { transform: translate(7px, -2px) rotate(2deg); } 70% { transform: translate(-3px, 1px) rotate(-1deg); } 100% { transform: translate(0, 0) rotate(0); filter: brightness(1); } }
     @keyframes unova-skyla-damage-number { 0% { opacity: 0; transform: translate(-50%, -20%) scale(.65); } 20% { opacity: 1; transform: translate(-50%, -55%) scale(1.18); } 100% { opacity: 0; transform: translate(-50%, -130%) scale(.92); } }
-    @media (max-width: 720px) { .unova-glaciate-panel { padding: 14px; border-radius: 16px; } .unova-glaciate-panel h2 { font-size: 20px; } .unova-glaciate-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .unova-sealed-hand-hud { bottom: 88px; font-size: 10px; } }
+    @keyframes unova-cobalion-original-target { 0% { filter: brightness(1); } 45% { filter: brightness(1.55) saturate(1.35); box-shadow: 0 0 0 3px rgba(255,105,105,.9), 0 0 24px rgba(255,75,75,.7); } 100% { filter: brightness(1); } }
+    @keyframes unova-cobalion-guard-focus { 0% { transform: scale(1); filter: brightness(1); } 34% { transform: scale(1.16); filter: brightness(1.75) saturate(1.25); box-shadow: 0 0 0 4px rgba(175,230,255,.95), 0 0 34px rgba(95,198,255,.92); } 62% { transform: scale(1.1); filter: brightness(1.35); box-shadow: 0 0 0 2px rgba(210,244,255,.8), 0 0 24px rgba(95,198,255,.75); } 100% { transform: scale(1); filter: brightness(1); } }
+    @keyframes unova-cobalion-guard-hit { 0% { transform: translateX(0); } 20% { transform: translateX(-8px) rotate(-2deg); } 43% { transform: translateX(8px) rotate(2deg); } 67% { transform: translateX(-4px); } 100% { transform: translateX(0); } }
+    @keyframes unova-cobalion-label { 0% { opacity: 0; transform: translate(-50%, 7px) scale(.75); } 22% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 76% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -8px) scale(.96); } }
+    @keyframes unova-cobalion-beam { 0% { opacity: 0; transform: rotate(var(--beam-angle)) scaleX(.05); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--beam-angle)) scaleX(1); } }
+    @media (max-width: 720px) { .unova-glaciate-panel { padding: 14px; border-radius: 16px; } .unova-glaciate-panel h2 { font-size: 20px; } .unova-glaciate-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .unova-sealed-hand-hud { bottom: 88px; font-size: 10px; } .unova-cobalion-guard-label { top: -21px; font-size: 8px; padding: 3px 7px; } }
   `;
   document.head.appendChild(style);
 }
@@ -150,6 +160,76 @@ function playSkylaImpact(event) {
   }
 }
 
+function drawGuardBeam(original, guard) {
+  const a = original.getBoundingClientRect();
+  const b = guard.getBoundingClientRect();
+  const x1 = a.left + a.width / 2;
+  const y1 = a.top + a.height / 2;
+  const x2 = b.left + b.width / 2;
+  const y2 = b.top + b.height / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const beam = document.createElement("div");
+  beam.className = "unova-cobalion-guard-beam";
+  beam.style.left = `${x1}px`;
+  beam.style.top = `${y1}px`;
+  beam.style.width = `${Math.hypot(dx, dy)}px`;
+  beam.style.setProperty("--beam-angle", `${Math.atan2(dy, dx)}rad`);
+  document.body.appendChild(beam);
+  window.setTimeout(() => beam.remove(), 430);
+}
+
+function playCobalionGuard(event) {
+  const originalUid = event.detail?.originalTargetUid;
+  const guardUid = event.detail?.guardUid;
+  if (!originalUid || !guardUid) return;
+
+  const original = document.querySelector(
+    `.battle.battle-board .field-unit[data-uid="${originalUid}"]`,
+  );
+  const guard = document.querySelector(
+    `.battle.battle-board .field-unit[data-uid="${guardUid}"]`,
+  );
+  if (!guard) return;
+
+  if (original) {
+    original.classList.remove("unova-cobalion-original-target");
+    void original.offsetWidth;
+    original.classList.add("unova-cobalion-original-target");
+  }
+
+  window.setTimeout(() => {
+    if (!document.contains(guard)) return;
+    if (original && document.contains(original)) drawGuardBeam(original, guard);
+
+    guard.classList.remove(
+      "unova-cobalion-guard-focus",
+      "unova-cobalion-guard-hit",
+    );
+    void guard.offsetWidth;
+    guard.classList.add("unova-cobalion-guard-focus");
+
+    const label = document.createElement("div");
+    label.className = "unova-cobalion-guard-label";
+    label.textContent = "퍼스트가드";
+    guard.appendChild(label);
+
+    window.setTimeout(() => {
+      if (!document.contains(guard)) return;
+      guard.classList.add("unova-cobalion-guard-hit");
+    }, 175);
+
+    window.setTimeout(() => {
+      original?.classList.remove("unova-cobalion-original-target");
+      guard.classList.remove(
+        "unova-cobalion-guard-focus",
+        "unova-cobalion-guard-hit",
+      );
+      label.remove();
+    }, 650);
+  }, 85);
+}
+
 function start() {
   ensureStyle();
   renderLegendaryState();
@@ -158,6 +238,7 @@ function start() {
     renderLegendaryState(event.detail);
   });
   window.addEventListener("skyla-airborne-impact", playSkylaImpact);
+  window.addEventListener("cobalion-guard-redirect", playCobalionGuard);
   const observer = new MutationObserver((records) => {
     for (const record of records) {
       for (const node of record.addedNodes) {
