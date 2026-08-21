@@ -1,5 +1,5 @@
 import { CARD_MAP } from "../../data/cards.js";
-import { resolveGlaciate } from "../../engine/engine.js";
+import { resolveGlaciate } from "../../engine/gameplay-balance.js";
 
 const ROOT_ID = "unova-legendary-runtime-root";
 const STYLE_ID = "unova-legendary-runtime-style";
