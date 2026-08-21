@@ -1,0 +1,72 @@
+/* 배틀 중 카드 미리보기는 손패 카드 자체 레이아웃을 바꾸지 않고
+   표준 134x188 카드 전체를 확대해서 보여준다. */
+.drag-ghost .hand-card,
+.enemy-reveal .hand-card {
+  width: 134px;
+  height: 188px;
+  min-height: 188px;
+  max-width: none;
+  flex: 0 0 134px;
+}
+
+/* 드래그 중에는 기존보다 훨씬 크게. 내부 레이아웃/설명칸 비율은 표준 카드 그대로 유지한다. */
+.drag-ghost {
+  transform: translate(-50%, -62%) scale(1.82);
+  transform-origin: center center;
+}
+
+/* 상대가 낸 카드 공개 연출도 같은 표준 카드 레이아웃을 통째로 확대한다. */
+.enemy-reveal {
+  top: 42%;
+  animation: reveal-card-large 1.28s ease-out forwards;
+}
+
+@keyframes reveal-card-large {
+  0% {
+    transform: translate(-50%, -50%) scale(0.58) rotate(-8deg);
+    opacity: 0;
+  }
+  16% {
+    transform: translate(-50%, -50%) scale(1.86) rotate(1.5deg);
+    opacity: 1;
+  }
+  27% {
+    transform: translate(-50%, -50%) scale(1.72) rotate(0deg);
+    opacity: 1;
+  }
+  76% {
+    transform: translate(-50%, -50%) scale(1.72) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -66%) scale(1.58) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+/* 작은 화면에서도 충분히 크게 보이되 화면 밖으로 잘리지 않게 조정. */
+@media (max-width: 640px) {
+  .drag-ghost {
+    transform: translate(-50%, -62%) scale(1.62);
+  }
+
+  @keyframes reveal-card-large {
+    0% {
+      transform: translate(-50%, -50%) scale(0.52) rotate(-7deg);
+      opacity: 0;
+    }
+    16% {
+      transform: translate(-50%, -50%) scale(1.68) rotate(1deg);
+      opacity: 1;
+    }
+    27%,
+    76% {
+      transform: translate(-50%, -50%) scale(1.56) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -64%) scale(1.44) rotate(0deg);
+      opacity: 0;
+    }
+  }
+}
