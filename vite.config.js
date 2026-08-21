@@ -117,6 +117,10 @@ export default defineConfig({
             '  const card = CARD_MAP[h.cardId];\n  if (effectiveCost(card, game, side, h) > p.mana) {',
             '  const card = CARD_MAP[h.cardId];\n  if (!card) return false;\n  if (effectiveCost(card, game, side, h) > p.mana) {',
           );
+          nextCode = nextCode.replace(
+            '          hooh.statusTurns = 0;\n\n          // 부활한 순간 다시 공격하는 것 방지',
+            '          hooh.statusTurns = 0;\n\n          const sacredFlameTargets = game.players[other(side)].field.filter((u) => u.hp > 0);\n          if (sacredFlameTargets.length > 0) {\n            const target = sacredFlameTargets[Math.floor(Math.random() * sacredFlameTargets.length)];\n            applyTypedAbilityDamage(game, target, 4, "불꽃");\n            log(game, `${hooh.name}의 성스러운불꽃! ${target.name}에게 불꽃 피해 4!`);\n            if (target.hp <= 0) anyNewDead = true;\n          }\n\n          // 부활한 순간 다시 공격하는 것 방지',
+          );
         }
 
         if (modulePath === battleModule) {
@@ -338,6 +342,10 @@ export default defineConfig({
         }
 
         nextCode = nextCode.replace(legendaryMegaStoneRarity, '$1"E"');
+        nextCode = nextCode.replace(
+          '"성스러운불꽃: 게임당 1회, 기절하면 체력 5로 부활하고 상태이상을 모두 해제한다"',
+          '"성스러운불꽃: 게임당 1회, 기절하면 체력 5로 부활하고 상태이상을 모두 해제한다. 그때 무작위 상대 포켓몬 1마리에게 불꽃 피해 4."',
+        );
 
         if (nextCode === code) return null;
 
