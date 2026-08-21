@@ -27,7 +27,9 @@ function countDeckCards(deck) {
 
 function rowCardId(row) {
   const rawName = row.querySelector(".deck-row-name")?.textContent || "";
-  const name = rawName.replace(/^✨\s*/, "").trim();
+  const name = rawName
+    .replace(/^✨\s*(?:이로치\s*·\s*)?/, "")
+    .trim();
   return CARD_ID_BY_NAME.get(name) || null;
 }
 
@@ -37,6 +39,24 @@ function setRowSprite(row, cardId, shiny) {
 
   row.classList.toggle("deck-row-shiny", shiny);
   row.dataset.shiny = shiny ? "1" : "0";
+
+  const nameNode = row.querySelector(".deck-row-name");
+  const cardName = CARDS.find((card) => card.id === cardId)?.name || "";
+  const expectedName = shiny ? `✨ 이로치 · ${cardName}` : cardName;
+
+  if (nameNode && cardName && nameNode.textContent !== expectedName) {
+    nameNode.textContent = expectedName;
+  }
+
+  if (shiny) {
+    row.setAttribute("aria-label", `이로치 ${cardName}`);
+    row.title = `이로치 ${cardName} · 클릭하면 1장 제거`;
+  } else {
+    row.removeAttribute("aria-label");
+    if (row.title?.startsWith("이로치 ")) {
+      row.title = "클릭하면 1장 제거";
+    }
+  }
 
   const image = row.querySelector("img.card-sprite");
   if (!image) return;
@@ -70,7 +90,7 @@ function syncDeckList(list, save, deckCounts) {
 
     // getDeckVariantRows()는 같은 카드에서 일반 행을 먼저, 이로치 행을 뒤에 둔다.
     // 화면 컴포넌트가 재렌더되며 일반 스프라이트를 다시 넣더라도
-    // 실제 저장값(deckShiny)을 최종 기준으로 시각 상태를 되돌린다.
+    // 실제 저장값(deckShiny)을 최종 기준으로 시각 상태와 표기를 되돌린다.
     rows.forEach((row) => setRowSprite(row, cardId, false));
 
     if (shinyCount <= 0 || rows.length === 0) return;
