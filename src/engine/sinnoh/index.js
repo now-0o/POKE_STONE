@@ -345,8 +345,8 @@ function syncSinnohMechanics(game) {
   syncBattleTurnVisual(game);
 }
 
-export function createGame(playerDeckIds, trainer) {
-  const game = base.createGame(playerDeckIds, trainer);
+export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {
+  const game = base.createGame(playerDeckIds, trainer, playerDeckShiny);
 
   if (trainer?.gimmick === "dojo_combo") game._mayleneCombo = 0;
   syncMayleneComboVisual(game);
