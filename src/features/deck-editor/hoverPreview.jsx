@@ -13,9 +13,22 @@ function deckRowFromTarget(target) {
   return target.closest(".deck-editor .deck-row");
 }
 
-function cardIdFromRow(row) {
-  const name = row?.querySelector(".deck-row-name")?.textContent?.trim();
-  return name ? CARD_ID_BY_NAME.get(name) || null : null;
+function previewDataFromRow(row) {
+  const rawName = row?.querySelector(".deck-row-name")?.textContent?.trim() || "";
+  const name = rawName
+    .replace(/^✨\s*(?:이로치\s*·\s*)?/, "")
+    .replace(/\s*·\s*이로치$/, "")
+    .trim();
+  const cardId = name ? CARD_ID_BY_NAME.get(name) || null : null;
+  if (!cardId) return null;
+
+  const shiny =
+    row?.dataset?.shiny === "1" ||
+    row?.classList?.contains("deck-row-shiny") ||
+    /\s*·\s*이로치$/.test(rawName) ||
+    /^✨/.test(rawName);
+
+  return { cardId, shiny };
 }
 
 function clamp(value, min, max) {
@@ -37,22 +50,26 @@ function DeckHoverPreview() {
         return;
       }
 
-      const cardId = cardIdFromRow(row);
-      if (!cardId) return;
+      const data = previewDataFromRow(row);
+      if (!data) return;
 
-      setPreview({ cardId, x: event.clientX, y: event.clientY });
+      setPreview({ ...data, x: event.clientX, y: event.clientY });
     };
 
     const onMouseMove = (event) => {
       const row = deckRowFromTarget(event.target);
       if (!row) return;
 
-      const cardId = cardIdFromRow(row);
-      if (!cardId) return;
+      const data = previewDataFromRow(row);
+      if (!data) return;
 
       setPreview((current) => {
-        if (!current || current.cardId !== cardId) {
-          return { cardId, x: event.clientX, y: event.clientY };
+        if (
+          !current ||
+          current.cardId !== data.cardId ||
+          current.shiny !== data.shiny
+        ) {
+          return { ...data, x: event.clientX, y: event.clientY };
         }
 
         return {
@@ -108,7 +125,7 @@ function DeckHoverPreview() {
       style={{ left: `${left}px`, top: `${top}px` }}
       aria-hidden="true"
     >
-      <HandCard cardId={preview.cardId} playable ghost />
+      <HandCard cardId={preview.cardId} shiny={preview.shiny} playable ghost />
     </div>
   );
 }
