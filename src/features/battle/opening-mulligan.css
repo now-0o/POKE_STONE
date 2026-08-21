@@ -63,6 +63,7 @@
   align-items: flex-start;
   gap: clamp(12px, 2.2vw, 24px);
   margin: 28px auto 24px;
+  perspective: 900px;
 }
 
 .opening-mulligan-card {
@@ -74,6 +75,9 @@
   border-radius: 18px;
   outline: none;
   transform: translateY(0) scale(1);
+  transform-origin: center center;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
   transition:
     transform 180ms ease,
     filter 180ms ease;
@@ -144,21 +148,17 @@
   line-height: 1;
 }
 
-.opening-mulligan-cards.is-done .opening-mulligan-card {
+/* 교체 시 패널/나머지 카드는 그대로 두고 선택한 카드 슬롯만 애니메이션한다. */
+.opening-mulligan-card.is-swapping-out {
   cursor: default;
-  animation: opening-mulligan-arrive 520ms cubic-bezier(.18,.82,.18,1) both;
+  pointer-events: none;
+  animation: opening-mulligan-card-out 260ms cubic-bezier(.55,.02,.82,.38) both;
 }
 
-.opening-mulligan-cards.is-done .opening-mulligan-card:nth-child(2) {
-  animation-delay: 60ms;
-}
-
-.opening-mulligan-cards.is-done .opening-mulligan-card:nth-child(3) {
-  animation-delay: 120ms;
-}
-
-.opening-mulligan-cards.is-done .opening-mulligan-card:nth-child(4) {
-  animation-delay: 180ms;
+.opening-mulligan-card.is-swapping-in {
+  cursor: default;
+  pointer-events: none;
+  animation: opening-mulligan-card-in 460ms cubic-bezier(.16,.84,.24,1) both;
 }
 
 .opening-mulligan-actions {
@@ -192,18 +192,56 @@
   cursor: pointer;
 }
 
-.opening-mulligan-actions button:hover {
+.opening-mulligan-actions button:hover:not(:disabled) {
   filter: brightness(1.08);
 }
 
-@keyframes opening-mulligan-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(-18px) scale(0.9);
-  }
-  to {
+.opening-mulligan-actions button:disabled {
+  cursor: default;
+  opacity: 0.82;
+  filter: saturate(0.72);
+}
+
+@keyframes opening-mulligan-card-out {
+  0% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(12px) rotateY(0deg) scale(0.96);
+    filter: saturate(0.82) brightness(0.78);
+  }
+  55% {
+    opacity: 0.75;
+    transform: translateY(4px) rotateY(62deg) scale(0.9);
+    filter: brightness(0.64);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) rotateY(90deg) scale(0.84);
+    filter: brightness(0.5);
+  }
+}
+
+@keyframes opening-mulligan-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) rotateY(-90deg) scale(0.84);
+    filter: brightness(0.72);
+  }
+  58% {
+    opacity: 1;
+    transform: translateY(2px) rotateY(8deg) scale(1.035);
+    filter: brightness(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateY(0deg) scale(1);
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opening-mulligan-card.is-swapping-out,
+  .opening-mulligan-card.is-swapping-in {
+    animation-duration: 80ms;
   }
 }
 
