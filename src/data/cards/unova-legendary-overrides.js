@@ -47,6 +47,12 @@ if (CARD_MAP.terrakion) {
   CARD_MAP.terrakion.hp = 6;
 }
 
+if (CARD_MAP.voltswitch) {
+  CARD_MAP.voltswitch.cost = 3;
+  CARD_MAP.voltswitch.text =
+    "전기 피해 2를 준 뒤, 내 필드에서 체력이 가장 낮은 포켓몬 1장을 손으로 되돌린다. 이 효과로 돌아온 진화 포켓몬은 진화 전 포켓몬 없이 다시 낼 수 있다.";
+}
+
 if (CARD_MAP.discharge) {
   CARD_MAP.discharge.text =
     "상대 포켓몬 전체에게 전기 타입 피해 2를 준다. 각각 50% 확률로 마비 상태이상.";
