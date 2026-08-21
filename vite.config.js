@@ -15,6 +15,9 @@ const aiWrapper = path.resolve(
 const battleModule = normalizePath(
   path.resolve(process.cwd(), 'src/components/Battle.jsx'),
 );
+const baseAiModule = normalizePath(
+  path.resolve(process.cwd(), 'src/engine/ai.js'),
+);
 
 const baseEngineModule = normalizePath(
   path.resolve(process.cwd(), 'src/engine/engine.js'),
@@ -68,6 +71,19 @@ export default defineConfig({
         }
 
         return null;
+      },
+    },
+    {
+      name: 'poke-stone-common-ai-air-balloon',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        if (modulePath !== baseAiModule) return null;
+
+        const before = `    const candidates = me.field.filter((u) => !u.item);\n\n    if (!candidates.length) return null;\n\n    const effect = card.item?.effect;`;
+        const after = `    let candidates = me.field.filter((u) => !u.item);\n\n    const effect = card.item?.effect;\n\n    if (effect === "air_balloon") {\n      candidates = candidates.filter(\n        (u) => u.type !== "비행" && !hasAbility(u, "levitate"),\n      );\n    }\n\n    if (!candidates.length) return null;`;
+        if (!code.includes(before)) return null;
+        return { code: code.replace(before, after), map: null };
       },
     },
     {
