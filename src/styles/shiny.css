@@ -35,6 +35,14 @@
   box-shadow: 0 0 13px rgba(255, 229, 102, .34);
 }
 
+/* 공격 가능한 이로치는 일반 포켓몬과 동일한 초록 오라를 우선 표시한다. */
+.field-unit.shiny-unit.can-act {
+  cursor: pointer;
+  box-shadow:
+    0 0 12px 3px rgba(125, 232, 159, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
 /* 이로치 포켓몬은 필드에 처음 나타나는 순간만 가볍게 반짝인다. */
 .field-unit.shiny-unit .unit-art {
   position: relative;
