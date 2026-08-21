@@ -66,6 +66,8 @@ import './styles/mobile-battle-controls-fix.css';
 import './features/battle/n-bond.css';
 // 풍란 공중날기는 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
 import './features/battle/skyla-airborne-card.css';
+// 손패/드래그/상대 공개 카드는 덱 편집 카드 리스트와 동일한 본체 규격을 최종 적용한다.
+import './styles/battle-card-canonical.css';
 
 import './features/mobile/battle-hand-runtime.js';
 // 대상 선택이 없는 기술은 클릭/터치 즉발을 막고 드롭으로만 사용한다.
