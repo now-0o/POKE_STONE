@@ -277,6 +277,172 @@ export default defineConfig({
       },
     },
     {
+      name: 'poke-stone-unova-technique-fx-and-screens',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        if (modulePath !== battleModule) return null;
+
+        let nextCode = code;
+
+        nextCode = nextCode.replace(
+          'import "../features/battle/card-preview.css";',
+          'import "../features/battle/card-preview.css";\nimport "../features/battle/unova-technique-fx.css";',
+        );
+
+        nextCode = nextCode.replace(
+          '  },\n};\n\nfunction FieldObstacle({',
+          `  },
+
+  // ============================================================
+  // 5세대 하나지방 신규 기술
+  // ============================================================
+  scald: {
+    type: "stream",
+    theme: "water",
+    scope: "target",
+    variant: "scald",
+    startup: 250,
+    duration: 460,
+    impactDelay: 220,
+  },
+  voltswitch: {
+    type: "bolt",
+    theme: "electric",
+    scope: "target",
+    variant: "volt-switch",
+    startup: 210,
+    duration: 380,
+    impactDelay: 180,
+  },
+  flamecharge: {
+    type: "strike",
+    theme: "fire",
+    scope: "target",
+    variant: "flame-charge",
+    startup: 180,
+    duration: 380,
+    impactDelay: 180,
+  },
+  acrobatics: {
+    type: "slash",
+    theme: "normal",
+    scope: "target",
+    variant: "acrobatics",
+    startup: 180,
+    duration: 420,
+    impactDelay: 200,
+  },
+  dragontail: {
+    type: "slash",
+    theme: "dragon",
+    scope: "target",
+    variant: "dragon-tail",
+    startup: 210,
+    duration: 420,
+    impactDelay: 210,
+  },
+  quiverdance: {
+    type: "status",
+    theme: "fairy",
+    scope: "target",
+    variant: "quiver",
+    startup: 260,
+    duration: 650,
+  },
+  shellsmash: {
+    type: "strike",
+    theme: "rock",
+    scope: "target",
+    variant: "shell-smash",
+    startup: 260,
+    duration: 560,
+    impactDelay: 260,
+  },
+  geargrind: {
+    type: "strike",
+    theme: "steel",
+    scope: "target",
+    variant: "gear-grind",
+    startup: 220,
+    duration: 560,
+    impactDelay: 260,
+  },
+  sacredsword: {
+    type: "slash",
+    theme: "fighting",
+    scope: "target",
+    variant: "sacred-sword",
+    startup: 240,
+    duration: 460,
+    impactDelay: 220,
+  },
+  reflect: {
+    type: "shield",
+    theme: "psychic",
+    scope: "self-field",
+    variant: "reflect",
+    startup: 280,
+    duration: 680,
+  },
+  lightscreen: {
+    type: "shield",
+    theme: "electric",
+    scope: "self-field",
+    variant: "light-screen",
+    startup: 280,
+    duration: 680,
+  },
+};
+
+function BattleScreenCounters({ player }) {
+  const reflect = Math.max(0, Number(player?._reflectCharges) || 0);
+  const lightScreen = Math.max(0, Number(player?._lightScreenCharges) || 0);
+
+  if (reflect <= 0 && lightScreen <= 0) return null;
+
+  return (
+    <div className="battle-screen-counters" aria-live="polite">
+      {reflect > 0 && (
+        <div
+          className="battle-screen-counter is-reflect"
+          aria-label={"리플렉터 " + reflect + "회 남음"}
+        >
+          <span className="screen-counter-name">리플렉터</span>
+          <strong>{reflect}</strong>
+        </div>
+      )}
+      {lightScreen > 0 && (
+        <div
+          className="battle-screen-counter is-light-screen"
+          aria-label={"빛의장막 " + lightScreen + "회 남음"}
+        >
+          <span className="screen-counter-name">빛의장막</span>
+          <strong>{lightScreen}</strong>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldObstacle({`,
+        );
+
+        nextCode = nextCode.replace(
+          '        </div>\n\n        <div className="hero-mana">\n          <ManaPips mana={foe.mana} maxMana={foe.maxMana} />',
+          '        </div>\n\n        <BattleScreenCounters player={foe} />\n\n        <div className="hero-mana">\n          <ManaPips mana={foe.mana} maxMana={foe.maxMana} />',
+        );
+
+        nextCode = nextCode.replace(
+          '        </div>\n\n        <div className="hero-mana">\n          <ManaPips mana={me.mana} maxMana={me.maxMana} />',
+          '        </div>\n\n        <BattleScreenCounters player={me} />\n\n        <div className="hero-mana">\n          <ManaPips mana={me.mana} maxMana={me.maxMana} />',
+        );
+
+        if (nextCode === code) return null;
+        return { code: nextCode, map: null };
+      },
+    },
+    {
       name: 'poke-stone-volt-switch-replay-ui',
       enforce: 'pre',
       transform(code, id) {
