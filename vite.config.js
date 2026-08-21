@@ -167,8 +167,8 @@ export default defineConfig({
         let nextCode = code;
 
         nextCode = nextCode.replace(
-          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";',
-          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport OpeningMulligan from "../features/battle/OpeningMulligan.jsx";',
+          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport NBattleHelp from "../features/battle/NBattleHelp.jsx";',
+          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport NBattleHelp from "../features/battle/NBattleHelp.jsx";\nimport OpeningMulligan from "../features/battle/OpeningMulligan.jsx";',
         );
 
         nextCode = nextCode.replace(
