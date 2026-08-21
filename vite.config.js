@@ -191,6 +191,50 @@ export default defineConfig({
       },
     },
     {
+      name: 'poke-stone-card-preview-and-cross-columns',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        let nextCode = code;
+
+        if (modulePath === battleModule) {
+          nextCode = nextCode.replace(
+            'import { playSfx, playCry } from "../audio.js";',
+            'import { playSfx, playCry } from "../audio.js";\nimport "../features/battle/card-preview.css";',
+          );
+        }
+
+        if (modulePath === baseEngineCoreModule) {
+          nextCode = nextCode.replace(
+            'log(game, `${unit.name}의 크로스플레임! 상대 1·3·5번째 칸을 불태웠다!`);',
+            'log(game, `${unit.name}의 크로스플레임! 상대 필드의 왼쪽에서 1·3·5번째 포켓몬을 불태웠다!`);',
+          );
+          nextCode = nextCode.replace(
+            '      [1, 3, 5].forEach((index) => {\n        const target = foe.field[index];',
+            '      [1, 3, 5].forEach((positionFromRight) => {\n        const index = foe.field.length - positionFromRight;\n        const target = foe.field[index];',
+          );
+          nextCode = nextCode.replace(
+            'log(game, `${unit.name}의 크로스썬더! 상대 2·4·6번째 칸을 강타했다!`);',
+            'log(game, `${unit.name}의 크로스썬더! 상대 필드의 오른쪽에서 1·3·5번째 포켓몬을 강타했다!`);',
+          );
+        }
+
+        if (modulePath === unovaCardsModule) {
+          nextCode = nextCode.replace(
+            'crossflame: "크로스플레임: 나왔을 때 상대 필드 1·3·5번째 칸의 포켓몬에게 각각 불꽃 피해 4.",',
+            'crossflame: "크로스플레임: 나왔을 때 상대 필드의 왼쪽에서 1·3·5번째 포켓몬에게 각각 불꽃 피해 4.",',
+          );
+          nextCode = nextCode.replace(
+            'crossbolt: "크로스썬더: 나왔을 때 상대 필드 2·4·6번째 칸의 포켓몬에게 각각 전기 피해 4.",',
+            'crossbolt: "크로스썬더: 나왔을 때 상대 필드의 오른쪽에서 1·3·5번째 포켓몬에게 각각 전기 피해 4.",',
+          );
+        }
+
+        if (nextCode === code) return null;
+        return { code: nextCode, map: null };
+      },
+    },
+    {
       name: 'poke-stone-volt-switch-replay-ui',
       enforce: 'pre',
       transform(code, id) {
