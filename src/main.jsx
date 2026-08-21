@@ -72,6 +72,8 @@ import './features/deck-editor/hoverPreview.jsx';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
 import './features/battle/unovaLegendaryRuntime.js';
+// 탈출버튼/레드카드로 필드에서 손으로 돌아갈 때 퇴장 연출을 추가한다.
+import './features/battle/returnItemAnimationRuntime.js';
 // 아티 고치 카운트/우화 연출은 하나지방 DOM 효과가 등록된 뒤 적용한다.
 import './features/battle/burghCocoonRuntime.js';
 // 카밀레는 매 턴 선택 결과를 받은 뒤 무대를 훑고 대상에 고정되는 연출을 재생한다.
