@@ -180,6 +180,23 @@ function rememberCandiceDropSlot(event) {
   };
 }
 
+// 손패 포켓몬은 클릭으로 사용하지 않는다.
+// pointerdown/move/up 기반 드래그 로직은 그대로 통과하므로 필드에 끌어다 놓아야 소환/진화된다.
+function blockPokemonHandClick(event) {
+  if (!(event.target instanceof Element)) return;
+
+  const handCard = event.target.closest(
+    ".battle.battle-board .hand .hand-card",
+  );
+  if (!handCard) return;
+
+  const typeLabel = handCard.querySelector(".card-typebadge")?.textContent || "";
+  if (!typeLabel.includes("포켓몬")) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 function syncBattlePageState() {
   const battleSurface = document.querySelector(
     ".battle-intro, .battle.battle-board",
@@ -210,6 +227,7 @@ function startBattleRuntime() {
   );
   window.addEventListener("resize", queueCandiceOverlayAlignment);
   window.addEventListener("pointerup", rememberCandiceDropSlot, true);
+  document.addEventListener("click", blockPokemonHandClick, true);
 
   const observer = new MutationObserver(syncBattlePageState);
   observer.observe(document.body, {
