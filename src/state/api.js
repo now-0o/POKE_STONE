@@ -14,6 +14,10 @@ const API_BASE = (() => {
 const TOKEN_KEY = 'pkm_stone_token';
 const USERNAME_KEY = 'pkm_stone_username';
 
+// 덱 편집처럼 짧은 시간에 여러 번 저장되는 경우 이전 PUT이 늦게 도착해
+// 최신 세이브를 덮어쓰지 않도록 서버 저장 요청을 순서대로 처리한다.
+let saveWriteQueue = Promise.resolve();
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -62,6 +66,15 @@ export async function fetchSave() {
   return data.save; // null이면 아직 서버에 저장된 게 없다는 뜻
 }
 
-export async function pushSave(save) {
-  return req('/save', { method: 'PUT', body: JSON.stringify({ data: save }) });
+export function pushSave(save) {
+  // 호출 순간의 세이브를 문자열로 고정한다. 이후 같은 save 객체가 mutate되어도
+  // 이미 큐에 들어간 요청의 deckShiny/deckPresets가 바뀌지 않는다.
+  const body = JSON.stringify({ data: save });
+
+  const write = saveWriteQueue
+    .catch(() => undefined)
+    .then(() => req('/save', { method: 'PUT', body }));
+
+  saveWriteQueue = write;
+  return write;
 }
