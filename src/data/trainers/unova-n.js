@@ -6,15 +6,33 @@ import {
 
 // BW 최종전의 N 파티를 포케스톤식으로 재구성한다.
 // 레시라무/제크로무는 덱에 넣지 않고 2·3페이즈 진입 시 강제 합류한다.
+//
+// 3.2 강화 방향:
+// - 원작 최종전의 늑골라 / 아케오스 / 배바닐라 / 기기기어르 계열은 유지한다.
+// - 소미안 → 엘풍의 짓궂은마음으로 비공격 기술을 찾아 상태이상 압박을 이어간다.
+// - 상태이상인 포켓몬이 공격하면 N 친밀도 기믹의 추가 감소 조건이 발동하므로,
+//   단순 화력보다 '공격할지 말지'를 고민하게 만드는 컨트롤 덱으로 강화한다.
 const N_DECK = [
+  // 원작 N 핵심 파티
   "tirtouga", "tirtouga", "carracosta", "carracosta",
   "archen", "archen", "archeops", "archeops",
-  "vanillite", "vanillite", "vanillish", "vanillish", "vanilluxe", "vanilluxe",
-  "klink", "klink", "klang", "klang", "klinklang", "klinklang",
-  "geargrind", "geargrind",
-  "stoneedge", "stoneedge",
-  "icebeam", "icebeam",
-  "reflect", "lightscreen", "hyperball", "fullrestore",
+  "vanillite", "vanillite", "vanillish", "vanilluxe",
+  "klink", "klink", "klang", "klinklang",
+
+  // 상태 기술을 찾아오는 컨트롤 엔진
+  "cottonee", "cottonee", "whimsicott", "whimsicott",
+
+  // 친밀도 압박용 상태이상 기술
+  "spore", "spore",
+  "toxic", "toxic",
+  "willowisp",
+  "thunderwave_move",
+  "sludgewave",
+
+  // 에이스 강화 / 마무리 / 유지력
+  "shellsmash",
+  "geargrind",
+  "fullrestore",
 ];
 
 export const UNOVA_N = {
