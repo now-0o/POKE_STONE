@@ -290,7 +290,9 @@ function applyNStressAfterAttack(game, attackerUid, snapshot) {
 function resolveZeroFriendship(game) {
   if (!isNBattle(game)) return;
   for (const unit of [...game.players.player.field]) {
-    if ((unit._nFriendship || 0) <= 0) moveUnitToN(game, unit);
+    if (Number.isFinite(unit._nFriendship) && unit._nFriendship <= 0) {
+      moveUnitToN(game, unit);
+    }
   }
 }
 
