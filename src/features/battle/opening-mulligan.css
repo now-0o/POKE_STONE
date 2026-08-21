@@ -67,8 +67,9 @@
 
 .opening-mulligan-card {
   position: relative;
-  width: 180px;
-  max-width: 22vw;
+  width: 147px;
+  height: 207px;
+  flex: 0 0 147px;
   cursor: pointer;
   border-radius: 18px;
   outline: none;
@@ -80,10 +81,12 @@
 }
 
 .opening-mulligan-card > .hand-card {
-  width: 100%;
-  min-width: 0;
+  width: 134px;
+  height: 188px;
+  min-height: 188px;
   margin: 0;
-  transform: none !important;
+  transform: scale(1.1) !important;
+  transform-origin: top left !important;
   pointer-events: none;
 }
 
@@ -220,14 +223,19 @@
   }
 
   .opening-mulligan-cards {
-    gap: 5px;
+    gap: 7px;
     margin-top: 22px;
     margin-bottom: 26px;
   }
 
   .opening-mulligan-card {
-    width: min(23vw, 150px);
-    max-width: none;
+    width: 90px;
+    height: 127px;
+    flex-basis: 90px;
+  }
+
+  .opening-mulligan-card > .hand-card {
+    transform: scale(0.675) !important;
   }
 
   .opening-mulligan-card:hover,
@@ -252,6 +260,10 @@
 }
 
 @media (max-width: 520px) and (orientation: portrait) {
+  .opening-mulligan-panel {
+    width: min(430px, 100%);
+  }
+
   .opening-mulligan-heading h2 {
     font-size: 26px;
   }
@@ -260,16 +272,26 @@
     font-size: 13px;
   }
 
-  .opening-mulligan-cards.count-4 {
-    width: 100%;
+  .opening-mulligan-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 96px);
+    justify-content: center;
+    gap: 18px 14px;
   }
 
   .opening-mulligan-card {
-    width: 23vw;
+    width: 96px;
+    height: 135px;
+    flex-basis: auto;
   }
 
   .opening-mulligan-card > .hand-card {
-    transform-origin: top center !important;
+    transform: scale(0.72) !important;
+  }
+
+  .opening-mulligan-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
   }
 
   .opening-mulligan-actions button {
@@ -301,12 +323,19 @@
   }
 
   .opening-mulligan-cards {
+    display: flex;
     margin: 12px auto 16px;
     gap: 14px;
   }
 
   .opening-mulligan-card {
-    width: 126px;
+    width: 100px;
+    height: 141px;
+    flex-basis: 100px;
+  }
+
+  .opening-mulligan-card > .hand-card {
+    transform: scale(0.75) !important;
   }
 
   .opening-mulligan-actions {
