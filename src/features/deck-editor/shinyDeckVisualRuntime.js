@@ -29,6 +29,7 @@ function rowCardId(row) {
   const rawName = row.querySelector(".deck-row-name")?.textContent || "";
   const name = rawName
     .replace(/^✨\s*(?:이로치\s*·\s*)?/, "")
+    .replace(/\s*·\s*이로치$/, "")
     .trim();
   return CARD_ID_BY_NAME.get(name) || null;
 }
@@ -42,18 +43,18 @@ function setRowSprite(row, cardId, shiny) {
 
   const nameNode = row.querySelector(".deck-row-name");
   const cardName = CARDS.find((card) => card.id === cardId)?.name || "";
-  const expectedName = shiny ? `✨ 이로치 · ${cardName}` : cardName;
+  const expectedName = shiny ? `${cardName} · 이로치` : cardName;
 
   if (nameNode && cardName && nameNode.textContent !== expectedName) {
     nameNode.textContent = expectedName;
   }
 
   if (shiny) {
-    row.setAttribute("aria-label", `이로치 ${cardName}`);
-    row.title = `이로치 ${cardName} · 클릭하면 1장 제거`;
+    row.setAttribute("aria-label", `${cardName} 이로치`);
+    row.title = `${cardName} · 이로치 · 클릭하면 1장 제거`;
   } else {
     row.removeAttribute("aria-label");
-    if (row.title?.startsWith("이로치 ")) {
+    if (row.title?.includes("이로치")) {
       row.title = "클릭하면 1장 제거";
     }
   }
