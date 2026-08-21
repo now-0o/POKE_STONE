@@ -1,0 +1,221 @@
+/* N - 포켓몬의 마음 / 친밀도 / 전향 연출 */
+
+.field-unit .n-friendship-badge {
+  position: absolute;
+  right: -2px;
+  bottom: 23px;
+  z-index: 18;
+  min-width: 36px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(132, 255, 228, .72);
+  background: linear-gradient(180deg, rgba(13, 72, 67, .96), rgba(7, 41, 43, .96));
+  color: #d9fff7;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .34), 0 0 8px rgba(55, 235, 199, .28);
+}
+
+.field-unit .n-friendship-badge strong {
+  margin-left: 2px;
+  color: #fff;
+  font-size: 9px;
+}
+
+.field-unit .n-friendship-badge.is-low {
+  border-color: rgba(255, 203, 101, .86);
+  background: linear-gradient(180deg, rgba(112, 70, 18, .97), rgba(56, 36, 11, .97));
+  color: #ffe8ad;
+}
+
+.field-unit .n-friendship-badge.is-zero,
+.field-unit .n-friendship-badge.is-defected {
+  border-color: rgba(68, 255, 218, .95);
+  background: linear-gradient(180deg, rgba(5, 102, 90, .98), rgba(3, 45, 48, .98));
+  color: #baffee;
+  box-shadow: 0 0 12px rgba(32, 255, 210, .62), 0 2px 8px rgba(0, 0, 0, .42);
+}
+
+.n-bond-chain {
+  position: fixed;
+  z-index: 3720;
+  height: 12px;
+  pointer-events: none;
+  transform-origin: 0 50%;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(77, 255, 220, .58) 43% 57%, transparent 58%),
+    radial-gradient(circle at 6px 50%, rgba(232,255,250,.98) 0 1.5px, rgba(70,245,210,.95) 2px 3.5px, transparent 4px) 0 0 / 12px 12px repeat-x;
+  filter: drop-shadow(0 0 4px rgba(35, 255, 211, .92)) drop-shadow(0 0 9px rgba(0, 160, 151, .62));
+}
+
+.n-bond-chain::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  width: 15px;
+  height: 15px;
+  transform: translateY(-50%) rotate(45deg);
+  border: 2px solid rgba(167,255,238,.95);
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(44,255,211,.9);
+}
+
+.n-bond-transfer-ghost {
+  position: fixed !important;
+  z-index: 3730 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+  transform-origin: center center !important;
+  filter: drop-shadow(0 0 12px rgba(49, 255, 216, .95)) brightness(1.08) !important;
+}
+
+.n-bond-destination-hidden {
+  opacity: 0 !important;
+}
+
+.n-bond-release-burst {
+  position: fixed;
+  z-index: 3725;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 2px solid rgba(157,255,237,.95);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 12px rgba(56,255,218,.88), inset 0 0 10px rgba(73,255,221,.4);
+  animation: n-bond-release-ring .48s ease-out both;
+}
+
+.n-bond-transfer-label {
+  position: fixed;
+  z-index: 3740;
+  transform: translate(-50%, -50%);
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(144,255,235,.82);
+  background: rgba(4, 44, 45, .92);
+  color: #d9fff7;
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 0 8px rgba(88,255,220,.72);
+  animation: n-bond-label .76s ease-out both;
+}
+
+.n-bond-phase-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3650;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, rgba(220,255,249,.34), rgba(20,102,93,.12) 38%, transparent 72%);
+  animation: n-bond-phase-flash .9s ease-out both;
+}
+
+.n-bond-phase-flash::before,
+.n-bond-phase-flash::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 70px;
+  height: 70px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(185,255,241,.8);
+  border-radius: 50%;
+  box-shadow: 0 0 18px rgba(76,255,218,.55);
+  animation: n-bond-phase-ring .82s ease-out both;
+}
+
+.n-bond-phase-flash::after {
+  animation-delay: .08s;
+}
+
+.n-bond-phase-flash strong {
+  position: relative;
+  z-index: 2;
+  margin-top: -22px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(202,255,245,.82);
+  background: rgba(6, 35, 38, .86);
+  color: #effffa;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-shadow: 0 0 10px rgba(78,255,221,.7);
+}
+
+.field-unit.n-signature-arrival {
+  animation: n-signature-arrival .72s cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+@keyframes n-bond-release-ring {
+  0% { opacity: 1; transform: scale(.45); }
+  100% { opacity: 0; transform: scale(3.2); }
+}
+
+@keyframes n-bond-label {
+  0% { opacity: 0; transform: translate(-50%, -35%) scale(.8); }
+  22%, 68% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -105%) scale(1.02); }
+}
+
+@keyframes n-bond-phase-flash {
+  0% { opacity: 0; filter: brightness(.8); }
+  18% { opacity: 1; filter: brightness(1.5); }
+  100% { opacity: 0; filter: brightness(1); }
+}
+
+@keyframes n-bond-phase-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.25); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(6.5); }
+}
+
+@keyframes n-signature-arrival {
+  0% { opacity: .15; transform: translateY(-18px) scale(.72); filter: brightness(2.3) saturate(.7); }
+  42% { opacity: 1; transform: translateY(2px) scale(1.1); filter: brightness(1.65) saturate(1.25); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1) saturate(1); }
+}
+
+@media (max-width: 760px) {
+  .field-unit .n-friendship-badge {
+    right: -1px;
+    bottom: 18px;
+    min-width: 30px;
+    padding: 1px 4px;
+    font-size: 6px;
+  }
+
+  .field-unit .n-friendship-badge strong {
+    font-size: 7px;
+  }
+
+  .n-bond-phase-flash strong {
+    font-size: 10px;
+    padding: 5px 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .n-bond-chain,
+  .n-bond-release-burst,
+  .n-bond-transfer-label,
+  .n-bond-phase-flash,
+  .n-bond-phase-flash::before,
+  .n-bond-phase-flash::after,
+  .field-unit.n-signature-arrival {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
