@@ -75,6 +75,8 @@ import './features/battle/costColorRuntime.js';
 import './features/battle/fixedFieldPlacement.js';
 import './features/battle/cynthiaSpeech.js';
 import './features/deck-editor/hoverPreview.jsx';
+// 덱 목록의 이로치 표시는 저장된 deckShiny 값을 최종 기준으로 동기화한다.
+import './features/deck-editor/shinyDeckVisualRuntime.js';
 import './components/battle/SinnohBattleUi.jsx';
 import './components/battle/UnovaBattleUi.jsx';
 // 사간의 용의 위압이 상승할 때 필드로 퍼지는 드래곤 피어 연출을 재생한다.
