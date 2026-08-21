@@ -1,5 +1,6 @@
 /* 모바일 배틀 보정
  * - 진화체 '버리고 뽑기' 버튼을 카드 제스처 영역과 분리한다.
+ * - 버튼 때문에 카드 래퍼 자체의 stacking order가 바뀌지 않게 한다.
  */
 
 @media (pointer: coarse), (max-width: 1024px) {
@@ -21,9 +22,13 @@
     z-index: 900 !important;
   }
 
-  /* 버리기 가능한 카드의 컨트롤은 일반 카드보다 위에서 터치를 받는다. */
-  .battle-board > .hand .hand-card-wrap:has(> .btn-discard-redraw) {
-    z-index: calc(200 + var(--mobile-hand-index, 1)) !important;
+  /*
+   * 카드 겹침 순서는 버리고 뽑기 가능 여부와 무관하게 손패 인덱스를 따른다.
+   * 왼쪽 A보다 오른쪽 B가 위에 와야 B가 A/C 사이에서 정상적으로 터치된다.
+   * 버튼 자체만 해당 카드 내부에서 높은 z-index를 유지한다.
+   */
+  .battle-board > .hand .hand-card-wrap:not(.mobile-grabbed-card):not(:has(.hand-card.selected)) {
+    z-index: var(--mobile-hand-index, 1) !important;
   }
 }
 
