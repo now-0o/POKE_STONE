@@ -3,15 +3,15 @@ import { ABILITY_TEXT, CARD_MAP } from "../cards.js";
 const LEGENDARY_ABILITIES = {
   cobalion: {
     ability: "quickguard",
-    text: "퍼스트가드: 상대 턴마다 처음으로 다른 아군 포켓몬이 기본 공격 또는 단일 대상 기술의 대상이 되면 대신 대상이 되고, 그 피해를 2 줄인다.",
+    text: "퍼스트가드: 다른 아군 포켓몬이 기본 공격 또는 단일 대상 기술의 대상이 되면 항상 대신 대상이 되고, 그 피해를 2 줄인다.",
   },
   terrakion: {
     ability: "retaliate",
-    text: "원수갚기: 이 카드가 손에 있을 때 아군 포켓몬이 기절하면 다음 내 턴 동안 비용 -3, 돌진을 얻는다.",
+    text: "원수갚기: 이 카드가 손에 있을 때 아군 포켓몬이 기절하면 다음 내 턴 동안 비용 -2, 돌진을 얻는다.",
   },
   virizion: {
     ability: "worryseed",
-    text: "고민씨: 나왔을 때 상대 포켓몬 하나를 선택한다. 비리디온이 필드에 있는 동안 그 포켓몬의 특성을 비활성화한다.",
+    text: "고민씨: 이 포켓몬이 필드에 있는 동안 상대는 기술 카드를 사용할 수 없다.",
   },
   tornadus: {
     ability: "tailwind",
@@ -36,6 +36,15 @@ for (const [cardId, config] of Object.entries(LEGENDARY_ABILITIES)) {
   if (!card) continue;
   card.ability = config.ability;
   ABILITY_TEXT[config.ability] = config.text;
+}
+
+if (CARD_MAP.cobalion) {
+  CARD_MAP.cobalion.atk = 6;
+  CARD_MAP.cobalion.hp = 11;
+}
+
+if (CARD_MAP.terrakion) {
+  CARD_MAP.terrakion.hp = 6;
 }
 
 if (CARD_MAP.discharge) {
