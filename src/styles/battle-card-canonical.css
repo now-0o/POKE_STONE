@@ -1,0 +1,135 @@
+/*
+ * Canonical battle card presentation
+ *
+ * Source of truth: DeckEditor collection cards in
+ * src/features/deck-editor/card-scale.css.
+ *
+ * Battle hand cards, drag previews and enemy-play reveals must keep exactly
+ * the same 134x188 HandCard shell and inner measurements. Battle-specific
+ * CSS may move/scale the whole card, but must not reshape its internals.
+ */
+
+.battle-board > .hand .hand-card-wrap > .hand-card,
+.battle-board .drag-ghost .hand-card,
+.battle-board .enemy-reveal .hand-card {
+  width: 134px !important;
+  min-width: 134px !important;
+  max-width: 134px !important;
+  height: 188px !important;
+  min-height: 188px !important;
+  max-height: 188px !important;
+  box-sizing: border-box !important;
+  flex: 0 0 188px !important;
+  padding: 7px 8px 6px !important;
+  gap: 3px !important;
+  border-width: 4px !important;
+  border-radius: 12px !important;
+  overflow: visible !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-art,
+.battle-board .drag-ghost .hand-card .card-art,
+.battle-board .enemy-reveal .hand-card .card-art {
+  height: 66px !important;
+  min-height: 66px !important;
+  max-height: 66px !important;
+  flex: 0 0 66px !important;
+  border-radius: 6px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-sprite,
+.battle-board .drag-ghost .hand-card .card-sprite,
+.battle-board .enemy-reveal .hand-card .card-sprite {
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-name,
+.battle-board .drag-ghost .hand-card .card-name,
+.battle-board .enemy-reveal .hand-card .card-name {
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-stageline,
+.battle-board .drag-ghost .hand-card .card-stageline,
+.battle-board .enemy-reveal .hand-card .card-stageline {
+  height: 14px !important;
+  min-height: 14px !important;
+  max-height: 14px !important;
+  padding: 1px 5px !important;
+  font-size: 8.5px !important;
+  line-height: 12px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-typebadge,
+.battle-board .drag-ghost .hand-card .card-typebadge,
+.battle-board .enemy-reveal .hand-card .card-typebadge {
+  padding: 2px 9px !important;
+  font-size: 9px !important;
+  white-space: nowrap !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-text,
+.battle-board .drag-ghost .hand-card .card-text,
+.battle-board .enemy-reveal .hand-card .card-text {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  padding: 3px 5px !important;
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+  overflow: hidden !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-text-inner,
+.battle-board .drag-ghost .hand-card .card-text-inner,
+.battle-board .enemy-reveal .hand-card .card-text-inner {
+  width: 100% !important;
+  white-space: pre-line !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-cost,
+.battle-board .drag-ghost .hand-card .card-cost,
+.battle-board .enemy-reveal .hand-card .card-cost {
+  top: -11px !important;
+  left: -11px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-width: 2px !important;
+  font-size: 18px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .hcard-orb,
+.battle-board .drag-ghost .hand-card .hcard-orb,
+.battle-board .enemy-reveal .hand-card .hcard-orb {
+  bottom: -11px !important;
+  width: 31px !important;
+  height: 31px !important;
+  border-width: 2px !important;
+  font-size: 16px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .hcard-orb.orb-atk,
+.battle-board .drag-ghost .hand-card .hcard-orb.orb-atk,
+.battle-board .enemy-reveal .hand-card .hcard-orb.orb-atk {
+  left: -10px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .hcard-orb.orb-hp,
+.battle-board .drag-ghost .hand-card .hcard-orb.orb-hp,
+.battle-board .enemy-reveal .hand-card .hcard-orb.orb-hp {
+  right: -10px !important;
+}
+
+.battle-board > .hand .hand-card-wrap > .hand-card .card-rarity-gem,
+.battle-board .drag-ghost .hand-card .card-rarity-gem,
+.battle-board .enemy-reveal .hand-card .card-rarity-gem {
+  bottom: -7px !important;
+  width: 15px !important;
+  height: 15px !important;
+  border-width: 2px !important;
+}
