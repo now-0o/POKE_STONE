@@ -1,5 +1,6 @@
 name: Shiny deck hotfix
 
+# trigger: 2026-08-21 shiny battle preservation
 on:
   push:
     branches: [main]
