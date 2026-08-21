@@ -1,0 +1,118 @@
+.n-battle-help-wrap {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 9500;
+}
+
+.n-battle-help-button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  background: rgba(9, 18, 34, 0.86);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.n-battle-help-button:hover {
+  border-color: rgba(157, 207, 255, 0.85);
+  background: rgba(25, 62, 101, 0.94);
+}
+
+.n-battle-help-popover {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: min(390px, calc(100vw - 24px));
+  padding: 18px;
+  border: 1px solid rgba(171, 211, 255, 0.28);
+  border-radius: 18px;
+  background: rgba(8, 17, 31, 0.97);
+  color: #eef6ff;
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+}
+
+.n-battle-help-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.n-battle-help-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: #89c9ff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.n-battle-help-title-row h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.n-battle-help-close {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.n-battle-help-popover ul {
+  margin: 14px 0 0;
+  padding-left: 20px;
+}
+
+.n-battle-help-popover li {
+  margin: 8px 0;
+  color: rgba(236, 245, 255, 0.84);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.n-battle-help-popover strong {
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .n-battle-help-wrap {
+    top: max(8px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+  }
+
+  .n-battle-help-button {
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
+  }
+
+  .n-battle-help-popover {
+    top: 42px;
+    width: min(360px, calc(100vw - 16px));
+    max-height: min(72vh, 520px);
+    overflow-y: auto;
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .n-battle-help-title-row h3 {
+    font-size: 18px;
+  }
+
+  .n-battle-help-popover li {
+    font-size: 12px;
+  }
+}
