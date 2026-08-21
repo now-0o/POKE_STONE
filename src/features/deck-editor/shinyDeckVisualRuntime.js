@@ -69,8 +69,8 @@ function syncDeckList(list, save, deckCounts) {
     const normalCount = Math.max(0, total - shinyCount);
 
     // getDeckVariantRows()는 같은 카드에서 일반 행을 먼저, 이로치 행을 뒤에 둔다.
-    // 데스크톱의 과거 중복 React key나 가로 모바일의 shiny prop 누락이 있어도
-    // 실제 저장값(deckShiny)을 최종 기준으로 시각 상태를 다시 맞춘다.
+    // 화면 컴포넌트가 재렌더되며 일반 스프라이트를 다시 넣더라도
+    // 실제 저장값(deckShiny)을 최종 기준으로 시각 상태를 되돌린다.
     rows.forEach((row) => setRowSprite(row, cardId, false));
 
     if (shinyCount <= 0 || rows.length === 0) return;
@@ -113,8 +113,14 @@ function startShinyDeckVisualRuntime() {
     childList: true,
     subtree: true,
     characterData: true,
+    // 가로 모바일/데스크톱 Sprite가 React 재렌더로 src를 일반판으로 되돌리는
+    // 경우도 즉시 감지한다. 우리 동기화가 만든 class/data 속성은 감시하지 않는다.
+    attributes: true,
+    attributeFilter: ["src"],
   });
 
+  // 클릭으로 덱이 바뀐 직후에도 다음 프레임에서 저장값을 다시 읽는다.
+  document.addEventListener("pointerup", syncShinyDeckRows, true);
   window.addEventListener("pageshow", syncShinyDeckRows);
   window.addEventListener("focus", syncShinyDeckRows);
 }
