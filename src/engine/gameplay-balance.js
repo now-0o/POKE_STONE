@@ -158,9 +158,6 @@ function normalizeDitto(game, side, previousFieldUids) {
   unit.maxHp = 1;
 }
 
-// ============================================================
-// 하나 전설: 비용 계열
-// ============================================================
 function isTailwindEligible(game, side, card) {
   if (!card || card.kind !== "pokemon" || card.id === "tornadus") return false;
   if (game.turn !== side) return false;
@@ -208,9 +205,6 @@ function withAdjustedCost(card, game, side, handCard, callback) {
   }
 }
 
-// ============================================================
-// 테라키온 - 원수갚기
-// ============================================================
 function snapshotDeaths(game) {
   const result = {};
   for (const side of ["player", "enemy"]) {
@@ -284,9 +278,6 @@ function clearExpiredRetaliate(game, side) {
   }
 }
 
-// ============================================================
-// 비리디온 - 고민씨
-// ============================================================
 function refreshWorrySeed(game) {
   if (!game?.players) return;
   const units = [
@@ -361,9 +352,6 @@ function setupVirizion(game, side, unit) {
   applyWorrySeed(game, unit, target);
 }
 
-// ============================================================
-// 코바르온 - 퍼스트가드
-// ============================================================
 function quickGuardForTarget(game, attackingSide, targetUid) {
   if (!targetUid || targetUid === "hero") return null;
   const defender = game.players?.[other(attackingSide)];
@@ -402,9 +390,6 @@ function markQuickGuard(game, guard) {
   game.log.push(`${guard.name}의 퍼스트가드! 아군 대신 공격을 받아냈다!`);
 }
 
-// ============================================================
-// 랜드로스 - 중력
-// ============================================================
 function withGravityGrounding(game, side, attackType, callback) {
   if (attackType !== "땅" || !fieldHasAbility(game, side, "gravity")) {
     return callback();
@@ -440,9 +425,6 @@ function withGravityGrounding(game, side, attackType, callback) {
   }
 }
 
-// ============================================================
-// 큐레무 - 얼어붙은세계
-// ============================================================
 function isGlaciateSealActive(game, side, handCard) {
   const sourceUid = handCard?._glaciateSealedByUid;
   if (!sourceUid) return false;
@@ -558,9 +540,6 @@ function findPlayedUnit(player, card, target, previousFieldUids) {
   );
 }
 
-// ============================================================
-// 볼트로스 - 충전
-// ============================================================
 function storeChargeEnergy(game, side) {
   const player = game.players?.[side];
   if (!player || !fieldHasAbility(game, side, "charge")) return;
@@ -583,10 +562,6 @@ function releaseChargeEnergy(game, side) {
   game.log.push(`볼트로스의 충전! 저장한 에너지 ${stored}을 추가로 얻었다!`);
 }
 
-// ============================================================
-// 풍란 - 공중날기
-// engine.js의 직접 HP 차감 경로를 우회하고 여기서 탈 판정과 피격 연출을 처리한다.
-// ============================================================
 function calcSkylaFlyingDamage(baseDamage, target) {
   if (baseDamage <= 0 || !target) return 0;
   const mult = TYPE_CHART["비행"]?.[target.type] ?? 1;
@@ -731,7 +706,7 @@ function runSkylaEndTurn(game) {
   try {
     result = core.endTurn(game);
   } finally {
-    game.trainer.gimmick = originalGimmICK;
+    game.trainer.gimmick = originalGimmick;
   }
   if (endingSide === "enemy") launchSkyla(game);
   if (game.turn === "enemy") landSkyla(game);
