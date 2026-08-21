@@ -280,8 +280,47 @@ function clearFixedFieldPreferredSlot(gimmick) {
   }
 }
 
-export function createGame(playerDeckIds, trainer) {
-  const game = core.createGame(playerDeckIds, trainer);
+// cynthia 계열 래퍼가 세 번째 createGame 인자를 버리는 구버전 세이브/엔진 경로에서도
+// 최종 진입점에서 덱의 이로치 수를 다시 확정한다. 카드 ID가 같은 일반/이로치 복사본은
+// 덱 배열에서는 동일하므로, 시작 손패에 먼저 배정하고 나머지를 이후 드로우용 카운터로 둔다.
+function restorePlayerShinyDeck(game, playerDeckShiny) {
+  const player = game?.players?.player;
+  if (!player) return;
+
+  const available = {};
+  for (const entry of [...(player.hand || []), ...(player.deck || [])]) {
+    const cardId = typeof entry === "string" ? entry : entry?.cardId;
+    if (!cardId || CARD_MAP[cardId]?.kind !== "pokemon") continue;
+    available[cardId] = (available[cardId] || 0) + 1;
+  }
+
+  const remaining = {};
+  for (const [cardId, rawCount] of Object.entries(playerDeckShiny || {})) {
+    if (CARD_MAP[cardId]?.kind !== "pokemon") continue;
+    const count = Math.max(
+      0,
+      Math.min(available[cardId] || 0, Math.floor(Number(rawCount) || 0)),
+    );
+    if (count > 0) remaining[cardId] = count;
+  }
+
+  for (const handCard of player.hand || []) {
+    if (CARD_MAP[handCard?.cardId]?.kind !== "pokemon") continue;
+    handCard.shiny = false;
+    const count = remaining[handCard.cardId] || 0;
+    if (count <= 0) continue;
+    handCard.shiny = true;
+    if (count === 1) delete remaining[handCard.cardId];
+    else remaining[handCard.cardId] = count - 1;
+  }
+
+  player._shinyDeckRemaining = { ...remaining };
+}
+
+export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {
+  // 하위 래퍼가 아직 3번째 인자를 받지 않는 경우가 있어도, 최종 생성 후 복원한다.
+  const game = core.createGame(playerDeckIds, trainer, playerDeckShiny);
+  restorePlayerShinyDeck(game, playerDeckShiny);
 
   if (!isWakeBattle(game)) {
     syncWakeVisual(game);
