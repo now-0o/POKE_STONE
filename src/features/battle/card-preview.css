@@ -2,23 +2,23 @@
    표준 134x188 카드 전체를 확대해서 보여준다. */
 .drag-ghost .hand-card,
 .enemy-reveal .hand-card {
-  width: 134px;
-  height: 188px;
-  min-height: 188px;
-  max-width: none;
-  flex: 0 0 134px;
+  width: 134px !important;
+  height: 188px !important;
+  min-height: 188px !important;
+  max-width: none !important;
+  flex: 0 0 134px !important;
 }
 
 /* 드래그 중에는 기존보다 훨씬 크게. 내부 레이아웃/설명칸 비율은 표준 카드 그대로 유지한다. */
 .drag-ghost {
-  transform: translate(-50%, -62%) scale(1.82);
+  transform: translate(-50%, -62%) scale(1.82) !important;
   transform-origin: center center;
 }
 
 /* 상대가 낸 카드 공개 연출도 같은 표준 카드 레이아웃을 통째로 확대한다. */
 .enemy-reveal {
-  top: 42%;
-  animation: reveal-card-large 1.28s ease-out forwards;
+  top: 42% !important;
+  animation: reveal-card-large 1.28s ease-out forwards !important;
 }
 
 @keyframes reveal-card-large {
@@ -47,7 +47,7 @@
 /* 작은 화면에서도 충분히 크게 보이되 화면 밖으로 잘리지 않게 조정. */
 @media (max-width: 640px) {
   .drag-ghost {
-    transform: translate(-50%, -62%) scale(1.62);
+    transform: translate(-50%, -62%) scale(1.62) !important;
   }
 
   @keyframes reveal-card-large {
