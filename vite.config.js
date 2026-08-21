@@ -21,6 +21,9 @@ const baseAiModule = normalizePath(
 const baseEngineCoreModule = normalizePath(
   path.resolve(process.cwd(), 'src/engine/engine.base.js'),
 );
+const unovaCardsModule = normalizePath(
+  path.resolve(process.cwd(), 'src/data/cards/unova.js'),
+);
 
 const baseEngineModule = normalizePath(
   path.resolve(process.cwd(), 'src/engine/engine.js'),
@@ -111,6 +114,42 @@ export default defineConfig({
           nextCode = nextCode.replace(
             '        {me.hand.map((h, idx) => {\n          const c = CARD_MAP[h.cardId];\n          const playableNow = myTurn && canPlayCard(game, "player", idx);',
             '        {me.hand.map((h, idx) => {\n          const c = CARD_MAP[h.cardId];\n          if (!c) return null;\n          const playableNow = myTurn && canPlayCard(game, "player", idx);',
+          );
+        }
+
+        if (nextCode === code) return null;
+        return { code: nextCode, map: null };
+      },
+    },
+    {
+      name: 'poke-stone-n-gimmick-help-and-defeatist',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        let nextCode = code;
+
+        if (modulePath === battleModule) {
+          nextCode = nextCode.replace(
+            'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";',
+            'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport NBattleHelp from "../features/battle/NBattleHelp.jsx";',
+          );
+          nextCode = nextCode.replace(
+            '      {resultOverlay}',
+            '      {trainer?.gimmick === "n_bond" && <NBattleHelp />}\n      {resultOverlay}',
+          );
+        }
+
+        if (modulePath === baseEngineCoreModule) {
+          nextCode = nextCode.replace(
+            '  // 아케오스 - 무기력\n  if (hasAbility(unit, "defeatist") && unit.hp <= Math.ceil(unit.maxHp / 2)) {\n    atk = Math.max(0, atk - 2);\n  }',
+            '  // 아케오스 - 무기력\n  if (hasAbility(unit, "defeatist") && unit.hp <= Math.ceil(unit.maxHp / 2)) {\n    atk = Math.max(0, Math.floor(atk / 2));\n  }',
+          );
+        }
+
+        if (modulePath === unovaCardsModule) {
+          nextCode = nextCode.replace(
+            'defeatist: "무기력: 체력이 절반 이하이면 공격력 -2.",',
+            'defeatist: "무기력: 체력이 절반 이하이면 공격력이 절반이 된다.",',
           );
         }
 
