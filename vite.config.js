@@ -15,6 +15,15 @@ const aiWrapper = path.resolve(
 const battleModule = normalizePath(
   path.resolve(process.cwd(), 'src/components/Battle.jsx'),
 );
+const openingMulliganModule = normalizePath(
+  path.resolve(process.cwd(), 'src/features/battle/OpeningMulligan.jsx'),
+);
+const sinnohBattleUiModule = normalizePath(
+  path.resolve(process.cwd(), 'src/components/battle/SinnohBattleUi.jsx'),
+);
+const unovaBattleUiModule = normalizePath(
+  path.resolve(process.cwd(), 'src/components/battle/UnovaBattleUi.jsx'),
+);
 const baseAiModule = normalizePath(
   path.resolve(process.cwd(), 'src/engine/ai.js'),
 );
@@ -122,20 +131,38 @@ export default defineConfig({
       },
     },
     {
-      name: 'poke-stone-n-gimmick-help-and-defeatist',
+      name: 'poke-stone-n-gimmick-and-defeatist',
       enforce: 'pre',
       transform(code, id) {
         const modulePath = normalizePath(id.split('?')[0]);
         let nextCode = code;
 
-        if (modulePath === battleModule) {
+        if (modulePath === unovaBattleUiModule) {
           nextCode = nextCode.replace(
-            'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";',
-            'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport NBattleHelp from "../features/battle/NBattleHelp.jsx";',
+            'const GIMMICK_GUIDES = {\n  striaton_counter:',
+            `const GIMMICK_GUIDES = {\n  n_bond: {\n    fieldName: "포켓몬의 마음",\n    lines: [\n      "내 포켓몬은 친밀도 3으로 시작합니다.",\n      "체력이 절반 이하인 상태에서 공격하거나, 상태이상 상태에서 공격하거나, 2턴 이상 연속으로 공격시키면 친밀도가 감소합니다. 한 턴 최대 감소량은 2입니다.",\n      "친밀도가 0이 되면 그 포켓몬은 N에게 전향해 2번의 N 턴 동안 적으로 싸운 뒤 친밀도 2로 돌아옵니다.",\n      "N의 HP가 최대치의 약 2/3에 도달하면 레시라무, 약 1/3에 도달하면 제크로무가 합류합니다.",\n    ],\n    hint: "힌트: 한 포켓몬에게 공격을 몰아주지 말고, 체력이 낮거나 상태이상인 포켓몬은 쉬게 하세요.",\n  },\n  striaton_counter:`,
           );
           nextCode = nextCode.replace(
-            '      {resultOverlay}',
-            '      {trainer?.gimmick === "n_bond" && <NBattleHelp />}\n      {resultOverlay}',
+            '? 버튼을 눌러 하나지방 체육관 룰을 확인하세요',
+            '{trainer.gimmick === "n_bond" ? "? 버튼을 눌러 N 배틀 기믹을 확인하세요" : "? 버튼을 눌러 하나지방 체육관 룰을 확인하세요"}',
+          );
+          nextCode = nextCode.replace(
+            '<span>하나 체육관 기믹</span>',
+            '<span>{trainer.gimmick === "n_bond" ? "N 배틀 기믹" : "하나 체육관 기믹"}</span>',
+          );
+          nextCode = nextCode.replace(
+            '<span className="battle-gimmick-eyebrow">배틀필드</span>',
+            '<span className="battle-gimmick-eyebrow">{trainer.gimmick === "n_bond" ? "특수 규칙" : "배틀필드"}</span>',
+          );
+        }
+
+        if (
+          modulePath === unovaBattleUiModule ||
+          modulePath === sinnohBattleUiModule
+        ) {
+          nextCode = nextCode.replace(
+            '    const timer = window.setTimeout(() => setShowTip(false), 4200);\n    return () => window.clearTimeout(timer);',
+            '    let timer = null;\n    const waitForMulligan = () => {\n      if (document.body.dataset.openingMulligan === "1") {\n        timer = window.setTimeout(waitForMulligan, 250);\n        return;\n      }\n      timer = window.setTimeout(() => setShowTip(false), 4200);\n    };\n    waitForMulligan();\n    return () => {\n      if (timer !== null) window.clearTimeout(timer);\n    };',
           );
         }
 
@@ -162,29 +189,40 @@ export default defineConfig({
       enforce: 'pre',
       transform(code, id) {
         const modulePath = normalizePath(id.split('?')[0]);
-        if (modulePath !== battleModule) return null;
-
         let nextCode = code;
 
-        nextCode = nextCode.replace(
-          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport NBattleHelp from "../features/battle/NBattleHelp.jsx";',
-          'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport NBattleHelp from "../features/battle/NBattleHelp.jsx";\nimport OpeningMulligan from "../features/battle/OpeningMulligan.jsx";',
-        );
+        if (modulePath === openingMulliganModule) {
+          nextCode = nextCode.replace(
+            'import React, { useMemo, useState } from "react";',
+            'import React, { useEffect, useMemo, useState } from "react";',
+          );
+          nextCode = nextCode.replace(
+            '  const [phase, setPhase] = useState("choose");\n\n  const hand = game?.players?.player?.hand || [];',
+            '  const [phase, setPhase] = useState("choose");\n\n  useEffect(() => {\n    if (typeof document === "undefined") return undefined;\n\n    document.body.dataset.openingMulligan = "1";\n    window.dispatchEvent(\n      new CustomEvent("poke-opening-mulligan-change", { detail: { open: true } }),\n    );\n\n    return () => {\n      delete document.body.dataset.openingMulligan;\n      window.dispatchEvent(\n        new CustomEvent("poke-opening-mulligan-change", { detail: { open: false } }),\n      );\n    };\n  }, []);\n\n  const hand = game?.players?.player?.hand || [];',
+          );
+        }
 
-        nextCode = nextCode.replace(
-          '  const [intro, setIntro] = useState("vs"); // \'vs\' -> \'coin\' -> false\n  const [confirmSurrender, setConfirmSurrender] = useState(false);',
-          '  const [intro, setIntro] = useState("vs"); // \'vs\' -> \'coin\' -> false\n  const [mulliganOpen, setMulliganOpen] = useState(true);\n  const [confirmSurrender, setConfirmSurrender] = useState(false);',
-        );
+        if (modulePath === battleModule) {
+          nextCode = nextCode.replace(
+            'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";',
+            'import { HandCard, FieldUnit, TrainerSprite } from "./Card.jsx";\nimport OpeningMulligan from "../features/battle/OpeningMulligan.jsx";',
+          );
 
-        nextCode = nextCode.replace(
-          '    if (intro !== false || game.winner || game.turn !== "enemy") return;',
-          '    if (intro !== false || mulliganOpen || game.winner || game.turn !== "enemy") return;',
-        );
+          nextCode = nextCode.replace(
+            '  const [intro, setIntro] = useState("vs"); // \'vs\' -> \'coin\' -> false\n  const [confirmSurrender, setConfirmSurrender] = useState(false);',
+            '  const [intro, setIntro] = useState("vs"); // \'vs\' -> \'coin\' -> false\n  const [mulliganOpen, setMulliganOpen] = useState(true);\n  const [confirmSurrender, setConfirmSurrender] = useState(false);',
+          );
 
-        nextCode = nextCode.replace(
-          '  const resultOverlay = game.winner && (',
-          `  if (mulliganOpen) {\n    return (\n      <OpeningMulligan\n        game={game}\n        onComplete={() => {\n          setMulliganOpen(false);\n          rerender();\n        }}\n      />\n    );\n  }\n\n  const resultOverlay = game.winner && (`,
-        );
+          nextCode = nextCode.replace(
+            '    if (intro !== false || game.winner || game.turn !== "enemy") return;',
+            '    if (intro !== false || mulliganOpen || game.winner || game.turn !== "enemy") return;',
+          );
+
+          nextCode = nextCode.replace(
+            '  const resultOverlay = game.winner && (',
+            `  if (mulliganOpen) {\n    return (\n      <OpeningMulligan\n        game={game}\n        onComplete={() => {\n          setMulliganOpen(false);\n          rerender();\n        }}\n      />\n    );\n  }\n\n  const resultOverlay = game.winner && (`,
+          );
+        }
 
         if (nextCode === code) return null;
         return { code: nextCode, map: null };
