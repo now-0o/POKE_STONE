@@ -15,18 +15,16 @@ function handCounts(game, side) {
 
 function takeSnapshot(game) {
   return {
-    logLength: game?.log?.length || 0,
     player: handCounts(game, "player"),
     enemy: handCounts(game, "enemy"),
   };
 }
 
 function returnReason(game) {
-  const start = Math.max(
-    previous?.logLength || 0,
-    Math.max(0, (game?.log?.length || 0) - 8),
-  );
-  const text = (game?.log || []).slice(start).join("\n");
+  // game.log는 60줄에서 오래된 로그를 밀어내므로 길이 비교 대신
+  // 방금 발생한 로그 꼬리만 확인한다. 필드->손패 증가 조건도 함께 보므로
+  // 이전 레드카드/탈출버튼 로그가 남아 있어도 오작동하지 않는다.
+  const text = (game?.log || []).slice(-8).join("\n");
   if (text.includes("탈출버튼")) return "eject";
   if (text.includes("레드카드")) return "redcard";
   return null;
