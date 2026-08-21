@@ -8,6 +8,7 @@ import './data/cards/unova.js';
 import './data/cards/unova-legendary-overrides.js';
 import './data/cards/unova-trainers.js';
 import './data/trainers/unova.js';
+import './data/trainers/unova-reward-overrides.js';
 import './data/trainers/sinnoh.js';
 import './data/cards/cynthia.js';
 import './data/trainers/cynthia.js';
