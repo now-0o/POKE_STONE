@@ -6,7 +6,14 @@ const normalizePath = (value) => value.replace(/\\/g, '/');
 
 const gameEngineWrapper = path.resolve(
   process.cwd(),
-  'src/engine/unova-legendary-balance.js',
+  'src/engine/unova-battle-balance.js',
+);
+const aiWrapper = path.resolve(
+  process.cwd(),
+  'src/engine/ai-unova.js',
+);
+const battleModule = normalizePath(
+  path.resolve(process.cwd(), 'src/components/Battle.jsx'),
 );
 
 const baseEngineModule = normalizePath(
@@ -44,18 +51,61 @@ export default defineConfig({
       resolveId(source, importer) {
         const importerPath = importer?.split('?')[0];
 
-        if (!importerPath || importerPath === gameEngineWrapper) {
-          return null;
-        }
+        if (!importerPath) return null;
 
         if (
-          source === '../engine/engine.js' ||
-          source === './engine.js'
+          importerPath !== gameEngineWrapper &&
+          (source === '../engine/engine.js' || source === './engine.js')
         ) {
           return gameEngineWrapper;
         }
 
+        if (
+          importerPath !== aiWrapper &&
+          (source === '../engine/ai.js' || source === './ai.js')
+        ) {
+          return aiWrapper;
+        }
+
         return null;
+      },
+    },
+    {
+      name: 'poke-stone-volt-switch-replay-ui',
+      enforce: 'pre',
+      transform(code, id) {
+        const modulePath = normalizePath(id.split('?')[0]);
+        if (modulePath !== battleModule) return null;
+
+        let nextCode = code;
+
+        nextCode = nextCode.replace(
+          '    const need = spellNeedsTarget(card);\n\n    function attemptPlay',
+          '    const freeVoltReplay = !!h._voltSwitchFreePlay;\n    const need = freeVoltReplay ? null : spellNeedsTarget(card);\n\n    function attemptPlay',
+        );
+        nextCode = nextCode.replace(
+          '    if (card.kind === "pokemon" && !card.evolvesFrom) {',
+          '    if (card.kind === "pokemon" && (!card.evolvesFrom || freeVoltReplay)) {',
+        );
+        nextCode = nextCode.replace(
+          '    if (card.kind === "pokemon" && card.evolvesFrom) {',
+          '    if (card.kind === "pokemon" && card.evolvesFrom && !freeVoltReplay) {',
+        );
+        nextCode = nextCode.replace(
+          '    const need = spellNeedsTarget(card);\n    if (!need) {',
+          '    const need = me.hand[idx]?._voltSwitchFreePlay ? null : spellNeedsTarget(card);\n    if (!need) {',
+        );
+        nextCode = nextCode.replace(
+          '  const spellNeed = activeCard ? spellNeedsTarget(activeCard) : null;',
+          '  const spellNeed = activeCard\n    ? (me.hand[activeHandIdx]?._voltSwitchFreePlay ? null : spellNeedsTarget(activeCard))\n    : null;',
+        );
+        nextCode = nextCode.replace(
+          '    activeCard.kind === "pokemon" &&\n    !activeCard.evolvesFrom;',
+          '    activeCard.kind === "pokemon" &&\n    (!activeCard.evolvesFrom || !!me.hand[dragIdx]?._voltSwitchFreePlay);',
+        );
+
+        if (nextCode === code) return null;
+        return { code: nextCode, map: null };
       },
     },
     {
