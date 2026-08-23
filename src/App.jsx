@@ -33,6 +33,8 @@ export default function App() {
   const [trainer, setTrainer] = useState(null);
   const [, forceRender] = useState(0);
   const [adminToast, setAdminToast] = useState(false);
+  const [syncToast, setSyncToast] = useState("");
+  const syncToastTimer = useRef(null);
   const keyBuffer = useRef("");
 
   // ── 인증 상태 ──
@@ -45,6 +47,12 @@ export default function App() {
 
   const [muted, setMuted] = useState(isMuted());
   const [volume, setVolumeState] = useState(getVolume());
+
+  function showSyncToast(message) {
+    setSyncToast(message);
+    clearTimeout(syncToastTimer.current);
+    syncToastTimer.current = setTimeout(() => setSyncToast(""), 3200);
+  }
 
   // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집·튜토리얼 / 상점 / 배틀
   // 배틀은 지역/트레이너 구분 없이 battle.mp3 한 곡만 사용한다.
@@ -59,6 +67,13 @@ export default function App() {
       playBgm("main");
     }
   }, [authStatus, screen]);
+
+  useEffect(
+    () => () => {
+      clearTimeout(syncToastTimer.current);
+    },
+    [],
+  );
 
   // 앱 첫 로딩: 저장된 토큰이 있으면 유효한지 서버에 확인하고 세이브를 받아온다
   useEffect(() => {
@@ -85,7 +100,34 @@ export default function App() {
     const save = ensureDeckPresets(serverSave || newSave());
     persist(save);
     saveRef.current = save;
-    if (!serverSave) pushSave(save).catch(() => {}); // 신규 유저면 서버에도 첫 세이브 반영
+    if (!serverSave) pushSave(save).catch(handleSaveSyncError); // 신규 유저면 서버에도 첫 세이브 반영
+  }
+
+  function handleSaveSyncError(e) {
+    // 다른 기기의 저장과 충돌한 순간 서버가 돌려준 최신 세이브를 즉시 적용한다.
+    // 충돌 전에 같은 기기 큐에 대기 중이던 요청은 api.js에서 save_superseded로 폐기된다.
+    if (e?.code === "save_conflict") {
+      const latest = ensureDeckPresets(e.serverSave || newSave());
+      persist(latest);
+      saveRef.current = latest;
+      setSelectedBattleStateAfterSync();
+      rerender();
+      showSyncToast("다른 기기의 최신 세이브를 불러왔습니다.");
+      return;
+    }
+
+    if (e?.code === "save_superseded") return;
+
+    console.warn("세이브 서버 동기화 실패:", e?.message || e);
+  }
+
+  function setSelectedBattleStateAfterSync() {
+    // 배틀 중 충돌이 나면 이미 시작한 배틀은 옛 세이브를 기반으로 하고 있으므로
+    // 최신 서버 세이브와 섞지 않고 안전하게 메인으로 돌린다.
+    if (screen === "battle") {
+      setTrainer(null);
+      setScreen("menu");
+    }
   }
 
   function onAuthed(serverSave) {
@@ -127,11 +169,9 @@ export default function App() {
   function onSaveChange(reload = false) {
     if (reload) saveRef.current = loadSave();
     rerender();
-    // 로그인 상태에서 변경된 세이브는 서버로도 반영 (실패해도 로컬은 이미 반영돼있어 게임은 계속 가능)
-    if (saveRef.current)
-      pushSave(saveRef.current).catch((e) =>
-        console.warn("세이브 서버 동기화 실패:", e.message),
-      );
+    // 로그인 상태에서 변경된 세이브는 서버로도 반영.
+    // revision 충돌이면 오래된 로컬 세이브를 저장하지 않고 최신 서버 세이브로 복구한다.
+    if (saveRef.current) pushSave(saveRef.current).catch(handleSaveSyncError);
   }
 
   const battleKeyRef = useRef(0);
@@ -184,6 +224,25 @@ export default function App() {
             }}
           >
             관리자 모드 활성화 — 자금·전 카드 해금됨
+          </div>
+        )}
+        {syncToast && (
+          <div
+            style={{
+              position: "fixed",
+              top: adminToast ? 58 : 12,
+              right: 12,
+              zIndex: 9999,
+              background: "#10271c",
+              border: "1px solid #56c987",
+              color: "#d9ffe8",
+              padding: "8px 14px",
+              borderRadius: 8,
+              fontSize: 13,
+              boxShadow: "0 4px 14px rgba(0,0,0,0.5)",
+            }}
+          >
+            {syncToast}
           </div>
         )}
         {screen === "menu" && (
