@@ -18,6 +18,23 @@ const USERNAME_KEY = 'pkm_stone_username';
 // 최신 세이브를 덮어쓰지 않도록 서버 저장 요청을 순서대로 처리한다.
 let saveWriteQueue = Promise.resolve();
 
+// 마지막으로 서버에서 확인한 세이브 revision.
+// 같은 기기 안에서는 큐가 실행되는 시점의 최신 revision을 사용하고,
+// 다른 기기와 충돌하면 epoch를 올려 이미 대기 중이던 오래된 요청을 폐기한다.
+let saveRevision = 0;
+let saveSyncEpoch = 0;
+
+function setServerRevision(revision, invalidateQueuedWrites = false) {
+  saveRevision = Number.isInteger(revision) && revision >= 0 ? revision : 0;
+  if (invalidateQueuedWrites) saveSyncEpoch += 1;
+}
+
+function supersededSaveError() {
+  const err = new Error('더 최신 서버 세이브가 적용되어 이전 저장 요청을 취소했습니다.');
+  err.code = 'save_superseded';
+  return err;
+}
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -27,6 +44,7 @@ export function getStoredUsername() {
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
+  setServerRevision(0, true);
 }
 function setAuth(token, username) {
   localStorage.setItem(TOKEN_KEY, token);
@@ -46,6 +64,7 @@ async function req(path, opts = {}) {
     const err = new Error(body?.message || body?.error || `요청 실패 (${res.status})`);
     err.status = res.status;
     err.code = body?.error;
+    err.body = body;
     throw err;
   }
   return body;
@@ -54,30 +73,59 @@ async function req(path, opts = {}) {
 export async function register(username, password) {
   const data = await req('/register', { method: 'POST', body: JSON.stringify({ username, password }) });
   setAuth(data.token, data.username);
+  setServerRevision(data.revision ?? 0, true);
   return data;
 }
 
 export async function login(username, password) {
   const data = await req('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
   setAuth(data.token, data.username);
-  return data; // { token, username, save }
+  setServerRevision(data.revision ?? 0, true);
+  return data; // { token, username, save, revision }
 }
 
 export async function fetchSave() {
   const data = await req('/save', { method: 'GET' });
+  setServerRevision(data.revision ?? 0, true);
   return data.save; // null이면 아직 서버에 저장된 게 없다는 뜻
 }
 
 export function pushSave(save) {
   // 호출 순간의 세이브와 계정을 함께 고정한다. 이후 같은 save 객체가 mutate되거나
   // 로그아웃/재로그인이 일어나도 이미 큐에 들어간 저장이 다른 계정으로 넘어가지 않는다.
-  const body = JSON.stringify({ data: save });
+  const dataSnapshot = JSON.stringify(save);
   const token = getToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const queuedEpoch = saveSyncEpoch;
 
   const write = saveWriteQueue
     .catch(() => undefined)
-    .then(() => req('/save', { method: 'PUT', body, headers }));
+    .then(async () => {
+      // 다른 기기와 충돌한 뒤에도 큐에 남아 있던 과거 로컬 세이브는 서버로 보내지 않는다.
+      if (queuedEpoch !== saveSyncEpoch) throw supersededSaveError();
+
+      const body = `{"data":${dataSnapshot},"revision":${saveRevision}}`;
+
+      try {
+        const result = await req('/save', { method: 'PUT', body, headers });
+        if (Number.isInteger(result?.revision)) {
+          setServerRevision(result.revision);
+        }
+        return result;
+      } catch (err) {
+        if (err?.code === 'save_conflict') {
+          const serverRevision = err.body?.revision;
+          if (Number.isInteger(serverRevision)) {
+            setServerRevision(serverRevision, true);
+          } else {
+            saveSyncEpoch += 1;
+          }
+          err.serverSave = err.body?.save ?? null;
+          err.serverRevision = serverRevision;
+        }
+        throw err;
+      }
+    });
 
   saveWriteQueue = write;
   return write;
