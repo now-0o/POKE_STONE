@@ -7,6 +7,8 @@ import './data/cards/sinnoh.js';
 import './data/cards/unova.js';
 import './data/cards/unova-legendary-overrides.js';
 import './data/cards/unova-trainers.js';
+// 일반 카드 확장이 모두 등록된 뒤 v3.3 밸런스 수치를 최종 적용한다.
+import './data/cards/balance-v33.js';
 import './data/trainers/unova.js';
 import './data/trainers/unova-reward-overrides.js';
 import './data/trainers/unova-n.js';
