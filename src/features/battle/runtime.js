@@ -1,6 +1,6 @@
 import "./battle-screen-counters.css";
 import "./unovaMoveFxRuntime.js";
-import { syncBattleHistory } from "./battleHistoryRuntime.js";
+import { syncBattleHistory } from "./battleHistoryRuntimeV2.js";
 import { syncWeatherIndicator } from "./weatherTurnRuntime.js";
 
 function syncEndTurnLabel() {
