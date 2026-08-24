@@ -73,7 +73,19 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
   return (
     <div className="card-dex-screen">
-      <div className="screen-header card-dex-header">
+      <div
+        className="screen-header card-dex-header"
+        style={{
+          position: "static",
+          zIndex: "auto",
+          width: "min(1080px, 100%)",
+          margin: "0 auto 16px",
+          padding: 0,
+          background: "none",
+          borderBottom: "none",
+          backdropFilter: "none",
+        }}
+      >
         <button
           className="btn-ghost"
           onClick={() => {
@@ -86,7 +98,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
         <h2>카드 도감</h2>
 
-        <div className="dex-header-progress">
+        <div className="dex-region-progress">
           발견 {allDiscoveredCount}/{allCards.length}
         </div>
       </div>
