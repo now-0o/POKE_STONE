@@ -22,7 +22,6 @@ if (!CARD_MAP.hail) {
     moveType: "얼음",
     cost: 2,
     rarity: "C",
-    emoji: "🌨️",
     animation: {
       type: "weather",
       theme: "ice",
