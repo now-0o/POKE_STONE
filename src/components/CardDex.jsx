@@ -8,6 +8,7 @@ import {
   dexQuestState,
 } from "../features/card-dex/state.js";
 import "../features/card-dex/styles.css";
+import "../features/card-dex/scale-v2.css";
 
 const REGION_TABS = [
   { id: "all", name: "전체", min: 1, max: 649 },
@@ -246,7 +247,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
                     <span>
                       보유 {Math.min(save.collection?.[card.id] || 0, maxCopies)} / {maxCopies}
                     </span>
-                    {shinyOwned && <span className="dex-shiny-owned">✨ 이로치 보유</span>}
+                    {shinyOwned && <span className="dex-shiny-owned">이로치 보유</span>}
                   </>
                 ) : (
                   <span>카드팩에서 획득하면 정보가 공개됩니다.</span>
