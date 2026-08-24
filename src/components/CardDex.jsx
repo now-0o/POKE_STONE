@@ -42,7 +42,7 @@ function rewardLabel(reward) {
   return "보상 수령 완료";
 }
 
-export default function CardDex({ save, onSaveChange, onBack, onShop }) {
+export default function CardDex({ save, onSaveChange, onBack }) {
   const [region, setRegion] = useState("all");
   const [rewardNotice, setRewardNotice] = useState(null);
   const allCards = useMemo(() => buildDexCards(), []);
@@ -73,36 +73,23 @@ export default function CardDex({ save, onSaveChange, onBack, onShop }) {
 
   return (
     <div className="card-dex-screen">
-      <header className="card-dex-header">
-        <div className="card-dex-header-inner">
-          <button
-            className="btn-ghost card-dex-back-btn"
-            onClick={() => {
-              playSfx("click");
-              onBack?.();
-            }}
-          >
-            ← 돌아가기
-          </button>
+      <div className="screen-header card-dex-header">
+        <button
+          className="btn-ghost"
+          onClick={() => {
+            playSfx("click");
+            onBack?.();
+          }}
+        >
+          ← 돌아가기
+        </button>
 
-          <div className="card-dex-title-block">
-            <h2>카드 도감</h2>
-            <span>
-              발견 {allDiscoveredCount} / {allCards.length}
-            </span>
-          </div>
+        <h2>카드 도감</h2>
 
-          <button
-            className="btn-secondary card-dex-shop-btn"
-            onClick={() => {
-              playSfx("slide");
-              onShop?.();
-            }}
-          >
-            카드팩 상점
-          </button>
+        <div className="dex-header-progress">
+          발견 {allDiscoveredCount}/{allCards.length}
         </div>
-      </header>
+      </div>
 
       <div className="dex-toolbar">
         <div className="dex-tabs" role="tablist" aria-label="지방별 도감">
