@@ -1,41 +1,23 @@
 import React, { useState } from "react";
-
 import { TRAINERS_BY_REGION, TRAINER_MAP } from "../data/trainers.js";
-
 import { resetSave } from "../state/save.js";
-
 import { TrainerSprite } from "./Card.jsx";
-
 import { UI_SPRITES } from "../data/cards.js";
-
 import { playSfx } from "../audio.js";
 
 const REGION_LABELS = {
-  kanto: {
-    name: "관동지방",
-    sub: "KANTO",
-  },
-  johto: {
-    name: "성도지방",
-    sub: "JOHTO",
-  },
-  hoenn: {
-    name: "호연지방",
-    sub: "HOENN",
-  },
-  sinnoh: {
-    name: "신오지방",
-    sub: "SINNOH",
-  },
-  unova: {
-    name: "하나지방",
-    sub: "UNOVA",
-  },
+  kanto: { name: "관동지방", sub: "KANTO" },
+  johto: { name: "성도지방", sub: "JOHTO" },
+  hoenn: { name: "호연지방", sub: "HOENN" },
+  sinnoh: { name: "신오지방", sub: "SINNOH" },
+  unova: { name: "하나지방", sub: "UNOVA" },
 };
 
 export default function MainMenu({
   save,
   username,
+  onlineAdmin,
+  onOnline,
   onBattle,
   onShop,
   onDeck,
@@ -45,42 +27,28 @@ export default function MainMenu({
   onLogout,
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
-
-  // null = 지방 선택 화면
   const [selectedRegion, setSelectedRegion] = useState(null);
 
   const deckReady = save.deck.length === 30;
-
-  // 레드 격파 후 성도 해금
+  const onlineReady = !!onlineAdmin && deckReady;
   const johtoUnlocked = save.adminMode || (save.wins?.champion || 0) > 0;
-
-  // 목호 격파 후 호연 해금
   const hoennUnlocked = save.adminMode || (save.wins?.johto_lance || 0) > 0;
-
   const hoennTrainers = TRAINERS_BY_REGION.hoenn || [];
-
   const hoennLastTrainer = hoennTrainers[hoennTrainers.length - 1];
-
   const sinnohUnlocked =
     save.adminMode ||
     (hoennLastTrainer && (save.wins?.[hoennLastTrainer.id] || 0) > 0);
-
   const sinnohTrainers = TRAINERS_BY_REGION.sinnoh || [];
-
   const sinnohLastTrainer = sinnohTrainers[sinnohTrainers.length - 1];
-
   const unovaUnlocked =
     save.adminMode ||
     (sinnohLastTrainer && (save.wins?.[sinnohLastTrainer.id] || 0) > 0);
 
   async function goFullscreen() {
     const el = document.documentElement;
-
     try {
       if (el.requestFullscreen) {
-        await el.requestFullscreen({
-          navigationUI: "hide",
-        });
+        await el.requestFullscreen({ navigationUI: "hide" });
       } else if (el.webkitRequestFullscreen) {
         el.webkitRequestFullscreen();
       } else if (el.msRequestFullscreen) {
@@ -104,35 +72,34 @@ export default function MainMenu({
       playSfx("buzzer");
       return;
     }
-
     if (region === "hoenn" && !hoennUnlocked) {
       playSfx("buzzer");
       return;
     }
-
     if (region === "sinnoh" && !sinnohUnlocked) {
       playSfx("buzzer");
       return;
     }
-
     if (region === "unova" && !unovaUnlocked) {
       playSfx("buzzer");
       return;
     }
-
     playSfx("click");
     setSelectedRegion(region);
   }
 
+  function openOnline() {
+    if (!onlineReady) {
+      playSfx("buzzer");
+      return;
+    }
+    playSfx("click");
+    onOnline?.();
+  }
+
   function trainerUnlocked(t) {
-    if (save.adminMode) {
-      return true;
-    }
-
-    if (!t.requires) {
-      return true;
-    }
-
+    if (save.adminMode) return true;
+    if (!t.requires) return true;
     return (save.wins?.[t.requires] || 0) > 0;
   }
 
@@ -154,7 +121,6 @@ export default function MainMenu({
 
       <div className="title-block">
         <h1 className="game-title">POKE STONE</h1>
-
         <p className="game-subtitle">FAN-MADE CARD BATTLE</p>
       </div>
 
@@ -168,10 +134,8 @@ export default function MainMenu({
             height={22}
             draggable={false}
           />
-
           {save.money}
         </span>
-
         <span className="res-item">
           <img
             className="res-icon"
@@ -185,14 +149,37 @@ export default function MainMenu({
         </span>
       </div>
 
-      {/* =========================================
-          지방 선택
-          ========================================= */}
       {!selectedRegion && (
         <>
           <div className="region-title">도전할 지방을 선택하세요</div>
 
           <div className="region-select">
+            <button
+              className={[
+                "region-card",
+                onlineReady ? "region-online" : "region-locked",
+              ].join(" ")}
+              onMouseEnter={() => onlineReady && playSfx("cursor")}
+              onClick={openOnline}
+            >
+              <span className="region-info">
+                <span className="region-name">온라인 배틀</span>
+                <span className="region-sub">ONLINE · RANDOM MATCH</span>
+                <span className="region-desc">실시간 대전 안정성 테스트</span>
+                {!onlineAdmin && (
+                  <span className="region-lock-text">
+                    🔒 stonemaster 관리자 계정 전용
+                  </span>
+                )}
+                {onlineAdmin && !deckReady && (
+                  <span className="region-lock-text">🔒 30장 덱 완성 필요</span>
+                )}
+              </span>
+              <span className="region-go">
+                {onlineReady ? "매칭 ▶" : "TEST LOCK"}
+              </span>
+            </button>
+
             <button
               className="region-card"
               onMouseEnter={() => playSfx("cursor")}
@@ -200,12 +187,9 @@ export default function MainMenu({
             >
               <span className="region-info">
                 <span className="region-name">관동지방</span>
-
                 <span className="region-sub">KANTO</span>
-
                 <span className="region-desc">체육관 로드 · 챔피언 레드</span>
               </span>
-
               <span className="region-go">선택 ▶</span>
             </button>
 
@@ -219,22 +203,19 @@ export default function MainMenu({
             >
               <span className="region-info">
                 <span className="region-name">성도지방</span>
-
                 <span className="region-sub">JOHTO</span>
-
                 <span className="region-desc">강한 AI · 안정적인 덱</span>
-
                 {!johtoUnlocked && (
                   <span className="region-lock-text">
                     🔒 챔피언 레드 격파 후 해금
                   </span>
                 )}
               </span>
-
               <span className="region-go">
                 {johtoUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
+
             <button
               className={[
                 "region-card",
@@ -245,22 +226,19 @@ export default function MainMenu({
             >
               <span className="region-info">
                 <span className="region-name">호연지방</span>
-
                 <span className="region-sub">HOENN</span>
-
                 <span className="region-desc">최상급 AI · 메가진화 · 전설</span>
-
                 {!hoennUnlocked && (
                   <span className="region-lock-text">
                     🔒 챔피언 목호 격파 후 해금
                   </span>
                 )}
               </span>
-
               <span className="region-go">
                 {hoennUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
+
             <button
               className={[
                 "region-card",
@@ -271,22 +249,19 @@ export default function MainMenu({
             >
               <span className="region-info">
                 <span className="region-name">신오지방</span>
-
                 <span className="region-sub">SINNOH</span>
-
                 <span className="region-desc">특수 배틀 · 체육관 기믹</span>
-
                 {!sinnohUnlocked && (
                   <span className="region-lock-text">
                     🔒 호연지방 클리어 후 해금
                   </span>
                 )}
               </span>
-
               <span className="region-go">
                 {sinnohUnlocked ? "선택 ▶" : "LOCK"}
               </span>
             </button>
+
             <button
               className={[
                 "region-card",
@@ -297,18 +272,14 @@ export default function MainMenu({
             >
               <span className="region-info">
                 <span className="region-name">하나지방</span>
-
                 <span className="region-sub">UNOVA</span>
-
                 <span className="region-desc">최상급 AI · 전용 체육관 룰</span>
-
                 {!unovaUnlocked && (
                   <span className="region-lock-text">
                     🔒 신오지방 클리어 후 해금
                   </span>
                 )}
               </span>
-
               <span className="region-go">
                 {unovaUnlocked ? "선택 ▶" : "LOCK"}
               </span>
@@ -317,9 +288,6 @@ export default function MainMenu({
         </>
       )}
 
-      {/* =========================================
-          트레이너 선택
-          ========================================= */}
       {selectedRegion && (
         <>
           <div className="trainer-region-header">
@@ -332,10 +300,8 @@ export default function MainMenu({
             >
               ◀ 지방 선택
             </button>
-
             <div>
               <strong>{REGION_LABELS[selectedRegion]?.name}</strong>
-
               <span className="trainer-region-sub">
                 {" "}
                 {REGION_LABELS[selectedRegion]?.sub}
@@ -346,11 +312,8 @@ export default function MainMenu({
           <div className="trainer-list">
             {trainers.map((t) => {
               const wins = save.wins?.[t.id] || 0;
-
               const progressUnlocked = trainerUnlocked(t);
-
               const canBattle = deckReady && progressUnlocked;
-
               const requiredTrainer = t.requires
                 ? TRAINER_MAP[t.requires]
                 : null;
@@ -377,10 +340,8 @@ export default function MainMenu({
                     emoji={t.emoji}
                     size={56}
                   />
-
                   <span className="trainer-info">
                     <span className="trainer-name">{t.name}</span>
-
                     <span className="trainer-meta">
                       {progressUnlocked ? (
                         <>
@@ -392,20 +353,16 @@ export default function MainMenu({
                             height={14}
                             draggable={false}
                           />
-
                           {t.reward}
-
                           {wins > 0 && ` · 승리 ${wins}회`}
                         </>
                       ) : (
                         <>
-                          🔒 {requiredTrainer?.name || "이전 트레이너"} 격파
-                          필요
+                          🔒 {requiredTrainer?.name || "이전 트레이너"} 격파 필요
                         </>
                       )}
                     </span>
                   </span>
-
                   <span className="trainer-go">
                     {canBattle ? "배틀 ▶" : "LOCK"}
                   </span>
@@ -495,14 +452,7 @@ export default function MainMenu({
 
       <div className="menu-footer">
         {username && (
-          <span
-            style={{
-              opacity: 0.55,
-              marginRight: 10,
-            }}
-          >
-            {username}님
-          </span>
+          <span style={{ opacity: 0.55, marginRight: 10 }}>{username}님</span>
         )}
         {onLogout && (
           <button
