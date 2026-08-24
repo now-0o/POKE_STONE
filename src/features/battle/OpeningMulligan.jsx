@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { HandCard } from "../../components/Card.jsx";
+import { getOnlineBattleBridge } from "../../engine/onlineBattleBridge.js";
 import "./opening-mulligan.css";
 
 let mulliganUid = 1;
@@ -49,11 +50,6 @@ function replaceOpeningCards(game, selectedUids) {
     return { count: 0, replacementUids: [] };
   }
 
-  // 하스스톤식 처리:
-  // 1) 교체할 카드는 잠시 덱 밖에 둔다.
-  // 2) 남은 덱에서 같은 수만큼 새 카드를 뽑는다.
-  // 3) 처음 뺀 카드들을 다시 덱에 넣고 섞는다.
-  // 따라서 선택한 바로 그 카드를 즉시 다시 뽑는 일은 없다.
   const replacements = [];
   for (let i = 0; i < selectedEntries.length; i += 1) {
     const cardId = player.deck.pop();
@@ -75,8 +71,6 @@ function replaceOpeningCards(game, selectedUids) {
 
   const actuallyReplaced = selectedEntries.slice(0, replacements.length);
 
-  // 교체 카드의 이로치 소유권은 새 카드를 다 뽑은 뒤 덱으로 복구한다.
-  // 그래야 방금 선택해 뺀 이로치 카드가 즉시 다른 복사본에 붙어 재등장하지 않는다.
   for (const entry of actuallyReplaced) {
     restoreShiny(player, entry.cardId, entry.shiny);
   }
@@ -101,19 +95,59 @@ function replaceOpeningCards(game, selectedUids) {
 export default function OpeningMulligan({ game, onComplete }) {
   const [selected, setSelected] = useState(() => new Set());
   const [phase, setPhase] = useState("choose");
+  const [error, setError] = useState("");
+  const completeRef = useRef(false);
 
   const hand = game?.players?.player?.hand || [];
   const first = game?.firstSide === "player";
   const selectedCount = selected.size;
   const choosing = phase === "choose";
+  const online = !!game?._onlineMatch?.id;
 
   const subtitle = useMemo(
-    () =>
-      first
-        ? "선공 · 시작 카드 3장"
-        : "후공 · 시작 카드 4장",
+    () => (first ? "선공 · 시작 카드 3장" : "후공 · 시작 카드 4장"),
     [first],
   );
+
+  function finish() {
+    if (completeRef.current) return;
+    completeRef.current = true;
+    onComplete?.();
+  }
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+
+    document.body.dataset.openingMulligan = "1";
+    window.dispatchEvent(
+      new CustomEvent("poke-opening-mulligan-change", { detail: { open: true } }),
+    );
+
+    return () => {
+      delete document.body.dataset.openingMulligan;
+      window.dispatchEvent(
+        new CustomEvent("poke-opening-mulligan-change", { detail: { open: false } }),
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!online || phase !== "waiting") return undefined;
+
+    let stopped = false;
+    const checkReady = () => {
+      if (stopped) return;
+      const bridge = getOnlineBattleBridge(game);
+      if (bridge?.canAct?.()) finish();
+    };
+
+    checkReady();
+    const timer = window.setInterval(checkReady, 80);
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+    };
+  }, [game, online, phase]);
 
   function toggle(uid) {
     if (!choosing) return;
@@ -125,29 +159,61 @@ export default function OpeningMulligan({ game, onComplete }) {
     });
   }
 
-  function confirm() {
-    if (!choosing) return;
+  async function confirmOnline() {
+    const bridge = getOnlineBattleBridge(game);
+    if (!bridge?.dispatch) {
+      setError("온라인 배틀 연결을 확인하지 못했습니다.");
+      return;
+    }
 
+    const cardUids = [...selected];
+    setError("");
+    setPhase(selectedCount > 0 ? "outgoing" : "waiting");
+
+    if (selectedCount > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, 220));
+      setPhase("waiting");
+    }
+
+    try {
+      const ok = await bridge.dispatch({ type: "mulligan", cardUids });
+      if (!ok) {
+        setPhase("choose");
+        setError("시작 손패 확정에 실패했습니다. 다시 시도해주세요.");
+      }
+    } catch (err) {
+      setPhase("choose");
+      setError(err?.message || "시작 손패 확정에 실패했습니다.");
+    }
+  }
+
+  function confirmOffline() {
     if (selectedCount === 0) {
-      onComplete?.();
+      finish();
       return;
     }
 
     const selectedSnapshot = new Set(selected);
     setPhase("outgoing");
 
-    // 화면/패널은 그대로 둔 채 선택 카드만 먼저 접어서 빼낸다.
     window.setTimeout(() => {
       const result = replaceOpeningCards(game, selectedSnapshot);
-
-      // 같은 슬롯에 들어온 새 카드 UID만 표시해 펼쳐지는 애니메이션을 준다.
       setSelected(new Set(result.replacementUids));
       setPhase("incoming");
 
       window.setTimeout(() => {
-        onComplete?.();
+        finish();
       }, 480);
     }, 260);
+  }
+
+  function confirm() {
+    if (!choosing) return;
+    if (online) {
+      confirmOnline();
+      return;
+    }
+    confirmOffline();
   }
 
   return (
@@ -163,8 +229,11 @@ export default function OpeningMulligan({ game, onComplete }) {
           <h2>시작 손패</h2>
           <p className="opening-mulligan-order">{subtitle}</p>
           <p className="opening-mulligan-help">
-            원하지 않는 카드를 선택하세요. 선택한 카드만 무작위로 교체됩니다.
+            {phase === "waiting"
+              ? "내 선택 완료 · 상대의 시작 손패 선택을 기다리는 중입니다."
+              : "원하지 않는 카드를 선택하세요. 선택한 카드만 무작위로 교체됩니다."}
           </p>
+          {error && <p className="online-error">{error}</p>}
         </div>
 
         <div className={`opening-mulligan-cards count-${hand.length}`}>
@@ -217,16 +286,20 @@ export default function OpeningMulligan({ game, onComplete }) {
         <div className="opening-mulligan-actions">
           <div className="opening-mulligan-selected-count" aria-live="polite">
             {phase === "outgoing"
-              ? "선택한 카드를 교체하는 중..."
+              ? "선택한 카드를 확정하는 중..."
               : phase === "incoming"
                 ? "새 카드가 들어왔습니다."
-                : selectedCount > 0
-                  ? `${selectedCount}장 교체 선택`
-                  : "카드를 눌러 교체할 카드를 선택"}
+                : phase === "waiting"
+                  ? "상대 선택 대기 중..."
+                  : selectedCount > 0
+                    ? `${selectedCount}장 교체 선택`
+                    : "카드를 눌러 교체할 카드를 선택"}
           </div>
           <button type="button" onClick={confirm} disabled={!choosing}>
             {!choosing
-              ? "교체 중..."
+              ? phase === "waiting"
+                ? "상대 기다리는 중..."
+                : "교체 중..."
               : selectedCount > 0
                 ? `${selectedCount}장 교체`
                 : "이대로 시작"}
