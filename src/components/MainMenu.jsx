@@ -39,6 +39,7 @@ export default function MainMenu({
   onBattle,
   onShop,
   onDeck,
+  onDex,
   onTutorial,
   onSaveChange,
   onLogout,
@@ -458,6 +459,18 @@ export default function MainMenu({
             draggable={false}
           />
           컬렉션 · 덱
+        </button>
+
+        <button
+          className="btn-secondary with-icon"
+          onMouseEnter={() => playSfx("cursor")}
+          onClick={() => {
+            playSfx("click");
+            onDex?.();
+          }}
+        >
+          <span aria-hidden="true">📖</span>
+          카드 도감
         </button>
 
         <button
