@@ -34,6 +34,10 @@ function supersededSaveError() {
   return err;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -163,7 +167,24 @@ export async function leaveMatchmaking() {
 }
 
 export async function fetchOnlineBootstrap(matchId) {
-  return req(`/online/match/${encodeURIComponent(matchId)}/bootstrap`, { method: 'GET' });
+  const data = await req(`/online/match/${encodeURIComponent(matchId)}/bootstrap`, { method: 'GET' });
+
+  // 비호스트에게는 상대 덱 정보가 내려오지 않는 것이 정상이다.
+  // 공용 Battle은 실제 온라인 상태를 bridge에서 받으므로 빈 덱 스냅샷만 보강해
+  // bootstrap.playerDeck 접근 때문에 화면 전체가 죽지 않도록 한다.
+  return {
+    ...data,
+    playerDeck: data.playerDeck || {
+      username: data.me?.username || '',
+      deck: [],
+      deckShiny: {},
+    },
+    enemyDeck: data.enemyDeck || {
+      username: data.opponent?.username || '상대',
+      deck: [],
+      deckShiny: {},
+    },
+  };
 }
 
 export async function initializeOnlineMatch(matchId, game) {
@@ -182,10 +203,29 @@ export async function fetchOnlineHostState(matchId) {
 }
 
 export async function sendOnlineCommand(matchId, command) {
-  return req(`/online/match/${encodeURIComponent(matchId)}/command`, {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  const maxAttempts = command?.type === 'mulligan' ? 8 : 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return await req(`/online/match/${encodeURIComponent(matchId)}/command`, {
+        method: 'POST',
+        body: JSON.stringify(command),
+      });
+    } catch (err) {
+      const retryMulligan =
+        command?.type === 'mulligan' &&
+        err?.code === 'command_busy' &&
+        attempt < maxAttempts - 1;
+
+      if (!retryMulligan) throw err;
+
+      // 양쪽이 멀리건 확정을 동시에 눌러도 단일 host command 슬롯 때문에
+      // 사용자가 두 번 누르지 않도록 첫 요청을 자동 재시도한다.
+      await sleep(350);
+    }
+  }
+
+  throw new Error('온라인 행동 전송에 실패했습니다.');
 }
 
 export async function commitOnlineHostState(matchId, payload) {
