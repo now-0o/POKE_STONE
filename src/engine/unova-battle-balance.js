@@ -9,6 +9,17 @@ const N_RETURN_FRIENDSHIP = 2;
 const N_DEFECTION_TURNS = 2;
 const N_MAX_FRIENDSHIP_LOSS_PER_TURN = 2;
 
+const WEATHER_TURN_LIMITS = Object.freeze({
+  rain: 5,
+  sun: 5,
+  sand: 3,
+  hail: 3,
+});
+
+if (core.WEATHER_NAME) {
+  core.WEATHER_NAME.hail = "싸라기눈";
+}
+
 function isNBattle(game) {
   return game?.trainer?.gimmick === N_GIMMICK;
 }
@@ -68,6 +79,7 @@ function nReservedFieldFull(game, side, card, handCard) {
 
 function syncNState(game) {
   if (typeof window === "undefined" || !game) return;
+  window.__pokeBattleGame = game;
   window.__pokeNState = {
     game,
     phase: game._nPhase || 1,
@@ -373,8 +385,165 @@ function resolveNPhaseGate(game) {
   return false;
 }
 
+function weatherLimit(weather) {
+  return WEATHER_TURN_LIMITS[weather] || 0;
+}
+
+function refreshForecastForWeather(game) {
+  if (!game?.players) return;
+  const weatherType =
+    game.weather === "rain"
+      ? "물"
+      : game.weather === "sun"
+        ? "불꽃"
+        : game.weather === "sand"
+          ? "바위"
+          : game.weather === "hail"
+            ? "얼음"
+            : "노말";
+
+  for (const side of ["player", "enemy"]) {
+    for (const unit of game.players[side]?.field || []) {
+      if (unit.ability === "forecast" || unit.secondaryAbility === "forecast") {
+        unit.type = weatherType;
+      }
+    }
+  }
+}
+
+function armWeatherTimer(game, weather) {
+  if (!game) return;
+  if (!weather) {
+    game._weatherTurnsRemaining = 0;
+    game._weatherDurationWeather = null;
+    return;
+  }
+
+  game._weatherTurnsRemaining = weatherLimit(weather);
+  game._weatherDurationWeather = weather;
+  game._weatherSerial = (game._weatherSerial || 0) + 1;
+  refreshForecastForWeather(game);
+}
+
+function weatherActivationSeen(weather, lines) {
+  const text = (lines || []).join("\n");
+  if (!text) return false;
+
+  if (weather === "rain") {
+    return /(비가 내리기 시작|폭우|근원의바다|비가 쏟아|비 날씨)/.test(text);
+  }
+  if (weather === "sun") {
+    return /(햇살이 강해|쾌청|끝의대지|그래스필드)/.test(text);
+  }
+  if (weather === "sand") {
+    return /(모래바람이 불기 시작|모래바람 날씨|모래날림)/.test(text);
+  }
+  if (weather === "hail") {
+    return /싸라기눈/.test(text);
+  }
+  return false;
+}
+
+function syncWeatherAfterAction(game, beforeWeather, beforeLogLength, card = null) {
+  if (!game) return;
+  const afterWeather = game.weather || null;
+
+  if (!afterWeather) {
+    if (beforeWeather || game._weatherDurationWeather) armWeatherTimer(game, null);
+    refreshForecastForWeather(game);
+    return;
+  }
+
+  const newLines = (game.log || []).slice(beforeLogLength || 0);
+  const explicitWeatherCard = card?.spell?.effect === "weather";
+  const changed = beforeWeather !== afterWeather;
+  const retriggered = explicitWeatherCard || weatherActivationSeen(afterWeather, newLines);
+  const timerMissing =
+    game._weatherDurationWeather !== afterWeather ||
+    !Number.isFinite(game._weatherTurnsRemaining) ||
+    game._weatherTurnsRemaining <= 0;
+
+  if (changed || retriggered || timerMissing) {
+    armWeatherTimer(game, afterWeather);
+  } else {
+    refreshForecastForWeather(game);
+  }
+}
+
+function hailImmune(unit) {
+  if (!unit || unit.hp <= 0) return true;
+  if (unit.type === "얼음") return true;
+  return unit.ability === "overcoat" || unit.secondaryAbility === "overcoat";
+}
+
+function applyHailEndDamage(game) {
+  if (game?.weather !== "hail") return;
+
+  let hit = false;
+  for (const side of ["player", "enemy"]) {
+    for (const unit of game.players?.[side]?.field || []) {
+      if (hailImmune(unit)) continue;
+      unit.hp = Math.max(0, unit.hp - 1);
+      hit = true;
+    }
+  }
+
+  game.log.push("싸라기눈이 몰아친다!");
+  if (hit) core.cleanupDeaths(game);
+}
+
+function decayWeatherAfterTurn(game, weatherAtEnd) {
+  if (!game || !weatherAtEnd || game.weather !== weatherAtEnd) return;
+
+  const limit = weatherLimit(weatherAtEnd);
+  const current =
+    game._weatherDurationWeather === weatherAtEnd &&
+    Number.isFinite(game._weatherTurnsRemaining)
+      ? game._weatherTurnsRemaining
+      : limit;
+  const next = Math.max(0, current - 1);
+
+  game._weatherTurnsRemaining = next;
+  game._weatherDurationWeather = weatherAtEnd;
+
+  if (next > 0) return;
+
+  const name = core.WEATHER_NAME?.[weatherAtEnd] || "날씨";
+  game.weather = null;
+  game._weatherDurationWeather = null;
+  refreshForecastForWeather(game);
+  game.log.push(`${name}이(가) 그쳤다!`);
+}
+
+function dispatchWeatherTurnStart(game) {
+  if (
+    typeof window === "undefined" ||
+    !game?.weather ||
+    game.winner ||
+    !Number.isFinite(game._weatherTurnsRemaining) ||
+    game._weatherTurnsRemaining <= 0
+  ) {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent("poke-weather-turn-start", {
+      detail: {
+        weather: game.weather,
+        name: core.WEATHER_NAME?.[game.weather] || game.weather,
+        remaining: game._weatherTurnsRemaining,
+        side: game.turn,
+        turnCount: game.turnCount,
+      },
+    }),
+  );
+}
+
 export function createGame(playerDeckIds, trainer, playerDeckShiny = null) {
   const game = core.createGame(playerDeckIds, trainer, playerDeckShiny);
+  game._weatherTurnsRemaining = 0;
+  game._weatherDurationWeather = null;
+  game._weatherSerial = 0;
   if (isNBattle(game)) {
     game._nPhase = 1;
     game._nForcedSeq = 0;
@@ -412,6 +581,8 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   const beforeHandUids = isVoltSwitch
     ? new Set(player.hand.map((entry) => entry.uid))
     : null;
+  const beforeWeather = game.weather || null;
+  const beforeLogLength = game.log?.length || 0;
 
   const result = withVoltSwitchReplay(card, handCard, () =>
     core.playCard(game, side, handIdx, target, fieldIndex),
@@ -422,6 +593,7 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   }
 
   if (result) {
+    syncWeatherAfterAction(game, beforeWeather, beforeLogLength, card);
     ensureNFriendship(game);
     resolveNPhaseGate(game);
     resolveZeroFriendship(game);
@@ -443,9 +615,12 @@ export function attack(game, side, attackerUid, target) {
           lastAttackTurn: attacker._nLastAttackTurn,
         }
       : null;
+  const beforeWeather = game.weather || null;
+  const beforeLogLength = game.log?.length || 0;
 
   const result = core.attack(game, side, attackerUid, target);
   if (result) {
+    syncWeatherAfterAction(game, beforeWeather, beforeLogLength);
     resolveNPhaseGate(game);
     if (side === "player") applyNStressAfterAttack(game, attackerUid, stressSnapshot);
     ensureNFriendship(game);
@@ -457,16 +632,28 @@ export function attack(game, side, attackerUid, target) {
 
 export function endTurn(game) {
   const endingSide = game.turn;
+  const weatherAtEnd = game.weather || null;
+
   if (isNBattle(game) && endingSide === "enemy") {
     releaseNDefections(game);
   }
 
+  if (weatherAtEnd === "hail") {
+    applyHailEndDamage(game);
+    if (game.winner) {
+      syncNState(game);
+      return undefined;
+    }
+  }
+
   const result = core.endTurn(game);
+  decayWeatherAfterTurn(game, weatherAtEnd);
   if (isNBattle(game)) {
     ensureNFriendship(game);
     resolveNPhaseGate(game);
     if (game.turn === "enemy") resolveZeroFriendship(game);
   }
   syncNState(game);
+  dispatchWeatherTurnStart(game);
   return result;
 }
