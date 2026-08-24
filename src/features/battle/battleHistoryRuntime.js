@@ -5,7 +5,11 @@ import {
   SAND_IMMUNE_TYPES,
   spriteUrl,
 } from "../../data/cards.js";
-import { effectiveAtk, effectiveCost } from "../../engine/engine.js";
+import {
+  calcTypedDamage,
+  effectiveAtk,
+  effectiveCost,
+} from "../../engine/engine.js";
 import { HandCard } from "../../components/Card.jsx";
 import "./battle-history.css";
 
@@ -509,7 +513,6 @@ function weatherSpecForMessage(message) {
       weather: "sand",
       icon: "🏜️",
       label: "모래바람",
-      damageText: "피해 1",
     };
   }
   if (message === "싸라기눈이 몰아친다!") {
@@ -517,7 +520,6 @@ function weatherSpecForMessage(message) {
       weather: "hail",
       icon: "🌨️",
       label: "싸라기눈",
-      damageText: "얼음 피해 1",
     };
   }
   return null;
@@ -546,15 +548,21 @@ function weatherActionsFromLines(newLines, currentSnapshots, oldSnapshots) {
 
       let targetSnapshot = null;
       let targetFainted = false;
+      let weatherDamage = 1;
 
       if (spec.weather === "hail") {
-        targetFainted = (before.unit?.hp || 0) <= 1;
+        weatherDamage = calcTypedDamage(
+          1,
+          "얼음",
+          before.unit?.type || card.type,
+        );
+        targetFainted = (before.unit?.hp || 0) <= weatherDamage;
         targetSnapshot = {
           ...before,
           unit: before.unit
             ? {
                 ...before.unit,
-                hp: Math.max(0, (before.unit.hp || 0) - 1),
+                hp: Math.max(0, (before.unit.hp || 0) - weatherDamage),
               }
             : null,
         };
@@ -572,6 +580,11 @@ function weatherActionsFromLines(newLines, currentSnapshots, oldSnapshots) {
         targetFainted = !after || (targetSnapshot.unit?.hp || 0) <= 0;
       }
 
+      const damageLabel =
+        spec.weather === "hail"
+          ? `얼음 피해 ${weatherDamage}`
+          : `피해 ${weatherDamage}`;
+
       actions.push({
         index: index + offset / 1000,
         action: {
@@ -588,9 +601,9 @@ function weatherActionsFromLines(newLines, currentSnapshots, oldSnapshots) {
           targetHero: null,
           weatherTargetSide: before.side,
           side: "neutral",
-          damage: 1,
+          damage: weatherDamage,
           retaliation: 0,
-          message: `${spec.label}! ${card.name}이(가) ${spec.damageText}을 받았다.`,
+          message: `${spec.label}! ${card.name}이(가) ${damageLabel}을 받았다.`,
         },
       });
       offset += 1;
