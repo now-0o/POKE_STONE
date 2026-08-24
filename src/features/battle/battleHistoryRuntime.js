@@ -16,7 +16,16 @@ let selectedSeq = null;
 let mobileOpen = false;
 let syncing = false;
 
+function getBattleGame() {
+  return window.__pokeNState?.game || null;
+}
+
 function readBattleLines(board) {
+  const game = getBattleGame();
+  if (Array.isArray(game?.log)) {
+    return game.log.map((line) => String(line || "").trim()).filter(Boolean);
+  }
+
   const log = board?.querySelector(".mid-bar .battle-log");
   if (!log) return [];
   return [...log.children]
