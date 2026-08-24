@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Battle from "./Battle.jsx";
-import { HandCard } from "./Card.jsx";
 import * as battleRules from "../engine/engine.rules.js";
 import {
   registerOnlineBattleBridge,
@@ -18,8 +17,14 @@ import {
 import { playSfx } from "../audio.js";
 import "../styles/online-battle.css";
 
-const POLL_MS = 500;
+const POLL_MS = 120;
+const COMMAND_RETRY_MS = 80;
+const COMMAND_RETRY_ATTEMPTS = 5;
 const ONLINE_TRAINER_SPRITE = "ethan";
+
+function sleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 function cloneJson(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -254,6 +259,7 @@ function resolvePendingChoice(game, side, value) {
 function applyHostCommand(game, command, seed) {
   const side = command.side;
   const payload = command.payload || {};
+
   try {
     if (payload.type === "mulligan") {
       return {
@@ -328,9 +334,10 @@ function applyHostCommand(game, command, seed) {
       game.log.push(`${game.players[side].name}이(가) 항복했다.`);
       return { ok: true };
     }
-  } catch (error) {
-    return { ok: false, error: error?.message || "engine_error" };
+  } catch (err) {
+    return { ok: false, error: err?.message || "engine_error" };
   }
+
   return { ok: false, error: "unknown_command" };
 }
 
@@ -340,14 +347,15 @@ export default function OnlineBattle({ match, onBack }) {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pendingCommandId, setPendingCommandId] = useState(null);
-  const [mulliganSelected, setMulliganSelected] = useState([]);
+  const [pendingCommand, setPendingCommand] = useState(null);
+
   const initializedRef = useRef(false);
   const processingCommandRef = useRef(null);
   const mountedRef = useRef(true);
   const sharedGameRef = useRef(null);
-  const latestRef = useRef({ room: null, busy: false });
+  const latestRef = useRef({ room: null });
   const issueRef = useRef(null);
+  const busyRef = useRef(false);
 
   const displayGame = useMemo(
     () => localViewGame(room?.game, room?.mySide),
@@ -362,7 +370,7 @@ export default function OnlineBattle({ match, onBack }) {
     }
   }
 
-  latestRef.current = { room, busy };
+  latestRef.current = { room };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -413,6 +421,7 @@ export default function OnlineBattle({ match, onBack }) {
 
     const game = cloneJson(snapshot.game);
     const result = applyHostCommand(game, command, seed);
+
     try {
       await commitOnlineHostState(matchId, {
         commandId: command.id,
@@ -421,6 +430,14 @@ export default function OnlineBattle({ match, onBack }) {
         ok: result.ok,
         error: result.error || null,
       });
+
+      if (mountedRef.current) {
+        const refreshed = await fetchOnlineHostState(matchId);
+        if (mountedRef.current) {
+          setRoom(refreshed);
+          setError("");
+        }
+      }
     } catch (err) {
       if (mountedRef.current) {
         setError(err.message || "전투 행동 동기화에 실패했습니다.");
@@ -438,13 +455,16 @@ export default function OnlineBattle({ match, onBack }) {
     async function tick() {
       if (stopped || running) return;
       running = true;
+
       try {
         const next = bootstrap.host
           ? await fetchOnlineHostState(matchId)
           : await fetchOnlineState(matchId);
         if (stopped) return;
+
         setRoom(next);
         setError("");
+
         if (bootstrap.host && next.pendingCommand) {
           await processHostCommand(next, bootstrap.seed);
         }
@@ -470,26 +490,81 @@ export default function OnlineBattle({ match, onBack }) {
   }, [matchId, bootstrap]);
 
   useEffect(() => {
-    if (!pendingCommandId || room?.lastCommand?.id !== pendingCommandId) return;
+    if (!pendingCommand || !room) return;
+
+    const matchingLast = room.lastCommand?.id === pendingCommand.id;
+    const revisionAdvanced = room.revision > pendingCommand.baseRevision;
+    if (!matchingLast && !revisionAdvanced) return;
+
+    busyRef.current = false;
     setBusy(false);
-    if (!room.lastCommand.ok) {
+
+    if (matchingLast && !room.lastCommand.ok) {
       setError(
         `행동이 처리되지 않았습니다: ${room.lastCommand.error || "invalid_action"}`,
       );
+      playSfx("buzzer");
     }
-    setPendingCommandId(null);
-  }, [room?.lastCommand, pendingCommandId]);
+
+    setPendingCommand(null);
+  }, [room?.revision, room?.lastCommand, pendingCommand]);
+
+  useEffect(() => {
+    if (!displayGame?.turn) return;
+
+    document.body.dataset.battleTurn = displayGame.turn;
+    window.dispatchEvent(
+      new CustomEvent("battle-turn-change", {
+        detail: { turn: displayGame.turn },
+      }),
+    );
+  }, [room?.revision, displayGame?.turn]);
+
+  async function sendWithRetry(command) {
+    let lastError = null;
+
+    for (let attempt = 0; attempt < COMMAND_RETRY_ATTEMPTS; attempt += 1) {
+      try {
+        return await sendOnlineCommand(matchId, command);
+      } catch (err) {
+        lastError = err;
+        if (err?.code !== "command_busy" || attempt === COMMAND_RETRY_ATTEMPTS - 1) {
+          throw err;
+        }
+        await sleep(COMMAND_RETRY_MS);
+      }
+    }
+
+    throw lastError || new Error("온라인 행동 전송에 실패했습니다.");
+  }
 
   async function issue(command) {
-    if (busy || !matchId) return false;
+    if (busyRef.current || !matchId) return false;
+
+    busyRef.current = true;
     setBusy(true);
     setError("");
+
     try {
-      const result = await sendOnlineCommand(matchId, command);
-      setPendingCommandId(result.commandId);
+      const result = await sendWithRetry(command);
+      setPendingCommand({
+        id: result.commandId,
+        baseRevision: result.revision,
+      });
+
+      if (bootstrap?.host) {
+        const snapshot = await fetchOnlineHostState(matchId);
+        if (mountedRef.current) setRoom(snapshot);
+        if (snapshot.pendingCommand) {
+          await processHostCommand(snapshot, bootstrap.seed);
+        }
+      }
+
       return true;
     } catch (err) {
+      busyRef.current = false;
       setBusy(false);
+      setPendingCommand(null);
       setError(err.message || "행동을 서버로 보내지 못했습니다.");
       playSfx("buzzer");
       return false;
@@ -502,7 +577,7 @@ export default function OnlineBattle({ match, onBack }) {
     registerOnlineBattleBridge(matchId, {
       getGame: () => sharedGameRef.current,
       canAct: () =>
-        latestRef.current.room?.phase === "battle" && !latestRef.current.busy,
+        latestRef.current.room?.phase === "battle" && !busyRef.current,
       dispatch: (command) => issueRef.current?.(command),
     });
   }
@@ -510,23 +585,10 @@ export default function OnlineBattle({ match, onBack }) {
   useEffect(
     () => () => {
       unregisterOnlineBattleBridge(matchId);
+      delete document.body.dataset.battleTurn;
     },
     [matchId],
   );
-
-  async function submitMulligan() {
-    const ok = await issue({ type: "mulligan", cardUids: mulliganSelected });
-    if (ok) playSfx("click");
-  }
-
-  function toggleMulligan(uid) {
-    if (room?.mulligan?.me || busy) return;
-    setMulliganSelected((current) =>
-      current.includes(uid)
-        ? current.filter((value) => value !== uid)
-        : [...current, uid],
-    );
-  }
 
   async function leaveRoom() {
     unregisterOnlineBattleBridge(matchId);
@@ -562,87 +624,17 @@ export default function OnlineBattle({ match, onBack }) {
     );
   }
 
-  const my = displayGame.players.player;
   const enemy = displayGame.players.enemy;
-
-  if (room.phase === "mulligan") {
-    return (
-      <div className="online-battle-screen">
-        <div className="online-battle-topbar">
-          <div>
-            <strong>ONLINE BATTLE</strong>
-            <span>#{String(matchId).slice(0, 8)}</span>
-          </div>
-          <div className={`online-sync-state ${error ? "error" : ""}`}>
-            {error || (busy ? "선택 동기화 중" : "상대와 연결됨")}
-          </div>
-          <button className="btn-ghost small" onClick={leaveRoom}>
-            전투방 나가기
-          </button>
-        </div>
-
-        <div className="online-mulligan-overlay active-page">
-          <div className="online-mulligan-box">
-            <span className="online-state-label">MULLIGAN</span>
-            <h2>교체할 카드를 선택하세요</h2>
-            <p>
-              {room.mulligan.me
-                ? room.mulligan.opponent
-                  ? "양쪽 준비 완료. 전투를 시작합니다."
-                  : "내 선택 완료. 상대를 기다리는 중입니다."
-                : "선택하지 않으면 현재 손패를 그대로 사용합니다."}
-            </p>
-            <div className="online-mulligan-cards">
-              {my.hand.map((handCard) => (
-                <div
-                  key={handCard.uid}
-                  className={
-                    mulliganSelected.includes(handCard.uid) ? "selected" : ""
-                  }
-                  onClick={() => toggleMulligan(handCard.uid)}
-                >
-                  <HandCard
-                    cardId={handCard.cardId}
-                    handCard={handCard}
-                    shiny={!!handCard.shiny}
-                    playable={!room.mulligan.me && !busy}
-                    selected={mulliganSelected.includes(handCard.uid)}
-                  />
-                  <span>
-                    {mulliganSelected.includes(handCard.uid) ? "교체" : "유지"}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {!room.mulligan.me && (
-              <button
-                className="btn-primary"
-                disabled={busy}
-                onClick={submitMulligan}
-              >
-                {busy
-                  ? "확정 중..."
-                  : mulliganSelected.length
-                    ? `${mulliganSelected.length}장 교체`
-                    : "이 손패로 시작"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const onlineTrainer = {
     id: `online-${matchId}`,
     matchId,
     onlineBattle: true,
-    name: enemy.name || bootstrap.enemyDeck.username,
+    name: enemy.name || bootstrap.enemyDeck?.username || room.opponent?.username || "상대",
     sprite: ONLINE_TRAINER_SPRITE,
     emoji: "⚔️",
     hp: enemy.maxHp || 40,
     reward: 0,
-    deck: [...(bootstrap.enemyDeck.deck || [])],
+    deck: [...(bootstrap.enemyDeck?.deck || [])],
     region: "kanto",
     gymType: "",
     introLines: ["온라인 배틀, 시작한다!"],
@@ -655,8 +647,8 @@ export default function OnlineBattle({ match, onBack }) {
       <Battle
         key={`shared-online-${matchId}`}
         trainer={onlineTrainer}
-        deck={bootstrap.playerDeck.deck}
-        deckShiny={bootstrap.playerDeck.deckShiny || {}}
+        deck={bootstrap.playerDeck?.deck || []}
+        deckShiny={bootstrap.playerDeck?.deckShiny || {}}
         onFinish={handleBattleFinish}
       />
 
