@@ -2,26 +2,10 @@ import "./weather-turn.css";
 import "./battle-history-layout-fix.css";
 
 const WEATHER_VIEW = {
-  rain: {
-    icon: "🌧️",
-    title: "비가 계속 내린다",
-    particle: "│",
-  },
-  sun: {
-    icon: "☀️",
-    title: "강한 햇살이 비춘다",
-    particle: "✦",
-  },
-  sand: {
-    icon: "🏜️",
-    title: "모래바람이 휘몰아친다",
-    particle: "·",
-  },
-  hail: {
-    icon: "🌨️",
-    title: "싸라기눈이 쏟아진다",
-    particle: "◆",
-  },
+  rain: { title: "비가 계속 내린다" },
+  sun: { title: "강한 햇살이 비춘다" },
+  sand: { title: "모래바람이 휘몰아친다" },
+  hail: { title: "싸라기눈이 쏟아진다" },
 };
 
 let activeOverlay = null;
@@ -40,10 +24,9 @@ function removeWeatherFx() {
   activeOverlay = null;
 }
 
-function makeParticle(view, index) {
+function makeParticle(index) {
   const particle = document.createElement("span");
   particle.className = "weather-turn-particle";
-  particle.textContent = view.particle;
   particle.style.setProperty("--weather-x", `${(index * 37 + 11) % 100}%`);
   particle.style.setProperty("--weather-y", `${12 + ((index * 23) % 70)}%`);
   particle.style.setProperty("--weather-delay", `${(index % 7) * 55}ms`);
@@ -65,18 +48,13 @@ function showWeatherFx(detail) {
 
   const atmosphere = document.createElement("div");
   atmosphere.className = "weather-turn-atmosphere";
-  for (let i = 0; i < 24; i += 1) {
-    atmosphere.appendChild(makeParticle(view, i));
+  for (let i = 0; i < 28; i += 1) {
+    atmosphere.appendChild(makeParticle(i));
   }
   overlay.appendChild(atmosphere);
 
   const banner = document.createElement("div");
   banner.className = "weather-turn-banner";
-
-  const icon = document.createElement("span");
-  icon.className = "weather-turn-icon";
-  icon.textContent = view.icon;
-  banner.appendChild(icon);
 
   const copy = document.createElement("div");
   copy.className = "weather-turn-copy";
