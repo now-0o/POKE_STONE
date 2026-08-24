@@ -915,7 +915,7 @@ function captureNewLines(board, game, currentSnapshots, oldSnapshots) {
   for (const item of parsed) {
     const action = enrichAction(item.action, game, oldSnapshots, currentSnapshots);
     if (
-      (action.type === "weather" || action.isAoe) &&
+      action.type === "weather" &&
       Array.isArray(action.targets) &&
       action.targets.length === 0
     ) {
