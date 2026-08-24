@@ -31,7 +31,7 @@ if (!CARD_MAP.hail) {
       duration: 720,
     },
     spell: { effect: "weather", weather: "hail" },
-    text: "날씨를 3턴 동안 싸라기눈으로 바꾼다. (매 턴 종료 시 얼음 타입이 아닌 포켓몬 전체에게 얼음 피해 1)",
+    text: "날씨를 3턴 동안 싸라기눈으로 바꾼다. (매 턴 종료 시 얼음 타입이 아닌 포켓몬 전체에게 기본 얼음 피해 1, 상성 적용)",
   };
 
   CARDS.push(hail);
