@@ -1,0 +1,391 @@
+.card-dex-screen {
+  min-height: calc(100vh - 24px);
+  padding: 18px 6px 36px;
+}
+
+.card-dex-header {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  padding: 8px 6px 12px;
+  background: linear-gradient(180deg, rgba(11, 16, 32, .98), rgba(11, 16, 32, .86), transparent);
+  backdrop-filter: blur(8px);
+}
+
+.card-dex-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.card-dex-title-block span {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.card-dex-shop-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.dex-set-panel {
+  width: min(1050px, 100%);
+  margin: 6px auto 18px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(190px, .7fr);
+  align-items: center;
+  gap: 18px;
+  border: 1px solid rgba(245, 197, 66, .36);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(245, 197, 66, .14), transparent 35%),
+    linear-gradient(145deg, rgba(39, 47, 76, .96), rgba(16, 23, 43, .97));
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .28);
+}
+
+.dex-set-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-family: var(--display-font);
+  font-size: 10px;
+  letter-spacing: .14em;
+}
+
+.dex-set-copy h3 {
+  font-family: var(--display-font);
+  font-size: 22px;
+}
+
+.dex-set-copy p,
+.dex-set-reward-copy {
+  margin-top: 7px;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dex-set-progress {
+  width: max-content;
+  margin-top: 9px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(245, 197, 66, .12);
+  color: var(--accent);
+  font-family: var(--display-font);
+  font-size: 11px;
+}
+
+.dex-set-reward-copy small {
+  display: block;
+  margin-top: 2px;
+  opacity: .72;
+  font-size: 10px;
+}
+
+.dex-starter-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.dex-starter-chip {
+  width: 86px;
+  min-height: 96px;
+  padding: 7px 5px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--panel-border);
+  border-radius: 13px;
+  background: rgba(255,255,255,.045);
+}
+
+.dex-starter-chip.missing .dex-starter-sprite {
+  filter: grayscale(1) brightness(.5) contrast(1.1);
+  opacity: .66;
+}
+
+.dex-starter-chip.found {
+  border-color: rgba(245, 197, 66, .42);
+  background: rgba(245, 197, 66, .07);
+}
+
+.dex-starter-chip strong {
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.dex-starter-chip span {
+  margin-top: 3px;
+  color: var(--text-dim);
+  font-size: 9px;
+}
+
+.dex-starter-chip.found span {
+  color: #8ee6aa;
+}
+
+.dex-set-action {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.dex-set-action .btn-primary {
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.dex-reward-claimed {
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid rgba(90, 215, 132, .34);
+  border-radius: 12px;
+  background: rgba(65, 168, 102, .09);
+}
+
+.dex-reward-claimed span {
+  color: #83dca1;
+  font-size: 10px;
+}
+
+.dex-reward-claimed strong {
+  font-size: 13px;
+}
+
+.dex-reward-toast {
+  color: var(--accent);
+  text-align: center;
+  font-size: 11px;
+}
+
+.dex-toolbar {
+  width: min(1050px, 100%);
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dex-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dex-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.dex-tabs button {
+  flex: 0 0 auto;
+  padding: 7px 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(255,255,255,.04);
+  color: var(--text-dim);
+  font-family: var(--display-font);
+  font-size: 11px;
+}
+
+.dex-tabs button.active {
+  border-color: var(--accent);
+  background: rgba(245, 197, 66, .13);
+  color: var(--accent);
+}
+
+.dex-region-progress {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.dex-grid {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+  gap: 13px;
+}
+
+.dex-entry {
+  min-width: 0;
+  padding: 9px 7px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 15px;
+  background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+  overflow: hidden;
+}
+
+.dex-entry.is-owned {
+  border-color: rgba(255,255,255,.18);
+}
+
+.dex-entry.is-locked {
+  background: linear-gradient(160deg, rgba(255,255,255,.032), rgba(0,0,0,.08));
+}
+
+.dex-entry-topline,
+.dex-entry-footer {
+  width: 134px;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dex-entry-topline {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-family: var(--display-font);
+  font-size: 9px;
+}
+
+.dex-entry.is-owned .dex-entry-topline span:last-child {
+  color: #86dda4;
+}
+
+.dex-card-shell {
+  width: 134px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.dex-card-shell > .hand-card {
+  margin: 0 auto;
+}
+
+.dex-entry.is-locked .hand-card {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* 미발견 카드: 포켓몬 자체는 흑백으로 보여주되 카드 성능은 모자이크 처리한다. */
+.dex-entry.is-locked .card-sprite {
+  filter: grayscale(1) brightness(.52) contrast(1.12) !important;
+  opacity: .82 !important;
+}
+
+.dex-entry.is-locked .card-cost,
+.dex-entry.is-locked .hcard-orb {
+  color: transparent !important;
+  text-shadow: none !important;
+  border-color: rgba(255,255,255,.2) !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.18) 25%, transparent 25% 50%, rgba(255,255,255,.18) 50% 75%, transparent 75%),
+    linear-gradient(rgba(14,19,31,.96), rgba(35,41,56,.96)) !important;
+  background-size: 5px 5px, 100% 100% !important;
+}
+
+.dex-entry.is-locked .card-text {
+  position: relative !important;
+  background:
+    repeating-linear-gradient(90deg, rgba(33,38,48,.92) 0 5px, rgba(79,84,94,.78) 5px 9px),
+    repeating-linear-gradient(0deg, rgba(22,27,37,.88) 0 4px, rgba(103,108,117,.7) 4px 8px) !important;
+  color: transparent !important;
+  border-radius: 4px;
+}
+
+.dex-entry.is-locked .card-text-inner {
+  visibility: hidden !important;
+}
+
+.dex-entry.is-locked .holo-layer {
+  opacity: .08 !important;
+}
+
+.dex-entry-footer {
+  min-height: 28px;
+  margin-top: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  color: var(--text-dim);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.dex-entry.is-locked .dex-entry-footer {
+  opacity: .72;
+}
+
+.dex-shiny-owned {
+  color: #f6d976;
+}
+
+@media (max-width: 760px) {
+  .card-dex-screen {
+    padding-top: 8px;
+  }
+
+  .card-dex-header {
+    align-items: center;
+  }
+
+  .card-dex-header .btn-ghost,
+  .card-dex-shop-btn {
+    font-size: 10px;
+  }
+
+  .dex-set-panel {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .dex-set-copy {
+    text-align: center;
+  }
+
+  .dex-set-progress {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .dex-set-action {
+    width: min(330px, 100%);
+    margin: 0 auto;
+  }
+
+  .dex-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dex-tabs {
+    width: 100%;
+  }
+
+  .dex-grid {
+    grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+    gap: 9px;
+  }
+}
+
+@media (max-width: 390px) {
+  .dex-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dex-entry {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .dex-starter-chip {
+    width: 78px;
+  }
+}
