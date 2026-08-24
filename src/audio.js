@@ -147,6 +147,18 @@ const LEGEND_CRY_IDS = new Set([
   "registeel",
   "suicune",
   "zapdos",
+
+  // 5세대 / 하나지방
+  "victini",
+  "cobalion",
+  "terrakion",
+  "virizion",
+  "tornadus",
+  "thundurus",
+  "landorus",
+  "reshiram",
+  "zekrom",
+  "kyurem",
 ]);
 
 // 트레이너 전용 시그니처 카드 ID -> 실제 포켓몬 울음소리 파일명
