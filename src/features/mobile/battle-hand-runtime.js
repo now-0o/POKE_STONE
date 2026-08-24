@@ -68,8 +68,6 @@ function layoutHand(hand) {
   const expandedStep =
     count > 1 ? Math.min(expandedStepMax, expandedSpan / (count - 1)) : 0;
 
-  // 축소 손패는 기본 포개짐을 유지한다. 버리기 버튼이 있는 경우에도
-  // 버튼이 눌릴 정도만 살짝 넓히고, 손패가 화면을 길게 차지하지 않게 제한한다.
   const collapsedLimit = hasDiscardControls
     ? portrait
       ? 124
@@ -209,8 +207,6 @@ function onPointerDown(event) {
       return;
     }
 
-    // 중요: pointerdown 순간에는 절대 grabbing 클래스를 붙이지 않는다.
-    // 탭/가로 스크롤이 실제 카드 드래그처럼 한 프레임 깜빡이는 원인이었다.
     handGesture = {
       board,
       hand,
@@ -220,6 +216,13 @@ function onPointerDown(event) {
       moved: false,
       cardCount,
     };
+    return;
+  }
+
+  // 기술/도구/진화 카드의 대상 선택 중에는 필드 포켓몬 터치를
+  // 공격 제스처로 해석하지 않는다. React의 onUnitClick이 카드 사용을 처리한다.
+  if (board.querySelector(":scope > .hand .hand-card.selected")) {
+    board.classList.remove("mobile-field-interacting");
     return;
   }
 
