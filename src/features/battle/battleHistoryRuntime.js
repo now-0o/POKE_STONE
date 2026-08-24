@@ -11,6 +11,7 @@ let sequence = 0;
 let selectedSeq = null;
 let mobileOpen = false;
 let syncing = false;
+let floatingTooltip = null;
 
 function getBattleGame() {
   return window.__pokeNState?.game || null;
@@ -42,6 +43,19 @@ function suffixPrefixOverlap(before, after) {
     if (same) return size;
   }
   return 0;
+}
+
+function shouldIgnoreMessage(message) {
+  const text = String(message || "").trim();
+  if (!text) return true;
+
+  // 전투 행동이 아닌 단순 턴 안내는 히스토리에 남기지 않는다.
+  if (/의\s*차례[!！.…]*\s*$/.test(text)) return true;
+  if (/^(?:내|상대)\s*차례[!！.…]*\s*$/.test(text)) return true;
+  if (/턴\s*(?:종료|넘김|넘기기)/.test(text)) return true;
+  if (/턴을\s*넘/.test(text)) return true;
+
+  return false;
 }
 
 function cardCandidates() {
@@ -186,10 +200,10 @@ function turnEntries(entry) {
 }
 
 function createTooltip(entry) {
-  const tooltip = document.createElement("span");
+  const tooltip = document.createElement("div");
   tooltip.className = "battle-history-tooltip";
 
-  const head = document.createElement("span");
+  const head = document.createElement("div");
   head.className = "battle-history-tooltip-head";
 
   const title = document.createElement("strong");
@@ -204,21 +218,21 @@ function createTooltip(entry) {
 
   tooltip.appendChild(createFlowNode(entry));
 
-  const message = document.createElement("span");
+  const message = document.createElement("div");
   message.className = "battle-history-primary-message";
   message.textContent = entry.message;
   tooltip.appendChild(message);
 
   const sameTurn = turnEntries(entry);
   if (sameTurn.length > 1) {
-    const group = document.createElement("span");
+    const group = document.createElement("div");
     group.className = "battle-history-turn-detail";
 
     const groupTitle = document.createElement("strong");
     groupTitle.textContent = "이 턴의 기록";
     group.appendChild(groupTitle);
 
-    const list = document.createElement("span");
+    const list = document.createElement("div");
     list.className = "battle-history-turn-detail-list";
     sameTurn.forEach((item) => {
       const line = document.createElement("span");
@@ -233,6 +247,39 @@ function createTooltip(entry) {
   return tooltip;
 }
 
+function clearFloatingTooltip() {
+  floatingTooltip?.remove();
+  floatingTooltip = null;
+}
+
+function showFloatingTooltip(entry, anchor) {
+  if (!anchor || window.matchMedia?.("(pointer: coarse), (max-width: 760px)").matches) {
+    return;
+  }
+
+  clearFloatingTooltip();
+
+  const tooltip = createTooltip(entry);
+  tooltip.classList.add("is-floating");
+  document.body.appendChild(tooltip);
+  floatingTooltip = tooltip;
+
+  const anchorRect = anchor.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const gap = 12;
+
+  let left = anchorRect.right + gap;
+  if (left + tooltipRect.width > window.innerWidth - 8) {
+    left = Math.max(8, anchorRect.left - tooltipRect.width - gap);
+  }
+
+  let top = anchorRect.top + anchorRect.height / 2 - tooltipRect.height / 2;
+  top = Math.max(8, Math.min(top, window.innerHeight - tooltipRect.height - 8));
+
+  tooltip.style.left = `${Math.round(left)}px`;
+  tooltip.style.top = `${Math.round(top)}px`;
+}
+
 function createEntryNode(entry) {
   const button = document.createElement("button");
   button.type = "button";
@@ -242,8 +289,11 @@ function createEntryNode(entry) {
   button.setAttribute("aria-label", entry.message);
 
   button.appendChild(createPortrait(entry.cards[0] || null));
-  button.appendChild(createTooltip(entry));
 
+  button.addEventListener("mouseenter", () => showFloatingTooltip(entry, button));
+  button.addEventListener("mouseleave", clearFloatingTooltip);
+  button.addEventListener("focus", () => showFloatingTooltip(entry, button));
+  button.addEventListener("blur", clearFloatingTooltip);
   button.addEventListener("click", () => {
     selectedSeq = selectedSeq === entry.seq ? null : entry.seq;
     renderHistory(mountedBoard);
@@ -298,6 +348,8 @@ function visibleTurnGroups() {
 
 function renderHistory(board) {
   if (!board || board !== mountedBoard) return;
+  clearFloatingTooltip();
+
   const shell = createShell(board);
   shell.classList.toggle("is-open", mobileOpen);
 
@@ -307,6 +359,12 @@ function renderHistory(board) {
 
   const list = document.createElement("div");
   list.className = "battle-history-list";
+
+  // 로그가 적을 때도 항상 레일 아래에서 시작한다.
+  const spacer = document.createElement("div");
+  spacer.className = "battle-history-spacer";
+  list.appendChild(spacer);
+
   const groups = visibleTurnGroups();
 
   if (!groups.length) {
@@ -360,9 +418,10 @@ function captureNewLines(board) {
   }
 
   const overlap = suffixPrefixOverlap(previousLines, currentLines);
-  const newLines = previousLines.length ? currentLines.slice(overlap) : currentLines;
+  const rawNewLines = previousLines.length ? currentLines.slice(overlap) : currentLines;
   previousLines = currentLines;
 
+  const newLines = rawNewLines.filter((message) => !shouldIgnoreMessage(message));
   if (!newLines.length) return false;
 
   const game = getBattleGame();
@@ -390,6 +449,7 @@ function captureNewLines(board) {
 function resetForBoard(board) {
   if (mountedBoard === board) return;
 
+  clearFloatingTooltip();
   if (mountedBoard) mountedBoard.classList.remove("battle-history-enabled");
   mountedBoard = board;
   previousLines = [];
