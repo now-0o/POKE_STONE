@@ -1,0 +1,9 @@
+.battle-history-v2-card-inner.is-fainted .hp-current {
+  font-size: 0 !important;
+}
+
+.battle-history-v2-card-inner.is-fainted .hp-current::after {
+  content: "0";
+  font-size: 12px;
+  font-weight: 700;
+}
