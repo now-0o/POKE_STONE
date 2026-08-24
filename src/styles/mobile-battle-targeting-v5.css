@@ -1,16 +1,51 @@
 /* Mobile battle targeting/hand UX v5
- * - landscape: while a tapped card is waiting for a target, hide the hand and
- *   keep the target guide inside Safari's actually visible viewport.
- * - portrait: expanded hand is a straight horizontal rail with manual swipe
- *   scrolling; collapsing returns to the existing lower-right fan.
+ * - portrait: expanded hand is a stable straight horizontal rail with swipe scroll.
+ * - dragging no longer recenters one card or hides the rest of the hand.
+ * - landscape: keep the board/hand inside VisualViewport and make basic-Pokemon
+ *   drops match the visible card position more reliably.
  */
+
+/* -------------------------------------------------------------------------
+   Shared mobile dragging behavior
+   ------------------------------------------------------------------------- */
+@media (pointer: coarse), (max-width: 1024px) {
+  /* V4 used to hide every sibling as soon as grabbing/drag-origin appeared.
+     Keep the whole hand visible instead. */
+  .battle-board.mobile-hand-grabbing > .hand .hand-card-wrap:not(.mobile-grabbed-card),
+  .battle-board > .hand:has(.hand-card.drag-origin)
+    .hand-card-wrap:not(:has(.hand-card.drag-origin)) {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  /* Once the drag ghost exists, keep the hand visible as a reference instead
+     of blanking the entire bottom UI. The ghost itself remains pointer-transparent. */
+  .battle-board:has(.drag-ghost) > .hand {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+  }
+
+  .battle-board:has(.drag-ghost) > .hand .hand-card-wrap {
+    pointer-events: auto !important;
+  }
+
+  /* The original card stays in its slot as a faint placeholder while the ghost
+     follows the finger. This avoids a second full-strength copy. */
+  .battle-board > .hand .hand-card.drag-origin {
+    opacity: .26 !important;
+    filter: saturate(.65) !important;
+    box-shadow: none !important;
+  }
+}
 
 /* -------------------------------------------------------------------------
    Portrait expanded hand: straight row + horizontal scroll
    ------------------------------------------------------------------------- */
 @media (orientation: portrait) and (pointer: coarse),
        (orientation: portrait) and (max-width: 700px) {
-  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand {
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected)) > .hand {
     position: absolute !important;
     inset: auto 0 0 0 !important;
     left: 0 !important;
@@ -53,15 +88,19 @@
     ) !important;
   }
 
-  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand::-webkit-scrollbar {
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected)) > .hand::-webkit-scrollbar {
     display: none !important;
   }
 
-  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand::before {
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected)) > .hand::before {
     display: none !important;
   }
 
-  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand > .hand-card-wrap {
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected)) > .hand > .hand-card-wrap,
+  .battle-board.mobile-hand-open.mobile-hand-grabbing:not(:has(> .hand .hand-card.selected))
+    > .hand > .hand-card-wrap.mobile-grabbed-card,
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected))
+    > .hand > .hand-card-wrap:has(.hand-card.drag-origin) {
     position: relative !important;
     left: auto !important;
     right: auto !important;
@@ -81,10 +120,14 @@
     visibility: visible !important;
     pointer-events: auto !important;
     scroll-snap-align: none !important;
-    z-index: 1 !important;
+    z-index: var(--mobile-hand-index, 1) !important;
   }
 
-  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand > .hand-card-wrap > .hand-card {
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected)) > .hand > .hand-card-wrap > .hand-card,
+  .battle-board.mobile-hand-open.mobile-hand-grabbing:not(:has(> .hand .hand-card.selected))
+    > .hand > .hand-card-wrap.mobile-grabbed-card > .hand-card,
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected))
+    > .hand > .hand-card-wrap:has(.hand-card.drag-origin) > .hand-card {
     position: absolute !important;
     left: 50% !important;
     top: 0 !important;
@@ -96,9 +139,7 @@
     touch-action: none !important;
   }
 
-  /* Keep discard/redraw controls inside the visible rail while still separated
-     from the card body. */
-  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected))
+  .battle-board.mobile-hand-open:not(:has(> .hand .hand-card.selected))
     > .hand > .hand-card-wrap > .btn-discard-redraw {
     top: -23px !important;
     transform: translateX(-50%) scale(.88) !important;
@@ -107,10 +148,7 @@
 }
 
 /* -------------------------------------------------------------------------
-   Landscape: anchor the entire battle to VisualViewport.
-   Safari may show its URL/toolbar after rotation or a gesture. A web page cannot
-   force browser chrome to stay hidden, but it can keep the game inside the
-   currently visible rectangle instead of letting the toolbar cover the board.
+   Landscape: anchor to VisualViewport and make dragging/drop match the finger
    ------------------------------------------------------------------------- */
 @media (orientation: landscape) and (pointer: coarse),
        (orientation: landscape) and (max-width: 1024px) and (max-height: 600px) {
@@ -129,9 +167,6 @@
     margin: 0 !important;
   }
 
-  /* The hand used to inherit the board/app content box and could look shifted
-     slightly right in landscape. Pin it to the same visible-viewport rectangle
-     as the battle board so 50% is the physical screen center. */
   .battle-board > .hand,
   .battle-board.mobile-hand-open > .hand,
   .battle-board:has(> .hand .hand-card.selected) > .hand {
@@ -148,17 +183,70 @@
     max-height: var(--mobile-battle-vh, 100dvh) !important;
   }
 
-  /* A selected hand card means React is waiting for a spell/item/evolution target.
-     Hide the selected card as well as its siblings so the entire player field is
-     available for tapping. Drag targeting is intentionally unaffected. */
+  /* Preserve the expanded fan positions while a card is actually dragged.
+     No jump to screen center and no sibling disappearance. */
+  .battle-board.mobile-hand-open.mobile-hand-grabbing > .hand .hand-card-wrap.mobile-grabbed-card,
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap:has(.hand-card.drag-origin) {
+    left: 50% !important;
+    top: calc(100% - 160px) !important;
+    transform:
+      translateX(calc(-50% + var(--mobile-expanded-x, 0px)))
+      rotate(var(--mobile-hand-angle, 0deg)) !important;
+    transform-origin: 50% 148px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: var(--mobile-hand-index, 1) !important;
+  }
+
+  .battle-board.mobile-hand-open.mobile-hand-grabbing > .hand .hand-card-wrap.mobile-grabbed-card > .hand-card,
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap:has(.hand-card.drag-origin) > .hand-card {
+    scale: .82 !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.8),
+      2px 5px 12px rgba(0,0,0,.55) !important;
+  }
+
+  /* The old -68% Y anchor made the card image sit far above the actual pointer.
+     Users released when the image looked inside the field while the pointer was
+     already below it. Center the ghost on the pointer so visual/drop coordinates
+     agree. */
+  .battle-board .drag-ghost {
+    transform: translate(-50%, -50%) !important;
+  }
+
+  /* While a basic Pokemon is being dragged, give the visible player field a
+     forgiving drop halo. Pseudo-element hit testing resolves back to .my-field,
+     which already carries data-drop="my-field". */
+  .battle-board > .my-field.drop-ready {
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  .battle-board > .my-field.drop-ready::before {
+    content: "";
+    position: absolute;
+    left: -24px;
+    right: -24px;
+    top: -18px;
+    bottom: -28px;
+    background: transparent;
+    pointer-events: auto;
+    z-index: 30;
+  }
+
+  .battle-board > .my-field.drop-ready > * {
+    position: relative;
+    z-index: 31;
+  }
+
+  /* Tap-target selection still hides the hand so the field stays unobstructed. */
   .battle-board:has(> .hand .hand-card.selected) > .hand {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
   }
 
-  /* Keep the compact guide just above the bottom edge of VisualViewport instead
-     of the layout viewport, otherwise Safari chrome can cover it. */
   .battle-board:has(> .hand .hand-card.selected) .target-hint {
     position: fixed !important;
     left: var(--mobile-battle-cx, 50vw) !important;
@@ -195,5 +283,29 @@
     padding: 3px 6px !important;
     font-size: 9px !important;
     white-space: nowrap !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 380px) {
+  .battle-board.mobile-hand-open.mobile-hand-grabbing > .hand .hand-card-wrap.mobile-grabbed-card,
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap:has(.hand-card.drag-origin) {
+    top: calc(100% - 148px) !important;
+  }
+
+  .battle-board.mobile-hand-open.mobile-hand-grabbing > .hand .hand-card-wrap.mobile-grabbed-card > .hand-card,
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap:has(.hand-card.drag-origin) > .hand-card {
+    scale: .76 !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 340px) {
+  .battle-board.mobile-hand-open.mobile-hand-grabbing > .hand .hand-card-wrap.mobile-grabbed-card,
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap:has(.hand-card.drag-origin) {
+    top: calc(100% - 137px) !important;
+  }
+
+  .battle-board.mobile-hand-open.mobile-hand-grabbing > .hand .hand-card-wrap.mobile-grabbed-card > .hand-card,
+  .battle-board.mobile-hand-open > .hand .hand-card-wrap:has(.hand-card.drag-origin) > .hand-card {
+    scale: .70 !important;
   }
 }
