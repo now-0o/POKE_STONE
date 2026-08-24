@@ -1,5 +1,26 @@
 /* Battle history rail + weather indicator spacing fixes. */
 
+/*
+ * The React battle component still renders the legacy text log while targeting.
+ * Hide it unconditionally inside battles so an aim/selection rerender can never
+ * make the old log reappear and collide with the weather/history UI.
+ */
+.battle.battle-board .mid-bar .battle-log {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 @media (pointer: fine) and (min-width: 761px) {
   /* Reserve the left history rail so the weather pill never sits under it. */
   .battle-history-enabled .weather-indicator {
