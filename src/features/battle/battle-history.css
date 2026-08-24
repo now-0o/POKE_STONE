@@ -19,7 +19,7 @@
   width: 100%;
   height: 100%;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 8px 7px;
   border-right: 1px solid rgba(255, 255, 255, 0.12);
   background: linear-gradient(90deg, rgba(10, 13, 22, 0.9), rgba(10, 13, 22, 0.62) 72%, rgba(10, 13, 22, 0));
@@ -34,10 +34,9 @@
   max-height: 100%;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
   gap: 7px;
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
   scrollbar-width: none;
 }
 
@@ -45,9 +44,15 @@
   display: none;
 }
 
+.battle-history-spacer {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 .battle-history-turn-group {
   position: relative;
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
   gap: 4px;
@@ -146,20 +151,17 @@
 }
 
 .battle-history-tooltip {
-  position: absolute;
-  left: calc(100% + 11px);
-  top: 50%;
-  z-index: 120;
+  position: fixed;
+  z-index: 10000;
   display: none;
   width: 310px;
   max-height: min(72vh, 540px);
   overflow: auto;
-  transform: translateY(-50%);
   padding: 12px;
   border: 1px solid rgba(255,255,255,.2);
   border-radius: 12px;
-  background: rgba(7, 9, 16, 0.97);
-  box-shadow: 0 16px 34px rgba(0,0,0,.46);
+  background: rgba(7, 9, 16, 0.98);
+  box-shadow: 0 16px 34px rgba(0,0,0,.55);
   color: rgba(255,255,255,.84);
   font-size: 11px;
   line-height: 1.48;
@@ -167,7 +169,7 @@
   pointer-events: none;
 }
 
-.battle-history-entry:hover .battle-history-tooltip {
+.battle-history-tooltip.is-floating {
   display: block;
 }
 
@@ -300,6 +302,7 @@
 .battle-history-empty {
   width: 10px;
   height: 10px;
+  flex: 0 0 auto;
   align-self: center;
   border-radius: 50%;
   background: rgba(255,255,255,.16);
@@ -377,11 +380,15 @@
 
   .battle-history-list {
     max-height: min(50vh, 390px);
-    justify-content: flex-start;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 3px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,.28) transparent;
+  }
+
+  .battle-history-spacer {
+    display: none;
   }
 
   .battle-history-list::-webkit-scrollbar {
@@ -429,7 +436,8 @@
     height: 38px;
   }
 
-  .battle-history-tooltip {
+  .battle-history-tooltip,
+  .battle-history-tooltip.is-floating {
     display: none !important;
   }
 
