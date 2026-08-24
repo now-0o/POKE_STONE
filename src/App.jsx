@@ -3,6 +3,7 @@ import MainMenu from "./components/MainMenu.jsx";
 import Battle from "./components/Battle.jsx";
 import PackShop from "./components/PackShop.jsx";
 import DeckEditor from "./components/ResponsiveDeckEditor.jsx";
+import CardDex from "./components/CardDex.jsx";
 import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
@@ -29,7 +30,7 @@ const ADMIN_CODE = "stonemaster"; // 숨겨진 관리자 모드 진입 코드 (�
 
 export default function App() {
   const saveRef = useRef(null);
-  const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck | tutorial
+  const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck | dex | tutorial
   const [trainer, setTrainer] = useState(null);
   const [, forceRender] = useState(0);
   const [adminToast, setAdminToast] = useState(false);
@@ -54,7 +55,7 @@ export default function App() {
     syncToastTimer.current = setTimeout(() => setSyncToast(""), 3200);
   }
 
-  // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집·튜토리얼 / 상점 / 배틀
+  // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집·도감·튜토리얼 / 상점 / 배틀
   // 배틀은 지역/트레이너 구분 없이 battle.mp3 한 곡만 사용한다.
   useEffect(() => {
     if (authStatus === "anon" || authStatus === "checking") {
@@ -252,6 +253,7 @@ export default function App() {
             onBattle={startBattle}
             onShop={() => setScreen("shop")}
             onDeck={() => setScreen("deck")}
+            onDex={() => setScreen("dex")}
             onTutorial={() => setScreen("tutorial")}
             onSaveChange={onSaveChange}
             onLogout={onLogout}
@@ -278,6 +280,14 @@ export default function App() {
             save={save}
             onSaveChange={onSaveChange}
             onBack={() => setScreen("menu")}
+          />
+        )}
+        {screen === "dex" && (
+          <CardDex
+            save={save}
+            onSaveChange={onSaveChange}
+            onBack={() => setScreen("menu")}
+            onShop={() => setScreen("shop")}
           />
         )}
         {screen === "tutorial" && (
