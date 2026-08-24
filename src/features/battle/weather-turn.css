@@ -105,7 +105,7 @@
 }
 
 .weather-turn-sand .weather-turn-particle {
-  top: calc((var(--weather-x) * 0) + 18%);
+  top: var(--weather-y);
   color: rgba(232, 191, 112, 0.9);
   animation-name: weather-sand-sweep;
   animation-duration: 1000ms;
@@ -186,9 +186,9 @@
 }
 
 @keyframes weather-sand-sweep {
-  0% { opacity: 0; transform: translate(-28vw, calc(var(--weather-x) * 0)) scale(var(--weather-scale)); }
+  0% { opacity: 0; transform: translate(-28vw, 0) scale(var(--weather-scale)); }
   18% { opacity: 0.88; }
-  100% { opacity: 0; transform: translate(116vw, 120px) scale(var(--weather-scale)); }
+  100% { opacity: 0; transform: translate(116vw, 60px) scale(var(--weather-scale)); }
 }
 
 @keyframes weather-hail-fall {
