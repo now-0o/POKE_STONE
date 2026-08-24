@@ -10,15 +10,27 @@ import "../styles/online-matchmaking.css";
 
 const POLL_MS = 1500;
 
-export default function OnlineMatchmaking({ save, isAdmin, onBack }) {
+export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) {
   const [status, setStatus] = useState({ status: "idle" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const statusRef = useRef(status);
+  const handoffRef = useRef(false);
+  const matchedRef = useRef(null);
 
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  function acceptStatus(next) {
+    setStatus(next);
+    setError("");
+    if (next.status !== "matched" || matchedRef.current === next.matchId) return;
+    matchedRef.current = next.matchId;
+    handoffRef.current = true;
+    playSfx("click");
+    onMatched?.(next);
+  }
 
   useEffect(() => {
     if (status.status !== "searching") return undefined;
@@ -26,20 +38,21 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack }) {
     const timer = window.setInterval(async () => {
       try {
         const next = await fetchMatchmakingStatus();
-        setStatus(next);
-        setError("");
-        if (next.status === "matched") playSfx("click");
+        acceptStatus(next);
       } catch (err) {
         setError(err.message || "매칭 상태를 확인하지 못했습니다.");
       }
     }, POLL_MS);
 
     return () => window.clearInterval(timer);
-  }, [status.status]);
+  }, [status.status, onMatched]);
 
   useEffect(
     () => () => {
-      if (["searching", "matched"].includes(statusRef.current?.status)) {
+      if (
+        !handoffRef.current &&
+        ["searching", "matched"].includes(statusRef.current?.status)
+      ) {
         leaveMatchmaking().catch(() => undefined);
       }
     },
@@ -66,7 +79,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack }) {
     playSfx("click");
     try {
       const next = await joinMatchmaking(save);
-      setStatus(next);
+      acceptStatus(next);
     } catch (err) {
       setError(err.message || "랜덤 매칭에 참가하지 못했습니다.");
     } finally {
@@ -79,6 +92,8 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack }) {
     setBusy(true);
     try {
       await leaveMatchmaking();
+      matchedRef.current = null;
+      handoffRef.current = false;
       setStatus({ status: "idle" });
       setError("");
       playSfx("click");
@@ -182,12 +197,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack }) {
               <span>SEAT {status.seat || "-"}</span>
               <span>#{String(status.matchId || "").slice(0, 8)}</span>
             </div>
-            <p>
-              매칭 세션 생성 완료. 다음 개발 단계에서 이 세션에 실시간 전투 상태를 연결합니다.
-            </p>
-            <button className="btn-secondary" disabled={busy} onClick={cancelSearch}>
-              세션 종료
-            </button>
+            <p>전투방으로 연결하고 있습니다.</p>
           </div>
         )}
 
