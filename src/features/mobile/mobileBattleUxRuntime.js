@@ -1,21 +1,28 @@
 /* Mobile battle UX bridge.
  *
- * - Portrait expanded hand uses a straight rail. Horizontal movement scrolls
- *   that rail and is stopped before React's drag listeners see it; vertical
- *   movement remains the existing drag-to-play gesture.
- * - VisualViewport metrics are exposed as CSS variables so landscape battle UI
- *   follows Safari's actually visible area when browser chrome appears.
- * - Evolution tap routing is handled directly by battle/runtime.js; this module
- *   no longer mutates card labels during click dispatch.
+ * - Expanded-hand taps are resolved explicitly on pointer-up. We dispatch one
+ *   synthetic click into React and suppress the following trusted browser click,
+ *   so tools, techniques, Mega Stones and evolution cards reliably enter their
+ *   existing target-selection flow without being mistaken for drags.
+ * - While a tap-target card is active (or React is still rendering that state),
+ *   field-unit pointerdown is stopped before attack/inspect gestures can start;
+ *   the later click is left untouched so React's onUnitClick resolves the card.
+ * - Portrait horizontal movement remains a pure hand scroll.
+ * - Landscape basic-Pokemon drags get a real DOM drop-assist over the visible
+ *   player field so releasing near the centre resolves as my-field reliably.
+ * - VisualViewport metrics keep landscape UI inside Safari's visible rectangle.
  */
 
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
 const PORTRAIT_QUERY = "(orientation: portrait)";
+const LANDSCAPE_QUERY = "(orientation: landscape)";
 const MOVE_THRESHOLD = 9;
 const SCROLL_DIRECTION_BIAS = 1.08;
 
 let handGesture = null;
-const suppressClickUntil = new WeakMap();
+let basicDropAssist = null;
+const suppressTrustedHandClickUntil = new WeakMap();
+const suppressScrollClickUntil = new WeakMap();
 
 function isMobileBattle() {
   return (
@@ -28,6 +35,13 @@ function isPortrait() {
   return (
     typeof window !== "undefined" &&
     window.matchMedia(PORTRAIT_QUERY).matches
+  );
+}
+
+function isLandscape() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia(LANDSCAPE_QUERY).matches
   );
 }
 
@@ -68,6 +82,45 @@ function syncVisibleViewport() {
   root.style.setProperty("--mobile-battle-cx", `${centerX}px`);
 }
 
+function isBasicPokemonCard(handCard) {
+  if (!handCard) return false;
+  const typeLabel = handCard.querySelector(".card-typebadge")?.textContent || "";
+  const stageLine = handCard.querySelector(".card-stageline")?.textContent || "";
+  return typeLabel.includes("포켓몬") && stageLine.includes("이전 진화 없음");
+}
+
+function isTapPlayableCard(handCard) {
+  if (!handCard) return false;
+  return !isBasicPokemonCard(handCard);
+}
+
+function syncTapTargetState(board) {
+  if (!board || !document.contains(board)) return;
+  const selected = board.querySelector(":scope > .hand .hand-card.selected");
+  board.classList.toggle("mobile-tap-target-active", Boolean(selected));
+  if (!selected) board.classList.remove("mobile-tap-target-pending");
+}
+
+function queueTapTargetSync(board) {
+  requestAnimationFrame(() => {
+    syncTapTargetState(board);
+    requestAnimationFrame(() => syncTapTargetState(board));
+  });
+}
+
+function dispatchMobileHandTap(gesture) {
+  const { board, wrap } = gesture;
+  const handCard = wrap?.querySelector(":scope > .hand-card");
+  if (!handCard || !isTapPlayableCard(handCard)) return;
+
+  clearVisualGrab(board, wrap);
+  board.classList.add("mobile-tap-target-pending");
+
+  suppressTrustedHandClickUntil.set(board, Date.now() + 420);
+  handCard.click();
+  queueTapTargetSync(board);
+}
+
 function beginHandGesture(event) {
   if (!isMobileBattle() || !(event.target instanceof Element)) return;
 
@@ -98,7 +151,10 @@ function beginHandGesture(event) {
 
 function moveHandGesture(event) {
   const gesture = handGesture;
-  if (!gesture || !document.contains(gesture.board)) return;
+  if (!gesture || !document.contains(gesture.board)) {
+    ensureBasicPokemonDropAssist();
+    return;
+  }
 
   const dx = event.clientX - gesture.startX;
   const dy = event.clientY - gesture.startY;
@@ -117,11 +173,13 @@ function moveHandGesture(event) {
     } else {
       gesture.scrolling = false;
       setVisualGrab(gesture.board, gesture.wrap);
+      requestAnimationFrame(ensureBasicPokemonDropAssist);
     }
   }
 
   if (!gesture.scrolling) {
     gesture.lastX = event.clientX;
+    requestAnimationFrame(ensureBasicPokemonDropAssist);
     return;
   }
 
@@ -129,7 +187,7 @@ function moveHandGesture(event) {
   gesture.lastX = event.clientX;
   gesture.hand.scrollLeft -= deltaX;
 
-  suppressClickUntil.set(gesture.board, Date.now() + 500);
+  suppressScrollClickUntil.set(gesture.board, Date.now() + 500);
   event.preventDefault();
   event.stopImmediatePropagation();
 }
@@ -137,15 +195,38 @@ function moveHandGesture(event) {
 function endHandGesture() {
   const gesture = handGesture;
   handGesture = null;
-  if (!gesture) return;
+  if (!gesture) {
+    scheduleDropAssistRemoval();
+    return;
+  }
 
-  if (!gesture.moved || gesture.scrolling) {
+  if (!gesture.moved) {
+    dispatchMobileHandTap(gesture);
+    clearVisualGrab(gesture.board, gesture.wrap);
+  } else if (gesture.scrolling) {
+    suppressScrollClickUntil.set(gesture.board, Date.now() + 500);
     clearVisualGrab(gesture.board, gesture.wrap);
   }
 
-  if (gesture.scrolling) {
-    suppressClickUntil.set(gesture.board, Date.now() + 500);
+  scheduleDropAssistRemoval();
+}
+
+function blockAttackPointerDownDuringTapTarget(event) {
+  if (!isMobileBattle() || !(event.target instanceof Element)) return;
+  const board = getBoard(event.target);
+  if (!board) return;
+
+  const targeting =
+    board.classList.contains("mobile-tap-target-pending") ||
+    board.classList.contains("mobile-tap-target-active") ||
+    Boolean(board.querySelector(":scope > .hand .hand-card.selected"));
+
+  if (!targeting) return;
+  if (!event.target.closest(".field-unit, [data-drop='my-hero'], [data-drop='enemy-hero']")) {
+    return;
   }
+
+  event.stopPropagation();
 }
 
 function handleClickCapture(event) {
@@ -154,27 +235,124 @@ function handleClickCapture(event) {
   const board = getBoard(event.target);
   if (!board) return;
 
-  const blockedUntil = suppressClickUntil.get(board) || 0;
-  if (Date.now() < blockedUntil && event.target.closest(".hand")) {
-    event.preventDefault();
-    event.stopPropagation();
-    suppressClickUntil.delete(board);
+  if (event.target.closest(".hand")) {
+    const scrollUntil = suppressScrollClickUntil.get(board) || 0;
+    if (Date.now() < scrollUntil) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressScrollClickUntil.delete(board);
+      return;
+    }
+
+    const trustedUntil = suppressTrustedHandClickUntil.get(board) || 0;
+    if (event.isTrusted && Date.now() < trustedUntil) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressTrustedHandClickUntil.delete(board);
+    }
   }
+}
+
+function getDraggedOriginCard(board) {
+  return board?.querySelector(":scope > .hand .hand-card.drag-origin") || null;
+}
+
+function removeBasicPokemonDropAssist() {
+  basicDropAssist?.remove();
+  basicDropAssist = null;
+}
+
+function scheduleDropAssistRemoval() {
+  window.setTimeout(removeBasicPokemonDropAssist, 0);
+}
+
+function ensureBasicPokemonDropAssist() {
+  if (!isMobileBattle() || !isLandscape()) {
+    removeBasicPokemonDropAssist();
+    return;
+  }
+
+  const board = document.querySelector(".battle.battle-board");
+  const origin = getDraggedOriginCard(board);
+  const field = board?.querySelector(":scope > .my-field[data-drop='my-field']");
+
+  if (!board?.querySelector(".drag-ghost") || !origin || !isBasicPokemonCard(origin) || !field) {
+    removeBasicPokemonDropAssist();
+    return;
+  }
+
+  const rect = field.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    removeBasicPokemonDropAssist();
+    return;
+  }
+
+  if (!basicDropAssist) {
+    basicDropAssist = document.createElement("div");
+    basicDropAssist.className = "mobile-basic-pokemon-drop-assist";
+    basicDropAssist.dataset.drop = "my-field";
+    basicDropAssist.setAttribute("aria-hidden", "true");
+    document.body.appendChild(basicDropAssist);
+  }
+
+  const padX = Math.min(54, Math.max(30, rect.width * 0.07));
+  const padTop = Math.min(34, Math.max(20, rect.height * 0.28));
+  const padBottom = Math.min(48, Math.max(28, rect.height * 0.4));
+
+  Object.assign(basicDropAssist.style, {
+    position: "fixed",
+    left: `${rect.left - padX}px`,
+    top: `${rect.top - padTop}px`,
+    width: `${rect.width + padX * 2}px`,
+    height: `${rect.height + padTop + padBottom}px`,
+    background: "transparent",
+    pointerEvents: "auto",
+    zIndex: "1490",
+  });
 }
 
 function refreshViewportSoon() {
   syncVisibleViewport();
-  requestAnimationFrame(syncVisibleViewport);
+  requestAnimationFrame(() => {
+    syncVisibleViewport();
+    ensureBasicPokemonDropAssist();
+  });
 }
 
 if (typeof document !== "undefined") {
   syncVisibleViewport();
 
+  window.addEventListener("pointerdown", blockAttackPointerDownDuringTapTarget, true);
   window.addEventListener("pointerdown", beginHandGesture, true);
   window.addEventListener("pointermove", moveHandGesture, true);
   window.addEventListener("pointerup", endHandGesture, true);
   window.addEventListener("pointercancel", endHandGesture, true);
+
   document.addEventListener("click", handleClickCapture, true);
+  document.addEventListener(
+    "click",
+    (event) => {
+      const board = getBoard(event.target);
+      if (board) queueTapTargetSync(board);
+    },
+    false,
+  );
+
+  const observer = new MutationObserver(() => {
+    const board = document.querySelector(".battle.battle-board");
+    if (board) {
+      syncTapTargetState(board);
+      ensureBasicPokemonDropAssist();
+    } else {
+      removeBasicPokemonDropAssist();
+    }
+  });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 
   window.addEventListener("resize", refreshViewportSoon, { passive: true });
   window.addEventListener(
