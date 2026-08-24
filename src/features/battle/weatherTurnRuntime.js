@@ -1,5 +1,6 @@
 import "./weather-turn.css";
 import "./battle-history-layout-fix.css";
+import "./battle-history-v2-fix.css";
 
 const WEATHER_VIEW = {
   rain: { title: "비가 계속 내린다" },
