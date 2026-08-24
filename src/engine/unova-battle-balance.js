@@ -455,9 +455,11 @@ function syncWeatherAfterAction(game, beforeWeather, beforeLogLength, card = nul
   }
 
   const newLines = (game.log || []).slice(beforeLogLength || 0);
-  const explicitWeatherCard = card?.spell?.effect === "weather";
+  const explicitWeatherSource =
+    card?.spell?.effect === "weather" ||
+    card?.mega?.battlecryWeather === afterWeather;
   const changed = beforeWeather !== afterWeather;
-  const retriggered = explicitWeatherCard || weatherActivationSeen(afterWeather, newLines);
+  const retriggered = explicitWeatherSource || weatherActivationSeen(afterWeather, newLines);
   const timerMissing =
     game._weatherDurationWeather !== afterWeather ||
     !Number.isFinite(game._weatherTurnsRemaining) ||
