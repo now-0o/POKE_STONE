@@ -1,5 +1,5 @@
 // ============================================================
-// 서버 연동 (로그인 + 세이브 동기화 + 온라인 매칭)
+// 서버 연동 (로그인 + 세이브 동기화 + 온라인 매칭/배틀)
 // 로컬 개발 중엔 http://localhost:4000, 배포본엔 /api (Netlify 리다이렉트)
 // ============================================================
 
@@ -160,4 +160,37 @@ export async function fetchMatchmakingStatus() {
 
 export async function leaveMatchmaking() {
   return req('/matchmaking/leave', { method: 'POST', body: '{}' });
+}
+
+export async function fetchOnlineBootstrap(matchId) {
+  return req(`/online/match/${encodeURIComponent(matchId)}/bootstrap`, { method: 'GET' });
+}
+
+export async function initializeOnlineMatch(matchId, game) {
+  return req(`/online/match/${encodeURIComponent(matchId)}/initialize`, {
+    method: 'POST',
+    body: JSON.stringify({ game }),
+  });
+}
+
+export async function fetchOnlineState(matchId) {
+  return req(`/online/match/${encodeURIComponent(matchId)}/state`, { method: 'GET' });
+}
+
+export async function fetchOnlineHostState(matchId) {
+  return req(`/online/match/${encodeURIComponent(matchId)}/host`, { method: 'GET' });
+}
+
+export async function sendOnlineCommand(matchId, command) {
+  return req(`/online/match/${encodeURIComponent(matchId)}/command`, {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export async function commitOnlineHostState(matchId, payload) {
+  return req(`/online/match/${encodeURIComponent(matchId)}/host/commit`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
