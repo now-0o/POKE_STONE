@@ -13,8 +13,8 @@ let entries = [];
 let sequence = 0;
 let mobileOpen = false;
 let syncing = false;
-let floatingTooltip = null;
-let floatingRoot = null;
+let inspectHost = null;
+let inspectRoot = null;
 
 function cardCandidates() {
   return Object.values(CARD_MAP)
@@ -32,6 +32,16 @@ function findCardByName(name) {
   return cardCandidates().find((card) => card.name === text) || null;
 }
 
+function findPokemonByDisplayName(name) {
+  const text = String(name || "").trim();
+  if (!text) return null;
+  return (
+    pokemonCandidates().find((card) => card.name === text) ||
+    pokemonCandidates().find((card) => text.endsWith(card.name)) ||
+    null
+  );
+}
+
 function mentionedPokemon(message, excludeIds = []) {
   const excluded = new Set(excludeIds.filter(Boolean));
   const matches = [];
@@ -43,7 +53,9 @@ function mentionedPokemon(message, excludeIds = []) {
     matches.push({ card, index });
   });
 
-  matches.sort((a, b) => a.index - b.index || b.card.name.length - a.card.name.length);
+  matches.sort(
+    (a, b) => a.index - b.index || b.card.name.length - a.card.name.length,
+  );
 
   const seen = new Set();
   return matches
@@ -93,22 +105,29 @@ function parseDamage(message) {
 }
 
 function inferSide(board, message, sourceCard) {
-  const enemyName = board.querySelector(".enemy-hero-cluster .hero-name")?.textContent?.trim();
-  const playerName = board.querySelector(".my-hero-cluster .hero-name")?.textContent?.trim() || "나";
+  const enemyName = board
+    .querySelector(".enemy-hero-cluster .hero-name")
+    ?.textContent?.trim();
+  const playerName =
+    board.querySelector(".my-hero-cluster .hero-name")?.textContent?.trim() ||
+    "나";
 
   if (enemyName && message.includes(enemyName)) return "enemy";
-  if (playerName && (message.startsWith(playerName) || message.includes(`${playerName}의`))) {
+  if (
+    playerName &&
+    (message.startsWith(playerName) || message.includes(`${playerName}의`))
+  ) {
     return "player";
   }
 
   if (sourceCard?.kind === "pokemon") {
-    const enemyHas = [...board.querySelectorAll(".enemy-field [data-uid]")].some((node) =>
-      (node.textContent || "").includes(sourceCard.name),
+    const enemyHas = [...board.querySelectorAll(".enemy-field [data-uid]")].some(
+      (node) => (node.textContent || "").includes(sourceCard.name),
     );
     if (enemyHas) return "enemy";
 
-    const playerHas = [...board.querySelectorAll(".my-field [data-uid]")].some((node) =>
-      (node.textContent || "").includes(sourceCard.name),
+    const playerHas = [...board.querySelectorAll(".my-field [data-uid]")].some(
+      (node) => (node.textContent || "").includes(sourceCard.name),
     );
     if (playerHas) return "player";
   }
@@ -119,10 +138,11 @@ function inferSide(board, message, sourceCard) {
 
 function findUsedCard(message) {
   const candidates = cardCandidates();
-
   return (
     candidates.find((card) => message.startsWith(`${card.name}!`)) ||
-    candidates.find((card) => message.includes(`${card.name}을(를) 사용했다!`)) ||
+    candidates.find((card) =>
+      message.includes(`${card.name}을(를) 사용했다!`),
+    ) ||
     null
   );
 }
@@ -146,12 +166,12 @@ function parseAction(board, message) {
   const itemEquip = message.match(/^(.+?)에게\s+(.+?)을\(를\)\s+장착했다!/);
   if (itemEquip) {
     const itemCard = findCardByName(itemEquip[2]);
-    const targetCard = findCardByName(itemEquip[1]);
+    const targetCard = findPokemonByDisplayName(itemEquip[1]);
     if (itemCard && (itemCard.kind === "item" || itemCard.type === "도구")) {
       return {
         type: "item",
         sourceCard: itemCard,
-        targetCard: targetCard?.kind === "pokemon" ? targetCard : null,
+        targetCard,
         damage: 0,
         message,
         side: inferSide(board, message, itemCard),
@@ -159,16 +179,18 @@ function parseAction(board, message) {
     }
   }
 
-  if (/공격!/.test(message) && /피해/.test(message)) {
-    const cards = mentionedPokemon(message);
-    const sourceCard = cards[0] || null;
-    const targetCard = cards[1] || null;
+  const attack = message.match(
+    /^(.+?)이\(가\)\s+(.+?)을\(를\)\s+(?:직접\s+)?공격!\s*피해\s*(\d+)!?/,
+  );
+  if (attack) {
+    const sourceCard = findPokemonByDisplayName(attack[1]);
+    const targetCard = findPokemonByDisplayName(attack[2]);
     if (sourceCard) {
       return {
         type: "attack",
         sourceCard,
         targetCard,
-        damage: parseDamage(message),
+        damage: Number(attack[3]) || 0,
         message,
         side: inferSide(board, message, sourceCard),
       };
@@ -202,6 +224,15 @@ function typeLabel(type) {
   if (type === "attack") return "공격";
   if (type === "item") return "도구 사용";
   return "전투 기록";
+}
+
+function faintedInLines(card, lines) {
+  if (!card || !Array.isArray(lines)) return false;
+  return lines.some(
+    (line) =>
+      line.includes(card.name) &&
+      /(기절했다|기절!|쓰러졌다|쓰러졌다!)/.test(line),
+  );
 }
 
 function createRailIcon(entry) {
@@ -242,36 +273,47 @@ function handCardElement(cardId) {
   });
 }
 
-function previewReact(entry) {
+function inspectCard(card, fainted, key) {
+  if (!card) return null;
+  return React.createElement(
+    "div",
+    {
+      className: `battle-history-inspect-card ${fainted ? "is-fainted" : ""}`,
+      key,
+    },
+    handCardElement(card.id),
+    fainted
+      ? React.createElement(
+          "div",
+          { className: "battle-history-fainted-stamp" },
+          "기절",
+        )
+      : null,
+  );
+}
+
+function inspectReact(entry) {
   const children = [
-    React.createElement(
-      "div",
-      { className: "battle-history-preview-card", key: "source" },
-      handCardElement(entry.sourceCard?.id),
-    ),
+    inspectCard(entry.sourceCard, entry.sourceFainted, "source"),
   ];
 
   if (entry.targetCard) {
     children.push(
       React.createElement(
         "div",
-        { className: "battle-history-preview-arrow", key: "arrow" },
+        { className: "battle-history-inspect-bridge", key: "bridge" },
         React.createElement("span", null, "→"),
         entry.damage > 0
           ? React.createElement("strong", null, `피해 ${entry.damage}`)
           : null,
       ),
-      React.createElement(
-        "div",
-        { className: "battle-history-preview-card", key: "target" },
-        handCardElement(entry.targetCard.id),
-      ),
+      inspectCard(entry.targetCard, entry.targetFainted, "target"),
     );
   } else if (entry.damage > 0) {
     children.push(
       React.createElement(
         "div",
-        { className: "battle-history-preview-damage", key: "damage" },
+        { className: "battle-history-inspect-solo-damage", key: "damage" },
         `피해 ${entry.damage}`,
       ),
     );
@@ -279,49 +321,36 @@ function previewReact(entry) {
 
   return React.createElement(
     "div",
-    { className: "battle-history-preview-content" },
-    React.createElement(
-      "div",
-      { className: "battle-history-preview-title" },
-      React.createElement("strong", null, typeLabel(entry.type)),
-      React.createElement("span", null, entry.sourceCard?.name || ""),
-    ),
-    React.createElement("div", { className: "battle-history-preview-flow" }, ...children),
-    React.createElement("div", { className: "battle-history-preview-message" }, entry.message),
+    {
+      className: "battle-history-inspect-content",
+      "aria-label": `${typeLabel(entry.type)} ${entry.message}`,
+    },
+    ...children,
   );
 }
 
-function hideFloatingTooltip() {
-  if (floatingRoot) {
-    floatingRoot.unmount();
-    floatingRoot = null;
+function hideInspectOverlay() {
+  if (inspectRoot) {
+    inspectRoot.unmount();
+    inspectRoot = null;
   }
-  if (floatingTooltip) {
-    floatingTooltip.remove();
-    floatingTooltip = null;
+  if (inspectHost) {
+    inspectHost.remove();
+    inspectHost = null;
   }
 }
 
-function showFloatingTooltip(entry, anchor) {
-  hideFloatingTooltip();
-  if (!entry || !anchor || window.matchMedia?.("(pointer: coarse)").matches) return;
+function showInspectOverlay(entry) {
+  hideInspectOverlay();
+  if (!entry || window.matchMedia?.("(pointer: coarse)").matches) return;
 
-  const rect = anchor.getBoundingClientRect();
-  const tooltip = document.createElement("div");
-  tooltip.className = `battle-history-floating is-${entry.type}`;
+  const host = document.createElement("div");
+  host.className = "inspect-overlay battle-history-inspect-overlay";
+  document.body.appendChild(host);
 
-  const twoCards = Boolean(entry.targetCard);
-  const estimatedWidth = twoCards ? 430 : 230;
-  const gap = 14;
-  const canShowRight = rect.right + gap + estimatedWidth <= window.innerWidth - 10;
-
-  tooltip.style.left = `${canShowRight ? rect.right + gap : Math.max(10, rect.left - gap - estimatedWidth)}px`;
-  tooltip.style.top = `${Math.max(10, Math.min(window.innerHeight - 300, rect.top + rect.height / 2 - 145))}px`;
-
-  document.body.appendChild(tooltip);
-  floatingTooltip = tooltip;
-  floatingRoot = createRoot(tooltip);
-  floatingRoot.render(previewReact(entry));
+  inspectHost = host;
+  inspectRoot = createRoot(host);
+  inspectRoot.render(inspectReact(entry));
 }
 
 function createEntryNode(entry) {
@@ -331,10 +360,10 @@ function createEntryNode(entry) {
   button.setAttribute("aria-label", `${typeLabel(entry.type)}: ${entry.message}`);
   button.appendChild(createRailIcon(entry));
 
-  button.addEventListener("mouseenter", () => showFloatingTooltip(entry, button));
-  button.addEventListener("mouseleave", hideFloatingTooltip);
-  button.addEventListener("focus", () => showFloatingTooltip(entry, button));
-  button.addEventListener("blur", hideFloatingTooltip);
+  button.addEventListener("mouseenter", () => showInspectOverlay(entry));
+  button.addEventListener("mouseleave", hideInspectOverlay);
+  button.addEventListener("focus", () => showInspectOverlay(entry));
+  button.addEventListener("blur", hideInspectOverlay);
   button.addEventListener("click", () => {
     if (window.matchMedia?.("(pointer: coarse)").matches) {
       showMobileDetail(entry);
@@ -382,7 +411,13 @@ function showMobileDetail(entry) {
   detail.className = "battle-history-mobile-detail";
   panel.appendChild(detail);
   const root = createRoot(detail);
-  root.render(previewReact(entry));
+  root.render(
+    React.createElement(
+      "div",
+      { className: "battle-history-mobile-inspect" },
+      inspectReact(entry),
+    ),
+  );
 }
 
 function renderHistory(board) {
@@ -401,12 +436,14 @@ function renderHistory(board) {
   spacer.className = "battle-history-spacer";
   list.appendChild(spacer);
 
-  const visible = entries.slice(-MAX_VISIBLE);
+  // 오래된 행동이 맨 아래에 남고 새 행동이 그 위로 한 칸씩 쌓인다.
+  const visible = entries.slice(-MAX_VISIBLE).reverse();
   visible.forEach((entry) => list.appendChild(createEntryNode(entry)));
   panel.appendChild(list);
 
   requestAnimationFrame(() => {
-    list.scrollTop = list.scrollHeight;
+    // 항목이 넘칠 때도 최신 행동(위쪽)이 바로 보이도록 유지한다.
+    list.scrollTop = 0;
   });
 }
 
@@ -418,29 +455,40 @@ function captureNewLines(board) {
   }
 
   const overlap = suffixPrefixOverlap(previousLines, currentLines);
-  const newLines = previousLines.length ? currentLines.slice(overlap) : currentLines;
+  const newLines = previousLines.length
+    ? currentLines.slice(overlap)
+    : currentLines;
   previousLines = currentLines;
 
-  let changed = false;
-  newLines.forEach((message) => {
+  const parsed = [];
+  newLines.forEach((message, index) => {
     const action = parseAction(board, message);
-    if (!action) return;
+    if (action) parsed.push({ index, action });
+  });
+
+  if (!parsed.length) return false;
+
+  parsed.forEach((item, actionIndex) => {
+    const next = parsed[actionIndex + 1];
+    const outcomeLines = newLines.slice(item.index + 1, next ? next.index : newLines.length);
+    const action = item.action;
 
     entries.push({
       seq: ++sequence,
       ...action,
+      sourceFainted: faintedInLines(action.sourceCard, outcomeLines),
+      targetFainted: faintedInLines(action.targetCard, outcomeLines),
     });
-    changed = true;
   });
 
   if (entries.length > MAX_STORED) entries = entries.slice(-MAX_STORED);
-  return changed;
+  return true;
 }
 
 function resetForBoard(board) {
   if (mountedBoard === board) return;
 
-  hideFloatingTooltip();
+  hideInspectOverlay();
   if (mountedBoard) mountedBoard.classList.remove("battle-history-enabled");
   mountedBoard = board;
   previousLines = [];
