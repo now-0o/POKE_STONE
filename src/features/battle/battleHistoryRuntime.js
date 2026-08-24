@@ -363,11 +363,12 @@ function collectUnitSnapshots(game) {
 
 function findSnapshotByCard(snapshots, card, side = null) {
   if (!card || !snapshots) return null;
-  const matches = [...snapshots.values()].filter(
-    (snapshot) =>
-      snapshot.cardId === card.id && (!side || snapshot.side === side),
+  return (
+    [...snapshots.values()].find(
+      (snapshot) =>
+        snapshot.cardId === card.id && (!side || snapshot.side === side),
+    ) || null
   );
-  return matches[0] || null;
 }
 
 function resolveSnapshot(
@@ -478,71 +479,121 @@ function enrichActionSnapshots(
   };
 }
 
-function sandImmune(snapshot) {
+function hasOvercoat(snapshot) {
   const unit = snapshot?.unit;
-  if (!unit || unit.hp <= 0) return true;
-  if (SAND_IMMUNE_TYPES.includes(unit.type)) return true;
-  return unit.ability === "overcoat" || unit.secondaryAbility === "overcoat";
+  return unit?.ability === "overcoat" || unit?.secondaryAbility === "overcoat";
 }
 
-function faintedBeforeSand(snapshot, linesBeforeSand) {
+function weatherImmune(snapshot, weather) {
+  const unit = snapshot?.unit;
+  if (!unit || unit.hp <= 0) return true;
+  if (hasOvercoat(snapshot)) return true;
+  if (weather === "sand") return SAND_IMMUNE_TYPES.includes(unit.type);
+  if (weather === "hail") return unit.type === "얼음";
+  return true;
+}
+
+function faintedBeforeWeather(snapshot, linesBeforeWeather) {
   const name = snapshot?.unit?.name || CARD_MAP[snapshot?.cardId]?.name;
   if (!name) return false;
-  return linesBeforeSand.some(
+  return linesBeforeWeather.some(
     (line) =>
       line.includes(name) &&
       /(기절했다|기절!|쓰러졌다|쓰러졌다!)/.test(line),
   );
 }
 
-function weatherActionsFromLines(
-  newLines,
-  currentSnapshots,
-  oldSnapshots,
-) {
+function weatherSpecForMessage(message) {
+  if (message === "모래바람이 몰아친다!") {
+    return {
+      weather: "sand",
+      icon: "🏜️",
+      label: "모래바람",
+      damageText: "피해 1",
+    };
+  }
+  if (message === "싸라기눈이 몰아친다!") {
+    return {
+      weather: "hail",
+      icon: "🌨️",
+      label: "싸라기눈",
+      damageText: "얼음 피해 1",
+    };
+  }
+  return null;
+}
+
+function weatherActionsFromLines(newLines, currentSnapshots, oldSnapshots) {
   const actions = [];
 
   newLines.forEach((message, index) => {
-    if (message !== "모래바람이 몰아친다!") return;
+    const spec = weatherSpecForMessage(message);
+    if (!spec) return;
 
-    const beforeSand = newLines.slice(0, index);
+    const beforeWeather = newLines.slice(0, index);
+    let offset = 0;
+
     [...oldSnapshots.values()].forEach((before) => {
-      if (sandImmune(before) || faintedBeforeSand(before, beforeSand)) return;
+      if (
+        weatherImmune(before, spec.weather) ||
+        faintedBeforeWeather(before, beforeWeather)
+      ) {
+        return;
+      }
 
       const card = CARD_MAP[before.cardId];
       if (!card?.id) return;
 
-      const after = currentSnapshots.get(before.uid);
-      const targetSnapshot = after
-        ? {
-            ...after,
-            unit: after.unit ? { ...after.unit } : null,
-          }
-        : {
-            ...before,
-            unit: before.unit ? { ...before.unit, hp: 0 } : null,
-          };
+      let targetSnapshot = null;
+      let targetFainted = false;
+
+      if (spec.weather === "hail") {
+        targetFainted = (before.unit?.hp || 0) <= 1;
+        targetSnapshot = {
+          ...before,
+          unit: before.unit
+            ? {
+                ...before.unit,
+                hp: Math.max(0, (before.unit.hp || 0) - 1),
+              }
+            : null,
+        };
+      } else {
+        const after = currentSnapshots.get(before.uid);
+        targetSnapshot = after
+          ? {
+              ...after,
+              unit: after.unit ? { ...after.unit } : null,
+            }
+          : {
+              ...before,
+              unit: before.unit ? { ...before.unit, hp: 0 } : null,
+            };
+        targetFainted = !after || (targetSnapshot.unit?.hp || 0) <= 0;
+      }
 
       actions.push({
-        index: index + actions.length / 1000,
+        index: index + offset / 1000,
         action: {
           type: "weather",
-          weather: "sand",
-          weatherIcon: "🏜️",
+          weather: spec.weather,
+          weatherIcon: spec.icon,
+          weatherLabel: spec.label,
           sourceCard: null,
           sourceSnapshot: null,
           sourceFainted: false,
           targetCard: card,
           targetSnapshot,
-          targetFainted: !after || (targetSnapshot.unit?.hp || 0) <= 0,
+          targetFainted,
           targetHero: null,
           weatherTargetSide: before.side,
           side: "neutral",
           damage: 1,
           retaliation: 0,
-          message: `모래바람! ${card.name}이(가) 피해 1을 받았다.`,
+          message: `${spec.label}! ${card.name}이(가) ${spec.damageText}을 받았다.`,
         },
       });
+      offset += 1;
     });
   });
 
@@ -627,7 +678,12 @@ function inspectWeather(entry, key) {
     React.createElement(
       "strong",
       null,
-      entry.weather === "sand" ? "모래바람" : "날씨",
+      entry.weatherLabel ||
+        (entry.weather === "sand"
+          ? "모래바람"
+          : entry.weather === "hail"
+            ? "싸라기눈"
+            : "날씨"),
     ),
   );
 }
