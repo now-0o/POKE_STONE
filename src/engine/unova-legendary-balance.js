@@ -112,6 +112,40 @@ function quickGuardForTarget(game, attackingSide, targetUid) {
   );
 }
 
+function originalAttackTargetIsValid(game, side, attackerUid, targetUid) {
+  if (!targetUid || targetUid === "hero") return false;
+  const valid = core.validAttackTargets(game, side, attackerUid);
+  return !!valid?.units?.some((unit) => unit.uid === targetUid && unit.hp > 0);
+}
+
+function withQuickGuardTauntRedirect(game, defendingSide, guard, callback) {
+  if (!guard) return callback();
+  const defender = game?.players?.[defendingSide];
+  if (!defender) return callback();
+
+  // 도발은 '원래 공격 대상을 고르는 규칙'이다. 그 대상이 유효한지 확인한 뒤
+  // 코바르온이 대신 맞는 순간에만 내부 재검증용 도발 제한을 잠시 풀어준다.
+  // 이렇게 해야 도발 포켓몬 + 코바르온 조합에서도 공격이 취소되지 않는다.
+  const snapshots = defender.field.map((unit) => ({
+    unit,
+    hadDisabled: Object.prototype.hasOwnProperty.call(unit, "_tauntDisabled"),
+    disabled: unit._tauntDisabled,
+  }));
+
+  for (const snapshot of snapshots) {
+    snapshot.unit._tauntDisabled = true;
+  }
+
+  try {
+    return callback();
+  } finally {
+    for (const snapshot of snapshots) {
+      if (snapshot.hadDisabled) snapshot.unit._tauntDisabled = snapshot.disabled;
+      else delete snapshot.unit._tauntDisabled;
+    }
+  }
+}
+
 function withQuickGuardDamageReduction(guard, callback) {
   if (!guard) return callback();
   const originalMaxHp = guard.maxHp;
@@ -234,13 +268,23 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
 export function attack(game, side, attackerUid, target) {
   const originalTargetUid = target?.uid || null;
-  const quickGuard = quickGuardForTarget(game, side, originalTargetUid);
+  const canRedirect = originalAttackTargetIsValid(
+    game,
+    side,
+    attackerUid,
+    originalTargetUid,
+  );
+  const quickGuard = canRedirect
+    ? quickGuardForTarget(game, side, originalTargetUid)
+    : null;
   const resolvedTarget = quickGuard
     ? { ...target, uid: quickGuard.uid }
     : target;
 
   const result = withQuickGuardDamageReduction(quickGuard, () =>
-    core.attack(game, side, attackerUid, resolvedTarget),
+    withQuickGuardTauntRedirect(game, other(side), quickGuard, () =>
+      core.attack(game, side, attackerUid, resolvedTarget),
+    ),
   );
 
   if (result && quickGuard) {
