@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 // 하나지방 카드도 같은 확장 레지스트리 순서로 로드한다.
 import './data/cards/sinnoh.js';
 import './data/cards/unova.js';
+import './data/cards/unova-pack.js';
 import './data/cards/unova-legendary-overrides.js';
 import './data/cards/unova-trainers.js';
 // 일반 카드 확장이 모두 등록된 뒤 v3.3 밸런스 수치를 최종 적용한다.
