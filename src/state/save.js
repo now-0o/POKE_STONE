@@ -163,6 +163,9 @@ function isPokemonInGeneration(card, generation) {
     case 4:
       return dex >= 387 && dex <= 493;
 
+    case 5:
+      return dex >= 494 && dex <= 649;
+
     default:
       return false;
   }
