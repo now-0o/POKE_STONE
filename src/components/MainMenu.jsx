@@ -469,7 +469,14 @@ export default function MainMenu({
             onDex?.();
           }}
         >
-          <span aria-hidden="true">📖</span>
+          <img
+            className="res-icon"
+            src="/sprites/items/adventure-rules.png"
+            alt=""
+            width={20}
+            height={20}
+            draggable={false}
+          />
           카드 도감
         </button>
 
