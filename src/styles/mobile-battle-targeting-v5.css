@@ -1,0 +1,153 @@
+/* Mobile battle targeting/hand UX v5
+ * - landscape: while a tapped card is waiting for a target, hide the hand and
+ *   move the compact target guide below the board so the player's field stays clear.
+ * - portrait: expanded hand becomes a straight horizontal rail. Collapsing the
+ *   hand removes this layout and naturally returns to the existing lower-right fan.
+ */
+
+/* -------------------------------------------------------------------------
+   Portrait expanded hand: straight row + horizontal scroll
+   ------------------------------------------------------------------------- */
+@media (orientation: portrait) and (pointer: coarse),
+       (orientation: portrait) and (max-width: 700px) {
+  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand {
+    position: absolute !important;
+    inset: auto 0 0 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 218px !important;
+    min-height: 218px !important;
+    max-height: 218px !important;
+    padding: 27px 14px 10px !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain !important;
+    scroll-snap-type: x proximity !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: none !important;
+    pointer-events: auto !important;
+    isolation: isolate !important;
+    z-index: 260 !important;
+    background: linear-gradient(
+      180deg,
+      rgba(5, 10, 22, 0) 0%,
+      rgba(5, 10, 22, 0.74) 17%,
+      rgba(5, 9, 19, 0.97) 100%
+    ) !important;
+  }
+
+  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand::before {
+    display: none !important;
+  }
+
+  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand > .hand-card-wrap {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    flex: 0 0 116px !important;
+    width: 116px !important;
+    min-width: 116px !important;
+    max-width: 116px !important;
+    height: 166px !important;
+    margin: 0 !important;
+    transform: none !important;
+    transform-origin: center !important;
+    transition: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    scroll-snap-align: center !important;
+    z-index: 1 !important;
+  }
+
+  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected)) > .hand > .hand-card-wrap > .hand-card {
+    position: absolute !important;
+    left: 50% !important;
+    top: 0 !important;
+    translate: -50% 0 !important;
+    transform: none !important;
+    scale: .82 !important;
+    transform-origin: top center !important;
+    transition: box-shadow .16s ease !important;
+    touch-action: none !important;
+  }
+
+  /* Keep discard/redraw controls inside the visible rail while still separated
+     from the card body. */
+  .battle-board.mobile-hand-open:not(.mobile-hand-grabbing):not(:has(> .hand .hand-card.selected))
+    > .hand > .hand-card-wrap > .btn-discard-redraw {
+    top: -23px !important;
+    transform: translateX(-50%) scale(.88) !important;
+    z-index: 980 !important;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Landscape target selection: field first, hand temporarily hidden
+   ------------------------------------------------------------------------- */
+@media (orientation: landscape) and (pointer: coarse),
+       (orientation: landscape) and (max-width: 1024px) and (max-height: 600px) {
+  /* A selected hand card means React is waiting for a spell/item/evolution target.
+     Hide the selected card as well as its siblings so the entire player field is
+     available for tapping. Drag targeting is intentionally unaffected. */
+  .battle-board:has(> .hand .hand-card.selected) > .hand {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* The old guide sat around 21% from the bottom and could overlap the player
+     field. Pin a compact guide to the safe bottom edge instead. */
+  .battle-board:has(> .hand .hand-card.selected) .target-hint {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: max(7px, env(safe-area-inset-bottom)) !important;
+    width: max-content !important;
+    max-width: calc(100vw - 24px) !important;
+    min-height: 32px !important;
+    padding: 6px 10px !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    border: 1px solid rgba(245, 197, 66, .45) !important;
+    border-radius: 999px !important;
+    background: rgba(10, 16, 31, .96) !important;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .52) !important;
+    font-size: clamp(9px, 1.8vh, 12px) !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    pointer-events: auto !important;
+    z-index: 1700 !important;
+  }
+
+  .battle-board:has(> .hand .hand-card.selected) .target-hint .btn-ghost.small {
+    flex: 0 0 auto !important;
+    padding: 3px 6px !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+}
