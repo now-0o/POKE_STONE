@@ -1,4 +1,5 @@
 import "./weather-turn.css";
+import "./battle-history-layout-fix.css";
 
 const WEATHER_VIEW = {
   rain: {
