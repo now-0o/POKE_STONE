@@ -59,12 +59,14 @@ function syncVisibleViewport() {
   const height = Math.round(viewport?.height || window.innerHeight || 0);
   const offsetLeft = Math.round(viewport?.offsetLeft || 0);
   const offsetTop = Math.round(viewport?.offsetTop || 0);
+  const centerX = Math.round(offsetLeft + width / 2);
   const root = document.documentElement;
 
   if (width > 0) root.style.setProperty("--mobile-battle-vw", `${width}px`);
   if (height > 0) root.style.setProperty("--mobile-battle-vh", `${height}px`);
   root.style.setProperty("--mobile-battle-vx", `${offsetLeft}px`);
   root.style.setProperty("--mobile-battle-vy", `${offsetTop}px`);
+  root.style.setProperty("--mobile-battle-cx", `${centerX}px`);
 }
 
 function beginHandGesture(event) {
