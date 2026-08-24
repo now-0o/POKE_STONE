@@ -1,5 +1,6 @@
 import "./battle-screen-counters.css";
 import "./unovaMoveFxRuntime.js";
+import { syncBattleHistory } from "./battleHistoryRuntime.js";
 
 function syncEndTurnLabel() {
   const button = document.querySelector(".battle.battle-board .btn-endturn");
@@ -144,6 +145,7 @@ function syncBattlePageState() {
   document.body.classList.toggle("battle-page-locked", locked);
 
   syncEndTurnLabel();
+  syncBattleHistory();
   queueCandiceOverlayAlignment();
 }
 
@@ -152,13 +154,17 @@ function startBattleRuntime() {
 
   window.addEventListener("battle-turn-change", () => {
     syncEndTurnLabel();
+    syncBattleHistory();
     queueCandiceOverlayAlignment();
   });
   window.addEventListener(
     "candice-whiteout-change",
     queueCandiceOverlayAlignment,
   );
-  window.addEventListener("resize", queueCandiceOverlayAlignment);
+  window.addEventListener("resize", () => {
+    syncBattleHistory();
+    queueCandiceOverlayAlignment();
+  });
   window.addEventListener("pointerup", rememberCandiceDropSlot, true);
   document.addEventListener("click", blockPokemonHandClick, true);
 
