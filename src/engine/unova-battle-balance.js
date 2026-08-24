@@ -476,14 +476,20 @@ function hailImmune(unit) {
   return unit.ability === "overcoat" || unit.secondaryAbility === "overcoat";
 }
 
+function hailDamageAmount(unit) {
+  if (!unit || hailImmune(unit)) return 0;
+  return core.calcTypedDamage(1, "얼음", unit.type);
+}
+
 function applyHailEndDamage(game) {
   if (game?.weather !== "hail") return;
 
   let hit = false;
   for (const side of ["player", "enemy"]) {
     for (const unit of game.players?.[side]?.field || []) {
-      if (hailImmune(unit)) continue;
-      unit.hp = Math.max(0, unit.hp - 1);
+      const damage = hailDamageAmount(unit);
+      if (damage <= 0) continue;
+      unit.hp = Math.max(0, unit.hp - damage);
       hit = true;
     }
   }
