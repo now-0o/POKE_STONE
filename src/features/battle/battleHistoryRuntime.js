@@ -104,22 +104,35 @@ function parseDamage(message) {
   return match ? Number(match[1]) : 0;
 }
 
+function heroSnapshot(board, side) {
+  const selector =
+    side === "enemy" ? ".enemy-hero-cluster" : ".my-hero-cluster";
+  const cluster = board.querySelector(selector);
+  if (!cluster) return null;
+
+  const image = cluster.querySelector(".trainer-sprite, img");
+  const name =
+    cluster.querySelector(".hero-name")?.textContent?.trim() ||
+    (side === "enemy" ? "상대 트레이너" : "플레이어");
+
+  return {
+    side,
+    name,
+    spriteUrl: image?.currentSrc || image?.src || null,
+  };
+}
+
+function heroMentionedInMessage(board, message) {
+  const enemy = heroSnapshot(board, "enemy");
+  const player = heroSnapshot(board, "player");
+  if (enemy?.name && message.includes(enemy.name)) return enemy;
+  if (player?.name && message.includes(player.name)) return player;
+  return null;
+}
+
 function inferSide(board, message, sourceCard) {
-  const enemyName = board
-    .querySelector(".enemy-hero-cluster .hero-name")
-    ?.textContent?.trim();
-  const playerName =
-    board.querySelector(".my-hero-cluster .hero-name")?.textContent?.trim() ||
-    "나";
-
-  if (enemyName && message.includes(enemyName)) return "enemy";
-  if (
-    playerName &&
-    (message.startsWith(playerName) || message.includes(`${playerName}의`))
-  ) {
-    return "player";
-  }
-
+  // 공격 문장에는 공격받은 트레이너 이름도 들어가므로
+  // 포켓몬이 실제 어느 필드에 있는지를 가장 먼저 본다.
   if (sourceCard?.kind === "pokemon") {
     const enemyHas = [...board.querySelectorAll(".enemy-field [data-uid]")].some(
       (node) => (node.textContent || "").includes(sourceCard.name),
@@ -131,6 +144,21 @@ function inferSide(board, message, sourceCard) {
     );
     if (playerHas) return "player";
   }
+
+  const enemyName = board
+    .querySelector(".enemy-hero-cluster .hero-name")
+    ?.textContent?.trim();
+  const playerName =
+    board.querySelector(".my-hero-cluster .hero-name")?.textContent?.trim() ||
+    "나";
+
+  if (
+    playerName &&
+    (message.startsWith(playerName) || message.includes(`${playerName}의`))
+  ) {
+    return "player";
+  }
+  if (enemyName && message.startsWith(enemyName)) return "enemy";
 
   const turn = document.body.dataset.battleTurn;
   return turn === "enemy" ? "enemy" : "player";
@@ -156,7 +184,9 @@ function parseAction(board, message) {
         type: "summon",
         sourceCard: card,
         targetCard: null,
+        targetHero: null,
         damage: 0,
+        retaliation: 0,
         message,
         side: inferSide(board, message, card),
       };
@@ -172,27 +202,54 @@ function parseAction(board, message) {
         type: "item",
         sourceCard: itemCard,
         targetCard,
+        targetHero: null,
         damage: 0,
+        retaliation: 0,
         message,
         side: inferSide(board, message, itemCard),
       };
     }
   }
 
-  const attack = message.match(
-    /^(.+?)이\(가\)\s+(.+?)을\(를\)\s+(?:직접\s+)?공격!\s*피해\s*(\d+)!?/,
+  // 포켓몬 ↔ 포켓몬 기본 공격.
+  // 엔진 로그 형식: "공격자 ➜ 대상 공격! 피해 N, 반격 M."
+  const unitAttack = message.match(
+    /^(.+?)\s*➜\s*(.+?)\s+공격!\s*피해\s*(\d+)\s*,\s*반격\s*(\d+)/,
   );
-  if (attack) {
-    const sourceCard = findPokemonByDisplayName(attack[1]);
-    const targetCard = findPokemonByDisplayName(attack[2]);
-    if (sourceCard) {
+  if (unitAttack) {
+    const sourceCard = findPokemonByDisplayName(unitAttack[1]);
+    const targetCard = findPokemonByDisplayName(unitAttack[2]);
+    if (sourceCard && targetCard) {
       return {
         type: "attack",
         sourceCard,
         targetCard,
-        damage: Number(attack[3]) || 0,
+        targetHero: null,
+        damage: Number(unitAttack[3]) || 0,
+        retaliation: Number(unitAttack[4]) || 0,
         message,
         side: inferSide(board, message, sourceCard),
+      };
+    }
+  }
+
+  // 포켓몬 → 트레이너 직접 공격.
+  const heroAttack = message.match(
+    /^(.+?)이\(가\)\s+(.+?)을\(를\)\s+직접\s+공격!\s*피해\s*(\d+)!?/,
+  );
+  if (heroAttack) {
+    const sourceCard = findPokemonByDisplayName(heroAttack[1]);
+    if (sourceCard) {
+      const side = inferSide(board, message, sourceCard);
+      return {
+        type: "attack",
+        sourceCard,
+        targetCard: null,
+        targetHero: heroSnapshot(board, side === "player" ? "enemy" : "player"),
+        damage: Number(heroAttack[3]) || 0,
+        retaliation: 0,
+        message,
+        side,
       };
     }
   }
@@ -204,11 +261,17 @@ function parseAction(board, message) {
 
     if (isItem || isTechnique) {
       const targets = mentionedPokemon(message, [usedCard.id]);
+      const damage = parseDamage(message);
       return {
         type: isItem ? "item" : "technique",
         sourceCard: usedCard,
         targetCard: targets[0] || null,
-        damage: parseDamage(message),
+        targetHero:
+          !targets.length && damage > 0
+            ? heroMentionedInMessage(board, message)
+            : null,
+        damage,
+        retaliation: 0,
         message,
         side: inferSide(board, message, usedCard),
       };
@@ -239,17 +302,18 @@ function createRailIcon(entry) {
   const wrap = document.createElement("span");
   wrap.className = "battle-history-portrait";
 
-  if (entry.sourceCard?.kind === "pokemon") {
+  const iconUrl = entry.sourceCard?.id ? spriteUrl(entry.sourceCard.id) : null;
+  if (iconUrl) {
     const img = document.createElement("img");
-    img.alt = entry.sourceCard.name;
+    img.alt = entry.sourceCard?.name || "";
     img.draggable = false;
     img.loading = "lazy";
-    img.src = spriteUrl(entry.sourceCard.id);
+    img.src = iconUrl;
     img.addEventListener(
       "error",
       () => {
         img.remove();
-        wrap.textContent = entry.sourceCard.emoji || "◆";
+        wrap.textContent = entry.sourceCard?.emoji || "◆";
       },
       { once: true },
     );
@@ -257,10 +321,7 @@ function createRailIcon(entry) {
     return wrap;
   }
 
-  const symbol = document.createElement("span");
-  symbol.className = "battle-history-card-symbol";
-  symbol.textContent = entry.type === "technique" ? "✧" : "◆";
-  wrap.appendChild(symbol);
+  wrap.textContent = entry.sourceCard?.emoji || "◆";
   return wrap;
 }
 
@@ -292,22 +353,90 @@ function inspectCard(card, fainted, key) {
   );
 }
 
+function inspectTrainer(hero, key) {
+  if (!hero) return null;
+  return React.createElement(
+    "div",
+    {
+      key,
+      className: "battle-history-inspect-trainer",
+      style: {
+        width: "170px",
+        height: "220px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        borderRadius: "18px",
+        border: "2px solid rgba(255,255,255,.2)",
+        background: "radial-gradient(circle at 50% 38%, rgba(255,255,255,.14), rgba(8,12,24,.9) 68%)",
+        boxShadow: "0 24px 60px rgba(0,0,0,.7)",
+      },
+    },
+    hero.spriteUrl
+      ? React.createElement("img", {
+          src: hero.spriteUrl,
+          alt: hero.name,
+          draggable: false,
+          style: {
+            width: "145px",
+            height: "165px",
+            objectFit: "contain",
+            imageRendering: "pixelated",
+            filter: "drop-shadow(0 8px 12px rgba(0,0,0,.65))",
+          },
+        })
+      : null,
+    React.createElement(
+      "strong",
+      {
+        style: {
+          color: "#fff",
+          fontFamily: "var(--display-font)",
+          fontSize: "14px",
+          textShadow: "0 2px 4px rgba(0,0,0,.8)",
+        },
+      },
+      hero.name,
+    ),
+  );
+}
+
 function inspectReact(entry) {
   const children = [
     inspectCard(entry.sourceCard, entry.sourceFainted, "source"),
   ];
 
-  if (entry.targetCard) {
+  const hasTarget = Boolean(entry.targetCard || entry.targetHero);
+  if (hasTarget) {
+    const bridgeChildren = [
+      React.createElement("span", { key: "arrow" }, "→"),
+    ];
+    if (entry.damage > 0) {
+      bridgeChildren.push(
+        React.createElement("strong", { key: "damage" }, `피해 ${entry.damage}`),
+      );
+    }
+    if (entry.retaliation > 0) {
+      bridgeChildren.push(
+        React.createElement(
+          "strong",
+          { key: "retaliation" },
+          `반격 ${entry.retaliation}`,
+        ),
+      );
+    }
+
     children.push(
       React.createElement(
         "div",
         { className: "battle-history-inspect-bridge", key: "bridge" },
-        React.createElement("span", null, "→"),
-        entry.damage > 0
-          ? React.createElement("strong", null, `피해 ${entry.damage}`)
-          : null,
+        ...bridgeChildren,
       ),
-      inspectCard(entry.targetCard, entry.targetFainted, "target"),
+      entry.targetCard
+        ? inspectCard(entry.targetCard, entry.targetFainted, "target")
+        : inspectTrainer(entry.targetHero, "trainer"),
     );
   } else if (entry.damage > 0) {
     children.push(
@@ -470,7 +599,10 @@ function captureNewLines(board) {
 
   parsed.forEach((item, actionIndex) => {
     const next = parsed[actionIndex + 1];
-    const outcomeLines = newLines.slice(item.index + 1, next ? next.index : newLines.length);
+    const outcomeLines = newLines.slice(
+      item.index + 1,
+      next ? next.index : newLines.length,
+    );
     const action = item.action;
 
     entries.push({
