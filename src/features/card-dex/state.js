@@ -5,6 +5,22 @@ import { ensureShinyState } from "../../state/shiny.js";
 export const KANTO_STARTER_IDS = ["bulbasaur", "charmander", "squirtle"];
 export const KANTO_STARTER_REWARD_KEY = "kantoStarters";
 
+// 도감 퀘스트는 서로 선행 조건을 갖지 않는다.
+// 카드팩 획득 순서는 랜덤이므로 각 퀘스트는 자기 requiredCardIds만 보고
+// 독립적으로 완료/수령 가능 상태가 된다.
+export const DEX_QUESTS = [
+  {
+    id: KANTO_STARTER_REWARD_KEY,
+    order: 1,
+    category: "세트 수집",
+    title: "관동 스타팅",
+    description: "이상해씨 · 파이리 · 꼬부기를 모두 발견하세요.",
+    requiredCardIds: KANTO_STARTER_IDS,
+    rewardText: "미보유 관동 스타팅 이로치 1장",
+    rewardSubtext: "세 이로치를 이미 모두 보유했다면 150원으로 대체",
+  },
+];
+
 function ensureDexRewards(save) {
   if (!save.dexRewards || typeof save.dexRewards !== "object") {
     save.dexRewards = {};
@@ -12,40 +28,43 @@ function ensureDexRewards(save) {
   return save.dexRewards;
 }
 
-export function kantoStarterRewardState(save) {
-  const ids = KANTO_STARTER_IDS;
-  const found = ids.filter((id) => (save?.collection?.[id] || 0) > 0);
-  const reward = save?.dexRewards?.[KANTO_STARTER_REWARD_KEY] || null;
+export function dexQuestState(save, questOrId) {
+  const quest =
+    typeof questOrId === "string"
+      ? DEX_QUESTS.find((item) => item.id === questOrId)
+      : questOrId;
+
+  if (!quest) {
+    return {
+      found: [],
+      required: [],
+      complete: false,
+      claimed: false,
+      reward: null,
+    };
+  }
+
+  const required = quest.requiredCardIds || [];
+  const found = required.filter((id) => (save?.collection?.[id] || 0) > 0);
+  const reward = save?.dexRewards?.[quest.id] || null;
 
   return {
     found,
-    complete: found.length === ids.length,
+    required,
+    complete: required.length > 0 && found.length === required.length,
     claimed: !!reward?.claimed,
     reward,
   };
 }
 
-export function claimKantoStarterDexReward(save) {
-  if (!save) return { ok: false, reason: "missing-save" };
+export function kantoStarterRewardState(save) {
+  return dexQuestState(save, KANTO_STARTER_REWARD_KEY);
+}
 
-  ensureShinyState(save);
-  const rewards = ensureDexRewards(save);
-  const current = rewards[KANTO_STARTER_REWARD_KEY];
-
-  if (current?.claimed) {
-    return { ok: false, reason: "already-claimed", reward: current };
-  }
-
-  const state = kantoStarterRewardState(save);
-  if (!state.complete) {
-    return { ok: false, reason: "incomplete" };
-  }
-
+function claimKantoStarterReward(save) {
   const missingShiny = KANTO_STARTER_IDS.filter(
     (id) => (save.shinyCollection?.[id] || 0) <= 0,
   );
-
-  let reward;
 
   if (missingShiny.length > 0) {
     const cardId = missingShiny[Math.floor(Math.random() * missingShiny.length)];
@@ -65,27 +84,59 @@ export function claimKantoStarterDexReward(save) {
       Math.min(save.collection[cardId] || 1, save.shinyCollection[cardId] || 0),
     );
 
-    reward = {
+    return {
       claimed: true,
       rewardType: "shiny",
       cardId,
       claimedAt: Date.now(),
     };
-  } else {
-    // 세 스타팅 이로치를 이미 전부 가진 계정도 보상이 막히지 않도록
-    // 기존 재화로 대체 보상한다.
-    save.money = (save.money || 0) + 150;
-    reward = {
-      claimed: true,
-      rewardType: "money",
-      amount: 150,
-      claimedAt: Date.now(),
-    };
   }
 
-  rewards[KANTO_STARTER_REWARD_KEY] = reward;
+  save.money = (save.money || 0) + 150;
+  return {
+    claimed: true,
+    rewardType: "money",
+    amount: 150,
+    claimedAt: Date.now(),
+  };
+}
+
+export function claimDexQuestReward(save, questId) {
+  if (!save) return { ok: false, reason: "missing-save" };
+
+  const quest = DEX_QUESTS.find((item) => item.id === questId);
+  if (!quest) return { ok: false, reason: "missing-quest" };
+
+  ensureShinyState(save);
+  const rewards = ensureDexRewards(save);
+  const current = rewards[quest.id];
+
+  if (current?.claimed) {
+    return { ok: false, reason: "already-claimed", reward: current };
+  }
+
+  const state = dexQuestState(save, quest);
+  if (!state.complete) {
+    return { ok: false, reason: "incomplete" };
+  }
+
+  let reward;
+
+  switch (quest.id) {
+    case KANTO_STARTER_REWARD_KEY:
+      reward = claimKantoStarterReward(save);
+      break;
+    default:
+      return { ok: false, reason: "unsupported-quest" };
+  }
+
+  rewards[quest.id] = reward;
   ensureShinyState(save);
   persist(save);
 
-  return { ok: true, reward };
+  return { ok: true, reward, quest };
+}
+
+export function claimKantoStarterDexReward(save) {
+  return claimDexQuestReward(save, KANTO_STARTER_REWARD_KEY);
 }
