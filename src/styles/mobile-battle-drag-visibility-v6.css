@@ -1,0 +1,37 @@
+/* Mobile battle drag visibility v6
+ * Dragging should expose the field, while tap-to-target selection stays separate.
+ */
+
+@media (pointer: coarse), (max-width: 1024px) {
+  /* As soon as a real drag starts, hide every non-grabbed hand card so the
+     battlefield is readable before React has mounted the drag ghost. */
+  .battle-board.mobile-hand-grabbing > .hand > .hand-card-wrap:not(.mobile-grabbed-card) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .battle-board.mobile-hand-grabbing > .hand {
+    background: transparent !important;
+  }
+
+  .battle-board.mobile-hand-grabbing > .hand::before {
+    display: none !important;
+  }
+
+  /* Once the floating drag card exists, hide the original hand completely.
+     Only the pointer-following ghost remains, leaving the whole field visible. */
+  .battle-board:has(.drag-ghost) > .hand,
+  .battle-board:has(.drag-ghost) > .hand * {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .battle-board .drag-ghost,
+  .battle-board .drag-ghost * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+  }
+}
