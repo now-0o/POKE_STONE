@@ -8,6 +8,7 @@ import './data/cards/unova.js';
 import './data/cards/unova-pack.js';
 import './data/cards/unova-legendary-overrides.js';
 import './data/cards/unova-trainers.js';
+import './data/cards/weather-v34.js';
 // 일반 카드 확장이 모두 등록된 뒤 v3.3 밸런스 수치를 최종 적용한다.
 import './data/cards/balance-v33.js';
 import './data/trainers/unova.js';
@@ -56,7 +57,7 @@ import './styles/mobile-pack-open-portrait-v4.css';
 // 모바일 배틀은 레거시 가로/세로 배치보다 마지막에 모바일 전용으로 재구성한다.
 import './styles/mobile-battle-v2.css';
 import './styles/mobile-battle-v2-fixes.css';
-// 팩 확대 카드와 트레이너 선택 스크롤은 모든 모바일 화면 규칙 뒤에서 최종 고정한다.
+// 팩 확대 카드와 트레이너 선택 스크롤은 모든 모바일 상점 규칙 뒤에서 최종 고정한다.
 import './styles/mobile-pack-inspect-mainmenu-v1.css';
 // 하스스톤형 모바일 배틀 HUD/손패는 기존 모바일 배틀 규칙을 최종 대체한다.
 import './styles/mobile-battle-hearthstone-v3.css';
