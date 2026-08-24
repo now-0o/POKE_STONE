@@ -44,6 +44,7 @@ function makeParticle(view, index) {
   particle.className = "weather-turn-particle";
   particle.textContent = view.particle;
   particle.style.setProperty("--weather-x", `${(index * 37 + 11) % 100}%`);
+  particle.style.setProperty("--weather-y", `${12 + ((index * 23) % 70)}%`);
   particle.style.setProperty("--weather-delay", `${(index % 7) * 55}ms`);
   particle.style.setProperty("--weather-drift", `${((index % 5) - 2) * 22}px`);
   particle.style.setProperty("--weather-scale", `${0.72 + (index % 4) * 0.16}`);
@@ -100,15 +101,28 @@ export function syncWeatherIndicator() {
   const indicator = board?.querySelector(".weather-indicator");
   if (!indicator) return;
 
-  indicator.querySelector(":scope > .weather-turn-count")?.remove();
-
   const game = getBattleGame();
   const remaining = Number(game?._weatherTurnsRemaining) || 0;
-  if (!game?.weather || remaining <= 0) return;
+  const existing = indicator.querySelector(":scope > .weather-turn-count");
+
+  if (!game?.weather || remaining <= 0) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  const nextText = `${remaining}턴`;
+  if (existing) {
+    if (existing.textContent !== nextText) existing.textContent = nextText;
+    const nextLabel = `날씨 ${remaining}턴 남음`;
+    if (existing.getAttribute("aria-label") !== nextLabel) {
+      existing.setAttribute("aria-label", nextLabel);
+    }
+    return;
+  }
 
   const badge = document.createElement("span");
   badge.className = "weather-turn-count";
-  badge.textContent = `${remaining}턴`;
+  badge.textContent = nextText;
   badge.setAttribute("aria-label", `날씨 ${remaining}턴 남음`);
   indicator.appendChild(badge);
 }
