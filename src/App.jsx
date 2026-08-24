@@ -7,6 +7,7 @@ import CardDex from "./components/CardDex.jsx";
 import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
+import OnlineMatchmaking from "./components/OnlineMatchmaking.jsx";
 import {
   loadSave,
   newSave,
@@ -20,17 +21,19 @@ import {
 import {
   getToken,
   getStoredUsername,
+  getStoredAdmin,
   clearAuth,
   fetchSave,
   pushSave,
+  unlockAdmin,
 } from "./state/api.js";
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
-const ADMIN_CODE = "stonemaster"; // 숨겨진 관리자 모드 진입 코드 (아무 화면에서나 그냥 타이핑)
+const ADMIN_CODE = "stonemaster";
 
 export default function App() {
   const saveRef = useRef(null);
-  const [screen, setScreen] = useState("menu"); // menu | battle | shop | deck | dex | tutorial
+  const [screen, setScreen] = useState("menu"); // menu | battle | online | shop | deck | dex | tutorial
   const [trainer, setTrainer] = useState(null);
   const [, forceRender] = useState(0);
   const [adminToast, setAdminToast] = useState(false);
@@ -38,11 +41,9 @@ export default function App() {
   const syncToastTimer = useRef(null);
   const keyBuffer = useRef("");
 
-  // ── 인증 상태 ──
-  // checking: 저장된 토큰이 있는지 서버에 확인 중 (앱 첫 로딩)
-  // authed: 로그인 완료, 게임 화면 렌더 가능
-  const [authStatus, setAuthStatus] = useState("checking"); // checking | authed | anon | error
+  const [authStatus, setAuthStatus] = useState("checking");
   const [username, setUsername] = useState(getStoredUsername());
+  const [isAdmin, setIsAdmin] = useState(getStoredAdmin());
 
   const rerender = () => forceRender((n) => n + 1);
 
@@ -55,8 +56,6 @@ export default function App() {
     syncToastTimer.current = setTimeout(() => setSyncToast(""), 3200);
   }
 
-  // 화면에 맞는 BGM 전환: 로그인 / 메인·덱편집·도감·튜토리얼 / 상점 / 배틀
-  // 배틀은 지역/트레이너 구분 없이 battle.mp3 한 곡만 사용한다.
   useEffect(() => {
     if (authStatus === "anon" || authStatus === "checking") {
       playBgm("login");
@@ -76,7 +75,6 @@ export default function App() {
     [],
   );
 
-  // 앱 첫 로딩: 저장된 토큰이 있으면 유효한지 서버에 확인하고 세이브를 받아온다
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -86,27 +84,24 @@ export default function App() {
     fetchSave()
       .then((serverSave) => {
         applyServerSave(serverSave);
+        setIsAdmin(getStoredAdmin());
         setAuthStatus("authed");
       })
       .catch(() => {
         clearAuth();
+        setIsAdmin(false);
         setAuthStatus("anon");
       });
   }, []);
 
-  // 서버에서 받은(혹은 새로 만든) 세이브를 로컬 캐시에 덮어쓰고 메모리에 반영.
-  // 다른 계정으로 로그인했을 때 이전 계정의 로컬 캐시가 남아있는 문제를 막기 위해
-  // 항상 서버 응답으로 완전히 덮어씀.
   function applyServerSave(serverSave) {
     const save = ensureDeckPresets(serverSave || newSave());
     persist(save);
     saveRef.current = save;
-    if (!serverSave) pushSave(save).catch(handleSaveSyncError); // 신규 유저면 서버에도 첫 세이브 반영
+    if (!serverSave) pushSave(save).catch(handleSaveSyncError);
   }
 
   function handleSaveSyncError(e) {
-    // 다른 기기의 저장과 충돌한 순간 서버가 돌려준 최신 세이브를 즉시 적용한다.
-    // 충돌 전에 같은 기기 큐에 대기 중이던 요청은 api.js에서 save_superseded로 폐기된다.
     if (e?.code === "save_conflict") {
       const latest = ensureDeckPresets(e.serverSave || newSave());
       persist(latest);
@@ -123,9 +118,7 @@ export default function App() {
   }
 
   function setSelectedBattleStateAfterSync() {
-    // 배틀 중 충돌이 나면 이미 시작한 배틀은 옛 세이브를 기반으로 하고 있으므로
-    // 최신 서버 세이브와 섞지 않고 안전하게 메인으로 돌린다.
-    if (screen === "battle") {
+    if (screen === "battle" || screen === "online") {
       setTrainer(null);
       setScreen("menu");
     }
@@ -133,6 +126,7 @@ export default function App() {
 
   function onAuthed(serverSave) {
     setUsername(getStoredUsername());
+    setIsAdmin(getStoredAdmin());
     applyServerSave(serverSave);
     setAuthStatus("authed");
   }
@@ -141,13 +135,13 @@ export default function App() {
     clearAuth();
     saveRef.current = null;
     setUsername(null);
+    setIsAdmin(false);
     setScreen("menu");
     setTrainer(null);
     setAuthStatus("anon");
   }
 
-  // 관리자 모드: 입력창 포커스 없이 아무 화면에서나 'stonemaster'를 타이핑하면 발동.
-  // 버튼도, 힌트도, 메뉴 항목도 없음 - 아는 사람만 쓰는 용도.
+  // 관리자 모드: stonemaster 입력 시 기존 로컬 치트와 서버 관리자 권한을 함께 활성화한다.
   useEffect(() => {
     function onKeyDown(e) {
       if (authStatus !== "authed") return;
@@ -156,12 +150,24 @@ export default function App() {
       keyBuffer.current = (keyBuffer.current + e.key.toLowerCase()).slice(
         -ADMIN_CODE.length,
       );
-      if (keyBuffer.current === ADMIN_CODE) {
-        activateAdminMode(saveRef.current);
-        onSaveChange(true);
-        setAdminToast(true);
-        setTimeout(() => setAdminToast(false), 1800);
-      }
+      if (keyBuffer.current !== ADMIN_CODE) return;
+
+      keyBuffer.current = "";
+      activateAdminMode(saveRef.current);
+      onSaveChange(true);
+
+      unlockAdmin(ADMIN_CODE)
+        .then(() => {
+          setIsAdmin(true);
+          setAdminToast(true);
+          setTimeout(() => setAdminToast(false), 1800);
+        })
+        .catch((err) => {
+          setIsAdmin(false);
+          showSyncToast(
+            `로컬 관리자 모드는 켜졌지만 서버 권한 등록에 실패했습니다: ${err?.message || "연결 오류"}`,
+          );
+        });
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -170,14 +176,12 @@ export default function App() {
   function onSaveChange(reload = false) {
     if (reload) saveRef.current = loadSave();
     rerender();
-    // 로그인 상태에서 변경된 세이브는 서버로도 반영.
-    // revision 충돌이면 오래된 로컬 세이브를 저장하지 않고 최신 서버 세이브로 복구한다.
     if (saveRef.current) pushSave(saveRef.current).catch(handleSaveSyncError);
   }
 
   const battleKeyRef = useRef(0);
   function startBattle(t) {
-    battleKeyRef.current += 1; // 배틀 시작할 때만 갱신 - 리렌더마다 안 바뀌게
+    battleKeyRef.current += 1;
     setTrainer(t);
     setScreen("battle");
   }
@@ -224,7 +228,7 @@ export default function App() {
               boxShadow: "0 4px 14px rgba(0,0,0,0.5)",
             }}
           >
-            관리자 모드 활성화 — 자금·전 카드 해금됨
+            관리자 모드 활성화 — 온라인 테스트 권한 포함
           </div>
         )}
         {syncToast && (
@@ -250,6 +254,8 @@ export default function App() {
           <MainMenu
             save={save}
             username={username}
+            onlineAdmin={isAdmin}
+            onOnline={() => setScreen("online")}
             onBattle={startBattle}
             onShop={() => setScreen("shop")}
             onDeck={() => setScreen("deck")}
@@ -257,6 +263,13 @@ export default function App() {
             onTutorial={() => setScreen("tutorial")}
             onSaveChange={onSaveChange}
             onLogout={onLogout}
+          />
+        )}
+        {screen === "online" && (
+          <OnlineMatchmaking
+            save={save}
+            isAdmin={isAdmin}
+            onBack={() => setScreen("menu")}
           />
         )}
         {screen === "battle" && trainer && (
@@ -322,7 +335,7 @@ export default function App() {
             const v = Number(e.target.value) / 100;
             setVolumeState(v);
             setVolume(v);
-            setMuted(isMuted()); // 슬라이더로 볼륨 올리면 자동 음소거 해제되므로 상태 동기화
+            setMuted(isMuted());
           }}
           title="음량"
         />
