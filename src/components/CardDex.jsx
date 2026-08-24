@@ -3,9 +3,9 @@ import { CARDS, CARD_MAP, DEX, MAX_COPIES } from "../data/cards.js";
 import { HandCard, Sprite } from "./Card.jsx";
 import { playSfx } from "../audio.js";
 import {
-  KANTO_STARTER_IDS,
-  claimKantoStarterDexReward,
-  kantoStarterRewardState,
+  DEX_QUESTS,
+  claimDexQuestReward,
+  dexQuestState,
 } from "../features/card-dex/state.js";
 import "../features/card-dex/styles.css";
 
@@ -44,7 +44,7 @@ function rewardLabel(reward) {
 
 export default function CardDex({ save, onSaveChange, onBack, onShop }) {
   const [region, setRegion] = useState("all");
-  const [rewardNotice, setRewardNotice] = useState("");
+  const [rewardNotice, setRewardNotice] = useState(null);
   const allCards = useMemo(() => buildDexCards(), []);
   const activeTab = REGION_TABS.find((tab) => tab.id === region) || REGION_TABS[0];
   const visibleCards = allCards.filter((card) => {
@@ -58,101 +58,51 @@ export default function CardDex({ save, onSaveChange, onBack, onShop }) {
   const allDiscoveredCount = allCards.filter(
     (card) => (save.collection?.[card.id] || 0) > 0,
   ).length;
-  const starterState = kantoStarterRewardState(save);
 
-  function claimStarterReward() {
-    const result = claimKantoStarterDexReward(save);
+  function claimQuest(questId) {
+    const result = claimDexQuestReward(save, questId);
     if (!result.ok) {
       playSfx("buzzer");
       return;
     }
 
     playSfx("buy");
-    setRewardNotice(rewardLabel(result.reward));
+    setRewardNotice({ questId, text: rewardLabel(result.reward) });
     onSaveChange?.();
   }
 
   return (
     <div className="card-dex-screen">
-      <div className="screen-header card-dex-header">
-        <button
-          className="btn-ghost"
-          onClick={() => {
-            playSfx("click");
-            onBack?.();
-          }}
-        >
-          ← 돌아가기
-        </button>
-        <div className="card-dex-title-block">
-          <h2>카드 도감</h2>
-          <span>
-            발견 {allDiscoveredCount} / {allCards.length}
-          </span>
-        </div>
-        <button
-          className="btn-secondary card-dex-shop-btn"
-          onClick={() => {
-            playSfx("slide");
-            onShop?.();
-          }}
-        >
-          카드팩 상점
-        </button>
-      </div>
+      <header className="card-dex-header">
+        <div className="card-dex-header-inner">
+          <button
+            className="btn-ghost card-dex-back-btn"
+            onClick={() => {
+              playSfx("click");
+              onBack?.();
+            }}
+          >
+            ← 돌아가기
+          </button>
 
-      <section className="dex-set-panel" aria-label="관동 스타팅 세트">
-        <div className="dex-set-copy">
-          <span className="dex-set-kicker">COLLECTION SET 001</span>
-          <h3>관동 스타팅</h3>
-          <p>이상해씨 · 파이리 · 꼬부기를 모두 발견하세요.</p>
-          <div className="dex-set-progress">
-            {starterState.found.length} / {KANTO_STARTER_IDS.length} 발견
+          <div className="card-dex-title-block">
+            <h2>카드 도감</h2>
+            <span>
+              발견 {allDiscoveredCount} / {allCards.length}
+            </span>
           </div>
-          <div className="dex-set-reward-copy">
-            보상: 아직 보유하지 않은 관동 스타팅 이로치 1장
-            <small>세 이로치를 이미 모두 보유했다면 150원으로 대체됩니다.</small>
-          </div>
-        </div>
 
-        <div className="dex-starter-row">
-          {KANTO_STARTER_IDS.map((id) => {
-            const owned = (save.collection?.[id] || 0) > 0;
-            return (
-              <div key={id} className={`dex-starter-chip ${owned ? "found" : "missing"}`}>
-                <div className="dex-starter-sprite">
-                  <Sprite
-                    cardId={id}
-                    emoji={CARD_MAP[id]?.emoji}
-                    size={48}
-                    shiny={false}
-                  />
-                </div>
-                <strong>{CARD_MAP[id]?.name}</strong>
-                <span>{owned ? "발견" : "미발견"}</span>
-              </div>
-            );
-          })}
+          <button
+            className="btn-secondary card-dex-shop-btn"
+            onClick={() => {
+              playSfx("slide");
+              onShop?.();
+            }}
+          >
+            카드팩 상점
+          </button>
         </div>
-
-        <div className="dex-set-action">
-          {starterState.claimed ? (
-            <div className="dex-reward-claimed">
-              <span>보상 수령 완료</span>
-              <strong>{rewardLabel(starterState.reward)}</strong>
-            </div>
-          ) : (
-            <button
-              className="btn-primary"
-              disabled={!starterState.complete}
-              onClick={claimStarterReward}
-            >
-              {starterState.complete ? "세트 보상 받기" : "3종을 모두 발견하세요"}
-            </button>
-          )}
-          {rewardNotice && <div className="dex-reward-toast">{rewardNotice} 획득!</div>}
-        </div>
-      </section>
+      </header>
 
       <div className="dex-toolbar">
         <div className="dex-tabs" role="tablist" aria-label="지방별 도감">
@@ -173,6 +123,102 @@ export default function CardDex({ save, onSaveChange, onBack, onShop }) {
           {activeTab.name} 도감 · {discoveredCount}/{visibleCards.length}
         </div>
       </div>
+
+      <section className="dex-quest-board" aria-label="도감 수집 퀘스트">
+        <div className="dex-quest-heading">
+          <div>
+            <span className="dex-quest-kicker">COLLECTION QUESTS</span>
+            <h3>수집 퀘스트</h3>
+          </div>
+          <p>퀘스트는 순서와 관계없이 조건을 채우는 즉시 보상을 받을 수 있습니다.</p>
+        </div>
+
+        <div className="dex-quest-list">
+          {DEX_QUESTS.map((quest) => {
+            const state = dexQuestState(save, quest);
+            const status = state.claimed
+              ? "claimed"
+              : state.complete
+                ? "complete"
+                : "progress";
+
+            return (
+              <article key={quest.id} className={`dex-quest-item is-${status}`}>
+                <div className="dex-quest-index">#{String(quest.order).padStart(2, "0")}</div>
+
+                <div className="dex-quest-copy">
+                  <span>{quest.category}</span>
+                  <h4>{quest.title}</h4>
+                  <p>{quest.description}</p>
+
+                  <div className="dex-quest-required">
+                    {quest.requiredCardIds.map((id) => {
+                      const owned = (save.collection?.[id] || 0) > 0;
+                      return (
+                        <div
+                          key={id}
+                          className={`dex-quest-pokemon ${owned ? "found" : "missing"}`}
+                          title={CARD_MAP[id]?.name}
+                        >
+                          <Sprite
+                            cardId={id}
+                            emoji={CARD_MAP[id]?.emoji}
+                            size={38}
+                            shiny={false}
+                          />
+                          <span>{CARD_MAP[id]?.name}</span>
+                          <b>{owned ? "✓" : "?"}</b>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="dex-quest-progress-box">
+                  <strong>
+                    {state.found.length} / {state.required.length}
+                  </strong>
+                  <span>발견</span>
+                  <div className="dex-quest-progress-track" aria-hidden="true">
+                    <i
+                      style={{
+                        width: `${state.required.length ? (state.found.length / state.required.length) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="dex-quest-reward">
+                  <span className="dex-quest-reward-label">보상</span>
+                  <strong>{quest.rewardText}</strong>
+                  <small>{quest.rewardSubtext}</small>
+                </div>
+
+                <div className="dex-quest-action">
+                  {state.claimed ? (
+                    <div className="dex-reward-claimed">
+                      <span>수령 완료</span>
+                      <strong>{rewardLabel(state.reward)}</strong>
+                    </div>
+                  ) : (
+                    <button
+                      className={state.complete ? "btn-primary" : "btn-secondary"}
+                      disabled={!state.complete}
+                      onClick={() => claimQuest(quest.id)}
+                    >
+                      {state.complete ? "보상 받기" : "진행 중"}
+                    </button>
+                  )}
+
+                  {rewardNotice?.questId === quest.id && (
+                    <div className="dex-reward-toast">{rewardNotice.text} 획득!</div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="dex-grid">
         {visibleCards.map((card) => {
