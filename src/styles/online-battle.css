@@ -1,0 +1,507 @@
+.online-battle-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(71, 104, 142, 0.22), transparent 38%),
+    linear-gradient(180deg, #0b1018 0%, #101827 48%, #0a111b 100%);
+  color: #edf5ff;
+}
+
+.online-battle-topbar {
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  border-bottom: 1px solid rgba(146, 187, 231, 0.22);
+  background: rgba(5, 10, 17, 0.9);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+
+.online-battle-topbar > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.online-battle-topbar strong {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+.online-battle-topbar span {
+  font-size: 11px;
+  opacity: 0.66;
+}
+
+.online-battle-topbar > button {
+  justify-self: end;
+}
+
+.online-sync-state {
+  min-width: 170px;
+  padding: 5px 12px;
+  border: 1px solid rgba(83, 218, 153, 0.34);
+  border-radius: 999px;
+  background: rgba(25, 104, 70, 0.18);
+  color: #baf7d8;
+  text-align: center;
+  font-size: 11px;
+}
+
+.online-sync-state.error {
+  border-color: rgba(255, 105, 105, 0.48);
+  background: rgba(126, 31, 31, 0.22);
+  color: #ffd0d0;
+}
+
+.online-battle-board {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 42px minmax(0, 1fr) 158px;
+  padding: 8px 18px 10px;
+}
+
+.online-battle-side {
+  position: relative;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  min-height: 0;
+}
+
+.online-battle-side.player-side {
+  grid-template-columns: minmax(0, 1fr) 250px;
+}
+
+.online-battle-hero {
+  width: 100%;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(155, 190, 225, 0.25);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(18, 29, 44, 0.96), rgba(11, 19, 31, 0.92));
+  color: #edf5ff;
+  text-align: left;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.online-battle-hero:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.online-battle-hero.targetable {
+  cursor: pointer;
+  border-color: rgba(255, 95, 95, 0.82);
+  box-shadow:
+    0 0 0 2px rgba(255, 82, 82, 0.2),
+    0 0 24px rgba(255, 72, 72, 0.22);
+}
+
+.online-battle-hero .trainer-sprite,
+.online-battle-hero .trainer-emoji {
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-self: center;
+}
+
+.online-battle-hero-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.online-battle-hero-copy small {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  opacity: 0.52;
+}
+
+.online-battle-hero-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.online-battle-hero-copy span {
+  margin-top: 3px;
+  color: #ffb8b8;
+  font-size: 12px;
+}
+
+.online-battle-resource {
+  grid-column: 2;
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(91, 147, 255, 0.15);
+  color: #b7d2ff;
+  font-size: 9px !important;
+  letter-spacing: 0.04em;
+  opacity: 1 !important;
+}
+
+.online-field {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(7px, 1.2vw, 18px);
+  overflow: visible;
+}
+
+.online-field .field-unit {
+  flex: 0 0 auto;
+}
+
+.online-opponent-private {
+  position: absolute;
+  left: 18px;
+  bottom: 8px;
+  color: rgba(220, 234, 250, 0.52);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.online-battle-centerline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.online-battle-centerline::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(155, 190, 225, 0.34), transparent);
+}
+
+.online-turn-banner {
+  position: relative;
+  z-index: 1;
+  min-width: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 15px;
+  border: 1px solid rgba(156, 191, 227, 0.3);
+  border-radius: 999px;
+  background: #0d1623;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.34);
+}
+
+.online-turn-banner.mine {
+  border-color: rgba(92, 155, 255, 0.72);
+  box-shadow: 0 0 18px rgba(59, 126, 255, 0.18);
+}
+
+.online-turn-banner.theirs {
+  border-color: rgba(255, 105, 105, 0.48);
+}
+
+.online-turn-banner strong {
+  font-size: 13px;
+}
+
+.online-turn-banner span {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  opacity: 0.62;
+}
+
+.online-hand-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  padding: 4px 150px 0;
+  overflow: visible;
+}
+
+.online-hand-row > .hand-card {
+  flex: 0 0 auto;
+  transform: scale(0.72);
+  transform-origin: center bottom;
+  margin: 0 -15px;
+}
+
+.online-hand-row > .hand-card:hover,
+.online-hand-row > .hand-card.selected {
+  z-index: 12;
+  transform: translateY(-9px) scale(0.78);
+}
+
+.online-battle-actions {
+  position: absolute;
+  right: 20px;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 128px;
+}
+
+.online-battle-actions .btn-primary,
+.online-battle-actions .btn-ghost {
+  width: 100%;
+}
+
+.online-mulligan-overlay,
+.online-choice-overlay,
+.online-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 7, 12, 0.82);
+  backdrop-filter: blur(10px);
+}
+
+.online-mulligan-box,
+.online-choice-box,
+.online-result-box {
+  width: min(920px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid rgba(128, 176, 226, 0.36);
+  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(17, 29, 45, 0.98), rgba(8, 15, 25, 0.98));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  text-align: center;
+}
+
+.online-mulligan-box h2,
+.online-choice-box h2,
+.online-result-box h2 {
+  margin: 6px 0 8px;
+}
+
+.online-mulligan-box p,
+.online-choice-box p {
+  margin: 0 0 18px;
+  color: rgba(226, 238, 252, 0.68);
+  font-size: 13px;
+}
+
+.online-mulligan-cards,
+.online-choice-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0 22px;
+}
+
+.online-mulligan-cards > div {
+  position: relative;
+  cursor: pointer;
+}
+
+.online-mulligan-cards > div > span {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  z-index: 4;
+  min-width: 58px;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #111b29;
+  border: 1px solid rgba(180, 206, 236, 0.28);
+  font-size: 11px;
+}
+
+.online-mulligan-cards > div.selected > span {
+  border-color: rgba(255, 103, 103, 0.72);
+  background: #38191d;
+  color: #ffd3d3;
+}
+
+.online-mulligan-cards .hand-card,
+.online-choice-cards .hand-card {
+  transform: scale(0.9);
+}
+
+.online-choice-box.compact {
+  width: min(460px, 90vw);
+  display: grid;
+  gap: 10px;
+}
+
+.online-choice-box.compact button {
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid rgba(151, 187, 225, 0.3);
+  border-radius: 10px;
+  background: rgba(26, 43, 65, 0.82);
+  color: #edf5ff;
+  cursor: pointer;
+}
+
+.online-choice-box.compact button:hover:not(:disabled) {
+  border-color: rgba(113, 172, 255, 0.75);
+  background: rgba(37, 63, 95, 0.9);
+}
+
+.online-target-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 172px;
+  z-index: 180;
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 196, 90, 0.45);
+  border-radius: 999px;
+  background: rgba(35, 27, 12, 0.92);
+  color: #ffe0a1;
+  font-size: 12px;
+}
+
+.online-result-box {
+  width: min(420px, 90vw);
+}
+
+.online-result-box > span {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  opacity: 0.55;
+}
+
+.online-result-box h2 {
+  margin: 10px 0 22px;
+  font-size: 38px;
+}
+
+.online-battle-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0a111b;
+  color: #edf5ff;
+}
+
+.online-battle-loading strong {
+  font-size: 20px;
+}
+
+.online-battle-loading span {
+  max-width: 520px;
+  color: rgba(228, 239, 252, 0.66);
+  text-align: center;
+}
+
+@media (max-width: 1000px), (max-height: 650px) {
+  .online-battle-topbar {
+    height: 40px;
+    flex-basis: 40px;
+    padding-inline: 10px;
+  }
+
+  .online-battle-board {
+    grid-template-rows: minmax(0, 1fr) 34px minmax(0, 1fr) 126px;
+    padding: 4px 10px 6px;
+  }
+
+  .online-battle-side,
+  .online-battle-side.player-side {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .online-battle-side.player-side {
+    grid-template-columns: minmax(0, 1fr) 190px;
+  }
+
+  .online-battle-hero {
+    min-height: 68px;
+    grid-template-columns: 48px minmax(0, 1fr);
+    padding: 6px 8px;
+  }
+
+  .online-battle-hero .trainer-sprite {
+    width: 44px;
+    height: 44px;
+  }
+
+  .online-battle-hero-copy strong {
+    font-size: 13px;
+  }
+
+  .online-hand-row {
+    padding-inline: 120px;
+  }
+
+  .online-hand-row > .hand-card {
+    transform: scale(0.58);
+    margin-inline: -24px;
+  }
+
+  .online-hand-row > .hand-card:hover,
+  .online-hand-row > .hand-card.selected {
+    transform: translateY(-5px) scale(0.63);
+  }
+
+  .online-battle-actions {
+    right: 8px;
+    bottom: 12px;
+    width: 108px;
+  }
+
+  .online-field {
+    gap: 5px;
+    transform: scale(0.88);
+  }
+}
+
+@media (pointer: coarse) {
+  .online-battle-topbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .online-sync-state {
+    display: none;
+  }
+
+  .online-hand-row > .hand-card:hover {
+    transform: scale(0.58);
+  }
+
+  .online-hand-row > .hand-card.selected {
+    transform: translateY(-5px) scale(0.63);
+  }
+}
