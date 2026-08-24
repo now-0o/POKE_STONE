@@ -64,12 +64,17 @@ import './styles/mobile-battle-hearthstone-v3-fixes.css';
 import './styles/mobile-battle-hearthstone-v4.css';
 // 진화체 버리고 뽑기 등 모바일 배틀 컨트롤 위치를 V4 뒤에서 최종 보정한다.
 import './styles/mobile-battle-controls-fix.css';
+// V5는 가로 대상 선택 시 필드 시야를 확보하고, 세로 확대 손패를 일자 스크롤로 바꾼다.
+import './styles/mobile-battle-targeting-v5.css';
 // N 친밀도 숫자/사슬 전향 연출은 모바일 배틀 최종 레이아웃 위에 표시한다.
 import './features/battle/n-bond.css';
 // 풍란 공중날기는 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
 import './features/battle/skyla-airborne-card.css';
 
 import './features/mobile/battle-hand-runtime.js';
+// 모바일에서는 진화체도 탭 후 대상 선택이 가능하며, 세로 확대 손패는 좌우 스크롤을 지원한다.
+// runtime.js의 기본 포켓몬 클릭 방지보다 먼저 로드되어 진화 탭만 안전하게 통과시킨다.
+import './features/mobile/mobileBattleUxRuntime.js';
 // 대상 선택이 없는 기술은 클릭/터치 즉발을 막고 드롭으로만 사용한다.
 import './features/battle/dragOnlyTechniqueRuntime.js';
 import './features/battle/runtime.js';
