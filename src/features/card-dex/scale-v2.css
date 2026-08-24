@@ -1,0 +1,350 @@
+/* Card Dex scale v2
+ * Keep the canonical 134x188 HandCard intact and enlarge only surrounding UI.
+ */
+
+/* Region/category pills: match the collection filter button weight. */
+.dex-tabs {
+  gap: 8px;
+}
+
+.dex-tabs button {
+  min-height: 34px;
+  padding: 7px 15px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.dex-region-progress {
+  font-size: 12px;
+}
+
+/* Quest board: larger typography and touch targets. */
+.dex-quest-board {
+  width: min(1080px, 100%);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.dex-quest-heading {
+  padding: 2px 5px 16px;
+}
+
+.dex-quest-kicker {
+  margin-bottom: 5px;
+  font-size: 11px;
+}
+
+.dex-quest-heading h3 {
+  font-size: 22px;
+}
+
+.dex-quest-heading p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dex-quest-list {
+  gap: 12px;
+}
+
+.dex-quest-item {
+  min-height: 138px;
+  padding: 16px 17px;
+  grid-template-columns: 48px minmax(290px, 1.55fr) 92px minmax(190px, .82fr) minmax(145px, .64fr);
+  gap: 15px;
+  border-radius: 16px;
+}
+
+.dex-quest-index {
+  font-size: 13px;
+}
+
+.dex-quest-copy > span {
+  font-size: 11px;
+}
+
+.dex-quest-copy h4 {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.dex-quest-copy > p {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dex-quest-required {
+  margin-top: 11px;
+  gap: 7px;
+}
+
+.dex-quest-pokemon {
+  min-width: 104px;
+  height: 58px;
+  padding: 5px 8px 5px 5px;
+  grid-template-columns: 46px 1fr 16px;
+  gap: 5px;
+  border-radius: 11px;
+}
+
+.dex-quest-pokemon .card-sprite,
+.dex-quest-pokemon .card-emoji {
+  width: 46px !important;
+  height: 46px !important;
+}
+
+.dex-quest-pokemon span {
+  font-size: 11px;
+}
+
+.dex-quest-pokemon b {
+  font-size: 12px;
+}
+
+.dex-quest-progress-box strong {
+  font-size: 20px;
+}
+
+.dex-quest-progress-box > span {
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.dex-quest-progress-track {
+  width: 72px;
+  height: 7px;
+  margin-top: 9px;
+}
+
+.dex-quest-reward {
+  gap: 5px;
+}
+
+.dex-quest-reward-label {
+  font-size: 11px;
+}
+
+.dex-quest-reward strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dex-quest-reward small {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.dex-quest-action {
+  gap: 7px;
+}
+
+.dex-quest-action .btn-primary,
+.dex-quest-action .btn-secondary {
+  min-height: 44px;
+  padding: 10px 15px;
+  font-size: 13px;
+}
+
+.dex-reward-claimed {
+  min-height: 52px;
+  padding: 9px 11px;
+  gap: 4px;
+}
+
+.dex-reward-claimed span {
+  font-size: 10px;
+}
+
+.dex-reward-claimed strong {
+  font-size: 12px;
+}
+
+.dex-reward-toast {
+  font-size: 11px;
+}
+
+/*
+ * Card grid
+ * Desktop is capped at five cards per row. The actual card component remains
+ * the canonical 134x188 HandCard used by collection/deck and battle UI.
+ */
+.dex-grid {
+  width: min(980px, 100%);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.dex-entry {
+  padding: 12px 10px 13px;
+  border-radius: 16px;
+}
+
+.dex-entry-topline,
+.dex-entry-footer {
+  width: 144px;
+  max-width: 100%;
+}
+
+.dex-entry-topline {
+  margin-bottom: 8px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.dex-card-shell {
+  width: 134px;
+  min-width: 134px;
+  max-width: 134px;
+  margin: 0 auto;
+}
+
+.dex-card-shell > .hand-card {
+  width: 134px !important;
+  min-width: 134px !important;
+  max-width: 134px !important;
+  height: 188px !important;
+  min-height: 188px !important;
+  max-height: 188px !important;
+  flex: 0 0 188px !important;
+  margin: 0 auto;
+}
+
+.dex-entry-footer {
+  min-height: 36px;
+  margin-top: 9px;
+  gap: 5px 9px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.dex-shiny-owned {
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .dex-grid {
+    width: min(800px, 100%);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dex-quest-item {
+    grid-template-columns: 42px minmax(245px, 1.45fr) 80px minmax(170px, .8fr);
+  }
+
+  .dex-quest-action {
+    grid-column: 2 / -1;
+    width: min(320px, 100%);
+    justify-self: end;
+  }
+}
+
+@media (max-width: 760px) {
+  .dex-tabs button {
+    min-height: 36px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  .dex-region-progress {
+    font-size: 11px;
+  }
+
+  .dex-quest-board {
+    padding: 14px;
+  }
+
+  .dex-quest-heading {
+    gap: 6px;
+    padding-bottom: 13px;
+  }
+
+  .dex-quest-heading h3 {
+    font-size: 19px;
+  }
+
+  .dex-quest-heading p {
+    font-size: 11px;
+  }
+
+  .dex-quest-item {
+    min-height: 0;
+    grid-template-columns: 32px 1fr;
+    gap: 10px 12px;
+    padding: 13px;
+  }
+
+  .dex-quest-index {
+    grid-row: 1 / 5;
+    font-size: 12px;
+  }
+
+  .dex-quest-copy,
+  .dex-quest-progress-box,
+  .dex-quest-reward,
+  .dex-quest-action {
+    grid-column: 2;
+  }
+
+  .dex-quest-copy h4 {
+    font-size: 17px;
+  }
+
+  .dex-quest-copy > p {
+    font-size: 11px;
+  }
+
+  .dex-quest-pokemon {
+    min-width: 100px;
+    height: 54px;
+    grid-template-columns: 42px 1fr 15px;
+  }
+
+  .dex-quest-pokemon .card-sprite,
+  .dex-quest-pokemon .card-emoji {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .dex-quest-progress-box {
+    align-items: flex-start;
+  }
+
+  .dex-quest-progress-track {
+    width: min(210px, 88%);
+  }
+
+  .dex-quest-action {
+    width: min(300px, 100%);
+    justify-self: stretch;
+  }
+
+  .dex-grid {
+    width: min(620px, 100%);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .dex-grid {
+    width: min(390px, 100%);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 9px;
+  }
+
+  .dex-entry {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .dex-entry-topline,
+  .dex-entry-footer {
+    width: 134px;
+  }
+
+  .dex-entry-topline,
+  .dex-entry-footer {
+    font-size: 10.5px;
+  }
+}
