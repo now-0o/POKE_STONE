@@ -47,6 +47,7 @@
   display: none;
 }
 
+/* 로그가 적을 때 전체 묶음을 아래로 밀어 오래된 로그가 바닥에 붙는다. */
 .battle-history-spacer {
   min-height: 0;
   flex: 1 1 auto;
@@ -130,65 +131,31 @@
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.6);
 }
 
-.battle-history-floating {
-  position: fixed;
-  z-index: 2000;
-  width: max-content;
-  max-width: min(460px, calc(100vw - 20px));
-  pointer-events: none;
+/* 카드 꾹 눌러보기와 동일한 전면 inspect 오버레이를 전투 로그에서도 사용한다. */
+.battle-history-inspect-overlay {
+  z-index: 2200 !important;
+  justify-content: center;
+  pointer-events: none !important;
 }
 
-.battle-history-preview-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 13px;
-  background: rgba(7, 9, 16, 0.975);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-}
-
-.battle-history-preview-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 7px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.battle-history-preview-title strong {
-  color: #ffe9a6;
-  font-size: 12px;
-}
-
-.battle-history-preview-title span {
-  color: rgba(255, 255, 255, 0.64);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.battle-history-preview-flow {
+.battle-history-inspect-content {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 13px;
-  min-height: 194px;
-  padding: 2px 0;
+  gap: 72px;
+  min-width: 134px;
+  min-height: 188px;
 }
 
-.battle-history-preview-card {
-  display: flex;
+.battle-history-inspect-card {
+  position: relative;
   width: 134px;
   height: 188px;
   flex: 0 0 134px;
-  align-items: center;
-  justify-content: center;
 }
 
-.battle-history-preview-card > .hand-card {
+.battle-history-inspect-card > .hand-card {
   width: 134px !important;
   min-width: 134px !important;
   max-width: 134px !important;
@@ -200,52 +167,81 @@
   pointer-events: none !important;
 }
 
-.battle-history-preview-arrow {
+/* 전역 inspect-overlay 규칙의 scale:1.8을 그대로 사용한다. */
+.battle-history-inspect-card.is-fainted > .hand-card {
+  filter: grayscale(0.76) brightness(0.66);
+}
+
+.battle-history-inspect-bridge {
+  position: relative;
+  z-index: 3;
   display: flex;
-  min-width: 58px;
+  width: 86px;
+  flex: 0 0 86px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 10px;
 }
 
-.battle-history-preview-arrow > span {
+.battle-history-inspect-bridge > span {
   color: #f5c542;
-  font-size: 28px;
+  font-size: 44px;
   font-weight: 900;
   line-height: 1;
-  text-shadow: 0 0 9px rgba(245, 197, 66, 0.38);
+  text-shadow:
+    0 0 10px rgba(245, 197, 66, 0.45),
+    0 3px 8px rgba(0, 0, 0, 0.7);
 }
 
-.battle-history-preview-arrow > strong,
-.battle-history-preview-damage {
+.battle-history-inspect-bridge > strong,
+.battle-history-inspect-solo-damage {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 5px 9px;
-  border: 1px solid rgba(255, 105, 90, 0.4);
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 105, 90, 0.56);
   border-radius: 999px;
-  background: rgba(160, 39, 31, 0.28);
-  color: #ffb3a9;
-  font-size: 11px;
+  background: rgba(125, 23, 20, 0.82);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.42);
+  color: #ffd1cb;
+  font-size: 14px;
   font-weight: 900;
   white-space: nowrap;
 }
 
-.battle-history-preview-damage {
-  align-self: center;
+.battle-history-inspect-solo-damage {
+  position: absolute;
+  left: calc(50% + 130px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
 }
 
-.battle-history-preview-message {
-  max-width: 410px;
-  padding: 7px 9px;
+.battle-history-fainted-stamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 8;
+  display: flex;
+  width: 92px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%) rotate(-10deg) scale(1.18);
+  border: 4px solid rgba(255, 85, 76, 0.96);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 10px;
-  line-height: 1.45;
-  text-align: left;
+  background: rgba(45, 5, 7, 0.72);
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+  color: #ff9b94;
+  font-family: var(--display-font);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .battle-history-mobile-detail {
@@ -349,19 +345,27 @@
     display: block;
     margin-top: 8px;
     overflow-x: auto;
+    overflow-y: hidden;
   }
 
-  .battle-history-mobile-detail .battle-history-preview-content {
-    min-width: 286px;
+  .battle-history-mobile-inspect {
+    min-width: 570px;
+    min-height: 250px;
+    padding: 22px 92px;
   }
 
-  .battle-history-mobile-detail .battle-history-preview-flow {
-    gap: 8px;
+  .battle-history-mobile-inspect .battle-history-inspect-content {
+    gap: 42px;
+    transform: scale(0.72);
     transform-origin: top left;
   }
 
-  .battle-history-mobile-detail .battle-history-preview-message {
-    max-width: none;
+  .battle-history-mobile-inspect .hand-card {
+    scale: 1.45;
+  }
+
+  .battle-history-mobile-inspect .battle-history-fainted-stamp {
+    transform: translate(-50%, -50%) rotate(-10deg) scale(0.95);
   }
 }
 
