@@ -1,6 +1,6 @@
 // ============================================================
-// 서버 연동 (로그인 + 세이브 동기화)
-// 로컬 개발 중엔 http://localhost:4000, 배포本엔 /api (Netlify 리다이렉트)
+// 서버 연동 (로그인 + 세이브 동기화 + 온라인 매칭)
+// 로컬 개발 중엔 http://localhost:4000, 배포본엔 /api (Netlify 리다이렉트)
 // ============================================================
 
 const API_BASE = (() => {
@@ -13,20 +13,19 @@ const API_BASE = (() => {
 
 const TOKEN_KEY = 'pkm_stone_token';
 const USERNAME_KEY = 'pkm_stone_username';
+const ADMIN_KEY = 'pkm_stone_server_admin';
 
-// 덱 편집처럼 짧은 시간에 여러 번 저장되는 경우 이전 PUT이 늦게 도착해
-// 최신 세이브를 덮어쓰지 않도록 서버 저장 요청을 순서대로 처리한다.
 let saveWriteQueue = Promise.resolve();
-
-// 마지막으로 서버에서 확인한 세이브 revision.
-// 같은 기기 안에서는 큐가 실행되는 시점의 최신 revision을 사용하고,
-// 다른 기기와 충돌하면 epoch를 올려 이미 대기 중이던 오래된 요청을 폐기한다.
 let saveRevision = 0;
 let saveSyncEpoch = 0;
 
 function setServerRevision(revision, invalidateQueuedWrites = false) {
   saveRevision = Number.isInteger(revision) && revision >= 0 ? revision : 0;
   if (invalidateQueuedWrites) saveSyncEpoch += 1;
+}
+
+function setStoredAdmin(isAdmin) {
+  localStorage.setItem(ADMIN_KEY, isAdmin ? '1' : '0');
 }
 
 function supersededSaveError() {
@@ -38,24 +37,31 @@ function supersededSaveError() {
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
+
 export function getStoredUsername() {
   return localStorage.getItem(USERNAME_KEY);
 }
+
+export function getStoredAdmin() {
+  return localStorage.getItem(ADMIN_KEY) === '1';
+}
+
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
+  localStorage.removeItem(ADMIN_KEY);
   setServerRevision(0, true);
 }
-function setAuth(token, username) {
+
+function setAuth(token, username, isAdmin = false) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USERNAME_KEY, username);
+  setStoredAdmin(!!isAdmin);
 }
 
 async function req(path, opts = {}) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-  // 큐에 들어간 저장 요청은 호출 당시 계정 토큰을 headers로 넘긴다.
-  // 명시 토큰이 있을 때 현재 로그인 토큰으로 덮어쓰지 않는다.
   if (token && !headers.Authorization) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
   let body = null;
@@ -72,27 +78,26 @@ async function req(path, opts = {}) {
 
 export async function register(username, password) {
   const data = await req('/register', { method: 'POST', body: JSON.stringify({ username, password }) });
-  setAuth(data.token, data.username);
+  setAuth(data.token, data.username, data.isAdmin);
   setServerRevision(data.revision ?? 0, true);
   return data;
 }
 
 export async function login(username, password) {
   const data = await req('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
-  setAuth(data.token, data.username);
+  setAuth(data.token, data.username, data.isAdmin);
   setServerRevision(data.revision ?? 0, true);
-  return data; // { token, username, save, revision }
+  return data;
 }
 
 export async function fetchSave() {
   const data = await req('/save', { method: 'GET' });
   setServerRevision(data.revision ?? 0, true);
-  return data.save; // null이면 아직 서버에 저장된 게 없다는 뜻
+  setStoredAdmin(!!data.isAdmin);
+  return data.save;
 }
 
 export function pushSave(save) {
-  // 호출 순간의 세이브와 계정을 함께 고정한다. 이후 같은 save 객체가 mutate되거나
-  // 로그아웃/재로그인이 일어나도 이미 큐에 들어간 저장이 다른 계정으로 넘어가지 않는다.
   const dataSnapshot = JSON.stringify(save);
   const token = getToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -101,7 +106,6 @@ export function pushSave(save) {
   const write = saveWriteQueue
     .catch(() => undefined)
     .then(async () => {
-      // 다른 기기와 충돌한 뒤에도 큐에 남아 있던 과거 로컬 세이브는 서버로 보내지 않는다.
       if (queuedEpoch !== saveSyncEpoch) throw supersededSaveError();
 
       const body = `{"data":${dataSnapshot},"revision":${saveRevision}}`;
@@ -129,4 +133,31 @@ export function pushSave(save) {
 
   saveWriteQueue = write;
   return write;
+}
+
+export async function unlockAdmin(code) {
+  const data = await req('/admin/unlock', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+  setStoredAdmin(!!data.isAdmin);
+  return data;
+}
+
+export async function joinMatchmaking(save) {
+  return req('/matchmaking/join', {
+    method: 'POST',
+    body: JSON.stringify({
+      deck: save?.deck || [],
+      deckShiny: save?.deckShiny || {},
+    }),
+  });
+}
+
+export async function fetchMatchmakingStatus() {
+  return req('/matchmaking/status', { method: 'GET' });
+}
+
+export async function leaveMatchmaking() {
+  return req('/matchmaking/leave', { method: 'POST', body: '{}' });
 }
