@@ -1,6 +1,7 @@
 import "./battle-screen-counters.css";
 import "./unovaMoveFxRuntime.js";
 import { syncBattleHistory } from "./battleHistoryRuntime.js";
+import { syncWeatherIndicator } from "./weatherTurnRuntime.js";
 
 function syncEndTurnLabel() {
   const button = document.querySelector(".battle.battle-board .btn-endturn");
@@ -146,6 +147,7 @@ function syncBattlePageState() {
 
   syncEndTurnLabel();
   syncBattleHistory();
+  syncWeatherIndicator();
   queueCandiceOverlayAlignment();
 }
 
@@ -155,6 +157,7 @@ function startBattleRuntime() {
   window.addEventListener("battle-turn-change", () => {
     syncEndTurnLabel();
     syncBattleHistory();
+    syncWeatherIndicator();
     queueCandiceOverlayAlignment();
   });
   window.addEventListener(
@@ -163,6 +166,7 @@ function startBattleRuntime() {
   );
   window.addEventListener("resize", () => {
     syncBattleHistory();
+    syncWeatherIndicator();
     queueCandiceOverlayAlignment();
   });
   window.addEventListener("pointerup", rememberCandiceDropSlot, true);
