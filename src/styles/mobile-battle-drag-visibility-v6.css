@@ -39,33 +39,66 @@
     touch-action: none !important;
     -webkit-tap-highlight-color: transparent !important;
   }
-}
 
-/* Portrait target selection: keep the guide on the narrow centre rail between
-   the two fields instead of covering the player's Pokemon. */
-@media (orientation: portrait) and (pointer: coarse),
-       (orientation: portrait) and (max-width: 700px) {
+  /* Target-selection mode must remove the entire hand hit layer, not only make
+     its cards transparent. Otherwise invisible hand children can still receive
+     pointer events over the player field/hero on mobile Safari. */
+  .battle-board:has(> .hand .hand-card.selected) > .hand,
+  .battle-board.mobile-tap-target-active > .hand,
+  .battle-board.mobile-tap-target-pending > .hand,
+  .battle-board:has(> .hand .hand-card.selected) > .hand *,
+  .battle-board.mobile-tap-target-active > .hand *,
+  .battle-board.mobile-tap-target-pending > .hand * {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .battle-board:has(> .hand .hand-card.selected) > .hand,
+  .battle-board.mobile-tap-target-active > .hand,
+  .battle-board.mobile-tap-target-pending > .hand {
+    background: none !important;
+    box-shadow: none !important;
+  }
+
+  .battle-board:has(> .hand .hand-card.selected) > .hand::before,
+  .battle-board:has(> .hand .hand-card.selected) > .hand::after,
+  .battle-board.mobile-tap-target-active > .hand::before,
+  .battle-board.mobile-tap-target-active > .hand::after,
+  .battle-board.mobile-tap-target-pending > .hand::before,
+  .battle-board.mobile-tap-target-pending > .hand::after {
+    content: none !important;
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    background: none !important;
+  }
+
+  /* The guide is informational. Only its cancel button should consume taps, so
+     Pokemon/hero targets remain clickable even if the compact pill overlaps them. */
   .battle-board:has(> .hand .hand-card.selected) .target-hint,
   .battle-board.mobile-tap-target-active .target-hint,
   .battle-board.mobile-tap-target-pending .target-hint {
     position: fixed !important;
-    left: 50% !important;
+    left: var(--mobile-battle-cx, 50vw) !important;
     right: auto !important;
-    top: 50% !important;
+    top: calc(var(--mobile-battle-vy, 0px) + var(--mobile-battle-vh, 100dvh) / 2) !important;
     bottom: auto !important;
     width: max-content !important;
-    max-width: calc(100vw - 18px) !important;
-    min-height: 30px !important;
-    padding: 5px 9px !important;
+    max-width: calc(var(--mobile-battle-vw, 100vw) - 18px) !important;
+    min-height: 28px !important;
+    padding: 4px 8px !important;
     transform: translate(-50%, -50%) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 7px !important;
     border-radius: 999px !important;
-    font-size: 9px !important;
-    line-height: 1.1 !important;
+    font-size: clamp(8px, 1.7vh, 10px) !important;
+    line-height: 1.05 !important;
     white-space: nowrap !important;
+    pointer-events: none !important;
     z-index: 1750 !important;
   }
 
@@ -76,5 +109,30 @@
     padding: 3px 6px !important;
     font-size: 8px !important;
     white-space: nowrap !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Keep the player's trainer above decorative/mobile hand layers whenever a
+     friendly-or-hero card marks it targetable. */
+  .battle-board .my-hero-cluster {
+    position: relative !important;
+  }
+
+  .battle-board .my-hero-cluster .hero-bar.targetable {
+    position: relative !important;
+    z-index: 1800 !important;
+    pointer-events: auto !important;
+  }
+}
+
+/* Portrait keeps the same centre-rail guide but uses a slightly tighter width. */
+@media (orientation: portrait) and (pointer: coarse),
+       (orientation: portrait) and (max-width: 700px) {
+  .battle-board:has(> .hand .hand-card.selected) .target-hint,
+  .battle-board.mobile-tap-target-active .target-hint,
+  .battle-board.mobile-tap-target-pending .target-hint {
+    max-width: calc(100vw - 14px) !important;
+    font-size: 8.5px !important;
   }
 }
