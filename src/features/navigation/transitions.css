@@ -1,7 +1,9 @@
 /* 화면 단위 진입 전환 */
 .main-menu,
 .pack-shop,
-.deck-editor {
+.deck-editor,
+.card-dex-screen,
+.tutorial-screen {
   animation: game-screen-enter 0.34s cubic-bezier(0.2, 0.82, 0.24, 1) both;
   transform-origin: 50% 50%;
 }
@@ -60,6 +62,8 @@
   .main-menu,
   .pack-shop,
   .deck-editor,
+  .card-dex-screen,
+  .tutorial-screen,
   .battle-intro,
   .battle.battle-board,
   .main-menu .trainer-region-header,
