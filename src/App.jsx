@@ -8,6 +8,7 @@ import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
 import OnlineMatchmaking from "./components/OnlineMatchmaking.jsx";
+import OnlineBattle from "./components/OnlineBattle.jsx";
 import {
   loadSave,
   newSave,
@@ -33,8 +34,9 @@ const ADMIN_CODE = "stonemaster";
 
 export default function App() {
   const saveRef = useRef(null);
-  const [screen, setScreen] = useState("menu"); // menu | battle | online | shop | deck | dex | tutorial
+  const [screen, setScreen] = useState("menu"); // menu | battle | online | onlineBattle | shop | deck | dex | tutorial
   const [trainer, setTrainer] = useState(null);
+  const [onlineMatch, setOnlineMatch] = useState(null);
   const [, forceRender] = useState(0);
   const [adminToast, setAdminToast] = useState(false);
   const [syncToast, setSyncToast] = useState("");
@@ -61,7 +63,7 @@ export default function App() {
       playBgm("login");
     } else if (screen === "shop") {
       playBgm("shop");
-    } else if (screen === "battle") {
+    } else if (screen === "battle" || screen === "onlineBattle") {
       playBgm("battle");
     } else {
       playBgm("main");
@@ -118,8 +120,9 @@ export default function App() {
   }
 
   function setSelectedBattleStateAfterSync() {
-    if (screen === "battle" || screen === "online") {
+    if (["battle", "online", "onlineBattle"].includes(screen)) {
       setTrainer(null);
+      setOnlineMatch(null);
       setScreen("menu");
     }
   }
@@ -136,6 +139,7 @@ export default function App() {
     saveRef.current = null;
     setUsername(null);
     setIsAdmin(false);
+    setOnlineMatch(null);
     setScreen("menu");
     setTrainer(null);
     setAuthStatus("anon");
@@ -197,6 +201,16 @@ export default function App() {
     setTrainer(null);
     setScreen("menu");
     onSaveChange();
+  }
+
+  function enterOnlineBattle(match) {
+    setOnlineMatch(match);
+    setScreen("onlineBattle");
+  }
+
+  function leaveOnlineBattle() {
+    setOnlineMatch(null);
+    setScreen("menu");
   }
 
   let body;
@@ -269,7 +283,15 @@ export default function App() {
           <OnlineMatchmaking
             save={save}
             isAdmin={isAdmin}
+            onMatched={enterOnlineBattle}
             onBack={() => setScreen("menu")}
+          />
+        )}
+        {screen === "onlineBattle" && onlineMatch && (
+          <OnlineBattle
+            key={onlineMatch.matchId}
+            match={onlineMatch}
+            onBack={leaveOnlineBattle}
           />
         )}
         {screen === "battle" && trainer && (
