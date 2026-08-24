@@ -1,0 +1,94 @@
+/* Card Dex virtual scroll v3
+ * Same windowed-list pattern as the collection/deck editor:
+ * - one internal scroll pane
+ * - full-height virtual spacer
+ * - only the visible rows (+ small overscan) remain mounted
+ * - deck-editor scrollbar presentation
+ */
+
+.card-dex-screen {
+  height: calc(100dvh - 24px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.card-dex-screen > .card-dex-header {
+  flex: 0 0 auto;
+}
+
+.dex-scroll-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 4px 30px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(238, 240, 246, 0.36) transparent;
+}
+
+/* Match the collection/deck custom scrollbar. */
+.dex-scroll-pane::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dex-scroll-pane::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dex-scroll-pane::-webkit-scrollbar-thumb {
+  background: rgba(238, 240, 246, 0.36);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.dex-scroll-pane::-webkit-scrollbar-thumb:hover {
+  background: rgba(238, 240, 246, 0.55);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dex-scroll-pane::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* The spacer preserves the full list height while the actual grid is windowed. */
+.dex-virtual-space {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+  margin: 0 auto;
+}
+
+.dex-grid.is-virtualized {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+/* Keep row measurement deterministic for the virtualizer. */
+.dex-grid .dex-entry {
+  align-self: stretch;
+}
+
+@media (max-width: 760px) {
+  .card-dex-screen {
+    height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+  }
+
+  .dex-scroll-pane {
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+}
