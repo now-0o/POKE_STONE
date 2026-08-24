@@ -1,13 +1,12 @@
 /* Mobile battle UX bridge.
  *
- * - A tap never enters the visual "grab" state. Grabbing starts only after
- *   actual pointer movement, so tapped techniques/items/evolutions reliably
- *   reach React's click/target-selection flow.
  * - Portrait expanded hand uses a straight rail. Horizontal movement scrolls
  *   that rail and is stopped before React's drag listeners see it; vertical
  *   movement remains the existing drag-to-play gesture.
  * - VisualViewport metrics are exposed as CSS variables so landscape battle UI
  *   follows Safari's actually visible area when browser chrome appears.
+ * - Evolution tap routing is handled directly by battle/runtime.js; this module
+ *   no longer mutates card labels during click dispatch.
  */
 
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
@@ -95,15 +94,6 @@ function beginHandGesture(event) {
     decided: false,
     scrolling: false,
   };
-
-  // battle-hand-runtime runs on document capture later in this same pointerdown
-  // and historically adds its grabbing class immediately. Clear it after the
-  // pointerdown dispatch. A stationary tap should never visually/semantically
-  // become a card drag, regardless of orientation or card kind.
-  queueMicrotask(() => {
-    if (!handGesture || handGesture.wrap !== wrap || handGesture.moved) return;
-    clearVisualGrab(board, wrap);
-  });
 }
 
 function moveHandGesture(event) {
@@ -126,8 +116,6 @@ function moveHandGesture(event) {
       clearVisualGrab(gesture.board, gesture.wrap);
     } else {
       gesture.scrolling = false;
-      // Re-enable the existing grabbed-card presentation only after the user
-      // has actually moved far enough to mean a drag.
       setVisualGrab(gesture.board, gesture.wrap);
     }
   }
@@ -143,11 +131,6 @@ function moveHandGesture(event) {
 
   suppressClickUntil.set(gesture.board, Date.now() + 500);
   event.preventDefault();
-
-  // Important: React adds temporary pointermove listeners on window after the
-  // card pointerdown. stopPropagation() alone still lets later listeners on the
-  // same Window fire, which turned a horizontal swipe into a card drag. Stop
-  // same-target listeners too so this gesture remains a pure hand scroll.
   event.stopImmediatePropagation();
 }
 
@@ -165,11 +148,6 @@ function endHandGesture() {
   }
 }
 
-function isEvolutionHandCard(handCard) {
-  const stageLine = handCard.querySelector(".card-stageline")?.textContent || "";
-  return Boolean(stageLine) && !stageLine.includes("이전 진화 없음");
-}
-
 function handleClickCapture(event) {
   if (!isMobileBattle() || !(event.target instanceof Element)) return;
 
@@ -181,24 +159,7 @@ function handleClickCapture(event) {
     event.preventDefault();
     event.stopPropagation();
     suppressClickUntil.delete(board);
-    return;
   }
-
-  const handCard = event.target.closest(".hand .hand-card");
-  if (!handCard || !isEvolutionHandCard(handCard)) return;
-
-  const badge = handCard.querySelector(".card-typebadge");
-  const original = badge?.textContent || "";
-  if (!badge || !original.includes("포켓몬")) return;
-
-  // runtime.js deliberately blocks basic Pokémon clicks by inspecting this
-  // badge. Evolution cards temporarily hide only that token for this click so
-  // React can enter its already-existing spellNeedsTarget(card) === "evolve"
-  // flow. The visible label is restored before paint.
-  badge.textContent = original.replace("포켓몬", "진화");
-  queueMicrotask(() => {
-    if (badge.isConnected) badge.textContent = original;
-  });
 }
 
 function refreshViewportSoon() {
@@ -209,23 +170,22 @@ function refreshViewportSoon() {
 if (typeof document !== "undefined") {
   syncVisibleViewport();
 
-  // Window capture runs before document capture in battle-hand-runtime and
-  // before temporary Window listeners installed by Battle.jsx.
   window.addEventListener("pointerdown", beginHandGesture, true);
   window.addEventListener("pointermove", moveHandGesture, true);
   window.addEventListener("pointerup", endHandGesture, true);
   window.addEventListener("pointercancel", endHandGesture, true);
-
-  // Imported before battle/runtime.js, so evolution clicks are adjusted before
-  // its basic-Pokémon click guard runs.
   document.addEventListener("click", handleClickCapture, true);
 
   window.addEventListener("resize", refreshViewportSoon, { passive: true });
-  window.addEventListener("orientationchange", () => {
-    refreshViewportSoon();
-    window.setTimeout(syncVisibleViewport, 120);
-    window.setTimeout(syncVisibleViewport, 360);
-  }, { passive: true });
+  window.addEventListener(
+    "orientationchange",
+    () => {
+      refreshViewportSoon();
+      window.setTimeout(syncVisibleViewport, 120);
+      window.setTimeout(syncVisibleViewport, 360);
+    },
+    { passive: true },
+  );
   window.visualViewport?.addEventListener("resize", refreshViewportSoon, {
     passive: true,
   });
