@@ -11,6 +11,10 @@
  * - Landscape basic-Pokemon drags get a real DOM drop-assist over the visible
  *   player field so releasing near the centre resolves as my-field reliably.
  * - VisualViewport metrics keep landscape UI inside Safari's visible rectangle.
+ *
+ * Important: this module deliberately avoids a document-wide MutationObserver.
+ * Battle mounting and animation changes can produce a very large mutation burst
+ * immediately after mulligan; polling every class mutation can stall mobile Safari.
  */
 
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
@@ -338,21 +342,10 @@ if (typeof document !== "undefined") {
     false,
   );
 
-  const observer = new MutationObserver(() => {
-    const board = document.querySelector(".battle.battle-board");
-    if (board) {
-      syncTapTargetState(board);
-      ensureBasicPokemonDropAssist();
-    } else {
-      removeBasicPokemonDropAssist();
-    }
-  });
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  // Do not observe the whole battle subtree. The battle mounts a large DOM tree
+  // immediately after mulligan and many feature runtimes mutate classes. A global
+  // class observer caused a mutation storm on mobile Safari. Interaction events
+  // above already cover every state that needs synchronization.
 
   window.addEventListener("resize", refreshViewportSoon, { passive: true });
   window.addEventListener(
