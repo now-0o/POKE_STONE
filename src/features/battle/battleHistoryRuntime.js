@@ -1,6 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { CARD_MAP, spriteUrl } from "../../data/cards.js";
+import {
+  CARD_MAP,
+  SAND_IMMUNE_TYPES,
+  spriteUrl,
+} from "../../data/cards.js";
+import { effectiveAtk, effectiveCost } from "../../engine/engine.js";
 import { HandCard } from "../../components/Card.jsx";
 import "./battle-history.css";
 
@@ -9,6 +14,7 @@ const MAX_STORED = 60;
 
 let mountedBoard = null;
 let previousLines = [];
+let previousUnitSnapshots = new Map();
 let entries = [];
 let sequence = 0;
 let mobileOpen = false;
@@ -131,8 +137,6 @@ function heroMentionedInMessage(board, message) {
 }
 
 function inferSide(board, message, sourceCard) {
-  // 공격 문장에는 공격받은 트레이너 이름도 들어가므로
-  // 포켓몬이 실제 어느 필드에 있는지를 가장 먼저 본다.
   if (sourceCard?.kind === "pokemon") {
     const enemyHas = [...board.querySelectorAll(".enemy-field [data-uid]")].some(
       (node) => (node.textContent || "").includes(sourceCard.name),
@@ -211,8 +215,6 @@ function parseAction(board, message) {
     }
   }
 
-  // 포켓몬 ↔ 포켓몬 기본 공격.
-  // 엔진 로그 형식: "공격자 ➜ 대상 공격! 피해 N, 반격 M."
   const unitAttack = message.match(
     /^(.+?)\s*➜\s*(.+?)\s+공격!\s*피해\s*(\d+)\s*,\s*반격\s*(\d+)/,
   );
@@ -233,7 +235,6 @@ function parseAction(board, message) {
     }
   }
 
-  // 포켓몬 → 트레이너 직접 공격.
   const heroAttack = message.match(
     /^(.+?)이\(가\)\s+(.+?)을\(를\)\s+직접\s+공격!\s*피해\s*(\d+)!?/,
   );
@@ -286,6 +287,7 @@ function typeLabel(type) {
   if (type === "technique") return "기술 사용";
   if (type === "attack") return "공격";
   if (type === "item") return "도구 사용";
+  if (type === "weather") return "날씨 피해";
   return "전투 기록";
 }
 
@@ -298,9 +300,264 @@ function faintedInLines(card, lines) {
   );
 }
 
+function cloneUnitForHistory(unit, game) {
+  if (!unit) return null;
+  let atk = unit.atk;
+  try {
+    atk = effectiveAtk(unit, game);
+  } catch {
+    atk = unit.atk;
+  }
+
+  return {
+    uid: unit.uid,
+    cardId: unit.cardId,
+    side: unit.side,
+    name: unit.name,
+    type: unit.type,
+    atk,
+    baseAtk: unit.baseAtk,
+    hp: Math.max(0, unit.hp),
+    maxHp: unit.maxHp,
+    ability: unit.ability || null,
+    secondaryAbility: unit.secondaryAbility || null,
+    shiny: !!unit.shiny,
+    mega: !!unit.mega,
+    megaSpriteId: unit.megaSpriteId || null,
+    sturdyUsed: !!unit.sturdyUsed,
+    item: unit.item || null,
+    status: unit.status || null,
+  };
+}
+
+function snapshotCardCost(card, game, side) {
+  if (!card) return null;
+  if (!game || !side) return card.cost;
+  try {
+    return effectiveCost(card, game, side);
+  } catch {
+    return card.cost;
+  }
+}
+
+function collectUnitSnapshots(game) {
+  const map = new Map();
+  if (!game?.players) return map;
+
+  ["player", "enemy"].forEach((side) => {
+    const player = game.players[side];
+    player?.field?.forEach((unit) => {
+      const card = CARD_MAP[unit.cardId];
+      map.set(unit.uid, {
+        uid: unit.uid,
+        side,
+        cardId: unit.cardId,
+        cost: snapshotCardCost(card, game, side),
+        unit: cloneUnitForHistory(unit, game),
+      });
+    });
+  });
+
+  return map;
+}
+
+function findSnapshotByCard(snapshots, card, side = null) {
+  if (!card || !snapshots) return null;
+  const matches = [...snapshots.values()].filter(
+    (snapshot) =>
+      snapshot.cardId === card.id && (!side || snapshot.side === side),
+  );
+  return matches[0] || null;
+}
+
+function resolveSnapshot(
+  card,
+  side,
+  preferredUid,
+  currentSnapshots,
+  oldSnapshots,
+  fainted = false,
+) {
+  if (!card?.id) return null;
+
+  let snapshot = null;
+  if (preferredUid) {
+    snapshot = currentSnapshots.get(preferredUid) || oldSnapshots.get(preferredUid);
+  }
+  if (!snapshot) snapshot = findSnapshotByCard(currentSnapshots, card, side);
+  if (!snapshot) snapshot = findSnapshotByCard(oldSnapshots, card, side);
+
+  if (!snapshot) {
+    return {
+      side,
+      cardId: card.id,
+      cost: card.cost,
+      unit: null,
+    };
+  }
+
+  const cloned = {
+    ...snapshot,
+    unit: snapshot.unit ? { ...snapshot.unit } : null,
+  };
+
+  if (fainted && cloned.unit) cloned.unit.hp = 0;
+  return cloned;
+}
+
+function actionPreferredUids(game, action) {
+  const last = game?.lastAction;
+  if (!last) return { sourceUid: null, targetUid: null };
+
+  if (action.type === "attack" && last.kind === "attack") {
+    return {
+      sourceUid: last.uid || null,
+      targetUid: last.targetUid && last.targetUid !== "hero" ? last.targetUid : null,
+    };
+  }
+
+  if (
+    ["summon", "technique", "item"].includes(action.type) &&
+    last.kind === "play" &&
+    last.cardId === action.sourceCard?.id
+  ) {
+    return {
+      sourceUid: last.uid || null,
+      targetUid: last.targetUid && last.targetUid !== "hero" ? last.targetUid : null,
+    };
+  }
+
+  return { sourceUid: null, targetUid: null };
+}
+
+function targetSideForAction(action) {
+  if (!action?.targetCard) return null;
+  if (action.type === "item") return action.side;
+  if (action.type === "weather") return action.weatherTargetSide || null;
+  return action.side === "player" ? "enemy" : "player";
+}
+
+function enrichActionSnapshots(
+  action,
+  outcomeLines,
+  game,
+  currentSnapshots,
+  oldSnapshots,
+) {
+  if (action.type === "weather") return action;
+
+  const { sourceUid, targetUid } = actionPreferredUids(game, action);
+  const sourceFainted = faintedInLines(action.sourceCard, outcomeLines);
+  const targetFainted = faintedInLines(action.targetCard, outcomeLines);
+
+  return {
+    ...action,
+    sourceFainted,
+    targetFainted,
+    sourceSnapshot:
+      action.sourceCard?.kind === "pokemon"
+        ? resolveSnapshot(
+            action.sourceCard,
+            action.side,
+            sourceUid,
+            currentSnapshots,
+            oldSnapshots,
+            sourceFainted,
+          )
+        : null,
+    targetSnapshot: action.targetCard
+      ? resolveSnapshot(
+          action.targetCard,
+          targetSideForAction(action),
+          targetUid,
+          currentSnapshots,
+          oldSnapshots,
+          targetFainted,
+        )
+      : null,
+  };
+}
+
+function sandImmune(snapshot) {
+  const unit = snapshot?.unit;
+  if (!unit || unit.hp <= 0) return true;
+  if (SAND_IMMUNE_TYPES.includes(unit.type)) return true;
+  return unit.ability === "overcoat" || unit.secondaryAbility === "overcoat";
+}
+
+function faintedBeforeSand(snapshot, linesBeforeSand) {
+  const name = snapshot?.unit?.name || CARD_MAP[snapshot?.cardId]?.name;
+  if (!name) return false;
+  return linesBeforeSand.some(
+    (line) =>
+      line.includes(name) &&
+      /(기절했다|기절!|쓰러졌다|쓰러졌다!)/.test(line),
+  );
+}
+
+function weatherActionsFromLines(
+  newLines,
+  currentSnapshots,
+  oldSnapshots,
+) {
+  const actions = [];
+
+  newLines.forEach((message, index) => {
+    if (message !== "모래바람이 몰아친다!") return;
+
+    const beforeSand = newLines.slice(0, index);
+    [...oldSnapshots.values()].forEach((before) => {
+      if (sandImmune(before) || faintedBeforeSand(before, beforeSand)) return;
+
+      const card = CARD_MAP[before.cardId];
+      if (!card?.id) return;
+
+      const after = currentSnapshots.get(before.uid);
+      const targetSnapshot = after
+        ? {
+            ...after,
+            unit: after.unit ? { ...after.unit } : null,
+          }
+        : {
+            ...before,
+            unit: before.unit ? { ...before.unit, hp: 0 } : null,
+          };
+
+      actions.push({
+        index: index + actions.length / 1000,
+        action: {
+          type: "weather",
+          weather: "sand",
+          weatherIcon: "🏜️",
+          sourceCard: null,
+          sourceSnapshot: null,
+          sourceFainted: false,
+          targetCard: card,
+          targetSnapshot,
+          targetFainted: !after || (targetSnapshot.unit?.hp || 0) <= 0,
+          targetHero: null,
+          weatherTargetSide: before.side,
+          side: "neutral",
+          damage: 1,
+          retaliation: 0,
+          message: `모래바람! ${card.name}이(가) 피해 1을 받았다.`,
+        },
+      });
+    });
+  });
+
+  return actions;
+}
+
 function createRailIcon(entry) {
   const wrap = document.createElement("span");
   wrap.className = "battle-history-portrait";
+
+  if (entry.type === "weather") {
+    wrap.textContent = entry.weatherIcon || "☁️";
+    wrap.classList.add("is-weather");
+    return wrap;
+  }
 
   const iconUrl = entry.sourceCard?.id ? spriteUrl(entry.sourceCard.id) : null;
   if (iconUrl) {
@@ -325,16 +582,21 @@ function createRailIcon(entry) {
   return wrap;
 }
 
-function handCardElement(cardId) {
-  if (!cardId) return null;
+function handCardElement(card, snapshot) {
+  if (!card?.id) return null;
+  const shownCost = Number.isFinite(snapshot?.cost) ? snapshot.cost : card.cost;
+  const costReduction = card.cost - shownCost;
+
   return React.createElement(HandCard, {
-    cardId,
+    cardId: card.id,
     playable: true,
     ghost: true,
+    unit: snapshot?.unit || undefined,
+    handCard: costReduction ? { costReduction } : undefined,
   });
 }
 
-function inspectCard(card, fainted, key) {
+function inspectCard(card, fainted, key, snapshot = null) {
   if (!card) return null;
   return React.createElement(
     "div",
@@ -342,7 +604,7 @@ function inspectCard(card, fainted, key) {
       className: `battle-history-inspect-card ${fainted ? "is-fainted" : ""}`,
       key,
     },
-    handCardElement(card.id),
+    handCardElement(card, snapshot),
     fainted
       ? React.createElement(
           "div",
@@ -350,6 +612,23 @@ function inspectCard(card, fainted, key) {
           "기절",
         )
       : null,
+  );
+}
+
+function inspectWeather(entry, key) {
+  return React.createElement(
+    "div",
+    { className: "battle-history-weather-source", key },
+    React.createElement(
+      "span",
+      { className: "battle-history-weather-glyph", "aria-hidden": "true" },
+      entry.weatherIcon || "☁️",
+    ),
+    React.createElement(
+      "strong",
+      null,
+      entry.weather === "sand" ? "모래바람" : "날씨",
+    ),
   );
 }
 
@@ -370,7 +649,8 @@ function inspectTrainer(hero, key) {
         gap: "10px",
         borderRadius: "18px",
         border: "2px solid rgba(255,255,255,.2)",
-        background: "radial-gradient(circle at 50% 38%, rgba(255,255,255,.14), rgba(8,12,24,.9) 68%)",
+        background:
+          "radial-gradient(circle at 50% 38%, rgba(255,255,255,.14), rgba(8,12,24,.9) 68%)",
         boxShadow: "0 24px 60px rgba(0,0,0,.7)",
       },
     },
@@ -404,9 +684,20 @@ function inspectTrainer(hero, key) {
 }
 
 function inspectReact(entry) {
-  const children = [
-    inspectCard(entry.sourceCard, entry.sourceFainted, "source"),
-  ];
+  const children = [];
+
+  if (entry.type === "weather") {
+    children.push(inspectWeather(entry, "weather"));
+  } else if (entry.sourceCard) {
+    children.push(
+      inspectCard(
+        entry.sourceCard,
+        entry.sourceFainted,
+        "source",
+        entry.sourceSnapshot,
+      ),
+    );
+  }
 
   const hasTarget = Boolean(entry.targetCard || entry.targetHero);
   if (hasTarget) {
@@ -435,7 +726,12 @@ function inspectReact(entry) {
         ...bridgeChildren,
       ),
       entry.targetCard
-        ? inspectCard(entry.targetCard, entry.targetFainted, "target")
+        ? inspectCard(
+            entry.targetCard,
+            entry.targetFainted,
+            "target",
+            entry.targetSnapshot,
+          )
         : inspectTrainer(entry.targetHero, "trainer"),
     );
   } else if (entry.damage > 0) {
@@ -565,18 +861,16 @@ function renderHistory(board) {
   spacer.className = "battle-history-spacer";
   list.appendChild(spacer);
 
-  // 오래된 행동이 맨 아래에 남고 새 행동이 그 위로 한 칸씩 쌓인다.
   const visible = entries.slice(-MAX_VISIBLE).reverse();
   visible.forEach((entry) => list.appendChild(createEntryNode(entry)));
   panel.appendChild(list);
 
   requestAnimationFrame(() => {
-    // 항목이 넘칠 때도 최신 행동(위쪽)이 바로 보이도록 유지한다.
     list.scrollTop = 0;
   });
 }
 
-function captureNewLines(board) {
+function captureNewLines(board, game, currentSnapshots, oldSnapshots) {
   const currentLines = readBattleLines(board);
   if (!currentLines.length) {
     previousLines = [];
@@ -595,21 +889,27 @@ function captureNewLines(board) {
     if (action) parsed.push({ index, action });
   });
 
+  parsed.push(...weatherActionsFromLines(newLines, currentSnapshots, oldSnapshots));
+  parsed.sort((a, b) => a.index - b.index);
+
   if (!parsed.length) return false;
 
   parsed.forEach((item, actionIndex) => {
     const next = parsed[actionIndex + 1];
-    const outcomeLines = newLines.slice(
-      item.index + 1,
-      next ? next.index : newLines.length,
+    const start = Math.floor(item.index) + 1;
+    const end = next ? Math.floor(next.index) : newLines.length;
+    const outcomeLines = newLines.slice(start, end);
+    const action = enrichActionSnapshots(
+      item.action,
+      outcomeLines,
+      game,
+      currentSnapshots,
+      oldSnapshots,
     );
-    const action = item.action;
 
     entries.push({
       seq: ++sequence,
       ...action,
-      sourceFainted: faintedInLines(action.sourceCard, outcomeLines),
-      targetFainted: faintedInLines(action.targetCard, outcomeLines),
     });
   });
 
@@ -624,6 +924,7 @@ function resetForBoard(board) {
   if (mountedBoard) mountedBoard.classList.remove("battle-history-enabled");
   mountedBoard = board;
   previousLines = [];
+  previousUnitSnapshots = new Map();
   entries = [];
   sequence = 0;
   mobileOpen = false;
@@ -641,7 +942,16 @@ export function syncBattleHistory() {
     }
 
     resetForBoard(board);
-    const changed = captureNewLines(board);
+    const game = getBattleGame();
+    const currentSnapshots = collectUnitSnapshots(game);
+    const changed = captureNewLines(
+      board,
+      game,
+      currentSnapshots,
+      previousUnitSnapshots,
+    );
+    previousUnitSnapshots = currentSnapshots;
+
     const shellMissing = !board.querySelector(":scope > .battle-history-shell");
     if (changed || shellMissing) renderHistory(board);
   } finally {
