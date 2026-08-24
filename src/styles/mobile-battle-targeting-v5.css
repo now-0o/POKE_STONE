@@ -161,7 +161,7 @@
      of the layout viewport, otherwise Safari chrome can cover it. */
   .battle-board:has(> .hand .hand-card.selected) .target-hint {
     position: fixed !important;
-    left: calc(var(--mobile-battle-vx, 0px) + var(--mobile-battle-vw, 100vw) / 2) !important;
+    left: var(--mobile-battle-cx, 50vw) !important;
     right: auto !important;
     top: calc(
       var(--mobile-battle-vy, 0px) +
