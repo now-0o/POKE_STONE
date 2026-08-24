@@ -1,12 +1,8 @@
 import { CARD_MAP, spriteUrl } from "../../data/cards.js";
 import "./battle-history.css";
 
-const MAX_VISIBLE = 9;
-const MAX_STORED = 40;
-
-const CARD_CANDIDATES = Object.values(CARD_MAP)
-  .filter((card) => card?.id && card?.name)
-  .sort((a, b) => b.name.length - a.name.length);
+const MAX_VISIBLE = 16;
+const MAX_STORED = 60;
 
 let mountedBoard = null;
 let previousLines = [];
@@ -48,8 +44,31 @@ function suffixPrefixOverlap(before, after) {
   return 0;
 }
 
-function inferCard(message) {
-  return CARD_CANDIDATES.find((card) => message.includes(card.name)) || null;
+function cardCandidates() {
+  return Object.values(CARD_MAP)
+    .filter((card) => card?.id && card?.name)
+    .sort((a, b) => b.name.length - a.name.length);
+}
+
+function findMentionedCards(message) {
+  const matches = [];
+
+  cardCandidates().forEach((card) => {
+    const index = message.indexOf(card.name);
+    if (index < 0) return;
+    matches.push({ card, index });
+  });
+
+  matches.sort((a, b) => a.index - b.index || b.card.name.length - a.card.name.length);
+
+  const seen = new Set();
+  return matches
+    .filter(({ card }) => {
+      if (seen.has(card.id)) return false;
+      seen.add(card.id);
+      return true;
+    })
+    .map(({ card }) => card);
 }
 
 function fieldMentions(board, selector, name) {
@@ -59,7 +78,7 @@ function fieldMentions(board, selector, name) {
   );
 }
 
-function inferSide(board, message, card) {
+function inferSide(board, message, cards) {
   const enemyName = board.querySelector(".enemy-hero-cluster .hero-name")?.textContent?.trim();
   const playerName = board.querySelector(".my-hero-cluster .hero-name")?.textContent?.trim() || "나";
 
@@ -68,18 +87,31 @@ function inferSide(board, message, card) {
     return "player";
   }
 
-  if (card?.name) {
-    if (fieldMentions(board, ".enemy-field [data-uid]", card.name)) return "enemy";
-    if (fieldMentions(board, ".my-field [data-uid]", card.name)) return "player";
+  const source = cards[0];
+  if (source?.name) {
+    if (fieldMentions(board, ".enemy-field [data-uid]", source.name)) return "enemy";
+    if (fieldMentions(board, ".my-field [data-uid]", source.name)) return "player";
   }
 
   const turn = document.body.dataset.battleTurn;
   return turn === "player" || turn === "enemy" ? turn : "neutral";
 }
 
-function entryIcon(card) {
+function actionLabel(message) {
+  if (/기절|쓰러|탈진/.test(message)) return "기절";
+  if (/메가진화|진화했다|진화했/.test(message)) return "진화";
+  if (/냈다|소환|등장|합류/.test(message)) return "소환";
+  if (/공격|피해|강타|불태|절단|폭발|번개|파동|빔/.test(message)) return "공격 / 피해";
+  if (/회복|치유|흡수/.test(message)) return "회복";
+  if (/특성|의 .*\!|공격력|방어|장막|날씨/.test(message)) return "특성 / 효과";
+  if (/퀘스트/.test(message)) return "퀘스트";
+  if (/카드를 뽑|손으로|덱/.test(message)) return "카드";
+  return "전투 기록";
+}
+
+function createPortrait(card, className = "") {
   const wrap = document.createElement("span");
-  wrap.className = "battle-history-portrait";
+  wrap.className = ["battle-history-portrait", className].filter(Boolean).join(" ");
 
   if (card?.kind === "pokemon") {
     const img = document.createElement("img");
@@ -87,10 +119,14 @@ function entryIcon(card) {
     img.draggable = false;
     img.loading = "lazy";
     img.src = spriteUrl(card.id);
-    img.addEventListener("error", () => {
-      img.remove();
-      wrap.textContent = card.emoji || "◆";
-    }, { once: true });
+    img.addEventListener(
+      "error",
+      () => {
+        img.remove();
+        wrap.textContent = card.emoji || "◆";
+      },
+      { once: true },
+    );
     wrap.appendChild(img);
     return wrap;
   }
@@ -106,16 +142,95 @@ function entryIcon(card) {
           ? "◆"
           : card?.kind === "spell"
             ? "✧"
-            : "▣";
+            : "•";
   wrap.appendChild(symbol);
   return wrap;
 }
 
-function shortLabel(entry) {
-  if (entry.card?.name) return entry.card.name;
-  const message = entry.message;
-  if (message.length <= 15) return message;
-  return `${message.slice(0, 14)}…`;
+function createFlowNode(entry) {
+  const flow = document.createElement("div");
+  flow.className = "battle-history-action-flow";
+
+  const source = entry.cards[0] || null;
+  const target = entry.cards[1] || null;
+
+  const sourceWrap = document.createElement("div");
+  sourceWrap.className = "battle-history-flow-person";
+  sourceWrap.appendChild(createPortrait(source, "is-flow"));
+  const sourceName = document.createElement("span");
+  sourceName.textContent = source?.name || (entry.side === "enemy" ? "상대" : entry.side === "player" ? "나" : "효과");
+  sourceWrap.appendChild(sourceName);
+  flow.appendChild(sourceWrap);
+
+  if (target) {
+    const arrow = document.createElement("span");
+    arrow.className = "battle-history-flow-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.textContent = "→";
+    flow.appendChild(arrow);
+
+    const targetWrap = document.createElement("div");
+    targetWrap.className = "battle-history-flow-person";
+    targetWrap.appendChild(createPortrait(target, "is-flow"));
+    const targetName = document.createElement("span");
+    targetName.textContent = target.name;
+    targetWrap.appendChild(targetName);
+    flow.appendChild(targetWrap);
+  }
+
+  return flow;
+}
+
+function turnEntries(entry) {
+  return entries.filter((candidate) => candidate.turnKey === entry.turnKey);
+}
+
+function createTooltip(entry) {
+  const tooltip = document.createElement("span");
+  tooltip.className = "battle-history-tooltip";
+
+  const head = document.createElement("span");
+  head.className = "battle-history-tooltip-head";
+
+  const title = document.createElement("strong");
+  title.textContent = actionLabel(entry.message);
+  head.appendChild(title);
+
+  const turn = document.createElement("span");
+  turn.className = "battle-history-turn-badge";
+  turn.textContent = `턴 ${entry.turnCount} · ${entry.turnSide === "enemy" ? "상대" : "내"} 턴`;
+  head.appendChild(turn);
+  tooltip.appendChild(head);
+
+  tooltip.appendChild(createFlowNode(entry));
+
+  const message = document.createElement("span");
+  message.className = "battle-history-primary-message";
+  message.textContent = entry.message;
+  tooltip.appendChild(message);
+
+  const sameTurn = turnEntries(entry);
+  if (sameTurn.length > 1) {
+    const group = document.createElement("span");
+    group.className = "battle-history-turn-detail";
+
+    const groupTitle = document.createElement("strong");
+    groupTitle.textContent = "이 턴의 기록";
+    group.appendChild(groupTitle);
+
+    const list = document.createElement("span");
+    list.className = "battle-history-turn-detail-list";
+    sameTurn.forEach((item) => {
+      const line = document.createElement("span");
+      if (item.seq === entry.seq) line.classList.add("is-current");
+      line.textContent = item.message;
+      list.appendChild(line);
+    });
+    group.appendChild(list);
+    tooltip.appendChild(group);
+  }
+
+  return tooltip;
 }
 
 function createEntryNode(entry) {
@@ -124,35 +239,10 @@ function createEntryNode(entry) {
   button.className = `battle-history-entry is-${entry.side}`;
   if (selectedSeq === entry.seq) button.classList.add("is-selected");
   button.dataset.historySeq = String(entry.seq);
-  button.title = entry.message;
+  button.setAttribute("aria-label", entry.message);
 
-  button.appendChild(entryIcon(entry.card));
-
-  const copy = document.createElement("span");
-  copy.className = "battle-history-entry-copy";
-
-  const label = document.createElement("strong");
-  label.textContent = shortLabel(entry);
-  copy.appendChild(label);
-
-  const preview = document.createElement("span");
-  preview.textContent = entry.message;
-  copy.appendChild(preview);
-  button.appendChild(copy);
-
-  const tooltip = document.createElement("span");
-  tooltip.className = "battle-history-tooltip";
-
-  if (entry.card?.name) {
-    const title = document.createElement("strong");
-    title.textContent = entry.card.name;
-    tooltip.appendChild(title);
-  }
-
-  const detail = document.createElement("span");
-  detail.textContent = entry.message;
-  tooltip.appendChild(detail);
-  button.appendChild(tooltip);
+  button.appendChild(createPortrait(entry.cards[0] || null));
+  button.appendChild(createTooltip(entry));
 
   button.addEventListener("click", () => {
     selectedSeq = selectedSeq === entry.seq ? null : entry.seq;
@@ -190,6 +280,22 @@ function createShell(board) {
   return shell;
 }
 
+function visibleTurnGroups() {
+  const visible = entries.slice(-MAX_VISIBLE).reverse();
+  const groups = [];
+
+  visible.forEach((entry) => {
+    const last = groups[groups.length - 1];
+    if (last?.turnKey === entry.turnKey) {
+      last.entries.push(entry);
+      return;
+    }
+    groups.push({ turnKey: entry.turnKey, entries: [entry] });
+  });
+
+  return groups;
+}
+
 function renderHistory(board) {
   if (!board || board !== mountedBoard) return;
   const shell = createShell(board);
@@ -199,29 +305,23 @@ function renderHistory(board) {
   if (!panel) return;
   panel.replaceChildren();
 
-  const header = document.createElement("div");
-  header.className = "battle-history-header";
-
-  const title = document.createElement("strong");
-  title.textContent = "전투 기록";
-  header.appendChild(title);
-
-  const count = document.createElement("span");
-  count.textContent = `${entries.length}`;
-  header.appendChild(count);
-  panel.appendChild(header);
-
   const list = document.createElement("div");
   list.className = "battle-history-list";
-  const visible = entries.slice(-MAX_VISIBLE).reverse();
+  const groups = visibleTurnGroups();
 
-  if (!visible.length) {
+  if (!groups.length) {
     const empty = document.createElement("div");
     empty.className = "battle-history-empty";
-    empty.textContent = "아직 기록된 행동이 없습니다.";
+    empty.setAttribute("aria-label", "아직 기록된 행동이 없습니다.");
     list.appendChild(empty);
   } else {
-    visible.forEach((entry) => list.appendChild(createEntryNode(entry)));
+    groups.forEach((group) => {
+      const turnGroup = document.createElement("div");
+      turnGroup.className = "battle-history-turn-group";
+      turnGroup.dataset.turnKey = group.turnKey;
+      group.entries.forEach((entry) => turnGroup.appendChild(createEntryNode(entry)));
+      list.appendChild(turnGroup);
+    });
   }
 
   panel.appendChild(list);
@@ -231,13 +331,23 @@ function renderHistory(board) {
     const detail = document.createElement("div");
     detail.className = "battle-history-selected-detail";
 
+    const heading = document.createElement("div");
+    heading.className = "battle-history-selected-head";
     const detailTitle = document.createElement("strong");
-    detailTitle.textContent = selected.card?.name || "전투 기록";
-    detail.appendChild(detailTitle);
+    detailTitle.textContent = actionLabel(selected.message);
+    heading.appendChild(detailTitle);
+    const detailTurn = document.createElement("span");
+    detailTurn.textContent = `턴 ${selected.turnCount}`;
+    heading.appendChild(detailTurn);
+    detail.appendChild(heading);
+
+    detail.appendChild(createFlowNode(selected));
 
     const detailText = document.createElement("span");
+    detailText.className = "battle-history-selected-message";
     detailText.textContent = selected.message;
     detail.appendChild(detailText);
+
     panel.appendChild(detail);
   }
 }
@@ -255,13 +365,21 @@ function captureNewLines(board) {
 
   if (!newLines.length) return false;
 
+  const game = getBattleGame();
+  const turnCount = Number(game?.turnCount) || 1;
+  const turnSide = game?.turn === "enemy" ? "enemy" : "player";
+  const turnKey = `${turnCount}:${turnSide}`;
+
   newLines.forEach((message) => {
-    const card = inferCard(message);
+    const cards = findMentionedCards(message);
     entries.push({
       seq: ++sequence,
       message,
-      card,
-      side: inferSide(board, message, card),
+      cards,
+      side: inferSide(board, message, cards),
+      turnCount,
+      turnSide,
+      turnKey,
     });
   });
 
