@@ -17,12 +17,7 @@
   position: absolute;
   left: var(--weather-x);
   top: -10%;
-  transform: translateX(var(--weather-drift)) scale(var(--weather-scale));
   opacity: 0;
-  font-size: 22px;
-  font-weight: 900;
-  line-height: 1;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
   animation-delay: var(--weather-delay);
 }
 
@@ -34,7 +29,6 @@
   min-width: 260px;
   align-items: center;
   justify-content: center;
-  gap: 14px;
   transform: translate(-50%, -50%);
   padding: 14px 22px;
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -45,16 +39,12 @@
   animation: weather-turn-banner-in 1450ms ease both;
 }
 
-.weather-turn-icon {
-  font-size: 42px;
-  line-height: 1;
-  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.45));
-}
-
 .weather-turn-copy {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 4px;
+  text-align: center;
 }
 
 .weather-turn-copy strong {
@@ -76,7 +66,11 @@
 }
 
 .weather-turn-rain .weather-turn-particle {
-  color: rgba(164, 216, 255, 0.92);
+  width: 2px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(205, 235, 255, 0), rgba(170, 218, 255, 0.96));
+  box-shadow: 0 0 6px rgba(135, 198, 255, 0.26);
   animation-name: weather-rain-drop;
   animation-duration: 920ms;
   animation-timing-function: linear;
@@ -92,8 +86,13 @@
 }
 
 .weather-turn-sun .weather-turn-particle {
-  top: 42%;
-  color: rgba(255, 228, 113, 0.94);
+  top: 38%;
+  width: 3px;
+  height: 72px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 239, 160, 0), rgba(255, 222, 96, 0.9), rgba(255, 239, 160, 0));
+  box-shadow: 0 0 12px rgba(255, 215, 92, 0.34);
+  transform-origin: center;
   animation-name: weather-sun-ray;
   animation-duration: 1200ms;
   animation-timing-function: ease-out;
@@ -106,7 +105,11 @@
 
 .weather-turn-sand .weather-turn-particle {
   top: var(--weather-y);
-  color: rgba(232, 191, 112, 0.9);
+  width: 11px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232, 191, 112, 0.88);
+  box-shadow: 0 0 6px rgba(204, 153, 80, 0.3);
   animation-name: weather-sand-sweep;
   animation-duration: 1000ms;
   animation-timing-function: linear;
@@ -118,8 +121,12 @@
 }
 
 .weather-turn-hail .weather-turn-particle {
-  color: rgba(223, 248, 255, 0.98);
-  font-size: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: radial-gradient(circle at 35% 28%, #fff, #d9f4ff 56%, #9fc9dc 100%);
+  box-shadow: 0 0 7px rgba(210, 244, 255, 0.44);
   animation-name: weather-hail-fall;
   animation-duration: 1050ms;
   animation-timing-function: cubic-bezier(0.28, 0.62, 0.42, 1);
@@ -180,9 +187,9 @@
 }
 
 @keyframes weather-sun-ray {
-  0% { opacity: 0; transform: translate(var(--weather-drift), 0) scale(0.5); }
-  35% { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--weather-drift), -90px) scale(1.35); }
+  0% { opacity: 0; transform: translate(var(--weather-drift), 22px) rotate(18deg) scale(0.55); }
+  35% { opacity: 0.92; }
+  100% { opacity: 0; transform: translate(var(--weather-drift), -90px) rotate(18deg) scale(1.2); }
 }
 
 @keyframes weather-sand-sweep {
@@ -192,9 +199,9 @@
 }
 
 @keyframes weather-hail-fall {
-  0% { opacity: 0; transform: translate(var(--weather-drift), -10vh) rotate(0deg) scale(var(--weather-scale)); }
+  0% { opacity: 0; transform: translate(var(--weather-drift), -10vh) scale(var(--weather-scale)); }
   16% { opacity: 1; }
-  100% { opacity: 0; transform: translate(calc(var(--weather-drift) + 36px), 108vh) rotate(260deg) scale(var(--weather-scale)); }
+  100% { opacity: 0; transform: translate(calc(var(--weather-drift) + 36px), 108vh) scale(var(--weather-scale)); }
 }
 
 @media (max-width: 760px) {
@@ -202,10 +209,6 @@
     min-width: 220px;
     padding: 11px 16px;
     border-radius: 15px;
-  }
-
-  .weather-turn-icon {
-    font-size: 34px;
   }
 
   .weather-turn-copy strong {
