@@ -1,0 +1,33 @@
+/* Battle history rail + weather indicator spacing fixes. */
+
+@media (pointer: fine) and (min-width: 761px) {
+  /* Reserve the left history rail so the weather pill never sits under it. */
+  .battle-history-enabled .weather-indicator {
+    width: calc(100% - 72px) !important;
+    margin-left: 72px !important;
+  }
+
+  /* Put the vertical safe area on the scroll content itself so top/bottom match. */
+  .battle-history-panel {
+    --battle-history-safe-y: 16px;
+    padding: 0 7px !important;
+  }
+
+  .battle-history-list {
+    padding-top: var(--battle-history-safe-y) !important;
+    padding-bottom: var(--battle-history-safe-y) !important;
+    scroll-padding-top: var(--battle-history-safe-y);
+    scroll-padding-bottom: var(--battle-history-safe-y);
+  }
+}
+
+@media (max-width: 1180px) and (pointer: fine) and (min-width: 761px) {
+  .battle-history-panel {
+    padding-inline: 6px !important;
+  }
+
+  .battle-history-enabled .weather-indicator {
+    width: calc(100% - 66px) !important;
+    margin-left: 66px !important;
+  }
+}
