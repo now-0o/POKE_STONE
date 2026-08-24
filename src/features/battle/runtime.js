@@ -180,8 +180,8 @@ function rememberCandiceDropSlot(event) {
   };
 }
 
-// 손패 포켓몬은 클릭으로 사용하지 않는다.
-// pointerdown/move/up 기반 드래그 로직은 그대로 통과하므로 필드에 끌어다 놓아야 소환/진화된다.
+// 기본 포켓몬의 클릭 소환은 막고 드래그 소환만 유지한다.
+// 모바일 진화체는 기존 React의 evolve 대상 선택 흐름으로 클릭을 통과시킨다.
 function blockPokemonHandClick(event) {
   if (!(event.target instanceof Element)) return;
 
@@ -192,6 +192,14 @@ function blockPokemonHandClick(event) {
 
   const typeLabel = handCard.querySelector(".card-typebadge")?.textContent || "";
   if (!typeLabel.includes("포켓몬")) return;
+
+  const stageLine = handCard.querySelector(".card-stageline")?.textContent || "";
+  const isEvolution = Boolean(stageLine) && !stageLine.includes("이전 진화 없음");
+  const isMobile = window.matchMedia?.(
+    "(pointer: coarse), (max-width: 1024px)",
+  ).matches;
+
+  if (isMobile && isEvolution) return;
 
   event.preventDefault();
   event.stopPropagation();
