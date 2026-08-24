@@ -8,7 +8,8 @@ import {
 import { playSfx } from "../audio.js";
 import "../styles/online-matchmaking.css";
 
-const POLL_MS = 1500;
+const POLL_MS = 700;
+const MATCH_FOUND_DELAY_MS = 2000;
 
 export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) {
   const [status, setStatus] = useState({ status: "idle" });
@@ -17,19 +18,32 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   const statusRef = useRef(status);
   const handoffRef = useRef(false);
   const matchedRef = useRef(null);
+  const matchedTimerRef = useRef(null);
 
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
 
+  function clearMatchedTimer() {
+    if (matchedTimerRef.current !== null) {
+      window.clearTimeout(matchedTimerRef.current);
+      matchedTimerRef.current = null;
+    }
+  }
+
   function acceptStatus(next) {
     setStatus(next);
     setError("");
     if (next.status !== "matched" || matchedRef.current === next.matchId) return;
+
     matchedRef.current = next.matchId;
     handoffRef.current = true;
     playSfx("click");
-    onMatched?.(next);
+    clearMatchedTimer();
+    matchedTimerRef.current = window.setTimeout(() => {
+      matchedTimerRef.current = null;
+      onMatched?.(next);
+    }, MATCH_FOUND_DELAY_MS);
   }
 
   useEffect(() => {
@@ -49,6 +63,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
 
   useEffect(
     () => () => {
+      clearMatchedTimer();
       if (
         !handoffRef.current &&
         ["searching", "matched"].includes(statusRef.current?.status)
@@ -90,6 +105,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   async function cancelSearch() {
     if (busy) return;
     setBusy(true);
+    clearMatchedTimer();
     try {
       await leaveMatchmaking();
       matchedRef.current = null;
@@ -105,6 +121,8 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   }
 
   async function backToMenu() {
+    clearMatchedTimer();
+    handoffRef.current = false;
     if (["searching", "matched"].includes(status.status)) {
       try {
         await leaveMatchmaking();
@@ -197,7 +215,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
               <span>SEAT {status.seat || "-"}</span>
               <span>#{String(status.matchId || "").slice(0, 8)}</span>
             </div>
-            <p>전투방으로 연결하고 있습니다.</p>
+            <p>매칭 완료! 잠시 후 배틀을 시작합니다.</p>
           </div>
         )}
 
