@@ -87,3 +87,21 @@ export function leaveFriendlyRoom() {
     body: "{}",
   });
 }
+
+export function leaveFriendlyRoomKeepalive() {
+  if (typeof window === "undefined") return;
+  const token = getToken();
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  try {
+    void fetch(`${API_BASE}/friendly/leave`, {
+      method: "POST",
+      headers,
+      body: "{}",
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // 페이지 종료 중 전송 실패는 서버의 stale room 정리로 보완한다.
+  }
+}
