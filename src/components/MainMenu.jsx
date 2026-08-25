@@ -3,6 +3,7 @@ import { TRAINERS_BY_REGION, TRAINER_MAP } from "../data/trainers.js";
 import { resetSave } from "../state/save.js";
 import { TrainerSprite } from "./Card.jsx";
 import OnlineMatchmaking from "./OnlineMatchmaking.jsx";
+import OnlineFriendlyRoom from "./OnlineFriendlyRoom.jsx";
 import {
   UI_SPRITES,
   LEGENDARY_POKEMON_IDS,
@@ -77,6 +78,7 @@ export default function MainMenu({
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [selectedOnlineMode, setSelectedOnlineMode] = useState(null);
   const [onlineMatching, setOnlineMatching] = useState(false);
+  const [onlineFriendlyActive, setOnlineFriendlyActive] = useState(false);
   const [showOnlineLeaveConfirm, setShowOnlineLeaveConfirm] = useState(false);
   const [cancelingOnline, setCancelingOnline] = useState(false);
   const onlineCancelRef = useRef(null);
@@ -199,11 +201,16 @@ export default function MainMenu({
   }
 
   function requestNavigation(action) {
-    if (
+    const randomActive =
       selectedMode === "online" &&
       selectedOnlineMode === "random" &&
-      onlineMatching
-    ) {
+      onlineMatching;
+    const friendlyActive =
+      selectedMode === "online" &&
+      selectedOnlineMode === "friendly" &&
+      onlineFriendlyActive;
+
+    if (randomActive || friendlyActive) {
       pendingNavigationRef.current = action;
       setShowOnlineLeaveConfirm(true);
       playSfx("click");
@@ -223,6 +230,7 @@ export default function MainMenu({
       const action = pendingNavigationRef.current;
       pendingNavigationRef.current = null;
       setOnlineMatching(false);
+      setOnlineFriendlyActive(false);
       setShowOnlineLeaveConfirm(false);
       playSfx("click");
       action?.();
@@ -233,7 +241,7 @@ export default function MainMenu({
     setCancelingOnline(false);
   }
 
-  function keepMatching() {
+  function keepOnlineActivity() {
     pendingNavigationRef.current = null;
     setShowOnlineLeaveConfirm(false);
     playSfx("click");
@@ -248,6 +256,7 @@ export default function MainMenu({
   const trainers = selectedRegion
     ? TRAINERS_BY_REGION[selectedRegion] || []
     : [];
+  const leavingFriendly = selectedOnlineMode === "friendly";
 
   return (
     <div className="main-menu">
@@ -465,6 +474,7 @@ export default function MainMenu({
               desc="상대를 자동으로 찾아 바로 대전"
               onClick={() => {
                 playSfx("click");
+                onlineCancelRef.current = null;
                 setSelectedOnlineMode("random");
               }}
             />
@@ -472,8 +482,11 @@ export default function MainMenu({
               name="친선전"
               sub="FRIENDLY MATCH"
               desc="방 만들기 · 코드로 입장"
-              goText="준비 중"
-              onClick={() => playSfx("buzzer")}
+              onClick={() => {
+                playSfx("click");
+                onlineCancelRef.current = null;
+                setSelectedOnlineMode("friendly");
+              }}
             />
           </div>
         </>
@@ -505,6 +518,39 @@ export default function MainMenu({
               embedded
               onMatched={onOnlineMatched}
               onActivityChange={setOnlineMatching}
+              onRegisterCancel={(handler) => {
+                onlineCancelRef.current = handler;
+              }}
+            />
+          </div>
+        </>
+      )}
+
+      {selectedMode === "online" && selectedOnlineMode === "friendly" && (
+        <>
+          <div className="trainer-region-header">
+            <button
+              className="btn-ghost small"
+              onClick={() =>
+                requestNavigation(() => {
+                  playSfx("click");
+                  setSelectedOnlineMode(null);
+                })
+              }
+            >
+              ◀ 온라인 배틀
+            </button>
+            <div>
+              <strong>친선전</strong>
+              <span className="trainer-region-sub"> FRIENDLY MATCH</span>
+            </div>
+          </div>
+
+          <div className="trainer-list online-matchmaking-trainer-slot">
+            <OnlineFriendlyRoom
+              save={save}
+              onMatched={onOnlineMatched}
+              onActivityChange={setOnlineFriendlyActive}
               onRegisterCancel={(handler) => {
                 onlineCancelRef.current = handler;
               }}
@@ -641,22 +687,30 @@ export default function MainMenu({
       {showOnlineLeaveConfirm && (
         <div className="online-leave-confirm-overlay" role="dialog" aria-modal="true">
           <div className="online-leave-confirm-box">
-            <h3>랜덤 매칭 중입니다</h3>
-            <p>다른 곳으로 이동하면 현재 매칭이 취소됩니다. 매칭을 취소하고 이동할까요?</p>
+            <h3>{leavingFriendly ? "친선전 방에 참가 중입니다" : "랜덤 매칭 중입니다"}</h3>
+            <p>
+              {leavingFriendly
+                ? "다른 곳으로 이동하면 현재 친선전 방에서 나가게 됩니다. 방을 나가고 이동할까요?"
+                : "다른 곳으로 이동하면 현재 매칭이 취소됩니다. 매칭을 취소하고 이동할까요?"}
+            </p>
             <div className="online-leave-confirm-actions">
               <button
                 className="btn-primary"
                 disabled={cancelingOnline}
                 onClick={confirmCancelAndNavigate}
               >
-                {cancelingOnline ? "취소 중..." : "매칭 취소하고 이동"}
+                {cancelingOnline
+                  ? "처리 중..."
+                  : leavingFriendly
+                    ? "방 나가고 이동"
+                    : "매칭 취소하고 이동"}
               </button>
               <button
                 className="btn-secondary"
                 disabled={cancelingOnline}
-                onClick={keepMatching}
+                onClick={keepOnlineActivity}
               >
-                계속 매칭
+                {leavingFriendly ? "방에 남기" : "계속 매칭"}
               </button>
             </div>
           </div>
