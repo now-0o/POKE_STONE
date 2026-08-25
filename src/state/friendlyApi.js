@@ -10,6 +10,13 @@ const API_BASE = (() => {
   return "/api";
 })();
 
+const FRIENDLY_ROOM_VISIBLE_NETWORK_MS = 2000;
+const FRIENDLY_ROOM_HIDDEN_NETWORK_MS = 8000;
+
+let friendlyRoomCache = null;
+let friendlyRoomLastRequestAt = 0;
+let friendlyRoomInFlight = null;
+
 async function friendlyReq(path, opts = {}) {
   const token = getToken();
   const headers = {
@@ -50,6 +57,25 @@ function deckPayload(source, extra = {}) {
   });
 }
 
+function friendlyRoomNetworkInterval() {
+  if (typeof document !== "undefined" && document.hidden) {
+    return FRIENDLY_ROOM_HIDDEN_NETWORK_MS;
+  }
+  return FRIENDLY_ROOM_VISIBLE_NETWORK_MS;
+}
+
+function cacheFriendlyRoom(data) {
+  friendlyRoomCache = data || null;
+  friendlyRoomLastRequestAt = Date.now();
+  return data;
+}
+
+function clearFriendlyRoomCache() {
+  friendlyRoomCache = null;
+  friendlyRoomLastRequestAt = 0;
+  friendlyRoomInFlight = null;
+}
+
 export function fetchFriendlyRooms() {
   return friendlyReq("/friendly/rooms", { method: "GET" });
 }
@@ -62,56 +88,75 @@ export function createFriendlyRoom(source, settings = {}) {
       isPrivate: !!settings.isPrivate,
       password: settings.password || "",
     }),
-  });
+  }).then(cacheFriendlyRoom);
 }
 
 export function joinFriendlyRoom(roomId, source, password = "") {
   return friendlyReq("/friendly/join", {
     method: "POST",
     body: deckPayload(source, { roomId, password }),
-  });
+  }).then(cacheFriendlyRoom);
 }
 
 export function fetchFriendlyRoom() {
-  return friendlyReq("/friendly/room", { method: "GET" });
+  const now = Date.now();
+  if (
+    friendlyRoomCache &&
+    now - friendlyRoomLastRequestAt < friendlyRoomNetworkInterval()
+  ) {
+    return Promise.resolve(friendlyRoomCache);
+  }
+  if (friendlyRoomInFlight) return friendlyRoomInFlight;
+
+  const request = friendlyReq("/friendly/room", { method: "GET" })
+    .then(cacheFriendlyRoom)
+    .finally(() => {
+      if (friendlyRoomInFlight === request) friendlyRoomInFlight = null;
+    });
+  friendlyRoomInFlight = request;
+  return request;
 }
 
 export function updateFriendlyDeck(source) {
   return friendlyReq("/friendly/deck", {
     method: "POST",
     body: deckPayload(source),
-  });
+  }).then(cacheFriendlyRoom);
 }
 
 export function setFriendlyReady(ready) {
   return friendlyReq("/friendly/ready", {
     method: "POST",
     body: JSON.stringify({ ready: !!ready }),
-  });
+  }).then(cacheFriendlyRoom);
 }
 
 export function startFriendlyMatch() {
   return friendlyReq("/friendly/start", {
     method: "POST",
     body: "{}",
-  });
+  }).then(cacheFriendlyRoom);
 }
 
 export function returnFriendlyToRoom(matchId) {
   return friendlyReq("/friendly/return", {
     method: "POST",
     body: JSON.stringify({ matchId }),
-  });
+  }).then(cacheFriendlyRoom);
 }
 
 export function leaveFriendlyRoom() {
   return friendlyReq("/friendly/leave", {
     method: "POST",
     body: "{}",
+  }).then((data) => {
+    clearFriendlyRoomCache();
+    return data;
   });
 }
 
 export function leaveFriendlyRoomKeepalive() {
+  clearFriendlyRoomCache();
   if (typeof window === "undefined") return;
   const token = getToken();
   const headers = { "Content-Type": "application/json" };
