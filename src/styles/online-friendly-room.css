@@ -16,7 +16,7 @@
 .friendly-room-kicker {
   display: block;
   margin-bottom: 6px;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.2em;
   opacity: 0.58;
 }
@@ -27,84 +27,29 @@
   font-size: clamp(24px, 4vw, 36px);
 }
 
-.friendly-room-intro p {
-  margin: 8px 0 0;
-  opacity: 0.7;
+.friendly-room-intro p,
+.friendly-room-lobby-head p {
+  margin: 7px 0 0;
+  opacity: 0.68;
 }
 
-.friendly-room-entry-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 20px;
-}
-
-.friendly-room-entry-card {
-  min-height: 150px;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.045);
-  color: inherit;
+.friendly-room-browser-head,
+.friendly-room-lobby-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   text-align: left;
 }
 
-button.friendly-room-entry-card {
-  cursor: pointer;
-}
-
-button.friendly-room-entry-card:hover:not(:disabled) {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.28);
-}
-
-.friendly-room-entry-card strong,
-.friendly-room-entry-card span,
-.friendly-room-entry-card em {
-  display: block;
-}
-
-.friendly-room-entry-card strong {
-  font-size: 20px;
-}
-
-.friendly-room-entry-card span {
-  margin-top: 8px;
-  font-size: 13px;
-  opacity: 0.65;
-}
-
-.friendly-room-entry-card em {
-  margin-top: 24px;
-  font-size: 11px;
-  font-style: normal;
-  letter-spacing: 0.11em;
-  opacity: 0.8;
-}
-
-.friendly-room-code-form {
+.friendly-browser-actions,
+.friendly-room-actions,
+.friendly-modal-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.friendly-room-code-form input {
-  min-width: 0;
-  flex: 1;
-  padding: 11px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  color: inherit;
-  font: inherit;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  outline: none;
-}
-
-.friendly-room-code-form input:focus {
-  border-color: rgba(255, 255, 255, 0.42);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 9px;
 }
 
 .friendly-room-error {
@@ -117,37 +62,238 @@ button.friendly-room-entry-card:hover:not(:disabled) {
   text-align: center;
 }
 
-.friendly-room-lobby-head {
+.friendly-room-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.friendly-room-list-item {
+  width: 100%;
+  min-height: 76px;
+  padding: 13px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.045);
+  color: inherit;
+  text-align: left;
+  transition: transform 0.14s, border-color 0.14s, background 0.14s;
+}
+
+.friendly-room-list-item:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(245, 197, 66, 0.58);
+  background: rgba(245, 197, 66, 0.07);
+}
+
+.friendly-room-list-item.is-full {
+  opacity: 0.52;
+}
+
+.friendly-room-list-main {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.friendly-room-list-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 17px;
+}
+
+.friendly-room-list-main small {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.friendly-lock {
+  margin-right: 5px;
+  font-size: 13px;
+}
+
+.friendly-room-list-meta {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.friendly-room-list-meta em {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  font-style: normal;
+  opacity: 0.72;
+}
+
+.friendly-room-list-meta b {
+  min-width: 34px;
+  text-align: center;
+  color: var(--accent);
+}
+
+.friendly-room-list-meta > span {
+  min-width: 46px;
+  text-align: right;
+  color: var(--accent);
+}
+
+.friendly-room-empty {
+  min-height: 190px;
+  display: grid;
+  place-content: center;
+  gap: 7px;
+  border: 1px dashed rgba(255, 255, 255, 0.13);
+  border-radius: 14px;
+  text-align: center;
+  opacity: 0.62;
+}
+
+.friendly-room-empty span {
+  font-size: 12px;
+}
+
+.friendly-modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 2147483100;
+  display: grid;
+  place-items: center;
+  padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  background: rgba(4, 8, 16, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.friendly-modal-box {
+  width: min(480px, 100%);
+  max-height: min(90dvh, 620px);
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: #111a2c;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+}
+
+.friendly-modal-box h3 {
+  margin-bottom: 16px;
+  font-size: 23px;
+}
+
+.friendly-modal-box > p {
+  margin: -7px 0 14px;
+  font-size: 12px;
+  opacity: 0.66;
+}
+
+.friendly-modal-box label,
+.friendly-modal-deck {
+  display: grid;
+  gap: 6px;
+  margin-top: 13px;
   text-align: left;
 }
 
-.friendly-room-code {
-  display: grid;
-  gap: 2px;
-  min-width: 180px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+.friendly-modal-box label > span,
+.friendly-modal-deck > span,
+.friendly-deck-picker label {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.friendly-modal-box input,
+.friendly-modal-box select,
+.friendly-deck-picker select {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
   color: inherit;
-  cursor: pointer;
+  font: inherit;
+  outline: none;
+}
+
+.friendly-modal-box input:focus,
+.friendly-modal-box select:focus,
+.friendly-deck-picker select:focus {
+  border-color: rgba(245, 197, 66, 0.7);
+}
+
+.friendly-privacy-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.friendly-privacy-toggle button {
+  min-height: 78px;
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+}
+
+.friendly-privacy-toggle button.is-selected {
+  border-color: var(--accent);
+  background: rgba(245, 197, 66, 0.1);
+  box-shadow: inset 0 0 22px rgba(245, 197, 66, 0.06);
+}
+
+.friendly-privacy-toggle small {
+  font-size: 10px;
+  opacity: 0.58;
+}
+
+.friendly-modal-actions {
+  margin-top: 20px;
+}
+
+.friendly-password-box > input {
+  margin-top: 2px;
+}
+
+.friendly-room-privacy-label {
+  font-size: 11px;
+}
+
+.friendly-room-lobby-badge {
+  flex: 0 0 auto;
+  min-width: 112px;
+  display: grid;
+  gap: 3px;
+  padding: 10px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.045);
   text-align: center;
 }
 
-.friendly-room-code span,
-.friendly-room-code small {
+.friendly-room-lobby-badge span {
   font-size: 9px;
   letter-spacing: 0.13em;
-  opacity: 0.55;
+  opacity: 0.52;
 }
 
-.friendly-room-code strong {
-  font-size: 24px;
-  letter-spacing: 0.16em;
+.friendly-room-lobby-badge strong {
+  font-size: 11px;
+  color: var(--accent);
 }
 
 .friendly-room-players {
@@ -161,7 +307,7 @@ button.friendly-room-entry-card:hover:not(:disabled) {
 .friendly-player-card {
   display: grid;
   align-content: center;
-  min-height: 125px;
+  min-height: 128px;
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -189,13 +335,21 @@ button.friendly-room-entry-card:hover:not(:disabled) {
   font-size: 20px;
 }
 
+.friendly-player-card small {
+  min-height: 16px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--accent);
+  opacity: 0.72;
+}
+
 .friendly-player-card em {
-  margin-top: 9px;
+  margin-top: 7px;
   font-size: 11px;
   font-style: normal;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  opacity: 0.72;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
 }
 
 .friendly-player-card.is-ready em {
@@ -211,31 +365,44 @@ button.friendly-room-entry-card:hover:not(:disabled) {
   opacity: 0.38;
 }
 
+.friendly-deck-picker {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.friendly-deck-picker > span {
+  font-size: 10px;
+  opacity: 0.52;
+}
+
 .friendly-room-status {
   min-height: 42px;
-  margin-top: 14px;
+  margin-top: 12px;
   padding: 11px 14px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.035);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
   text-align: center;
   opacity: 0.78;
 }
 
 .friendly-room-actions {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 15px;
+  margin-top: 14px;
 }
 
 .friendly-start-button:disabled {
   opacity: 0.4;
 }
 
-/* 랜덤 매칭 취소 / 친선전 방 나가기 확인창은 메인 콘텐츠가 아니라
-   실제 브라우저 viewport 전체를 덮는다. */
+/* 랜덤 매칭 취소 / 친선전 방 나가기 확인창은 실제 viewport 전체를 덮는다. */
 .online-leave-confirm-overlay {
   position: fixed !important;
   inset: 0 !important;
@@ -249,23 +416,54 @@ button.friendly-room-entry-card:hover:not(:disabled) {
   box-sizing: border-box;
 }
 
+/* 친선전 결과에서는 기존 OnlineBattle 버튼이 실제로 방 복귀를 수행한다. */
+.friendly-online-battle .online-result-box .btn-primary {
+  font-size: 0;
+}
+
+.friendly-online-battle .online-result-box .btn-primary::after {
+  content: "방으로 돌아가기";
+  font-size: 17px;
+}
+
 @media (max-width: 720px) {
   .friendly-room-shell {
     padding: 12px;
     border-radius: 14px;
   }
 
-  .friendly-room-entry-grid {
-    grid-template-columns: 1fr;
-  }
-
+  .friendly-room-browser-head,
   .friendly-room-lobby-head {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .friendly-room-code {
-    width: 100%;
+  .friendly-browser-actions .btn-primary,
+  .friendly-browser-actions .btn-secondary {
+    flex: 1 1 0;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .friendly-room-list-item {
+    min-height: 82px;
+    padding: 11px 12px;
+  }
+
+  .friendly-room-list-main strong {
+    font-size: 14px;
+  }
+
+  .friendly-room-list-meta {
+    grid-template-columns: auto auto;
+    gap: 5px;
+  }
+
+  .friendly-room-list-meta > span {
+    grid-column: 1 / -1;
+    min-width: 0;
+    text-align: right;
+    font-size: 9px;
   }
 
   .friendly-room-players {
@@ -277,6 +475,19 @@ button.friendly-room-entry-card:hover:not(:disabled) {
   }
 
   .friendly-player-card {
-    min-height: 92px;
+    min-height: 96px;
+  }
+
+  .friendly-deck-picker {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .friendly-privacy-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  .friendly-modal-box {
+    padding: 17px;
   }
 }
