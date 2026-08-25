@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   createFriendlyRoom,
   fetchFriendlyRoom,
@@ -52,8 +53,10 @@ export default function OnlineFriendlyRoom({
   const [roomName, setRoomName] = useState("");
   const [privateRoom, setPrivateRoom] = useState(false);
   const [createPassword, setCreatePassword] = useState("");
+  const [createError, setCreateError] = useState("");
   const [joinTarget, setJoinTarget] = useState(null);
   const [joinPassword, setJoinPassword] = useState("");
+  const [joinError, setJoinError] = useState("");
   const [busy, setBusy] = useState(false);
   const [listBusy, setListBusy] = useState(false);
   const [error, setError] = useState("");
@@ -222,19 +225,21 @@ export default function OnlineFriendlyRoom({
   async function createRoom() {
     if (busy) return;
     if (privateRoom && createPassword.length < 4) {
-      setError("비밀방 비밀번호는 4자 이상 입력해주세요.");
+      setCreateError("비밀방 비밀번호는 4자 이상 입력해주세요.");
       playSfx("buzzer");
       return;
     }
+
+    // 방 생성 시에는 현재 활성 덱을 사용하고, 생성 후 대기실에서 자유롭게 변경한다.
     const source = selectedDeckSource();
     if (!usablePreset(source)) {
-      setError("30장으로 완성된 덱 프리셋이 필요합니다.");
+      setCreateError("30장으로 완성된 덱이 필요합니다.");
       playSfx("buzzer");
       return;
     }
 
     setBusy(true);
-    setError("");
+    setCreateError("");
     try {
       const next = await createFriendlyRoom(source, {
         name: roomName,
@@ -243,10 +248,11 @@ export default function OnlineFriendlyRoom({
       });
       setCreateOpen(false);
       setCreatePassword("");
+      setCreateError("");
       acceptRoom(next);
       playSfx("click");
     } catch (err) {
-      setError(err?.message || "친선전 방을 만들지 못했습니다.");
+      setCreateError(err?.message || "친선전 방을 만들지 못했습니다.");
       playSfx("buzzer");
     } finally {
       setBusy(false);
@@ -265,21 +271,26 @@ export default function OnlineFriendlyRoom({
     if (target.isPrivate && !password) {
       setJoinTarget(target);
       setJoinPassword("");
+      setJoinError("");
       setError("");
       playSfx("click");
       return;
     }
 
     setBusy(true);
-    setError("");
+    if (target.isPrivate) setJoinError("");
+    else setError("");
     try {
       const next = await joinFriendlyRoom(target.roomId, source, password);
       setJoinTarget(null);
       setJoinPassword("");
+      setJoinError("");
       acceptRoom(next);
       playSfx("click");
     } catch (err) {
-      setError(err?.message || "친선전 방에 입장하지 못했습니다.");
+      const message = err?.message || "친선전 방에 입장하지 못했습니다.";
+      if (target.isPrivate) setJoinError(message);
+      else setError(message);
       playSfx("buzzer");
     } finally {
       setBusy(false);
@@ -339,6 +350,144 @@ export default function OnlineFriendlyRoom({
   }
 
   if (!room) {
+    const createModal =
+      createOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="friendly-modal-overlay" role="dialog" aria-modal="true">
+              <div className="friendly-modal-box">
+                <span className="friendly-room-kicker">CREATE ROOM</span>
+                <h3>친선전 방 만들기</h3>
+                <label>
+                  <span>방 이름</span>
+                  <input
+                    value={roomName}
+                    onChange={(event) => setRoomName(event.target.value.slice(0, 28))}
+                    placeholder="내 친선전 방"
+                    maxLength={28}
+                    autoFocus
+                  />
+                </label>
+
+                <div className="friendly-privacy-toggle">
+                  <button
+                    type="button"
+                    className={!privateRoom ? "is-selected" : ""}
+                    onClick={() => {
+                      setPrivateRoom(false);
+                      setCreatePassword("");
+                      setCreateError("");
+                    }}
+                  >
+                    🌐 공개방
+                    <small>누구나 바로 입장</small>
+                  </button>
+                  <button
+                    type="button"
+                    className={privateRoom ? "is-selected" : ""}
+                    onClick={() => {
+                      setPrivateRoom(true);
+                      setCreateError("");
+                    }}
+                  >
+                    🔒 비밀방
+                    <small>비밀번호로 입장</small>
+                  </button>
+                </div>
+
+                {privateRoom && (
+                  <label>
+                    <span>비밀번호</span>
+                    <input
+                      type="password"
+                      value={createPassword}
+                      onChange={(event) => {
+                        setCreatePassword(event.target.value.slice(0, 32));
+                        if (createError) setCreateError("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") createRoom();
+                      }}
+                      placeholder="4~32자"
+                      maxLength={32}
+                    />
+                  </label>
+                )}
+
+                {createError && <div className="friendly-room-error">{createError}</div>}
+
+                <div className="friendly-modal-actions">
+                  <button className="btn-primary" disabled={busy} onClick={createRoom}>
+                    {busy ? "생성 중..." : "방 만들기"}
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      setCreateOpen(false);
+                      setCreatePassword("");
+                      setCreateError("");
+                    }}
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null;
+
+    const joinModal =
+      joinTarget && typeof document !== "undefined"
+        ? createPortal(
+            <div className="friendly-modal-overlay" role="dialog" aria-modal="true">
+              <div className="friendly-modal-box friendly-password-box">
+                <span className="friendly-room-kicker">PRIVATE ROOM</span>
+                <h3>🔒 {joinTarget.name}</h3>
+                <p>비밀방 비밀번호를 입력하세요.</p>
+                <input
+                  type="password"
+                  autoFocus
+                  value={joinPassword}
+                  onChange={(event) => {
+                    setJoinPassword(event.target.value.slice(0, 32));
+                    if (joinError) setJoinError("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && joinPassword.length >= 4) {
+                      enterRoom(joinTarget, joinPassword);
+                    }
+                  }}
+                  placeholder="비밀번호"
+                  maxLength={32}
+                />
+                {joinError && <div className="friendly-room-error">{joinError}</div>}
+                <div className="friendly-modal-actions">
+                  <button
+                    className="btn-primary"
+                    disabled={busy || joinPassword.length < 4}
+                    onClick={() => enterRoom(joinTarget, joinPassword)}
+                  >
+                    입장
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      setJoinTarget(null);
+                      setJoinPassword("");
+                      setJoinError("");
+                    }}
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null;
+
     return (
       <div className="friendly-room-shell friendly-room-browser">
         <div className="friendly-room-browser-head">
@@ -361,6 +510,7 @@ export default function OnlineFriendlyRoom({
               className="btn-primary"
               onClick={() => {
                 setCreateOpen(true);
+                setCreateError("");
                 setError("");
                 playSfx("click");
               }}
@@ -405,122 +555,8 @@ export default function OnlineFriendlyRoom({
           )}
         </div>
 
-        {createOpen && (
-          <div className="friendly-modal-overlay" role="dialog" aria-modal="true">
-            <div className="friendly-modal-box">
-              <span className="friendly-room-kicker">CREATE ROOM</span>
-              <h3>친선전 방 만들기</h3>
-              <label>
-                <span>방 이름</span>
-                <input
-                  value={roomName}
-                  onChange={(event) => setRoomName(event.target.value.slice(0, 28))}
-                  placeholder="내 친선전 방"
-                  maxLength={28}
-                />
-              </label>
-
-              <div className="friendly-privacy-toggle">
-                <button
-                  type="button"
-                  className={!privateRoom ? "is-selected" : ""}
-                  onClick={() => setPrivateRoom(false)}
-                >
-                  🌐 공개방
-                  <small>누구나 바로 입장</small>
-                </button>
-                <button
-                  type="button"
-                  className={privateRoom ? "is-selected" : ""}
-                  onClick={() => setPrivateRoom(true)}
-                >
-                  🔒 비밀방
-                  <small>비밀번호로 입장</small>
-                </button>
-              </div>
-
-              {privateRoom && (
-                <label>
-                  <span>비밀번호</span>
-                  <input
-                    type="password"
-                    value={createPassword}
-                    onChange={(event) => setCreatePassword(event.target.value.slice(0, 32))}
-                    placeholder="4~32자"
-                    maxLength={32}
-                  />
-                </label>
-              )}
-
-              <div className="friendly-modal-deck">
-                <span>시작 덱</span>
-                <select value={selectedPreset} onChange={(event) => setSelectedPreset(Number(event.target.value))}>
-                  {presets.map((preset, index) => (
-                    <option key={index} value={index} disabled={!usablePreset(preset)}>
-                      {preset.name}{usablePreset(preset) ? " · 30장" : " · 미완성"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="friendly-modal-actions">
-                <button className="btn-primary" disabled={busy} onClick={createRoom}>
-                  {busy ? "생성 중..." : "방 만들기"}
-                </button>
-                <button
-                  className="btn-secondary"
-                  disabled={busy}
-                  onClick={() => {
-                    setCreateOpen(false);
-                    setCreatePassword("");
-                  }}
-                >
-                  취소
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {joinTarget && (
-          <div className="friendly-modal-overlay" role="dialog" aria-modal="true">
-            <div className="friendly-modal-box friendly-password-box">
-              <span className="friendly-room-kicker">PRIVATE ROOM</span>
-              <h3>🔒 {joinTarget.name}</h3>
-              <p>비밀방 비밀번호를 입력하세요.</p>
-              <input
-                type="password"
-                autoFocus
-                value={joinPassword}
-                onChange={(event) => setJoinPassword(event.target.value.slice(0, 32))}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") enterRoom(joinTarget, joinPassword);
-                }}
-                placeholder="비밀번호"
-                maxLength={32}
-              />
-              <div className="friendly-modal-actions">
-                <button
-                  className="btn-primary"
-                  disabled={busy || joinPassword.length < 4}
-                  onClick={() => enterRoom(joinTarget, joinPassword)}
-                >
-                  입장
-                </button>
-                <button
-                  className="btn-secondary"
-                  disabled={busy}
-                  onClick={() => {
-                    setJoinTarget(null);
-                    setJoinPassword("");
-                  }}
-                >
-                  취소
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {createModal}
+        {joinModal}
       </div>
     );
   }
