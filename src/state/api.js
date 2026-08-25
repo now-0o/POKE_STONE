@@ -110,7 +110,8 @@ async function fetchOnlineSnapshot(matchId, host = false) {
       }
     }
 
-    const path = params.size ? `${basePath}?${params.toString()}` : basePath;
+    const query = params.toString();
+    const path = query ? `${basePath}?${query}` : basePath;
     const data = await req(path, { method: 'GET' });
     const receivedAt = Date.now();
 
