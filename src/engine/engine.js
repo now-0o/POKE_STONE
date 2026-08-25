@@ -97,7 +97,7 @@ function enrichEvolutionLog(game, side, card, source, result) {
     replaceLatestEvolutionLog(
       game,
       (line) => line === oldLog,
-      `${ownerName}의 ${source.name}이(가) ${evolved.name}(으)로 진화했다!`,
+      `${ownerName}: ${source.name} → ${evolved.name} 진화!`,
     );
     return;
   }
@@ -107,7 +107,7 @@ function enrichEvolutionLog(game, side, card, source, result) {
     replaceLatestEvolutionLog(
       game,
       (line) => line === oldLog,
-      `${ownerName}의 ${source.name}이(가) ${evolved.name}(으)로 메가진화했다!!`,
+      `${ownerName}: ${source.name} → ${evolved.name} 메가진화!!`,
     );
   }
 }
