@@ -260,6 +260,13 @@ function resolvePendingChoice(game, side, value) {
   return false;
 }
 
+function endedBySurrender(game) {
+  if (game?._onlineEndReason?.type === "surrender") return true;
+  return (game?.log || [])
+    .slice(-4)
+    .some((line) => typeof line === "string" && line.includes("항복했다"));
+}
+
 function applyHostCommand(game, command, seed) {
   const side = command.side;
   const payload = command.payload || {};
@@ -340,8 +347,13 @@ function applyHostCommand(game, command, seed) {
     }
 
     if (payload.type === "surrender") {
+      const loserName = game.players[side].name;
       game.winner = side === "player" ? "enemy" : "player";
-      game.log.push(`${game.players[side].name}이(가) 항복했다.`);
+      game._onlineEndReason = {
+        type: "surrender",
+        loserName,
+      };
+      game.log.push(`${loserName}이(가) 항복했다.`);
       return { ok: true };
     }
   } catch (err) {
@@ -713,6 +725,7 @@ export default function OnlineBattle({ match, onBack }) {
   }
 
   const enemy = displayGame.players.enemy;
+  const surrenderResult = endedBySurrender(displayGame);
   const onlineTrainer = {
     id: `online-${matchId}`,
     matchId,
@@ -749,6 +762,13 @@ export default function OnlineBattle({ match, onBack }) {
           <div className="online-result-box">
             <span>ONLINE BATTLE</span>
             <h2>{displayGame.winner === "player" ? "승리" : "패배"}</h2>
+            {surrenderResult && (
+              <p className="online-result-reason">
+                {displayGame.winner === "player"
+                  ? "상대가 항복하여 승리했습니다."
+                  : "항복하여 패배했습니다."}
+              </p>
+            )}
             <button className="btn-primary" onClick={leaveRoom}>
               메인 메뉴
             </button>

@@ -1,10 +1,13 @@
 .online-matchmaking-screen {
-  min-height: 100vh;
-  padding: 18px 22px 28px;
+  height: calc(100dvh - 24px);
+  min-height: 0;
+  max-height: calc(100dvh - 24px);
+  padding: 0 22px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: hidden;
   box-sizing: border-box;
   background:
     radial-gradient(circle at 50% 16%, rgba(74, 145, 255, 0.18), transparent 34%),
@@ -13,10 +16,12 @@
 
 .online-matchmaking-topbar {
   width: min(720px, 94vw);
+  min-height: 40px;
+  flex: 0 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .online-test-badge {
@@ -31,9 +36,12 @@
 
 .online-matchmaking-card {
   width: min(720px, 94vw);
-  min-height: 390px;
+  max-height: calc(100% - 50px);
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
   box-sizing: border-box;
-  padding: 34px 34px 30px;
+  padding: 30px 34px 26px;
   border-radius: 22px;
   border: 1px solid rgba(127, 177, 255, 0.34);
   background: rgba(12, 22, 42, 0.88);
@@ -48,7 +56,7 @@
 }
 
 .online-matchmaking-subtitle {
-  margin: 0 auto 24px;
+  margin: 0 auto 20px;
   color: rgba(236, 244, 255, 0.68);
   font-size: 14px;
 }
@@ -91,8 +99,8 @@
 .online-searching-panel,
 .online-matched-panel {
   width: min(520px, 100%);
-  margin: 18px auto 0;
-  padding: 18px;
+  margin: 16px auto 0;
+  padding: 16px;
   border-radius: 16px;
   box-sizing: border-box;
   display: grid;
@@ -122,6 +130,18 @@
 .online-matched-panel {
   border: 1px solid rgba(105, 164, 255, 0.28);
   background: rgba(17, 31, 59, 0.64);
+}
+
+.online-idle-panel.compact {
+  width: auto;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.online-idle-panel.compact .btn-primary {
+  margin-top: 0;
 }
 
 .online-state-label {
@@ -245,28 +265,93 @@
 
 @media (max-width: 760px), (pointer: coarse) {
   .online-matchmaking-screen {
-    min-height: 100dvh;
-    padding: 12px;
-  }
-
-  .online-matchmaking-card {
-    width: 100%;
+    height: calc(100dvh - 24px);
     min-height: 0;
-    padding: 22px 16px 20px;
-    border-radius: 17px;
+    max-height: calc(100dvh - 24px);
+    padding: 0 4px 4px;
   }
 
   .online-matchmaking-topbar {
     width: 100%;
+    min-height: 36px;
+    flex-basis: 36px;
+    margin-bottom: 6px;
+  }
+
+  .online-matchmaking-card {
+    width: 100%;
+    max-height: calc(100% - 42px);
+    min-height: 0;
+    padding: 18px 14px 16px;
+    border-radius: 17px;
+  }
+
+  .online-orb {
+    width: 52px;
+    height: 52px;
+  }
+
+  .online-matchmaking-card h2 {
+    margin-top: 7px;
+    font-size: clamp(24px, 6vw, 32px);
+  }
+
+  .online-matchmaking-subtitle {
+    margin-bottom: 14px;
+    font-size: 12px;
+  }
+
+  .online-access-warning,
+  .online-searching-panel,
+  .online-matched-panel {
+    margin-top: 12px;
+    padding: 12px;
   }
 
   .online-versus-row {
     gap: 8px;
   }
 
+  .online-versus-row > div {
+    min-height: 64px;
+  }
+
   .online-versus-row strong {
     max-width: 120px;
     font-size: 14px;
+  }
+}
+
+@media (max-height: 560px) {
+  .online-matchmaking-card {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .online-orb {
+    width: 46px;
+    height: 46px;
+  }
+
+  .online-matchmaking-card h2 {
+    margin-top: 5px;
+    font-size: 24px;
+  }
+
+  .online-matchmaking-subtitle {
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+
+  .online-search-pulse {
+    height: 30px;
+  }
+
+  .online-searching-panel,
+  .online-matched-panel {
+    margin-top: 8px;
+    padding: 10px;
+    gap: 6px;
   }
 }
 

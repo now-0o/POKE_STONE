@@ -8,6 +8,11 @@
   transform-origin: 50% 50%;
 }
 
+.online-matchmaking-screen {
+  animation: game-online-enter 0.38s cubic-bezier(0.16, 0.86, 0.24, 1) both;
+  transform-origin: 50% 30%;
+}
+
 .battle-intro {
   animation: game-intro-enter 0.32s cubic-bezier(0.2, 0.82, 0.24, 1) both;
 }
@@ -32,9 +37,43 @@
   animation: game-region-back 0.33s cubic-bezier(0.2, 0.82, 0.24, 1) 0.025s both;
 }
 
+/* 온라인은 전용 결과 팝업만 사용한다. */
+.battle[data-trainer^="online-"] > .result-overlay {
+  display: none;
+}
+
+.result-overlay,
+.online-result-overlay {
+  animation: game-result-backdrop 0.26s ease-out both;
+}
+
+.result-box,
+.online-result-box {
+  animation: game-result-pop 0.52s cubic-bezier(0.16, 1.18, 0.28, 1) both;
+  transform-origin: 50% 50%;
+}
+
+.result-title,
+.online-result-box h2 {
+  animation: game-result-title 0.48s cubic-bezier(0.16, 1.18, 0.28, 1) 0.08s both;
+}
+
+.online-result-reason {
+  margin: -10px 0 22px;
+  color: rgba(232, 241, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 @keyframes game-screen-enter {
   from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(2.5px); }
   to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes game-online-enter {
+  0% { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(4px) brightness(0.76); }
+  62% { opacity: 1; filter: blur(0.6px) brightness(1.05); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) brightness(1); }
 }
 
 @keyframes game-intro-enter {
@@ -58,18 +97,42 @@
   to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
 }
 
+@keyframes game-result-backdrop {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; }
+}
+
+@keyframes game-result-pop {
+  0% { opacity: 0; transform: translateY(28px) scale(0.78); filter: blur(5px); }
+  62% { opacity: 1; transform: translateY(-4px) scale(1.035); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes game-result-title {
+  0% { opacity: 0; transform: scale(0.72); letter-spacing: 0.02em; }
+  65% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .main-menu,
   .pack-shop,
   .deck-editor,
   .card-dex-screen,
   .tutorial-screen,
+  .online-matchmaking-screen,
   .battle-intro,
   .battle.battle-board,
   .main-menu .trainer-region-header,
   .main-menu .trainer-list,
   .main-menu .region-title,
-  .main-menu .region-select {
+  .main-menu .region-select,
+  .result-overlay,
+  .online-result-overlay,
+  .result-box,
+  .online-result-box,
+  .result-title,
+  .online-result-box h2 {
     animation: none !important;
   }
 }
