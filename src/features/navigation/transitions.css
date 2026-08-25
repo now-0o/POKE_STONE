@@ -58,6 +58,13 @@
   animation: game-result-title 0.48s cubic-bezier(0.16, 1.18, 0.28, 1) 0.08s both;
 }
 
+.online-result-reason {
+  margin: -10px 0 22px;
+  color: rgba(232, 241, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 @keyframes game-screen-enter {
   from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(2.5px); }
   to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
