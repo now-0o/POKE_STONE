@@ -1,4 +1,5 @@
 const onlineBattleBridges = new Map();
+let bridgeBypassDepth = 0;
 
 function buildBridge(bridge) {
   if (!bridge || bridge.tryDispatch) return bridge;
@@ -20,6 +21,15 @@ function buildBridge(bridge) {
   };
 }
 
+export function withOnlineBattleBridgeBypass(callback) {
+  bridgeBypassDepth += 1;
+  try {
+    return callback();
+  } finally {
+    bridgeBypassDepth = Math.max(0, bridgeBypassDepth - 1);
+  }
+}
+
 export function registerOnlineBattleBridge(matchId, bridge) {
   if (!matchId || !bridge) return;
   onlineBattleBridges.set(String(matchId), buildBridge(bridge));
@@ -31,12 +41,13 @@ export function unregisterOnlineBattleBridge(matchId) {
 }
 
 export function getOnlineBattleBridge(game) {
+  if (bridgeBypassDepth > 0) return null;
   const matchId = game?._onlineMatch?.id;
   if (!matchId) return null;
   return onlineBattleBridges.get(String(matchId)) || null;
 }
 
 export function getOnlineBattleBridgeByMatchId(matchId) {
-  if (!matchId) return null;
+  if (bridgeBypassDepth > 0 || !matchId) return null;
   return onlineBattleBridges.get(String(matchId)) || null;
 }

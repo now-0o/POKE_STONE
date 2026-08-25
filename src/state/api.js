@@ -14,8 +14,8 @@ const API_BASE = (() => {
 const TOKEN_KEY = 'pkm_stone_token';
 const USERNAME_KEY = 'pkm_stone_username';
 const ADMIN_KEY = 'pkm_stone_server_admin';
-const ONLINE_BURST_ATTEMPTS = 3;
-const ONLINE_BURST_DELAY_MS = 20;
+const ONLINE_BURST_ATTEMPTS = 1;
+const ONLINE_BURST_DELAY_MS = 0;
 
 let saveWriteQueue = Promise.resolve();
 let saveRevision = 0;
@@ -267,7 +267,7 @@ export async function sendOnlineCommand(matchId, command) {
 
       // 양쪽이 멀리건 확정을 동시에 눌러도 단일 host command 슬롯 때문에
       // 사용자가 두 번 누르지 않도록 첫 요청을 자동 재시도한다.
-      await sleep(120);
+      await sleep(60);
     }
   }
 

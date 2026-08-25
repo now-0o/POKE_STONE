@@ -6,6 +6,8 @@ import {
 
 export * from "./engine.rules.js";
 
+const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
+
 function bridgeFor(game) {
   return getOnlineBattleBridge(game);
 }
@@ -33,6 +35,21 @@ function dispatch(game, command) {
   } catch {
     return false;
   }
+}
+
+function optimisticApply(callback) {
+  try {
+    callback();
+  } catch {
+    // 서버 권위 상태가 곧 다시 동기화되므로 화면 선반영 실패는 무시한다.
+  }
+}
+
+function finishPendingDispatch(sent, callback) {
+  if (sent === null) return callback();
+  if (!sent) return false;
+  optimisticApply(callback);
+  return true;
 }
 
 export function createGame(deck, trainer, deckShiny = {}) {
@@ -69,7 +86,14 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   const command = { type: "play", handUid: handCard.uid };
   if (target?.uid) command.targetUid = target.uid;
   if (fieldIndex != null) command.fieldIndex = fieldIndex;
-  return dispatch(game, command);
+
+  const accepted = dispatch(game, command);
+  if (!accepted) return false;
+
+  optimisticApply(() =>
+    rules.playCard(game, side, handIdx, target, fieldIndex),
+  );
+  return true;
 }
 
 export function attack(game, side, attackerUid, target) {
@@ -80,11 +104,16 @@ export function attack(game, side, attackerUid, target) {
   if (!bridge.canAct?.() || !target?.uid || !rules.canAttack(game, side, attackerUid)) {
     return false;
   }
-  return dispatch(game, {
+
+  const accepted = dispatch(game, {
     type: "attack",
     attackerUid,
     targetUid: target.uid,
   });
+  if (!accepted) return false;
+
+  optimisticApply(() => rules.attack(game, side, attackerUid, target));
+  return true;
 }
 
 export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
@@ -93,18 +122,32 @@ export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
     return rules.attackFieldObstacle(game, side, attackerUid, obstacleId);
   }
   if (!bridge.canAct?.() || !rules.canAttack(game, side, attackerUid)) return false;
-  return dispatch(game, {
+
+  const accepted = dispatch(game, {
     type: "attack_obstacle",
     attackerUid,
     obstacleId,
   });
+  if (!accepted) return false;
+
+  optimisticApply(() =>
+    rules.attackFieldObstacle(game, side, attackerUid, obstacleId),
+  );
+  return true;
 }
 
 export function endTurn(game) {
   const bridge = bridgeFor(game);
   if (!bridge) return rules.endTurn(game);
   if (!bridge.canAct?.()) return false;
-  return dispatch(game, { type: "end_turn" });
+
+  const accepted = dispatch(game, { type: "end_turn" });
+  if (!accepted) return false;
+
+  // 비호스트는 상대 덱/손패가 가려져 있어 전체 endTurn을 로컬에서 실행하면
+  // 숨김 정보가 깨질 수 있다. 버튼/조작감만 즉시 바뀌도록 턴 표시만 선반영한다.
+  if (game.turn === "player") game.turn = "enemy";
+  return true;
 }
 
 export function discardToDraw(game, side, handIdx) {
@@ -113,7 +156,18 @@ export function discardToDraw(game, side, handIdx) {
   if (!bridge.canAct?.()) return false;
   const handCard = game.players?.player?.hand?.[handIdx];
   if (!handCard?.uid) return false;
-  return dispatch(game, { type: "discard_redraw", handUid: handCard.uid });
+
+  // 구버전 EC2도 이미 지원하는 play 명령에 sentinel을 실어 보낸다.
+  // 따라서 백엔드가 discard_redraw whitelist 반영 전이어도 동일하게 처리 가능하다.
+  const accepted = dispatch(game, {
+    type: "play",
+    handUid: handCard.uid,
+    targetUid: DISCARD_REDRAW_SENTINEL,
+  });
+  if (!accepted) return false;
+
+  optimisticApply(() => rules.discardToDraw(game, side, handIdx));
+  return true;
 }
 
 function dispatchPending(game, side, targetUid) {
@@ -124,33 +178,45 @@ function dispatchPending(game, side, targetUid) {
 }
 
 export function resolveMoldbreaker(game, side, targetUid) {
-  const sent = dispatchPending(game, side, targetUid);
-  return sent === null ? rules.resolveMoldbreaker(game, side, targetUid) : sent;
+  return finishPendingDispatch(
+    dispatchPending(game, side, targetUid),
+    () => rules.resolveMoldbreaker(game, side, targetUid),
+  );
 }
 
 export function resolveMew(game, side, targetUid) {
-  const sent = dispatchPending(game, side, targetUid);
-  return sent === null ? rules.resolveMew(game, side, targetUid) : sent;
+  return finishPendingDispatch(
+    dispatchPending(game, side, targetUid),
+    () => rules.resolveMew(game, side, targetUid),
+  );
 }
 
 export function resolveSpacialRend(game, side, targetUid) {
-  const sent = dispatchPending(game, side, targetUid);
-  return sent === null ? rules.resolveSpacialRend(game, side, targetUid) : sent;
+  return finishPendingDispatch(
+    dispatchPending(game, side, targetUid),
+    () => rules.resolveSpacialRend(game, side, targetUid),
+  );
 }
 
 export function resolveMagmaStorm(game, side, targetUid) {
-  const sent = dispatchPending(game, side, targetUid);
-  return sent === null ? rules.resolveMagmaStorm(game, side, targetUid) : sent;
+  return finishPendingDispatch(
+    dispatchPending(game, side, targetUid),
+    () => rules.resolveMagmaStorm(game, side, targetUid),
+  );
 }
 
 export function resolvePhioneBraveCharge(game, side, targetUid) {
-  const sent = dispatchPending(game, side, targetUid);
-  return sent === null ? rules.resolvePhioneBraveCharge(game, side, targetUid) : sent;
+  return finishPendingDispatch(
+    dispatchPending(game, side, targetUid),
+    () => rules.resolvePhioneBraveCharge(game, side, targetUid),
+  );
 }
 
 export function resolveManaphyBraveCharge(game, side, targetUid) {
-  const sent = dispatchPending(game, side, targetUid);
-  return sent === null ? rules.resolveManaphyBraveCharge(game, side, targetUid) : sent;
+  return finishPendingDispatch(
+    dispatchPending(game, side, targetUid),
+    () => rules.resolveManaphyBraveCharge(game, side, targetUid),
+  );
 }
 
 function dispatchChoice(game, side, value) {
@@ -161,26 +227,36 @@ function dispatchChoice(game, side, value) {
 }
 
 export function resolveHyperball(game, side, value) {
-  const sent = dispatchChoice(game, side, value);
-  return sent === null ? rules.resolveHyperball(game, side, value) : sent;
+  return finishPendingDispatch(
+    dispatchChoice(game, side, value),
+    () => rules.resolveHyperball(game, side, value),
+  );
 }
 
 export function resolveUxie(game, side, value) {
-  const sent = dispatchChoice(game, side, value);
-  return sent === null ? rules.resolveUxie(game, side, value) : sent;
+  return finishPendingDispatch(
+    dispatchChoice(game, side, value),
+    () => rules.resolveUxie(game, side, value),
+  );
 }
 
 export function resolveWishmaker(game, side, value) {
-  const sent = dispatchChoice(game, side, value);
-  return sent === null ? rules.resolveWishmaker(game, side, value) : sent;
+  return finishPendingDispatch(
+    dispatchChoice(game, side, value),
+    () => rules.resolveWishmaker(game, side, value),
+  );
 }
 
 export function resolveDeoxysForm(game, side, value) {
-  const sent = dispatchChoice(game, side, value);
-  return sent === null ? rules.resolveDeoxysForm(game, side, value) : sent;
+  return finishPendingDispatch(
+    dispatchChoice(game, side, value),
+    () => rules.resolveDeoxysForm(game, side, value),
+  );
 }
 
 export function resolveShayminForm(game, side, value) {
-  const sent = dispatchChoice(game, side, value);
-  return sent === null ? rules.resolveShayminForm(game, side, value) : sent;
+  return finishPendingDispatch(
+    dispatchChoice(game, side, value),
+    () => rules.resolveShayminForm(game, side, value),
+  );
 }

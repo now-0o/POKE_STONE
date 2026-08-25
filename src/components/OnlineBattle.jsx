@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Battle from "./Battle.jsx";
-import * as battleRules from "../engine/engine.rules.js";
+import * as battleRules from "../engine/engine.js";
 import {
   registerOnlineBattleBridge,
   unregisterOnlineBattleBridge,
+  withOnlineBattleBridgeBypass,
 } from "../engine/onlineBattleBridge.js";
 import {
   commitOnlineHostState,
@@ -17,9 +18,12 @@ import {
 import { playSfx } from "../audio.js";
 import "../styles/online-battle.css";
 
-const POLL_MS = 120;
-const COMMAND_RETRY_MS = 80;
-const COMMAND_RETRY_ATTEMPTS = 5;
+const POLL_MS = 45;
+const COMMAND_RETRY_MS = 30;
+const COMMAND_RETRY_ATTEMPTS = 8;
+const ACTIVE_CONFIRM_DELAY_MS = 12;
+const ACTIVE_CONFIRM_ATTEMPTS = 10;
+const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
 const ONLINE_TRAINER_SPRITE = "ethan";
 
 function sleep(ms) {
@@ -277,6 +281,12 @@ function applyHostCommand(game, command, seed) {
         (entry) => entry.uid === payload.handUid,
       );
       if (handIdx < 0) return { ok: false, error: "hand_card_not_found" };
+
+      if (payload.targetUid === DISCARD_REDRAW_SENTINEL) {
+        const ok = battleRules.discardToDraw(game, side, handIdx);
+        return { ok, error: ok ? null : "discard_redraw_rejected" };
+      }
+
       const target = payload.targetUid ? { uid: payload.targetUid } : null;
       const ok = battleRules.playCard(
         game,
@@ -413,6 +423,15 @@ export default function OnlineBattle({ match, onBack }) {
     };
   }, [matchId]);
 
+  function rollbackOptimisticState() {
+    const current = latestRef.current.room;
+    if (!current?.game) return;
+    setRoom({
+      ...current,
+      game: cloneJson(current.game),
+    });
+  }
+
   async function processHostCommand(snapshot, seed) {
     const command = snapshot?.pendingCommand;
     if (!command || !snapshot.game) return;
@@ -420,10 +439,22 @@ export default function OnlineBattle({ match, onBack }) {
     processingCommandRef.current = command.id;
 
     const game = cloneJson(snapshot.game);
-    const result = applyHostCommand(game, command, seed);
+    const result = withOnlineBattleBridgeBypass(() =>
+      applyHostCommand(game, command, seed),
+    );
+    const optimisticRoom = {
+      ...snapshot,
+      game,
+      pendingCommand: command,
+    };
+
+    if (mountedRef.current) {
+      setRoom(optimisticRoom);
+      setError("");
+    }
 
     try {
-      await commitOnlineHostState(matchId, {
+      const committed = await commitOnlineHostState(matchId, {
         commandId: command.id,
         baseRevision: snapshot.revision,
         game,
@@ -432,14 +463,31 @@ export default function OnlineBattle({ match, onBack }) {
       });
 
       if (mountedRef.current) {
-        const refreshed = await fetchOnlineHostState(matchId);
-        if (mountedRef.current) {
-          setRoom(refreshed);
-          setError("");
-        }
+        setRoom({
+          ...optimisticRoom,
+          phase: committed.phase,
+          revision: committed.revision,
+          pendingCommand: null,
+          lastCommand:
+            command.side === snapshot.mySide
+              ? {
+                  id: command.id,
+                  ok: result.ok,
+                  error: result.error || null,
+                  revision: committed.revision,
+                }
+              : null,
+        });
+        setError("");
       }
     } catch (err) {
       if (mountedRef.current) {
+        try {
+          const refreshed = await fetchOnlineHostState(matchId);
+          if (mountedRef.current) setRoom(refreshed);
+        } catch {
+          // 다음 polling에서 다시 서버 권위 상태로 맞춘다.
+        }
         setError(err.message || "전투 행동 동기화에 실패했습니다.");
       }
     } finally {
@@ -538,6 +586,32 @@ export default function OnlineBattle({ match, onBack }) {
     throw lastError || new Error("온라인 행동 전송에 실패했습니다.");
   }
 
+  async function confirmOwnCommand(commandId, baseRevision) {
+    for (let attempt = 0; attempt < ACTIVE_CONFIRM_ATTEMPTS; attempt += 1) {
+      if (!mountedRef.current || !busyRef.current) return;
+      await sleep(ACTIVE_CONFIRM_DELAY_MS);
+
+      try {
+        const next = await fetchOnlineState(matchId);
+        if (!mountedRef.current) return;
+        setRoom(next);
+        setError("");
+
+        if (
+          next.lastCommand?.id === commandId ||
+          next.revision > baseRevision
+        ) {
+          return;
+        }
+      } catch (err) {
+        if (mountedRef.current && err?.code === "match_not_found") {
+          setError("상대가 전투방을 나갔거나 세션이 종료되었습니다.");
+        }
+        return;
+      }
+    }
+  }
+
   async function issue(command) {
     if (busyRef.current || !matchId) return false;
 
@@ -553,11 +627,24 @@ export default function OnlineBattle({ match, onBack }) {
       });
 
       if (bootstrap?.host) {
-        const snapshot = await fetchOnlineHostState(matchId);
-        if (mountedRef.current) setRoom(snapshot);
-        if (snapshot.pendingCommand) {
-          await processHostCommand(snapshot, bootstrap.seed);
+        const current = latestRef.current.room;
+        if (current?.game) {
+          await processHostCommand(
+            {
+              ...current,
+              revision: result.revision,
+              pendingCommand: {
+                id: result.commandId,
+                side: current.mySide,
+                payload: command,
+                baseRevision: result.revision,
+              },
+            },
+            bootstrap.seed,
+          );
         }
+      } else {
+        void confirmOwnCommand(result.commandId, result.revision);
       }
 
       return true;
@@ -565,6 +652,7 @@ export default function OnlineBattle({ match, onBack }) {
       busyRef.current = false;
       setBusy(false);
       setPendingCommand(null);
+      rollbackOptimisticState();
       setError(err.message || "행동을 서버로 보내지 못했습니다.");
       playSfx("buzzer");
       return false;
