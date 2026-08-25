@@ -73,14 +73,23 @@ function evolutionSource(game, side, card, target) {
   };
 }
 
-function replaceLatestEvolutionLog(game, match, replacement) {
+function promoteLatestEvolutionLog(game, match, replacement) {
   if (!Array.isArray(game?.log)) return;
 
   for (let i = game.log.length - 1; i >= 0; i -= 1) {
     if (!match(game.log[i])) continue;
-    game.log[i] = replacement;
+
+    // 진화 직후 전투의 함성/특성 로그가 여러 줄 붙어도 좌측 전투 로그에서
+    // 진화 이벤트가 묻히지 않도록 기존 짧은 문구를 제거한 뒤 최신 항목으로 올린다.
+    game.log.splice(i, 1);
+    game.log.push(replacement);
+    if (game.log.length > 60) game.log.shift();
     return;
   }
+
+  // 구형/특수 엔진 경로에서 짧은 진화 문구가 없더라도 진화 자체는 로그에 남긴다.
+  game.log.push(replacement);
+  if (game.log.length > 60) game.log.shift();
 }
 
 function enrichEvolutionLog(game, side, card, source, result) {
@@ -94,20 +103,20 @@ function enrichEvolutionLog(game, side, card, source, result) {
 
   if (card.kind === "pokemon" && card.evolvesFrom && evolved.cardId === card.id) {
     const oldLog = `${evolved.name}(으)로 진화했다!`;
-    replaceLatestEvolutionLog(
+    promoteLatestEvolutionLog(
       game,
       (line) => line === oldLog,
-      `${ownerName}: ${source.name} → ${evolved.name} 진화!`,
+      `[진화] ${ownerName}: ${source.name} → ${evolved.name}`,
     );
     return;
   }
 
   if (card.kind === "mega" && evolved.mega) {
     const oldLog = `${evolved.name}(으)로 메가진화했다!!`;
-    replaceLatestEvolutionLog(
+    promoteLatestEvolutionLog(
       game,
       (line) => line === oldLog,
-      `${ownerName}: ${source.name} → ${evolved.name} 메가진화!!`,
+      `[메가진화] ${ownerName}: ${source.name} → ${evolved.name}`,
     );
   }
 }
