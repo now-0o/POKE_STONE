@@ -37,19 +37,14 @@ function dispatch(game, command) {
   }
 }
 
-function optimisticApply(callback) {
-  try {
-    callback();
-  } catch {
-    // 서버 권위 상태가 곧 다시 동기화되므로 화면 선반영 실패는 무시한다.
-  }
-}
-
 function finishPendingDispatch(sent, callback) {
+  // 오프라인/AI는 기존처럼 즉시 엔진을 실행한다.
   if (sent === null) return callback();
-  if (!sent) return false;
-  optimisticApply(callback);
-  return true;
+
+  // 온라인은 명령 전송만 하고, 실제 게임 상태/이펙트는 호스트가 확정한
+  // revision을 수신했을 때 한 번만 반영한다. 같은 행동을 로컬에서도 실행하면
+  // optimistic -> rollback -> commit 순서로 lastAction이 왕복하며 연출이 중복된다.
+  return sent !== false;
 }
 
 export function createGame(deck, trainer, deckShiny = {}) {
@@ -87,13 +82,9 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   if (target?.uid) command.targetUid = target.uid;
   if (fieldIndex != null) command.fieldIndex = fieldIndex;
 
-  const accepted = dispatch(game, command);
-  if (!accepted) return false;
-
-  optimisticApply(() =>
-    rules.playCard(game, side, handIdx, target, fieldIndex),
-  );
-  return true;
+  // 온라인에서는 로컬 state를 먼저 mutate하지 않는다.
+  // 45ms polling/active confirm 뒤 도착하는 확정 revision만 Battle에 먹인다.
+  return dispatch(game, command);
 }
 
 export function attack(game, side, attackerUid, target) {
@@ -105,15 +96,11 @@ export function attack(game, side, attackerUid, target) {
     return false;
   }
 
-  const accepted = dispatch(game, {
+  return dispatch(game, {
     type: "attack",
     attackerUid,
     targetUid: target.uid,
   });
-  if (!accepted) return false;
-
-  optimisticApply(() => rules.attack(game, side, attackerUid, target));
-  return true;
 }
 
 export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
@@ -123,17 +110,11 @@ export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
   }
   if (!bridge.canAct?.() || !rules.canAttack(game, side, attackerUid)) return false;
 
-  const accepted = dispatch(game, {
+  return dispatch(game, {
     type: "attack_obstacle",
     attackerUid,
     obstacleId,
   });
-  if (!accepted) return false;
-
-  optimisticApply(() =>
-    rules.attackFieldObstacle(game, side, attackerUid, obstacleId),
-  );
-  return true;
 }
 
 export function endTurn(game) {
@@ -141,13 +122,9 @@ export function endTurn(game) {
   if (!bridge) return rules.endTurn(game);
   if (!bridge.canAct?.()) return false;
 
-  const accepted = dispatch(game, { type: "end_turn" });
-  if (!accepted) return false;
-
-  // 비호스트는 상대 덱/손패가 가려져 있어 전체 endTurn을 로컬에서 실행하면
-  // 숨김 정보가 깨질 수 있다. 버튼/조작감만 즉시 바뀌도록 턴 표시만 선반영한다.
-  if (game.turn === "player") game.turn = "enemy";
-  return true;
+  // 날씨/턴 시작 효과까지 포함한 전체 endTurn은 호스트에서 단 한 번 실행한다.
+  // 로컬에서 turn만 먼저 뒤집어도 한 클라이언트만 턴 효과를 본 것처럼 보일 수 있다.
+  return dispatch(game, { type: "end_turn" });
 }
 
 export function discardToDraw(game, side, handIdx) {
@@ -159,15 +136,11 @@ export function discardToDraw(game, side, handIdx) {
 
   // 구버전 EC2도 이미 지원하는 play 명령에 sentinel을 실어 보낸다.
   // 따라서 백엔드가 discard_redraw whitelist 반영 전이어도 동일하게 처리 가능하다.
-  const accepted = dispatch(game, {
+  return dispatch(game, {
     type: "play",
     handUid: handCard.uid,
     targetUid: DISCARD_REDRAW_SENTINEL,
   });
-  if (!accepted) return false;
-
-  optimisticApply(() => rules.discardToDraw(game, side, handIdx));
-  return true;
 }
 
 function dispatchPending(game, side, targetUid) {
