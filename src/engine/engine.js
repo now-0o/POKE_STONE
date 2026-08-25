@@ -20,8 +20,19 @@ function canDispatch(game) {
 function dispatch(game, command) {
   const bridge = canDispatch(game);
   if (!bridge) return false;
-  Promise.resolve(bridge.dispatch(command)).catch(() => {});
-  return true;
+
+  if (bridge.tryDispatch) {
+    return bridge.tryDispatch(command) !== false;
+  }
+
+  try {
+    const result = bridge.dispatch?.(command);
+    if (result === false) return false;
+    Promise.resolve(result).catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function createGame(deck, trainer, deckShiny = {}) {
