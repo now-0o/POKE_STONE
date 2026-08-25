@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Battle from "./Battle.jsx";
+import { HandCard } from "./Card.jsx";
 import * as battleRules from "../engine/engine.js";
 import {
   registerOnlineBattleBridge,
@@ -26,6 +28,9 @@ const COMMAND_RETRY_ATTEMPTS = 8;
 const ACTIVE_CONFIRM_DELAY_MS = 12;
 const ACTIVE_CONFIRM_ATTEMPTS = 10;
 const TURN_LIMIT_MS = 60_000;
+const MULLIGAN_OUT_MS = 260;
+const MULLIGAN_IN_MS = 420;
+const MULLIGAN_BATTLE_GRACE_MS = MULLIGAN_OUT_MS + MULLIGAN_IN_MS;
 const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
 const ONLINE_TRAINER_SPRITE = "ethan";
 
@@ -49,8 +54,8 @@ function roomRevision(room) {
   return Number.isInteger(room?.revision) ? room.revision : -1;
 }
 
-function startOnlineTurnClock(game) {
-  const now = Date.now();
+function startOnlineTurnClock(game, delayMs = 0) {
+  const now = Date.now() + Math.max(0, delayMs || 0);
   game._onlineTurnStartedAt = now;
   game._onlineTurnDeadlineAt = now + TURN_LIMIT_MS;
 }
@@ -370,8 +375,6 @@ function applyHostCommand(game, command, seed) {
     }
 
     if (payload.type === "end_turn") {
-      // 제한시간 만료 시 선택 오버레이가 남아 있어도 다음 턴으로 넘어갈 수 있게
-      // 미완료 선택 상태를 정리한 뒤 공통 턴 종료 로직을 한 번만 실행한다.
       game.pendingBattlecry = null;
       game.pendingChoose = null;
       game.pendingWishmaker = null;
@@ -410,6 +413,11 @@ export default function OnlineBattle({ match, onBack }) {
   const [pendingCommand, setPendingCommand] = useState(null);
   const [sessionEnded, setSessionEnded] = useState("");
   const [clockNow, setClockNow] = useState(() => Date.now());
+  const [clockHost, setClockHost] = useState(null);
+  const [mulliganSelected, setMulliganSelected] = useState([]);
+  const [mulliganOldHand, setMulliganOldHand] = useState([]);
+  const [mulliganStage, setMulliganStage] = useState("select");
+  const [mulliganVisualDone, setMulliganVisualDone] = useState(false);
 
   const initializedRef = useRef(false);
   const processingCommandRef = useRef(null);
@@ -421,16 +429,14 @@ export default function OnlineBattle({ match, onBack }) {
   const syncedRevisionRef = useRef(-1);
   const timeoutDeadlineRef = useRef(null);
   const sessionEndedRef = useRef(false);
+  const mulliganSubmittedRef = useRef(false);
+  const mulliganSubmitAtRef = useRef(0);
 
   const displayGame = useMemo(
     () => localViewGame(room?.game, room?.mySide),
     [room?.game, room?.mySide],
   );
 
-  // 서버 state를 shared Battle 객체에 덮어쓰는 것은 revision이 실제로 바뀔 때만 한다.
-  // 같은 revision에서 busy/error 등의 UI state 때문에 OnlineBattle이 재렌더되면,
-  // Battle이 애니메이션 종료 후 로컬에서 제거한 HP 0 포켓몬을 과거 snapshot이
-  // 다시 되살릴 수 있었기 때문에 동일 revision 재복사는 금지한다.
   if (displayGame) {
     const revision = roomRevision(room);
     if (!sharedGameRef.current) {
@@ -455,6 +461,14 @@ export default function OnlineBattle({ match, onBack }) {
     latestRef.current.room = next;
     setRoom(next);
     return true;
+  }
+
+  function resetMulliganSubmission() {
+    mulliganSubmittedRef.current = false;
+    mulliganSubmitAtRef.current = 0;
+    setMulliganStage("select");
+    setMulliganOldHand([]);
+    setMulliganVisualDone(false);
   }
 
   function endDisconnectedSession(message = "상대가 웹을 닫았거나 전투방을 나갔습니다.") {
@@ -482,8 +496,6 @@ export default function OnlineBattle({ match, onBack }) {
     };
   }, []);
 
-  // 실제 탭/브라우저 종료나 페이지 이탈에서는 React cleanup 완료를 기다릴 수 없다.
-  // keepalive 요청으로 서버의 현재 match를 즉시 제거해 상대 polling도 종료시킨다.
   useEffect(() => {
     const handlePageExit = () => {
       leaveMatchmakingKeepalive();
@@ -542,15 +554,12 @@ export default function OnlineBattle({ match, onBack }) {
     processingCommandRef.current = command.id;
 
     const game = cloneJson(snapshot.game);
-
-    // 다음 revision을 만들기 전에 직전 연출에서 남은 실제 HP 0 유닛을 제거한다.
     withOnlineBattleBridgeBypass(() => battleRules.cleanupDeaths(game));
 
     const result = withOnlineBattleBridgeBypass(() =>
       applyHostCommand(game, command, seed),
     );
 
-    // 두 번째 멀리건 확정으로 battle phase가 시작되는 순간 첫 턴 60초를 기록한다.
     if (
       result.ok &&
       command.payload?.type === "mulligan" &&
@@ -560,7 +569,9 @@ export default function OnlineBattle({ match, onBack }) {
         command.side === snapshot.mySide
           ? !!snapshot.mulligan?.opponent
           : !!snapshot.mulligan?.me;
-      if (otherMulliganDone) startOnlineTurnClock(game);
+      if (otherMulliganDone) {
+        startOnlineTurnClock(game, MULLIGAN_BATTLE_GRACE_MS);
+      }
     }
 
     try {
@@ -677,11 +688,49 @@ export default function OnlineBattle({ match, onBack }) {
       setError(
         `행동이 처리되지 않았습니다: ${room.lastCommand.error || "invalid_action"}`,
       );
+      if (mulliganSubmittedRef.current && mulliganStage === "leaving") {
+        resetMulliganSubmission();
+      }
       playSfx("buzzer");
     }
 
     setPendingCommand(null);
-  }, [room?.revision, room?.lastCommand, pendingCommand]);
+  }, [room?.revision, room?.lastCommand, pendingCommand, mulliganStage]);
+
+  useEffect(() => {
+    if (
+      mulliganStage !== "leaving" ||
+      !mulliganSubmittedRef.current ||
+      !room?.mulligan?.me
+    ) {
+      return undefined;
+    }
+
+    const elapsed = Date.now() - mulliganSubmitAtRef.current;
+    const delay = Math.max(0, MULLIGAN_OUT_MS - elapsed);
+    const timer = window.setTimeout(() => setMulliganStage("entering"), delay);
+    return () => window.clearTimeout(timer);
+  }, [mulliganStage, room?.mulligan?.me, room?.revision]);
+
+  useEffect(() => {
+    if (mulliganStage !== "entering") return undefined;
+    const timer = window.setTimeout(() => {
+      setMulliganStage("done");
+      setMulliganVisualDone(true);
+    }, MULLIGAN_IN_MS);
+    return () => window.clearTimeout(timer);
+  }, [mulliganStage]);
+
+  useEffect(() => {
+    if (mulliganStage !== "leaving" || room?.mulligan?.me) return undefined;
+    const timer = window.setTimeout(() => {
+      if (!latestRef.current.room?.mulligan?.me) {
+        resetMulliganSubmission();
+        setError("멀리건 확정을 다시 시도해주세요.");
+      }
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [mulliganStage, room?.mulligan?.me]);
 
   useEffect(() => {
     if (!displayGame?.turn) return;
@@ -697,6 +746,9 @@ export default function OnlineBattle({ match, onBack }) {
   const turnDeadline = Number(displayGame?._onlineTurnDeadlineAt) || 0;
   const remainingMs = turnDeadline ? Math.max(0, turnDeadline - clockNow) : 0;
   const turnSeconds = turnDeadline ? Math.max(0, Math.ceil(remainingMs / 1000)) : null;
+  const showMulligan =
+    room?.phase === "mulligan" ||
+    (mulliganSubmittedRef.current && !mulliganVisualDone);
 
   useEffect(() => {
     if (room?.phase !== "battle" || !turnDeadline || sessionEnded) return undefined;
@@ -704,6 +756,30 @@ export default function OnlineBattle({ match, onBack }) {
     const timer = window.setInterval(() => setClockNow(Date.now()), 200);
     return () => window.clearInterval(timer);
   }, [room?.phase, turnDeadline, sessionEnded]);
+
+  useEffect(() => {
+    if (room?.phase !== "battle" || showMulligan || sessionEnded) {
+      setClockHost(null);
+      return undefined;
+    }
+
+    let frame = 0;
+    let attempts = 0;
+    const findHost = () => {
+      const host = document.querySelector(
+        `.battle[data-trainer="online-${matchId}"] > .mid-bar`,
+      );
+      if (host) {
+        setClockHost(host);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 20) frame = window.requestAnimationFrame(findHost);
+    };
+
+    frame = window.requestAnimationFrame(findHost);
+    return () => window.cancelAnimationFrame(frame);
+  }, [matchId, room?.phase, showMulligan, sessionEnded]);
 
   async function sendWithRetry(command) {
     let lastError = null;
@@ -789,6 +865,7 @@ export default function OnlineBattle({ match, onBack }) {
       busyRef.current = false;
       setBusy(false);
       setPendingCommand(null);
+      if (command?.type === "mulligan") resetMulliganSubmission();
       if (err?.code === "match_not_found") {
         endDisconnectedSession();
       } else {
@@ -801,8 +878,39 @@ export default function OnlineBattle({ match, onBack }) {
 
   issueRef.current = issue;
 
-  // 제한시간이 0이 되면 현재 턴 플레이어의 브라우저가 일반 end_turn 명령을 보낸다.
-  // deadline 자체는 host가 확정 state에 넣으므로 양쪽 화면이 같은 시간을 기준으로 한다.
+  async function submitMulligan() {
+    if (
+      busyRef.current ||
+      room?.mulligan?.me ||
+      mulliganStage !== "select" ||
+      !displayGame?.players?.player
+    ) {
+      return;
+    }
+
+    mulliganSubmittedRef.current = true;
+    mulliganSubmitAtRef.current = Date.now();
+    setMulliganOldHand(cloneJson(displayGame.players.player.hand || []));
+    setMulliganVisualDone(false);
+    setMulliganStage("leaving");
+
+    const ok = await issue({
+      type: "mulligan",
+      cardUids: [...mulliganSelected],
+    });
+    if (ok) playSfx("click");
+  }
+
+  function toggleMulligan(uid) {
+    if (busyRef.current || room?.mulligan?.me || mulliganStage !== "select") return;
+    setMulliganSelected((current) =>
+      current.includes(uid)
+        ? current.filter((entry) => entry !== uid)
+        : [...current, uid],
+    );
+    playSfx("click");
+  }
+
   useEffect(() => {
     if (
       sessionEnded ||
@@ -883,6 +991,109 @@ export default function OnlineBattle({ match, onBack }) {
     );
   }
 
+  if (showMulligan) {
+    const currentHand = displayGame.players.player.hand || [];
+    const oldHand = mulliganOldHand.length ? mulliganOldHand : currentHand;
+    const renderedHand = mulliganStage === "leaving" ? oldHand : currentHand;
+    const selectedSet = new Set(mulliganSelected);
+    const replacedSlots = new Set(
+      oldHand
+        .map((card, index) => (selectedSet.has(card.uid) ? index : null))
+        .filter((index) => index !== null),
+    );
+    const waitingForOpponent = !!room.mulligan?.me && !room.mulligan?.opponent;
+
+    return (
+      <div className="online-mulligan-overlay stable-mulligan-overlay">
+        <div className="online-mulligan-box stable-mulligan-box">
+          <span className="online-state-label">MULLIGAN</span>
+          <h2>
+            {mulliganStage === "select"
+              ? "교체할 카드를 선택하세요"
+              : mulliganStage === "leaving"
+                ? "선택한 카드를 덱으로 돌려보내는 중..."
+                : mulliganStage === "entering"
+                  ? "새 카드를 받는 중..."
+                  : waitingForOpponent
+                    ? "멀리건 완료"
+                    : "배틀 준비 완료"}
+          </h2>
+          <p>
+            {mulliganStage === "select"
+              ? "카드를 눌러 교체 여부를 정한 뒤 확정하세요. 선택하지 않은 카드는 자리를 유지합니다."
+              : waitingForOpponent && mulliganStage === "done"
+                ? "상대의 선택을 기다리고 있습니다."
+                : "카드 교체 연출이 끝난 뒤 배틀이 시작됩니다."}
+          </p>
+
+          <div className={`online-mulligan-cards stable-mulligan-cards stage-${mulliganStage}`}>
+            {renderedHand.map((handCard, index) => {
+              const originalCard = oldHand[index] || handCard;
+              const selected =
+                mulliganStage === "select" && selectedSet.has(handCard.uid);
+              const replacedSlot = replacedSlots.has(index);
+              const leaving = mulliganStage === "leaving" && replacedSlot;
+              const entering = mulliganStage === "entering" && replacedSlot;
+
+              return (
+                <div
+                  key={`mulligan-slot-${index}`}
+                  className={[
+                    "online-mulligan-slot",
+                    selected ? "selected" : "",
+                    leaving ? "is-leaving" : "",
+                    entering ? "is-entering" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => toggleMulligan(handCard.uid)}
+                >
+                  <HandCard
+                    cardId={handCard.cardId}
+                    game={displayGame}
+                    handCard={handCard}
+                    playable={mulliganStage === "select" && !room.mulligan?.me && !busy}
+                    selected={selected}
+                    ghost={mulliganStage !== "select"}
+                  />
+                  <span>
+                    {mulliganStage === "select"
+                      ? selected
+                        ? "교체"
+                        : "유지"
+                      : leaving
+                        ? "교체 중"
+                        : entering
+                          ? "새 카드"
+                          : "확정"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {mulliganStage === "select" && !room.mulligan?.me && (
+            <button className="btn-primary" disabled={busy} onClick={submitMulligan}>
+              {busy
+                ? "확정 중..."
+                : mulliganSelected.length
+                  ? `${mulliganSelected.length}장 교체`
+                  : "이 손패로 시작"}
+            </button>
+          )}
+
+          {(room.mulligan?.me || mulliganStage !== "select") && (
+            <div className="stable-mulligan-status">
+              {mulliganStage === "done" && waitingForOpponent
+                ? "상대 선택 대기 중"
+                : "카드 교체 처리 중"}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const enemy = displayGame.players.enemy;
   const surrenderResult = endedBySurrender(displayGame);
   const onlineTrainer = {
@@ -902,6 +1113,20 @@ export default function OnlineBattle({ match, onBack }) {
     loseLines: ["좋은 승부였다!"],
   };
 
+  const turnClock =
+    clockHost && room.phase === "battle" && turnSeconds !== null && !sessionEnded
+      ? createPortal(
+          <div
+            className={`online-turn-clock ${displayGame.turn === "player" ? "mine" : "theirs"} ${turnSeconds <= 10 ? "urgent" : ""}`}
+            aria-label={`턴 제한시간 ${turnSeconds}초`}
+          >
+            <span>{displayGame.turn === "player" ? "내 턴" : "상대 턴"}</span>
+            <strong>{turnSeconds}</strong>
+          </div>,
+          clockHost,
+        )
+      : null;
+
   return (
     <>
       <Battle
@@ -912,15 +1137,7 @@ export default function OnlineBattle({ match, onBack }) {
         onFinish={handleBattleFinish}
       />
 
-      {room.phase === "battle" && turnSeconds !== null && !sessionEnded && (
-        <div
-          className={`online-turn-clock ${displayGame.turn === "player" ? "mine" : "theirs"} ${turnSeconds <= 10 ? "urgent" : ""}`}
-          aria-label={`턴 제한시간 ${turnSeconds}초`}
-        >
-          <span>{displayGame.turn === "player" ? "내 턴" : "상대 턴"}</span>
-          <strong>{turnSeconds}</strong>
-        </div>
-      )}
+      {turnClock}
 
       <div className={`online-sync-state online-sync-overlay ${error ? "error" : ""}`}>
         {error || (busy ? "행동 동기화 중" : "ONLINE")}
