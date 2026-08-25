@@ -26,7 +26,6 @@ function countLegendaryPokemon(deck = []) {
 
 export default function OnlineMatchmaking({
   save,
-  isAdmin,
   onBack,
   onMatched,
   embedded = false,
@@ -84,7 +83,6 @@ export default function OnlineMatchmaking({
     return () => window.clearInterval(timer);
   }, [status.status, onMatched]);
 
-  // 탭/브라우저 자체를 닫거나 다른 페이지로 떠날 때 큐/매치를 서버에서 즉시 정리한다.
   useEffect(() => {
     const handlePageExit = () => {
       if (["searching", "matched"].includes(statusRef.current?.status)) {
@@ -122,11 +120,6 @@ export default function OnlineMatchmaking({
 
   async function startSearch() {
     if (busy) return false;
-    if (!isAdmin) {
-      playSfx("buzzer");
-      setError("온라인 배틀 테스트 권한이 필요합니다. stonemaster 또는 imtester를 입력해주세요.");
-      return false;
-    }
     if (!deckReady) {
       playSfx("buzzer");
       setError("온라인 배틀에는 완성된 30장 덱이 필요합니다.");
@@ -144,9 +137,6 @@ export default function OnlineMatchmaking({
     setError("");
     playSfx("click");
     try {
-      // 새 검색을 시작하기 전에 서버에 남아 있을 수 있는 이전 탭/이전 접속의
-      // 매치 또는 큐를 먼저 끊는다. 브라우저를 닫았다 다시 접속했을 때
-      // 예전 온라인 배틀이 자동으로 이어지는 것을 방지한다.
       try {
         await leaveMatchmaking();
       } catch {
@@ -212,20 +202,7 @@ export default function OnlineMatchmaking({
 
   let stateContent = null;
 
-  if (!isAdmin) {
-    stateContent = (
-      <div key="locked" className="online-matchmaking-state online-warning-state">
-        <div className="online-orb" aria-hidden="true">
-          <span />
-        </div>
-        <h2>온라인 배틀</h2>
-        <div className="online-access-warning">
-          <strong>안정성 테스트 중</strong>
-          <span>stonemaster 또는 imtester 입력 시 온라인 테스트에 참가할 수 있습니다.</span>
-        </div>
-      </div>
-    );
-  } else if (!deckReady) {
+  if (!deckReady) {
     stateContent = (
       <div key="deck-warning" className="online-matchmaking-state online-warning-state">
         <div className="online-orb" aria-hidden="true">
@@ -261,7 +238,7 @@ export default function OnlineMatchmaking({
         </div>
         <h2>온라인 배틀</h2>
         <p className="online-matchmaking-subtitle">
-          같은 테스트 서버에 접속한 상대와 랜덤으로 매칭합니다.
+          같은 서버에 접속한 상대와 랜덤으로 매칭합니다.
         </p>
         <button className="btn-primary" disabled={busy} onClick={startSearch}>
           {busy ? "참가 중..." : "랜덤 매칭 시작"}
@@ -318,7 +295,7 @@ export default function OnlineMatchmaking({
           <button className="btn-ghost small" onClick={backToMenu}>
             ◀ 메인 메뉴
           </button>
-          <div className="online-test-badge">ONLINE TEST</div>
+          <div className="online-test-badge">ONLINE</div>
         </div>
       )}
 

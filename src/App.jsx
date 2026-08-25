@@ -21,7 +21,6 @@ import {
 import {
   getToken,
   getStoredUsername,
-  getStoredAdmin,
   clearAuth,
   fetchSave,
   pushSave,
@@ -30,8 +29,6 @@ import {
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
 const ADMIN_CODE = "stonemaster";
-const ONLINE_TESTER_CODE = "imtester";
-const CODE_BUFFER_LENGTH = Math.max(ADMIN_CODE.length, ONLINE_TESTER_CODE.length);
 
 export default function App() {
   const saveRef = useRef(null);
@@ -46,7 +43,6 @@ export default function App() {
 
   const [authStatus, setAuthStatus] = useState("checking");
   const [username, setUsername] = useState(getStoredUsername());
-  const [isAdmin, setIsAdmin] = useState(getStoredAdmin());
 
   const rerender = () => forceRender((n) => n + 1);
 
@@ -87,12 +83,10 @@ export default function App() {
     fetchSave()
       .then((serverSave) => {
         applyServerSave(serverSave);
-        setIsAdmin(getStoredAdmin());
         setAuthStatus("authed");
       })
       .catch(() => {
         clearAuth();
-        setIsAdmin(false);
         setAuthStatus("anon");
       });
   }, []);
@@ -130,7 +124,6 @@ export default function App() {
 
   function onAuthed(serverSave) {
     setUsername(getStoredUsername());
-    setIsAdmin(getStoredAdmin());
     applyServerSave(serverSave);
     setAuthStatus("authed");
   }
@@ -139,15 +132,13 @@ export default function App() {
     clearAuth();
     saveRef.current = null;
     setUsername(null);
-    setIsAdmin(false);
     setOnlineMatch(null);
     setScreen("menu");
     setTrainer(null);
     setAuthStatus("anon");
   }
 
-  // stonemaster: 기존 로컬 관리자 모드 + 온라인 테스트 권한
-  // imtester: 로컬 관리자 모드는 건드리지 않고 온라인 테스트 권한만 활성화
+  // 관리자 모드: stonemaster 입력 시 기존 로컬 치트와 서버 관리자 권한을 활성화한다.
   useEffect(() => {
     function onKeyDown(e) {
       if (authStatus !== "authed") return;
@@ -155,7 +146,7 @@ export default function App() {
       if (e.key.length !== 1) return;
 
       keyBuffer.current = (keyBuffer.current + e.key.toLowerCase()).slice(
-        -CODE_BUFFER_LENGTH,
+        -ADMIN_CODE.length,
       );
 
       if (keyBuffer.current.endsWith(ADMIN_CODE)) {
@@ -165,33 +156,12 @@ export default function App() {
 
         unlockAdmin(ADMIN_CODE)
           .then(() => {
-            setIsAdmin(true);
             setAdminToast(true);
             setTimeout(() => setAdminToast(false), 1800);
           })
           .catch((err) => {
-            setIsAdmin(false);
             showSyncToast(
               `로컬 관리자 모드는 켜졌지만 서버 권한 등록에 실패했습니다: ${err?.message || "연결 오류"}`,
-            );
-          });
-        return;
-      }
-
-      if (keyBuffer.current.endsWith(ONLINE_TESTER_CODE)) {
-        keyBuffer.current = "";
-
-        // 서버의 기존 온라인 테스트 허용 플래그만 활성화한다.
-        // save.adminMode는 변경하지 않으므로 카드/지역/재화 관리자 기능은 열리지 않는다.
-        unlockAdmin(ADMIN_CODE)
-          .then(() => {
-            setIsAdmin(true);
-            showSyncToast("온라인 배틀 테스트 권한이 활성화되었습니다.");
-          })
-          .catch((err) => {
-            setIsAdmin(false);
-            showSyncToast(
-              `온라인 테스트 권한 등록에 실패했습니다: ${err?.message || "연결 오류"}`,
             );
           });
       }
@@ -265,7 +235,7 @@ export default function App() {
               boxShadow: "0 4px 14px rgba(0,0,0,0.5)",
             }}
           >
-            관리자 모드 활성화 — 온라인 테스트 권한 포함
+            관리자 모드 활성화
           </div>
         )}
         {syncToast && (
@@ -291,7 +261,6 @@ export default function App() {
           <MainMenu
             save={save}
             username={username}
-            onlineAdmin={isAdmin}
             onOnlineMatched={enterOnlineBattle}
             onBattle={startBattle}
             onShop={() => setScreen("shop")}

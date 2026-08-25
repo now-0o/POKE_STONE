@@ -29,7 +29,6 @@ function countLegendaryPokemon(deck = []) {
 export default function MainMenu({
   save,
   username,
-  onlineAdmin,
   onOnlineMatched,
   onBattle,
   onShop,
@@ -50,7 +49,7 @@ export default function MainMenu({
   const deckReady = save.deck.length === 30;
   const legendaryCount = countLegendaryPokemon(save.deck);
   const legendaryReady = legendaryCount <= MAX_LEGENDARY_POKEMON;
-  const onlineReady = !!onlineAdmin && deckReady && legendaryReady;
+  const onlineReady = deckReady && legendaryReady;
   const johtoUnlocked = save.adminMode || (save.wins?.champion || 0) > 0;
   const hoennUnlocked = save.adminMode || (save.wins?.johto_lance || 0) > 0;
   const hoennTrainers = TRAINERS_BY_REGION.hoenn || [];
@@ -225,23 +224,18 @@ export default function MainMenu({
               <span className="region-info">
                 <span className="region-name">온라인 배틀</span>
                 <span className="region-sub">ONLINE · RANDOM MATCH</span>
-                <span className="region-desc">실시간 대전 안정성 테스트</span>
-                {!onlineAdmin && (
-                  <span className="region-lock-text">
-                    🔒 stonemaster 또는 imtester 입력 필요
-                  </span>
-                )}
-                {onlineAdmin && !deckReady && (
+                <span className="region-desc">실시간 랜덤 대전</span>
+                {!deckReady && (
                   <span className="region-lock-text">🔒 30장 덱 완성 필요</span>
                 )}
-                {onlineAdmin && deckReady && !legendaryReady && (
+                {deckReady && !legendaryReady && (
                   <span className="region-lock-text">
                     🔒 전설 포켓몬 최대 {MAX_LEGENDARY_POKEMON}장 · 현재 {legendaryCount}장
                   </span>
                 )}
               </span>
               <span className="region-go">
-                {onlineReady ? "선택 ▶" : "TEST LOCK"}
+                {onlineReady ? "선택 ▶" : "LOCK"}
               </span>
             </button>
 
@@ -380,7 +374,6 @@ export default function MainMenu({
             <div className="trainer-list online-matchmaking-trainer-slot">
               <OnlineMatchmaking
                 save={save}
-                isAdmin={onlineAdmin}
                 embedded
                 onMatched={onOnlineMatched}
                 onActivityChange={setOnlineMatching}
