@@ -263,6 +263,112 @@
   color: #8cc0ff;
 }
 
+/* 메인 메뉴의 트레이너 목록 영역에 들어가는 온라인 매칭 */
+.trainer-list.online-matchmaking-trainer-slot {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 760px;
+  width: min(760px, 100%);
+}
+
+.online-matchmaking-screen.embedded {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  align-items: stretch;
+  background: transparent;
+}
+
+.online-matchmaking-screen.embedded .online-matchmaking-card {
+  width: 100%;
+  max-height: none;
+  min-height: 250px;
+  padding: 24px 28px 22px;
+  overflow: visible;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(73, 145, 255, 0.13), transparent 42%),
+    linear-gradient(145deg, rgba(24, 39, 67, 0.94), rgba(13, 23, 42, 0.96));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.online-matchmaking-screen.embedded .online-orb {
+  width: 54px;
+  height: 54px;
+}
+
+.online-matchmaking-screen.embedded .online-matchmaking-card h2 {
+  margin-top: 8px;
+  font-size: 28px;
+}
+
+.online-matchmaking-screen.embedded .online-matchmaking-subtitle {
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+
+.online-matchmaking-screen.embedded .online-searching-panel,
+.online-matchmaking-screen.embedded .online-matched-panel,
+.online-matchmaking-screen.embedded .online-access-warning {
+  margin-top: 12px;
+  padding: 13px 16px;
+}
+
+.online-leave-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 7, 14, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.online-leave-confirm-box {
+  width: min(430px, 92vw);
+  padding: 24px;
+  border: 1px solid rgba(118, 174, 255, 0.34);
+  border-radius: 18px;
+  background: linear-gradient(155deg, rgba(18, 31, 54, 0.98), rgba(9, 17, 31, 0.98));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+  text-align: center;
+  animation: online-confirm-pop 0.2s ease-out both;
+}
+
+.online-leave-confirm-box h3 {
+  margin: 0 0 9px;
+  font-size: 21px;
+}
+
+.online-leave-confirm-box p {
+  margin: 0 0 20px;
+  color: rgba(232, 241, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.online-leave-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.online-leave-confirm-actions .btn-primary,
+.online-leave-confirm-actions .btn-secondary {
+  min-width: 150px;
+  padding-inline: 18px;
+}
+
+@keyframes online-confirm-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media (max-width: 760px), (pointer: coarse) {
   .online-matchmaking-screen {
     height: calc(100dvh - 24px);
@@ -320,6 +426,18 @@
     max-width: 120px;
     font-size: 14px;
   }
+
+  .online-matchmaking-screen.embedded {
+    height: auto;
+    max-height: none;
+    padding: 0;
+  }
+
+  .online-matchmaking-screen.embedded .online-matchmaking-card {
+    max-height: none;
+    min-height: 220px;
+    padding: 18px 14px 16px;
+  }
 }
 
 @media (max-height: 560px) {
@@ -353,10 +471,16 @@
     padding: 10px;
     gap: 6px;
   }
+
+  .online-matchmaking-screen.embedded .online-matchmaking-card {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .online-search-pulse i {
+  .online-search-pulse i,
+  .online-leave-confirm-box {
     animation: none;
   }
 }
