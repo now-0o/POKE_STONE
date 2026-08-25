@@ -42,6 +42,10 @@ function syncGameObject(target, source) {
   return target;
 }
 
+function roomRevision(room) {
+  return Number.isInteger(room?.revision) ? room.revision : -1;
+}
+
 function remapSide(side) {
   if (side === "player") return "enemy";
   if (side === "enemy") return "player";
@@ -206,6 +210,8 @@ function applyMulligan(game, side, cardUids, seedText) {
     else kept.push(handCard);
   }
 
+  // 선택/교체는 배열 index가 아니라 카드 UID로 고정한다.
+  // 양쪽 멀리건이 가까운 시점에 확정돼도 기존 카드와 새 카드가 섞이지 않는다.
   player.hand = kept;
   player.deck = shuffleWithSeed(player.deck || [], `${seedText}:replace`);
   for (let i = 0; i < returned.length; i += 1) {
@@ -392,7 +398,23 @@ export default function OnlineBattle({ match, onBack }) {
     }
   }
 
-  latestRef.current = { room };
+  latestRef.current.room = room;
+
+  function applyCommittedRoom(next) {
+    if (!next || !mountedRef.current) return false;
+    const current = latestRef.current.room;
+    const nextRevision = roomRevision(next);
+    const currentRevision = roomRevision(current);
+
+    // host polling은 pendingCommand가 생길 때 같은 revision의 새 객체를 준다.
+    // 그 객체를 Battle에 넣으면 같은 게임 state를 다시 덮어써서
+    // lastAction/HP/손패 애니메이션이 과거 -> 현재로 왕복한다.
+    if (current && nextRevision <= currentRevision) return false;
+
+    latestRef.current.room = next;
+    setRoom(next);
+    return true;
+  }
 
   useEffect(() => {
     mountedRef.current = true;
@@ -415,12 +437,12 @@ export default function OnlineBattle({ match, onBack }) {
           initializedRef.current = true;
           const game = createInitialOnlineGame(data);
           const initialized = await initializeOnlineMatch(matchId, game);
-          if (!cancelled) setRoom(initialized);
+          if (!cancelled) applyCommittedRoom(initialized);
         } else {
           const state = data.host
             ? await fetchOnlineHostState(matchId)
             : await fetchOnlineState(matchId);
-          if (!cancelled) setRoom(state);
+          if (!cancelled) applyCommittedRoom(state);
         }
       } catch (err) {
         if (!cancelled) {
@@ -435,15 +457,6 @@ export default function OnlineBattle({ match, onBack }) {
     };
   }, [matchId]);
 
-  function rollbackOptimisticState() {
-    const current = latestRef.current.room;
-    if (!current?.game) return;
-    setRoom({
-      ...current,
-      game: cloneJson(current.game),
-    });
-  }
-
   async function processHostCommand(snapshot, seed) {
     const command = snapshot?.pendingCommand;
     if (!command || !snapshot.game) return;
@@ -451,19 +464,15 @@ export default function OnlineBattle({ match, onBack }) {
     processingCommandRef.current = command.id;
 
     const game = cloneJson(snapshot.game);
+
+    // 직전 공격/기술은 애니메이션을 위해 HP 0 카드를 서버 state에 잠시 남긴다.
+    // 다음 명령을 적용하기 전에 한 번만 실제 제거해, 새 revision에서 시체가
+    // 다시 필드에 나타나는 현상을 막는다.
+    withOnlineBattleBridgeBypass(() => battleRules.cleanupDeaths(game));
+
     const result = withOnlineBattleBridgeBypass(() =>
       applyHostCommand(game, command, seed),
     );
-    const optimisticRoom = {
-      ...snapshot,
-      game,
-      pendingCommand: command,
-    };
-
-    if (mountedRef.current) {
-      setRoom(optimisticRoom);
-      setError("");
-    }
 
     try {
       const committed = await commitOnlineHostState(matchId, {
@@ -475,10 +484,18 @@ export default function OnlineBattle({ match, onBack }) {
       });
 
       if (mountedRef.current) {
-        setRoom({
-          ...optimisticRoom,
+        const mulligan = { ...(snapshot.mulligan || {}) };
+        if (result.ok && command.payload?.type === "mulligan") {
+          if (command.side === snapshot.mySide) mulligan.me = true;
+          else mulligan.opponent = true;
+        }
+
+        applyCommittedRoom({
+          ...snapshot,
+          game,
           phase: committed.phase,
           revision: committed.revision,
+          mulligan,
           pendingCommand: null,
           lastCommand:
             command.side === snapshot.mySide
@@ -496,7 +513,7 @@ export default function OnlineBattle({ match, onBack }) {
       if (mountedRef.current) {
         try {
           const refreshed = await fetchOnlineHostState(matchId);
-          if (mountedRef.current) setRoom(refreshed);
+          if (mountedRef.current) applyCommittedRoom(refreshed);
         } catch {
           // 다음 polling에서 다시 서버 권위 상태로 맞춘다.
         }
@@ -522,7 +539,9 @@ export default function OnlineBattle({ match, onBack }) {
           : await fetchOnlineState(matchId);
         if (stopped) return;
 
-        setRoom(next);
+        // 화면에는 revision이 실제로 증가했을 때만 적용한다.
+        // 동일 revision의 pendingCommand 변화는 host 처리용으로만 사용한다.
+        applyCommittedRoom(next);
         setError("");
 
         if (bootstrap.host && next.pendingCommand) {
@@ -606,7 +625,7 @@ export default function OnlineBattle({ match, onBack }) {
       try {
         const next = await fetchOnlineState(matchId);
         if (!mountedRef.current) return;
-        setRoom(next);
+        applyCommittedRoom(next);
         setError("");
 
         if (
@@ -664,7 +683,6 @@ export default function OnlineBattle({ match, onBack }) {
       busyRef.current = false;
       setBusy(false);
       setPendingCommand(null);
-      rollbackOptimisticState();
       setError(err.message || "행동을 서버로 보내지 못했습니다.");
       playSfx("buzzer");
       return false;
