@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { TRAINERS_BY_REGION, TRAINER_MAP } from "../data/trainers.js";
 import { resetSave } from "../state/save.js";
 import { TrainerSprite } from "./Card.jsx";
+import OnlineMatchmaking from "./OnlineMatchmaking.jsx";
 import {
   UI_SPRITES,
   LEGENDARY_POKEMON_IDS,
@@ -10,6 +11,7 @@ import {
 import { playSfx } from "../audio.js";
 
 const REGION_LABELS = {
+  online: { name: "온라인 배틀", sub: "ONLINE" },
   kanto: { name: "관동지방", sub: "KANTO" },
   johto: { name: "성도지방", sub: "JOHTO" },
   hoenn: { name: "호연지방", sub: "HOENN" },
@@ -28,7 +30,7 @@ export default function MainMenu({
   save,
   username,
   onlineAdmin,
-  onOnline,
+  onOnlineMatched,
   onBattle,
   onShop,
   onDeck,
@@ -39,6 +41,11 @@ export default function MainMenu({
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [onlineMatching, setOnlineMatching] = useState(false);
+  const [showOnlineLeaveConfirm, setShowOnlineLeaveConfirm] = useState(false);
+  const [cancelingOnline, setCancelingOnline] = useState(false);
+  const onlineCancelRef = useRef(null);
+  const pendingNavigationRef = useRef(null);
 
   const deckReady = save.deck.length === 30;
   const legendaryCount = countLegendaryPokemon(save.deck);
@@ -107,7 +114,44 @@ export default function MainMenu({
       return;
     }
     playSfx("click");
-    onOnline?.();
+    setSelectedRegion("online");
+  }
+
+  function requestNavigation(action) {
+    if (selectedRegion === "online" && onlineMatching) {
+      pendingNavigationRef.current = action;
+      setShowOnlineLeaveConfirm(true);
+      playSfx("click");
+      return;
+    }
+    action();
+  }
+
+  async function confirmCancelAndNavigate() {
+    if (cancelingOnline) return;
+    setCancelingOnline(true);
+
+    const cancel = onlineCancelRef.current;
+    const cancelled = cancel ? await cancel({ silent: true }) : true;
+
+    if (cancelled) {
+      const action = pendingNavigationRef.current;
+      pendingNavigationRef.current = null;
+      setOnlineMatching(false);
+      setShowOnlineLeaveConfirm(false);
+      playSfx("click");
+      action?.();
+    } else {
+      playSfx("buzzer");
+    }
+
+    setCancelingOnline(false);
+  }
+
+  function keepMatching() {
+    pendingNavigationRef.current = null;
+    setShowOnlineLeaveConfirm(false);
+    playSfx("click");
   }
 
   function trainerUnlocked(t) {
@@ -116,7 +160,10 @@ export default function MainMenu({
     return (save.wins?.[t.requires] || 0) > 0;
   }
 
-  const trainers = selectedRegion ? TRAINERS_BY_REGION[selectedRegion] : [];
+  const trainers =
+    selectedRegion && selectedRegion !== "online"
+      ? TRAINERS_BY_REGION[selectedRegion] || []
+      : [];
 
   return (
     <div className="main-menu">
@@ -194,7 +241,7 @@ export default function MainMenu({
                 )}
               </span>
               <span className="region-go">
-                {onlineReady ? "매칭 ▶" : "TEST LOCK"}
+                {onlineReady ? "선택 ▶" : "TEST LOCK"}
               </span>
             </button>
 
@@ -311,10 +358,12 @@ export default function MainMenu({
           <div className="trainer-region-header">
             <button
               className="btn-ghost small"
-              onClick={() => {
-                playSfx("click");
-                setSelectedRegion(null);
-              }}
+              onClick={() =>
+                requestNavigation(() => {
+                  playSfx("click");
+                  setSelectedRegion(null);
+                })
+              }
             >
               ◀ 지방 선택
             </button>
@@ -327,67 +376,82 @@ export default function MainMenu({
             </div>
           </div>
 
-          <div className="trainer-list">
-            {trainers.map((t) => {
-              const wins = save.wins?.[t.id] || 0;
-              const progressUnlocked = trainerUnlocked(t);
-              const canBattle = deckReady && progressUnlocked;
-              const requiredTrainer = t.requires
-                ? TRAINER_MAP[t.requires]
-                : null;
+          {selectedRegion === "online" ? (
+            <div className="trainer-list online-matchmaking-trainer-slot">
+              <OnlineMatchmaking
+                save={save}
+                isAdmin={onlineAdmin}
+                embedded
+                onMatched={onOnlineMatched}
+                onActivityChange={setOnlineMatching}
+                onRegisterCancel={(handler) => {
+                  onlineCancelRef.current = handler;
+                }}
+              />
+            </div>
+          ) : (
+            <div className="trainer-list">
+              {trainers.map((t) => {
+                const wins = save.wins?.[t.id] || 0;
+                const progressUnlocked = trainerUnlocked(t);
+                const canBattle = deckReady && progressUnlocked;
+                const requiredTrainer = t.requires
+                  ? TRAINER_MAP[t.requires]
+                  : null;
 
-              return (
-                <button
-                  key={t.id}
-                  className={[
-                    "trainer-card",
-                    !canBattle ? "btn-locked" : "",
-                  ].join(" ")}
-                  onMouseEnter={() => canBattle && playSfx("cursor")}
-                  onClick={() => {
-                    if (canBattle) {
-                      playSfx("click");
-                      onBattle(t);
-                    } else {
-                      playSfx("buzzer");
-                    }
-                  }}
-                >
-                  <TrainerSprite
-                    spriteKey={t.sprite}
-                    emoji={t.emoji}
-                    size={56}
-                  />
-                  <span className="trainer-info">
-                    <span className="trainer-name">{t.name}</span>
-                    <span className="trainer-meta">
-                      {progressUnlocked ? (
-                        <>
-                          <img
-                            className="res-icon small"
-                            src={UI_SPRITES.coin}
-                            alt=""
-                            width={14}
-                            height={14}
-                            draggable={false}
-                          />
-                          {t.reward}
-                          {wins > 0 && ` · 승리 ${wins}회`}
-                        </>
-                      ) : (
-                        <>
-                          🔒 {requiredTrainer?.name || "이전 트레이너"} 격파 필요
-                        </>
-                      )}
+                return (
+                  <button
+                    key={t.id}
+                    className={[
+                      "trainer-card",
+                      !canBattle ? "btn-locked" : "",
+                    ].join(" ")}
+                    onMouseEnter={() => canBattle && playSfx("cursor")}
+                    onClick={() => {
+                      if (canBattle) {
+                        playSfx("click");
+                        onBattle(t);
+                      } else {
+                        playSfx("buzzer");
+                      }
+                    }}
+                  >
+                    <TrainerSprite
+                      spriteKey={t.sprite}
+                      emoji={t.emoji}
+                      size={56}
+                    />
+                    <span className="trainer-info">
+                      <span className="trainer-name">{t.name}</span>
+                      <span className="trainer-meta">
+                        {progressUnlocked ? (
+                          <>
+                            <img
+                              className="res-icon small"
+                              src={UI_SPRITES.coin}
+                              alt=""
+                              width={14}
+                              height={14}
+                              draggable={false}
+                            />
+                            {t.reward}
+                            {wins > 0 && ` · 승리 ${wins}회`}
+                          </>
+                        ) : (
+                          <>
+                            🔒 {requiredTrainer?.name || "이전 트레이너"} 격파 필요
+                          </>
+                        )}
+                      </span>
                     </span>
-                  </span>
-                  <span className="trainer-go">
-                    {canBattle ? "배틀 ▶" : "LOCK"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <span className="trainer-go">
+                      {canBattle ? "배틀 ▶" : "LOCK"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
 
@@ -401,10 +465,12 @@ export default function MainMenu({
         <button
           className="btn-secondary with-icon"
           onMouseEnter={() => playSfx("cursor")}
-          onClick={() => {
-            playSfx("slide");
-            onShop();
-          }}
+          onClick={() =>
+            requestNavigation(() => {
+              playSfx("slide");
+              onShop();
+            })
+          }
         >
           <img
             className="res-icon"
@@ -420,10 +486,12 @@ export default function MainMenu({
         <button
           className="btn-secondary with-icon"
           onMouseEnter={() => playSfx("cursor")}
-          onClick={() => {
-            playSfx("pc");
-            onDeck();
-          }}
+          onClick={() =>
+            requestNavigation(() => {
+              playSfx("pc");
+              onDeck();
+            })
+          }
         >
           <img
             className="res-icon"
@@ -439,10 +507,12 @@ export default function MainMenu({
         <button
           className="btn-secondary with-icon"
           onMouseEnter={() => playSfx("cursor")}
-          onClick={() => {
-            playSfx("click");
-            onDex?.();
-          }}
+          onClick={() =>
+            requestNavigation(() => {
+              playSfx("click");
+              onDex?.();
+            })
+          }
         >
           <img
             className="res-icon"
@@ -458,10 +528,12 @@ export default function MainMenu({
         <button
           className="btn-secondary with-icon tutorial-menu-btn"
           onMouseEnter={() => playSfx("cursor")}
-          onClick={() => {
-            playSfx("click");
-            onTutorial?.();
-          }}
+          onClick={() =>
+            requestNavigation(() => {
+              playSfx("click");
+              onTutorial?.();
+            })
+          }
         >
           <span className="tutorial-menu-icon" aria-hidden="true">?</span>
           게임 튜토리얼
@@ -472,7 +544,10 @@ export default function MainMenu({
         {username && (
           <span style={{ opacity: 0.55, marginRight: 10 }}>{username}님</span>
         )}
-        <button className="btn-ghost small" onClick={onLogout}>
+        <button
+          className="btn-ghost small"
+          onClick={() => requestNavigation(onLogout)}
+        >
           로그아웃
         </button>
         {!confirmReset ? (
@@ -504,6 +579,31 @@ export default function MainMenu({
           </span>
         )}
       </div>
+
+      {showOnlineLeaveConfirm && (
+        <div className="online-leave-confirm-overlay" role="dialog" aria-modal="true">
+          <div className="online-leave-confirm-box">
+            <h3>랜덤 매칭 중입니다</h3>
+            <p>다른 곳으로 이동하면 현재 매칭이 취소됩니다. 매칭을 취소하고 이동할까요?</p>
+            <div className="online-leave-confirm-actions">
+              <button
+                className="btn-primary"
+                disabled={cancelingOnline}
+                onClick={confirmCancelAndNavigate}
+              >
+                {cancelingOnline ? "취소 중..." : "매칭 취소하고 이동"}
+              </button>
+              <button
+                className="btn-secondary"
+                disabled={cancelingOnline}
+                onClick={keepMatching}
+              >
+                계속 매칭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,11 @@
   transform-origin: 50% 30%;
 }
 
+/* 메인 메뉴 안에서는 트레이너 목록 전환만 사용한다. */
+.online-matchmaking-screen.embedded {
+  animation: none;
+}
+
 .battle-intro {
   animation: game-intro-enter 0.32s cubic-bezier(0.2, 0.82, 0.24, 1) both;
 }
