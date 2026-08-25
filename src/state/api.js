@@ -24,6 +24,7 @@ const ONLINE_FAST_WINDOW_MS = 700;
 let saveWriteQueue = Promise.resolve();
 let saveRevision = 0;
 let saveSyncEpoch = 0;
+let friendlyLeaveMatchId = null;
 const onlineStateCache = new Map();
 const onlineRequestInFlight = new Map();
 const onlineFastUntil = new Map();
@@ -189,6 +190,7 @@ export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(ADMIN_KEY);
+  friendlyLeaveMatchId = null;
   clearOnlineRuntimeCache();
   setServerRevision(0, true);
 }
@@ -298,13 +300,27 @@ export async function fetchMatchmakingStatus() {
   return req('/matchmaking/status', { method: 'GET' });
 }
 
+export function setFriendlyBattleLeaveMatch(matchId = null) {
+  friendlyLeaveMatchId = matchId || null;
+}
+
 export async function leaveMatchmaking() {
   clearOnlineRuntimeCache();
+
+  if (friendlyLeaveMatchId) {
+    const matchId = friendlyLeaveMatchId;
+    friendlyLeaveMatchId = null;
+    return req('/friendly/return', {
+      method: 'POST',
+      body: JSON.stringify({ matchId }),
+    });
+  }
+
   return req('/matchmaking/leave', { method: 'POST', body: '{}' });
 }
 
 // 탭/브라우저 종료 시 async 흐름을 기다릴 수 없으므로 keepalive fetch로
-// 현재 큐/매치를 즉시 정리한다. 기존 인증 헤더를 그대로 보내 서버의 leave를 사용한다.
+// 현재 큐/매치를 즉시 정리한다. 친선전 결과 화면이면 같은 방 복귀를 우선 시도한다.
 export function leaveMatchmakingKeepalive() {
   clearOnlineRuntimeCache();
   if (typeof window === 'undefined') return;
@@ -312,6 +328,22 @@ export function leaveMatchmakingKeepalive() {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
+
+  const friendlyMatchId = friendlyLeaveMatchId;
+  if (friendlyMatchId) {
+    friendlyLeaveMatchId = null;
+    try {
+      void fetch(`${API_BASE}/friendly/return`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ matchId: friendlyMatchId }),
+        keepalive: true,
+      }).catch(() => undefined);
+    } catch {
+      // 배틀 중 종료라면 서버 stale 정리로 보완한다.
+    }
+    return;
+  }
 
   try {
     void fetch(`${API_BASE}/matchmaking/leave`, {
