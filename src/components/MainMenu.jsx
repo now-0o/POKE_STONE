@@ -481,7 +481,7 @@ export default function MainMenu({
             <ChoiceCard
               name="친선전"
               sub="FRIENDLY MATCH"
-              desc="방 만들기 · 코드로 입장"
+              desc="방 목록 · 공개방 · 비밀방"
               onClick={() => {
                 playSfx("click");
                 onlineCancelRef.current = null;
