@@ -22,7 +22,15 @@ function countLegendaryPokemon(deck = []) {
   );
 }
 
-export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) {
+export default function OnlineMatchmaking({
+  save,
+  isAdmin,
+  onBack,
+  onMatched,
+  embedded = false,
+  onActivityChange,
+  onRegisterCancel,
+}) {
   const [status, setStatus] = useState({ status: "idle" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +41,8 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
 
   useEffect(() => {
     statusRef.current = status;
-  }, [status]);
+    onActivityChange?.(["searching", "matched"].includes(status.status));
+  }, [status, onActivityChange]);
 
   function clearMatchedTimer() {
     if (matchedTimerRef.current !== null) {
@@ -43,6 +52,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   }
 
   function acceptStatus(next) {
+    statusRef.current = next;
     setStatus(next);
     setError("");
     if (next.status !== "matched" || matchedRef.current === next.matchId) return;
@@ -75,6 +85,8 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   useEffect(
     () => () => {
       clearMatchedTimer();
+      onActivityChange?.(false);
+      onRegisterCancel?.(null);
       if (
         !handoffRef.current &&
         ["searching", "matched"].includes(statusRef.current?.status)
@@ -91,23 +103,23 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   const onlineDeckReady = deckReady && legendaryReady;
 
   async function startSearch() {
-    if (busy) return;
+    if (busy) return false;
     if (!isAdmin) {
       playSfx("buzzer");
       setError("온라인 배틀 테스트 권한이 필요합니다. stonemaster 또는 imtester를 입력해주세요.");
-      return;
+      return false;
     }
     if (!deckReady) {
       playSfx("buzzer");
       setError("온라인 배틀에는 완성된 30장 덱이 필요합니다.");
-      return;
+      return false;
     }
     if (!legendaryReady) {
       playSfx("buzzer");
       setError(
         `온라인 배틀 덱에는 전설 포켓몬을 최대 ${MAX_LEGENDARY_POKEMON}장까지만 넣을 수 있습니다. 현재 ${legendaryCount}장입니다.`,
       );
-      return;
+      return false;
     }
 
     setBusy(true);
@@ -116,30 +128,41 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
     try {
       const next = await joinMatchmaking(save);
       acceptStatus(next);
+      return true;
     } catch (err) {
       setError(err.message || "랜덤 매칭에 참가하지 못했습니다.");
+      return false;
     } finally {
       setBusy(false);
     }
   }
 
-  async function cancelSearch() {
-    if (busy) return;
+  async function cancelSearch({ silent = false } = {}) {
+    if (busy) return false;
     setBusy(true);
     clearMatchedTimer();
     try {
       await leaveMatchmaking();
       matchedRef.current = null;
       handoffRef.current = false;
-      setStatus({ status: "idle" });
+      const idle = { status: "idle" };
+      statusRef.current = idle;
+      setStatus(idle);
       setError("");
-      playSfx("click");
+      if (!silent) playSfx("click");
+      return true;
     } catch (err) {
       setError(err.message || "매칭을 취소하지 못했습니다.");
+      return false;
     } finally {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    onRegisterCancel?.(cancelSearch);
+    return () => onRegisterCancel?.(null);
+  }, [onRegisterCancel, busy, status.status]);
 
   async function backToMenu() {
     clearMatchedTimer();
@@ -150,20 +173,24 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
       } catch {
         // 화면 이동은 막지 않는다. 서버 큐는 유휴 타임아웃으로도 정리된다.
       }
-      setStatus({ status: "idle" });
+      const idle = { status: "idle" };
+      statusRef.current = idle;
+      setStatus(idle);
     }
     playSfx("click");
-    onBack();
+    onBack?.();
   }
 
   return (
-    <div className="online-matchmaking-screen">
-      <div className="online-matchmaking-topbar">
-        <button className="btn-ghost small" onClick={backToMenu}>
-          ◀ 메인 메뉴
-        </button>
-        <div className="online-test-badge">ONLINE TEST</div>
-      </div>
+    <div className={`online-matchmaking-screen ${embedded ? "embedded" : ""}`}>
+      {!embedded && (
+        <div className="online-matchmaking-topbar">
+          <button className="btn-ghost small" onClick={backToMenu}>
+            ◀ 메인 메뉴
+          </button>
+          <div className="online-test-badge">ONLINE TEST</div>
+        </div>
+      )}
 
       <div className="online-matchmaking-card">
         <div className="online-orb" aria-hidden="true">
@@ -217,7 +244,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
             <span>
               대기 순서 {status.queuePosition || 1} · 서버 연결 유지 중
             </span>
-            <button className="btn-secondary" disabled={busy} onClick={cancelSearch}>
+            <button className="btn-secondary" disabled={busy} onClick={() => cancelSearch()}>
               매칭 취소
             </button>
           </div>
