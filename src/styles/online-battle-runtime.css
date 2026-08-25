@@ -1,22 +1,37 @@
-/* 온라인 배틀 런타임 UI: 멀리건 연출 + 턴 제한시간 + 연결 종료 안내 */
+/* 온라인 배틀 런타임 UI: 턴 제한시간 + 연결 종료 안내 */
 .online-turn-clock {
-  position: relative;
-  z-index: 1;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
-  justify-self: center;
-  align-self: center;
   gap: 8px;
-  min-width: 104px;
-  padding: 6px 10px;
+  min-width: 112px;
+  padding: 7px 12px;
+  transform: translate(-50%, -50%);
   border: 1px solid rgba(136, 178, 231, 0.4);
   border-radius: 999px;
   background: rgba(8, 16, 28, 0.92);
-  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.26);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   color: #eaf4ff;
   pointer-events: none;
   backdrop-filter: blur(8px);
+}
+
+/* PC에서는 기존 중앙 컨트롤 레일 높이에 맞추되 카드 레이어보다 아래에 둔다. */
+@media (min-width: 901px) and (pointer: fine) {
+  .online-turn-clock {
+    top: 39%;
+  }
+
+  .battle[data-trainer^="online-"] .battle-log > div {
+    width: 46%;
+    max-width: 46%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .online-turn-clock.mine {
@@ -31,7 +46,6 @@
   font-size: 10px;
   letter-spacing: 0.08em;
   opacity: 0.7;
-  white-space: nowrap;
 }
 
 .online-turn-clock strong {
@@ -46,134 +60,6 @@
   border-color: rgba(255, 92, 92, 0.82);
   background: rgba(68, 16, 22, 0.92);
   animation: online-turn-clock-pulse 0.7s ease-in-out infinite alternate;
-}
-
-/* 타이머를 Battle 중앙 레일 안에 직접 넣는다.
-   별도 fixed 레이어가 아니므로 손패/필드 카드 위로 올라올 수 없다. */
-@media (min-width: 901px) and (pointer: fine) {
-  .battle[data-trainer^="online-"] > .mid-bar {
-    grid-template-columns:
-      minmax(90px, 0.75fr)
-      minmax(150px, 1.8fr)
-      auto
-      auto;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .weather-indicator {
-    grid-column: 1;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .battle-log {
-    grid-column: 2;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .online-turn-clock {
-    grid-column: 3;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .battle-actions {
-    grid-column: 4;
-  }
-}
-
-/* 멀리건: 슬롯 wrapper는 index 고정, 카드만 빠지고 같은 슬롯에 새 카드가 들어온다. */
-.stable-mulligan-overlay {
-  z-index: 900;
-}
-
-.stable-mulligan-box {
-  overflow: visible;
-}
-
-.stable-mulligan-cards {
-  flex-wrap: nowrap;
-  min-height: 224px;
-  overflow: visible;
-}
-
-.online-mulligan-slot {
-  position: relative;
-  flex: 0 0 142px;
-  width: 142px;
-  height: 210px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  cursor: pointer;
-  perspective: 800px;
-}
-
-.online-mulligan-slot .hand-card {
-  margin: 0;
-  transform: scale(0.9);
-  transform-origin: center top;
-  will-change: transform, opacity, filter;
-}
-
-.online-mulligan-slot.selected .hand-card {
-  transform: translateY(-9px) scale(0.92);
-  box-shadow:
-    0 13px 30px rgba(0, 0, 0, 0.48),
-    0 0 0 2px rgba(255, 103, 103, 0.62);
-}
-
-.online-mulligan-slot.is-leaving {
-  pointer-events: none;
-}
-
-.online-mulligan-slot.is-leaving .hand-card {
-  animation: stable-mulligan-card-out 260ms cubic-bezier(0.45, 0, 0.8, 0.4) both;
-}
-
-.online-mulligan-slot.is-entering {
-  pointer-events: none;
-}
-
-.online-mulligan-slot.is-entering .hand-card {
-  animation: stable-mulligan-card-in 420ms cubic-bezier(0.12, 0.82, 0.24, 1) both;
-}
-
-.stable-mulligan-status {
-  min-height: 28px;
-  margin-top: 2px;
-  color: rgba(221, 235, 251, 0.7);
-  font-size: 12px;
-  letter-spacing: 0.03em;
-}
-
-@keyframes stable-mulligan-card-out {
-  0% {
-    opacity: 1;
-    transform: translateY(-9px) scale(0.92) rotate(0deg);
-    filter: none;
-  }
-  55% {
-    opacity: 0.72;
-    transform: translateY(12px) scale(0.82) rotate(2deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(82px) scale(0.62) rotate(5deg);
-    filter: blur(2px);
-  }
-}
-
-@keyframes stable-mulligan-card-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-76px) scale(0.68) rotate(-4deg);
-    filter: blur(2px);
-  }
-  55% {
-    opacity: 1;
-    transform: translateY(7px) scale(0.94) rotate(1deg);
-    filter: none;
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(0.9) rotate(0deg);
-    filter: none;
-  }
 }
 
 .online-session-ended-overlay {
@@ -219,95 +105,29 @@
 
 @keyframes online-turn-clock-pulse {
   from {
-    transform: scale(1);
-    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.26);
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   }
   to {
-    transform: scale(1.04);
-    box-shadow: 0 0 20px rgba(255, 74, 74, 0.22);
+    transform: translate(-50%, -50%) scale(1.04);
+    box-shadow: 0 0 24px rgba(255, 74, 74, 0.24);
   }
 }
 
 @media (max-width: 1024px), (pointer: coarse) {
-  .battle[data-trainer^="online-"] > .mid-bar {
-    width: min(350px, calc(100vw - 10px)) !important;
-    max-width: 350px !important;
-    grid-template-columns: 64px auto minmax(0, 1fr) !important;
-    gap: 4px !important;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .weather-indicator {
-    grid-column: 1 !important;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .battle-log {
-    display: none !important;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .online-turn-clock {
-    grid-column: 2 !important;
-  }
-
-  .battle[data-trainer^="online-"] > .mid-bar > .battle-actions {
-    grid-column: 3 !important;
-  }
-
   .online-turn-clock {
-    min-width: 72px;
-    gap: 5px;
-    padding: 5px 7px;
-  }
-
-  .online-turn-clock span {
-    font-size: 8px;
+    top: 50%;
+    min-width: 96px;
+    padding: 6px 10px;
   }
 
   .online-turn-clock strong {
-    min-width: 19px;
-    font-size: 15px;
-  }
-
-  .stable-mulligan-box {
-    width: min(96vw, 760px);
-    padding: 18px 10px 14px;
-  }
-
-  .stable-mulligan-cards {
-    width: 100%;
-    min-height: 176px;
-    gap: 0;
-    justify-content: center;
-  }
-
-  .online-mulligan-slot {
-    flex: 0 1 112px;
-    width: min(112px, 20vw);
-    height: 174px;
-  }
-
-  .online-mulligan-slot .hand-card,
-  .online-mulligan-slot.selected .hand-card {
-    transform-origin: center top !important;
-  }
-}
-
-@media (max-width: 560px) {
-  .stable-mulligan-cards {
-    transform: scale(0.78);
-    transform-origin: center top;
-    width: 126%;
-    margin-left: -13%;
-    margin-bottom: -30px;
+    font-size: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .online-turn-clock.urgent {
     animation: none;
-  }
-
-  .online-mulligan-slot.is-leaving .hand-card,
-  .online-mulligan-slot.is-entering .hand-card {
-    animation-duration: 1ms;
   }
 }
