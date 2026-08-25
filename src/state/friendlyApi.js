@@ -41,30 +41,46 @@ async function friendlyReq(path, opts = {}) {
   return body;
 }
 
-function deckBody(save, extra = {}) {
+function deckPayload(source, extra = {}) {
   return JSON.stringify({
     ...extra,
-    deck: save?.deck || [],
-    deckShiny: save?.deckShiny || {},
+    deck: source?.deck || [],
+    deckShiny: source?.deckShiny || {},
+    deckName: source?.name || extra.deckName || "선택 덱",
   });
 }
 
-export function createFriendlyRoom(save) {
+export function fetchFriendlyRooms() {
+  return friendlyReq("/friendly/rooms", { method: "GET" });
+}
+
+export function createFriendlyRoom(source, settings = {}) {
   return friendlyReq("/friendly/create", {
     method: "POST",
-    body: deckBody(save),
+    body: deckPayload(source, {
+      name: settings.name || "",
+      isPrivate: !!settings.isPrivate,
+      password: settings.password || "",
+    }),
   });
 }
 
-export function joinFriendlyRoom(code, save) {
+export function joinFriendlyRoom(roomId, source, password = "") {
   return friendlyReq("/friendly/join", {
     method: "POST",
-    body: deckBody(save, { code }),
+    body: deckPayload(source, { roomId, password }),
   });
 }
 
 export function fetchFriendlyRoom() {
   return friendlyReq("/friendly/room", { method: "GET" });
+}
+
+export function updateFriendlyDeck(source) {
+  return friendlyReq("/friendly/deck", {
+    method: "POST",
+    body: deckPayload(source),
+  });
 }
 
 export function setFriendlyReady(ready) {
@@ -78,6 +94,13 @@ export function startFriendlyMatch() {
   return friendlyReq("/friendly/start", {
     method: "POST",
     body: "{}",
+  });
+}
+
+export function returnFriendlyToRoom(matchId) {
+  return friendlyReq("/friendly/return", {
+    method: "POST",
+    body: JSON.stringify({ matchId }),
   });
 }
 
