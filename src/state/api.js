@@ -14,8 +14,10 @@ const API_BASE = (() => {
 const TOKEN_KEY = 'pkm_stone_token';
 const USERNAME_KEY = 'pkm_stone_username';
 const ADMIN_KEY = 'pkm_stone_server_admin';
-const ONLINE_IDLE_NETWORK_MS = 85;
-const ONLINE_HIDDEN_NETWORK_MS = 450;
+// 턴제 배틀의 체감 반응성은 행동 직후 FAST polling으로 유지하고,
+// 아무 변화가 없는 평상시/백그라운드 polling만 느리게 해 서버 요청량을 줄인다.
+const ONLINE_IDLE_NETWORK_MS = 150;
+const ONLINE_HIDDEN_NETWORK_MS = 1000;
 const ONLINE_FAST_NETWORK_MS = 30;
 const ONLINE_FAST_WINDOW_MS = 700;
 
