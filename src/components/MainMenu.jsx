@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { TRAINERS_BY_REGION, TRAINER_MAP } from "../data/trainers.js";
 import { resetSave } from "../state/save.js";
 import { TrainerSprite } from "./Card.jsx";
-import { UI_SPRITES } from "../data/cards.js";
+import {
+  UI_SPRITES,
+  LEGENDARY_POKEMON_IDS,
+  MAX_LEGENDARY_POKEMON,
+} from "../data/cards.js";
 import { playSfx } from "../audio.js";
 
 const REGION_LABELS = {
@@ -12,6 +16,13 @@ const REGION_LABELS = {
   sinnoh: { name: "신오지방", sub: "SINNOH" },
   unova: { name: "하나지방", sub: "UNOVA" },
 };
+
+function countLegendaryPokemon(deck = []) {
+  return deck.reduce(
+    (count, cardId) => count + (LEGENDARY_POKEMON_IDS.has(cardId) ? 1 : 0),
+    0,
+  );
+}
 
 export default function MainMenu({
   save,
@@ -30,7 +41,9 @@ export default function MainMenu({
   const [selectedRegion, setSelectedRegion] = useState(null);
 
   const deckReady = save.deck.length === 30;
-  const onlineReady = !!onlineAdmin && deckReady;
+  const legendaryCount = countLegendaryPokemon(save.deck);
+  const legendaryReady = legendaryCount <= MAX_LEGENDARY_POKEMON;
+  const onlineReady = !!onlineAdmin && deckReady && legendaryReady;
   const johtoUnlocked = save.adminMode || (save.wins?.champion || 0) > 0;
   const hoennUnlocked = save.adminMode || (save.wins?.johto_lance || 0) > 0;
   const hoennTrainers = TRAINERS_BY_REGION.hoenn || [];
@@ -168,11 +181,16 @@ export default function MainMenu({
                 <span className="region-desc">실시간 대전 안정성 테스트</span>
                 {!onlineAdmin && (
                   <span className="region-lock-text">
-                    🔒 stonemaster 관리자 계정 전용
+                    🔒 stonemaster 또는 imtester 입력 필요
                   </span>
                 )}
                 {onlineAdmin && !deckReady && (
                   <span className="region-lock-text">🔒 30장 덱 완성 필요</span>
+                )}
+                {onlineAdmin && deckReady && !legendaryReady && (
+                  <span className="region-lock-text">
+                    🔒 전설 포켓몬 최대 {MAX_LEGENDARY_POKEMON}장 · 현재 {legendaryCount}장
+                  </span>
                 )}
               </span>
               <span className="region-go">
@@ -454,48 +472,32 @@ export default function MainMenu({
         {username && (
           <span style={{ opacity: 0.55, marginRight: 10 }}>{username}님</span>
         )}
-        {onLogout && (
-          <button
-            className="btn-ghost small"
-            onClick={() => {
-              playSfx("click");
-              onLogout();
-            }}
-          >
-            로그아웃
-          </button>
-        )}{" "}
+        <button className="btn-ghost small" onClick={onLogout}>
+          로그아웃
+        </button>
         {!confirmReset ? (
           <button
             className="btn-ghost small"
-            onClick={() => {
-              playSfx("click");
-              setConfirmReset(true);
-            }}
+            onClick={() => setConfirmReset(true)}
           >
-            세이브 초기화
+            데이터 초기화
           </button>
         ) : (
-          <span>
-            정말 초기화할까요?{" "}
+          <span className="reset-confirm-inline">
+            <span>정말 초기화?</span>
             <button
               className="btn-ghost small danger"
               onClick={() => {
-                playSfx("click");
                 resetSave();
-                setConfirmReset(false);
-                setSelectedRegion(null);
                 onSaveChange(true);
+                setConfirmReset(false);
               }}
             >
-              네, 전부 삭제
-            </button>{" "}
+              예
+            </button>
             <button
               className="btn-ghost small"
-              onClick={() => {
-                playSfx("click");
-                setConfirmReset(false);
-              }}
+              onClick={() => setConfirmReset(false)}
             >
               취소
             </button>
