@@ -5,8 +5,10 @@ import { PATCH_NOTE_V30 } from "./v30.js";
 import { PATCH_NOTE_V31 } from "./v31.js";
 import { PATCH_NOTE_V32 } from "./v32.js";
 import { PATCH_NOTE_V33 } from "./v33.js";
+import { PATCH_NOTE_V35 } from "./v35.js";
 
 export const ALL_PATCH_NOTES = [
+  PATCH_NOTE_V35,
   PATCH_NOTE_V33,
   PATCH_NOTE_V32,
   PATCH_NOTE_V31,
