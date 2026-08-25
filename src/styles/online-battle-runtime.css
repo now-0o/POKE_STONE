@@ -3,23 +3,25 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  z-index: 2;
+  z-index: 26;
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 112px;
   padding: 7px 12px;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(136, 178, 231, 0.4);
+  border: 1px solid rgba(164, 202, 250, 0.68);
   border-radius: 999px;
-  background: rgba(8, 16, 28, 0.92);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  color: #eaf4ff;
+  background: rgba(6, 13, 24, 0.97);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.46),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  color: #f4f9ff;
   pointer-events: none;
   backdrop-filter: blur(8px);
 }
 
-/* PC에서는 기존 중앙 컨트롤 레일 높이에 맞추되 카드 레이어보다 아래에 둔다. */
+/* PC에서는 중앙 컨트롤 레일 바로 위에만 둔다. 필드/손패용 고층 레이어는 사용하지 않는다. */
 @media (min-width: 901px) and (pointer: fine) {
   .online-turn-clock {
     top: 39%;
@@ -35,17 +37,18 @@
 }
 
 .online-turn-clock.mine {
-  border-color: rgba(95, 159, 255, 0.7);
+  border-color: rgba(95, 159, 255, 0.82);
 }
 
 .online-turn-clock.theirs {
-  border-color: rgba(255, 124, 124, 0.48);
+  border-color: rgba(255, 124, 124, 0.66);
 }
 
 .online-turn-clock span {
   font-size: 10px;
   letter-spacing: 0.08em;
-  opacity: 0.7;
+  opacity: 0.82;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .online-turn-clock strong {
@@ -54,11 +57,12 @@
   line-height: 1;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 .online-turn-clock.urgent {
-  border-color: rgba(255, 92, 92, 0.82);
-  background: rgba(68, 16, 22, 0.92);
+  border-color: rgba(255, 92, 92, 0.9);
+  background: rgba(74, 13, 20, 0.97);
   animation: online-turn-clock-pulse 0.7s ease-in-out infinite alternate;
 }
 
@@ -106,16 +110,20 @@
 @keyframes online-turn-clock-pulse {
   from {
     transform: translate(-50%, -50%) scale(1);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.46),
+      0 0 0 1px rgba(255, 255, 255, 0.04);
   }
   to {
     transform: translate(-50%, -50%) scale(1.04);
-    box-shadow: 0 0 24px rgba(255, 74, 74, 0.24);
+    box-shadow: 0 0 26px rgba(255, 74, 74, 0.34);
   }
 }
 
 @media (max-width: 1024px), (pointer: coarse) {
   .online-turn-clock {
+    /* 모바일 Battle 자체가 z-index:40이므로 딱 한 단계만 위로 올린다. */
+    z-index: 41;
     top: 50%;
     min-width: 96px;
     padding: 6px 10px;
