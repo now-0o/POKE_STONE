@@ -234,6 +234,21 @@ button.friendly-room-entry-card:hover:not(:disabled) {
   opacity: 0.4;
 }
 
+/* 랜덤 매칭 취소 / 친선전 방 나가기 확인창은 메인 콘텐츠가 아니라
+   실제 브라우저 viewport 전체를 덮는다. */
+.online-leave-confirm-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  z-index: 2147483000 !important;
+  box-sizing: border-box;
+}
+
 @media (max-width: 720px) {
   .friendly-room-shell {
     padding: 12px;
