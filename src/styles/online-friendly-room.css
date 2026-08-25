@@ -13,6 +13,11 @@
   text-align: center;
 }
 
+/* 방 목록 헤더는 좌측 정렬 */
+.friendly-room-browser .friendly-room-intro {
+  text-align: left;
+}
+
 .friendly-room-kicker {
   display: block;
   margin-bottom: 6px;
