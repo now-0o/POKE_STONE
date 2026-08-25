@@ -210,6 +210,28 @@ export async function leaveMatchmaking() {
   return req('/matchmaking/leave', { method: 'POST', body: '{}' });
 }
 
+// 탭/브라우저 종료 시 async 흐름을 기다릴 수 없으므로 keepalive fetch로
+// 현재 큐/매치를 즉시 정리한다. 기존 인증 헤더를 그대로 보내 서버의 leave를 사용한다.
+export function leaveMatchmakingKeepalive() {
+  onlineStateCache.clear();
+  if (typeof window === 'undefined') return;
+
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  try {
+    void fetch(`${API_BASE}/matchmaking/leave`, {
+      method: 'POST',
+      headers,
+      body: '{}',
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // 페이지 종료 중 전송 실패는 다음 접속의 stale-match 정리로 보완한다.
+  }
+}
+
 export async function fetchOnlineBootstrap(matchId) {
   const data = await req(`/online/match/${encodeURIComponent(matchId)}/bootstrap`, { method: 'GET' });
 

@@ -8,6 +8,7 @@ import {
   joinMatchmaking,
   fetchMatchmakingStatus,
   leaveMatchmaking,
+  leaveMatchmakingKeepalive,
 } from "../state/api.js";
 import { playSfx } from "../audio.js";
 import "../styles/online-matchmaking.css";
@@ -83,6 +84,22 @@ export default function OnlineMatchmaking({
     return () => window.clearInterval(timer);
   }, [status.status, onMatched]);
 
+  // 탭/브라우저 자체를 닫거나 다른 페이지로 떠날 때 큐/매치를 서버에서 즉시 정리한다.
+  useEffect(() => {
+    const handlePageExit = () => {
+      if (["searching", "matched"].includes(statusRef.current?.status)) {
+        leaveMatchmakingKeepalive();
+      }
+    };
+
+    window.addEventListener("pagehide", handlePageExit);
+    window.addEventListener("beforeunload", handlePageExit);
+    return () => {
+      window.removeEventListener("pagehide", handlePageExit);
+      window.removeEventListener("beforeunload", handlePageExit);
+    };
+  }, []);
+
   useEffect(
     () => () => {
       clearMatchedTimer();
@@ -127,6 +144,17 @@ export default function OnlineMatchmaking({
     setError("");
     playSfx("click");
     try {
+      // 새 검색을 시작하기 전에 서버에 남아 있을 수 있는 이전 탭/이전 접속의
+      // 매치 또는 큐를 먼저 끊는다. 브라우저를 닫았다 다시 접속했을 때
+      // 예전 온라인 배틀이 자동으로 이어지는 것을 방지한다.
+      try {
+        await leaveMatchmaking();
+      } catch {
+        // 정리할 세션이 없거나 이미 만료된 경우 새 검색은 계속한다.
+      }
+
+      matchedRef.current = null;
+      handoffRef.current = false;
       const next = await joinMatchmaking(save);
       acceptStatus(next);
       return true;
