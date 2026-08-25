@@ -11,7 +11,6 @@ import {
 import { playSfx } from "../audio.js";
 
 const REGION_LABELS = {
-  online: { name: "온라인 배틀", sub: "ONLINE" },
   kanto: { name: "관동지방", sub: "KANTO" },
   johto: { name: "성도지방", sub: "JOHTO" },
   hoenn: { name: "호연지방", sub: "HOENN" },
@@ -23,6 +22,41 @@ function countLegendaryPokemon(deck = []) {
   return deck.reduce(
     (count, cardId) => count + (LEGENDARY_POKEMON_IDS.has(cardId) ? 1 : 0),
     0,
+  );
+}
+
+function ChoiceCard({
+  className = "",
+  disabled = false,
+  name,
+  sub,
+  desc,
+  lockText = "",
+  goText = "선택 ▶",
+  onClick,
+}) {
+  return (
+    <button
+      className={["region-card", className, disabled ? "region-locked" : ""]
+        .filter(Boolean)
+        .join(" ")}
+      onMouseEnter={() => !disabled && playSfx("cursor")}
+      onClick={() => {
+        if (disabled) {
+          playSfx("buzzer");
+          return;
+        }
+        onClick?.();
+      }}
+    >
+      <span className="region-info">
+        <span className="region-name">{name}</span>
+        <span className="region-sub">{sub}</span>
+        <span className="region-desc">{desc}</span>
+        {lockText && <span className="region-lock-text">{lockText}</span>}
+      </span>
+      <span className="region-go">{disabled ? "LOCK" : goText}</span>
+    </button>
   );
 }
 
@@ -39,7 +73,9 @@ export default function MainMenu({
   onLogout,
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
+  const [selectedMode, setSelectedMode] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedOnlineMode, setSelectedOnlineMode] = useState(null);
   const [onlineMatching, setOnlineMatching] = useState(false);
   const [showOnlineLeaveConfirm, setShowOnlineLeaveConfirm] = useState(false);
   const [cancelingOnline, setCancelingOnline] = useState(false);
@@ -50,6 +86,7 @@ export default function MainMenu({
   const legendaryCount = countLegendaryPokemon(save.deck);
   const legendaryReady = legendaryCount <= MAX_LEGENDARY_POKEMON;
   const onlineReady = deckReady && legendaryReady;
+
   const johtoUnlocked = save.adminMode || (save.wins?.champion || 0) > 0;
   const hoennUnlocked = save.adminMode || (save.wins?.johto_lance || 0) > 0;
   const hoennTrainers = TRAINERS_BY_REGION.hoenn || [];
@@ -62,6 +99,60 @@ export default function MainMenu({
   const unovaUnlocked =
     save.adminMode ||
     (sinnohLastTrainer && (save.wins?.[sinnohLastTrainer.id] || 0) > 0);
+
+  const onlineLockText = !deckReady
+    ? "🔒 30장 덱 완성 필요"
+    : !legendaryReady
+      ? `🔒 전설 포켓몬 최대 ${MAX_LEGENDARY_POKEMON}장 · 현재 ${legendaryCount}장`
+      : "";
+
+  const storyRegions = [
+    {
+      id: "kanto",
+      name: "관동지방",
+      sub: "KANTO",
+      desc: "체육관 로드 · 챔피언 레드",
+      unlocked: true,
+      className: "",
+      lockText: "",
+    },
+    {
+      id: "johto",
+      name: "성도지방",
+      sub: "JOHTO",
+      desc: "강한 AI · 안정적인 덱",
+      unlocked: johtoUnlocked,
+      className: "region-johto",
+      lockText: "🔒 챔피언 레드 격파 후 해금",
+    },
+    {
+      id: "hoenn",
+      name: "호연지방",
+      sub: "HOENN",
+      desc: "최상급 AI · 메가진화 · 전설",
+      unlocked: hoennUnlocked,
+      className: "region-hoenn",
+      lockText: "🔒 챔피언 목호 격파 후 해금",
+    },
+    {
+      id: "sinnoh",
+      name: "신오지방",
+      sub: "SINNOH",
+      desc: "특수 배틀 · 체육관 기믹",
+      unlocked: sinnohUnlocked,
+      className: "region-sinnoh",
+      lockText: "🔒 호연지방 클리어 후 해금",
+    },
+    {
+      id: "unova",
+      name: "하나지방",
+      sub: "UNOVA",
+      desc: "최상급 AI · 전용 체육관 룰",
+      unlocked: unovaUnlocked,
+      className: "region-unova",
+      lockText: "🔒 신오지방 클리어 후 해금",
+    },
+  ];
 
   async function goFullscreen() {
     const el = document.documentElement;
@@ -86,20 +177,20 @@ export default function MainMenu({
     }
   }
 
+  function enterMode(mode) {
+    if (mode === "online" && !onlineReady) {
+      playSfx("buzzer");
+      return;
+    }
+    playSfx("click");
+    setSelectedMode(mode);
+    setSelectedRegion(null);
+    setSelectedOnlineMode(null);
+  }
+
   function selectRegion(region) {
-    if (region === "johto" && !johtoUnlocked) {
-      playSfx("buzzer");
-      return;
-    }
-    if (region === "hoenn" && !hoennUnlocked) {
-      playSfx("buzzer");
-      return;
-    }
-    if (region === "sinnoh" && !sinnohUnlocked) {
-      playSfx("buzzer");
-      return;
-    }
-    if (region === "unova" && !unovaUnlocked) {
+    const choice = storyRegions.find((entry) => entry.id === region);
+    if (!choice?.unlocked) {
       playSfx("buzzer");
       return;
     }
@@ -107,17 +198,12 @@ export default function MainMenu({
     setSelectedRegion(region);
   }
 
-  function openOnline() {
-    if (!onlineReady) {
-      playSfx("buzzer");
-      return;
-    }
-    playSfx("click");
-    setSelectedRegion("online");
-  }
-
   function requestNavigation(action) {
-    if (selectedRegion === "online" && onlineMatching) {
+    if (
+      selectedMode === "online" &&
+      selectedOnlineMode === "random" &&
+      onlineMatching
+    ) {
       pendingNavigationRef.current = action;
       setShowOnlineLeaveConfirm(true);
       playSfx("click");
@@ -153,16 +239,15 @@ export default function MainMenu({
     playSfx("click");
   }
 
-  function trainerUnlocked(t) {
+  function trainerUnlocked(trainer) {
     if (save.adminMode) return true;
-    if (!t.requires) return true;
-    return (save.wins?.[t.requires] || 0) > 0;
+    if (!trainer.requires) return true;
+    return (save.wins?.[trainer.requires] || 0) > 0;
   }
 
-  const trainers =
-    selectedRegion && selectedRegion !== "online"
-      ? TRAINERS_BY_REGION[selectedRegion] || []
-      : [];
+  const trainers = selectedRegion
+    ? TRAINERS_BY_REGION[selectedRegion] || []
+    : [];
 
   return (
     <div className="main-menu">
@@ -208,156 +293,75 @@ export default function MainMenu({
         </span>
       </div>
 
-      {!selectedRegion && (
+      {!selectedMode && (
         <>
-          <div className="region-title">도전할 지방을 선택하세요</div>
-
+          <div className="region-title">게임 모드를 선택하세요</div>
           <div className="region-select">
-            <button
-              className={[
-                "region-card",
-                onlineReady ? "region-online" : "region-locked",
-              ].join(" ")}
-              onMouseEnter={() => onlineReady && playSfx("cursor")}
-              onClick={openOnline}
-            >
-              <span className="region-info">
-                <span className="region-name">온라인 배틀</span>
-                <span className="region-sub">ONLINE · RANDOM MATCH</span>
-                <span className="region-desc">실시간 랜덤 대전</span>
-                {!deckReady && (
-                  <span className="region-lock-text">🔒 30장 덱 완성 필요</span>
-                )}
-                {deckReady && !legendaryReady && (
-                  <span className="region-lock-text">
-                    🔒 전설 포켓몬 최대 {MAX_LEGENDARY_POKEMON}장 · 현재 {legendaryCount}장
-                  </span>
-                )}
-              </span>
-              <span className="region-go">
-                {onlineReady ? "선택 ▶" : "LOCK"}
-              </span>
-            </button>
-
-            <button
-              className="region-card"
-              onMouseEnter={() => playSfx("cursor")}
-              onClick={() => selectRegion("kanto")}
-            >
-              <span className="region-info">
-                <span className="region-name">관동지방</span>
-                <span className="region-sub">KANTO</span>
-                <span className="region-desc">체육관 로드 · 챔피언 레드</span>
-              </span>
-              <span className="region-go">선택 ▶</span>
-            </button>
-
-            <button
-              className={[
-                "region-card",
-                !johtoUnlocked ? "region-locked" : "region-johto",
-              ].join(" ")}
-              onMouseEnter={() => johtoUnlocked && playSfx("cursor")}
-              onClick={() => selectRegion("johto")}
-            >
-              <span className="region-info">
-                <span className="region-name">성도지방</span>
-                <span className="region-sub">JOHTO</span>
-                <span className="region-desc">강한 AI · 안정적인 덱</span>
-                {!johtoUnlocked && (
-                  <span className="region-lock-text">
-                    🔒 챔피언 레드 격파 후 해금
-                  </span>
-                )}
-              </span>
-              <span className="region-go">
-                {johtoUnlocked ? "선택 ▶" : "LOCK"}
-              </span>
-            </button>
-
-            <button
-              className={[
-                "region-card",
-                !hoennUnlocked ? "region-locked" : "region-hoenn",
-              ].join(" ")}
-              onMouseEnter={() => hoennUnlocked && playSfx("cursor")}
-              onClick={() => selectRegion("hoenn")}
-            >
-              <span className="region-info">
-                <span className="region-name">호연지방</span>
-                <span className="region-sub">HOENN</span>
-                <span className="region-desc">최상급 AI · 메가진화 · 전설</span>
-                {!hoennUnlocked && (
-                  <span className="region-lock-text">
-                    🔒 챔피언 목호 격파 후 해금
-                  </span>
-                )}
-              </span>
-              <span className="region-go">
-                {hoennUnlocked ? "선택 ▶" : "LOCK"}
-              </span>
-            </button>
-
-            <button
-              className={[
-                "region-card",
-                !sinnohUnlocked ? "region-locked" : "region-sinnoh",
-              ].join(" ")}
-              onMouseEnter={() => sinnohUnlocked && playSfx("cursor")}
-              onClick={() => selectRegion("sinnoh")}
-            >
-              <span className="region-info">
-                <span className="region-name">신오지방</span>
-                <span className="region-sub">SINNOH</span>
-                <span className="region-desc">특수 배틀 · 체육관 기믹</span>
-                {!sinnohUnlocked && (
-                  <span className="region-lock-text">
-                    🔒 호연지방 클리어 후 해금
-                  </span>
-                )}
-              </span>
-              <span className="region-go">
-                {sinnohUnlocked ? "선택 ▶" : "LOCK"}
-              </span>
-            </button>
-
-            <button
-              className={[
-                "region-card",
-                !unovaUnlocked ? "region-locked" : "region-unova",
-              ].join(" ")}
-              onMouseEnter={() => unovaUnlocked && playSfx("cursor")}
-              onClick={() => selectRegion("unova")}
-            >
-              <span className="region-info">
-                <span className="region-name">하나지방</span>
-                <span className="region-sub">UNOVA</span>
-                <span className="region-desc">최상급 AI · 전용 체육관 룰</span>
-                {!unovaUnlocked && (
-                  <span className="region-lock-text">
-                    🔒 신오지방 클리어 후 해금
-                  </span>
-                )}
-              </span>
-              <span className="region-go">
-                {unovaUnlocked ? "선택 ▶" : "LOCK"}
-              </span>
-            </button>
+            <ChoiceCard
+              className="region-story"
+              name="스토리 모드"
+              sub="STORY MODE"
+              desc="지방을 선택해 트레이너 AI에 도전"
+              onClick={() => enterMode("story")}
+            />
+            <ChoiceCard
+              className="region-online"
+              disabled={!onlineReady}
+              name="온라인 배틀"
+              sub="ONLINE BATTLE"
+              desc="랜덤 매칭 · 친선전"
+              lockText={onlineLockText}
+              onClick={() => enterMode("online")}
+            />
           </div>
         </>
       )}
 
-      {selectedRegion && (
+      {selectedMode === "story" && !selectedRegion && (
         <>
           <div className="trainer-region-header">
             <button
               className="btn-ghost small"
-              onClick={() =>
-                requestNavigation(() => {
-                  playSfx("click");
-                  setSelectedRegion(null);
-                })
-              }
+              onClick={() => {
+                playSfx("click");
+                setSelectedMode(null);
+              }}
+            >
+              ◀ 모드 선택
+            </button>
+            <div>
+              <strong>스토리 모드</strong>
+              <span className="trainer-region-sub"> STORY</span>
+            </div>
+          </div>
+
+          <div className="region-title">도전할 지방을 선택하세요</div>
+          <div className="region-select">
+            {storyRegions.map((region) => (
+              <ChoiceCard
+                key={region.id}
+                className={region.className}
+                disabled={!region.unlocked}
+                name={region.name}
+                sub={region.sub}
+                desc={region.desc}
+                lockText={!region.unlocked ? region.lockText : ""}
+                onClick={() => selectRegion(region.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {selectedMode === "story" && selectedRegion && (
+        <>
+          <div className="trainer-region-header">
+            <button
+              className="btn-ghost small"
+              onClick={() => {
+                playSfx("click");
+                setSelectedRegion(null);
+              }}
             >
               ◀ 지방 선택
             </button>
@@ -370,81 +374,142 @@ export default function MainMenu({
             </div>
           </div>
 
-          {selectedRegion === "online" ? (
-            <div className="trainer-list online-matchmaking-trainer-slot">
-              <OnlineMatchmaking
-                save={save}
-                embedded
-                onMatched={onOnlineMatched}
-                onActivityChange={setOnlineMatching}
-                onRegisterCancel={(handler) => {
-                  onlineCancelRef.current = handler;
-                }}
-              />
-            </div>
-          ) : (
-            <div className="trainer-list">
-              {trainers.map((t) => {
-                const wins = save.wins?.[t.id] || 0;
-                const progressUnlocked = trainerUnlocked(t);
-                const canBattle = deckReady && progressUnlocked;
-                const requiredTrainer = t.requires
-                  ? TRAINER_MAP[t.requires]
-                  : null;
+          <div className="trainer-list">
+            {trainers.map((trainer) => {
+              const wins = save.wins?.[trainer.id] || 0;
+              const progressUnlocked = trainerUnlocked(trainer);
+              const canBattle = deckReady && progressUnlocked;
+              const requiredTrainer = trainer.requires
+                ? TRAINER_MAP[trainer.requires]
+                : null;
 
-                return (
-                  <button
-                    key={t.id}
-                    className={[
-                      "trainer-card",
-                      !canBattle ? "btn-locked" : "",
-                    ].join(" ")}
-                    onMouseEnter={() => canBattle && playSfx("cursor")}
-                    onClick={() => {
-                      if (canBattle) {
-                        playSfx("click");
-                        onBattle(t);
-                      } else {
-                        playSfx("buzzer");
-                      }
-                    }}
-                  >
-                    <TrainerSprite
-                      spriteKey={t.sprite}
-                      emoji={t.emoji}
-                      size={56}
-                    />
-                    <span className="trainer-info">
-                      <span className="trainer-name">{t.name}</span>
-                      <span className="trainer-meta">
-                        {progressUnlocked ? (
-                          <>
-                            <img
-                              className="res-icon small"
-                              src={UI_SPRITES.coin}
-                              alt=""
-                              width={14}
-                              height={14}
-                              draggable={false}
-                            />
-                            {t.reward}
-                            {wins > 0 && ` · 승리 ${wins}회`}
-                          </>
-                        ) : (
-                          <>
-                            🔒 {requiredTrainer?.name || "이전 트레이너"} 격파 필요
-                          </>
-                        )}
-                      </span>
+              return (
+                <button
+                  key={trainer.id}
+                  className={[
+                    "trainer-card",
+                    !canBattle ? "btn-locked" : "",
+                  ].join(" ")}
+                  onMouseEnter={() => canBattle && playSfx("cursor")}
+                  onClick={() => {
+                    if (canBattle) {
+                      playSfx("click");
+                      onBattle(trainer);
+                    } else {
+                      playSfx("buzzer");
+                    }
+                  }}
+                >
+                  <TrainerSprite
+                    spriteKey={trainer.sprite}
+                    emoji={trainer.emoji}
+                    size={56}
+                  />
+                  <span className="trainer-info">
+                    <span className="trainer-name">{trainer.name}</span>
+                    <span className="trainer-meta">
+                      {progressUnlocked ? (
+                        <>
+                          <img
+                            className="res-icon small"
+                            src={UI_SPRITES.coin}
+                            alt=""
+                            width={14}
+                            height={14}
+                            draggable={false}
+                          />
+                          {trainer.reward}
+                          {wins > 0 && ` · 승리 ${wins}회`}
+                        </>
+                      ) : (
+                        <>
+                          🔒 {requiredTrainer?.name || "이전 트레이너"} 격파 필요
+                        </>
+                      )}
                     </span>
-                    <span className="trainer-go">
-                      {canBattle ? "배틀 ▶" : "LOCK"}
-                    </span>
-                  </button>
-                );
-              })}
+                  </span>
+                  <span className="trainer-go">
+                    {canBattle ? "배틀 ▶" : "LOCK"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {selectedMode === "online" && !selectedOnlineMode && (
+        <>
+          <div className="trainer-region-header">
+            <button
+              className="btn-ghost small"
+              onClick={() => {
+                playSfx("click");
+                setSelectedMode(null);
+              }}
+            >
+              ◀ 모드 선택
+            </button>
+            <div>
+              <strong>온라인 배틀</strong>
+              <span className="trainer-region-sub"> ONLINE</span>
             </div>
-          )}
+          </div>
+
+          <div className="region-title">온라인 배틀 방식을 선택하세요</div>
+          <div className="region-select">
+            <ChoiceCard
+              className="region-online"
+              name="랜덤 매칭"
+              sub="RANDOM MATCH"
+              desc="상대를 자동으로 찾아 바로 대전"
+              onClick={() => {
+                playSfx("click");
+                setSelectedOnlineMode("random");
+              }}
+            />
+            <ChoiceCard
+              name="친선전"
+              sub="FRIENDLY MATCH"
+              desc="방 만들기 · 코드로 입장"
+              goText="준비 중"
+              onClick={() => playSfx("buzzer")}
+            />
+          </div>
+        </>
+      )}
+
+      {selectedMode === "online" && selectedOnlineMode === "random" && (
+        <>
+          <div className="trainer-region-header">
+            <button
+              className="btn-ghost small"
+              onClick={() =>
+                requestNavigation(() => {
+                  playSfx("click");
+                  setSelectedOnlineMode(null);
+                })
+              }
+            >
+              ◀ 온라인 배틀
+            </button>
+            <div>
+              <strong>랜덤 매칭</strong>
+              <span className="trainer-region-sub"> RANDOM MATCH</span>
+            </div>
+          </div>
+
+          <div className="trainer-list online-matchmaking-trainer-slot">
+            <OnlineMatchmaking
+              save={save}
+              embedded
+              onMatched={onOnlineMatched}
+              onActivityChange={setOnlineMatching}
+              onRegisterCancel={(handler) => {
+                onlineCancelRef.current = handler;
+              }}
+            />
+          </div>
         </>
       )}
 
