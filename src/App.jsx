@@ -8,6 +8,7 @@ import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
 import OnlineBattle from "./components/OnlineBattle.jsx";
+import FriendlyLobbyScreen from "./components/FriendlyLobbyScreen.jsx";
 import {
   loadSave,
   newSave,
@@ -25,6 +26,7 @@ import {
   fetchSave,
   pushSave,
   unlockAdmin,
+  setFriendlyBattleLeaveMatch,
 } from "./state/api.js";
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
@@ -32,7 +34,7 @@ const ADMIN_CODE = "stonemaster";
 
 export default function App() {
   const saveRef = useRef(null);
-  const [screen, setScreen] = useState("menu"); // menu | battle | onlineBattle | shop | deck | dex | tutorial
+  const [screen, setScreen] = useState("menu"); // menu | battle | onlineBattle | friendlyLobby | shop | deck | dex | tutorial
   const [trainer, setTrainer] = useState(null);
   const [onlineMatch, setOnlineMatch] = useState(null);
   const [, forceRender] = useState(0);
@@ -66,6 +68,12 @@ export default function App() {
       playBgm("main");
     }
   }, [authStatus, screen]);
+
+  useEffect(() => {
+    const friendlyBattle = screen === "onlineBattle" && !!onlineMatch?.friendly;
+    document.body.classList.toggle("friendly-online-battle", friendlyBattle);
+    return () => document.body.classList.remove("friendly-online-battle");
+  }, [screen, onlineMatch?.friendly]);
 
   useEffect(
     () => () => {
@@ -118,6 +126,7 @@ export default function App() {
     if (["battle", "onlineBattle"].includes(screen)) {
       setTrainer(null);
       setOnlineMatch(null);
+      setFriendlyBattleLeaveMatch(null);
       setScreen("menu");
     }
   }
@@ -133,6 +142,7 @@ export default function App() {
     saveRef.current = null;
     setUsername(null);
     setOnlineMatch(null);
+    setFriendlyBattleLeaveMatch(null);
     setScreen("menu");
     setTrainer(null);
     setAuthStatus("anon");
@@ -197,13 +207,16 @@ export default function App() {
   }
 
   function enterOnlineBattle(match) {
+    setFriendlyBattleLeaveMatch(match?.friendly ? match.matchId : null);
     setOnlineMatch(match);
     setScreen("onlineBattle");
   }
 
   function leaveOnlineBattle() {
+    const returnToFriendly = !!onlineMatch?.friendly;
+    setFriendlyBattleLeaveMatch(null);
     setOnlineMatch(null);
-    setScreen("menu");
+    setScreen(returnToFriendly ? "friendlyLobby" : "menu");
   }
 
   let body;
@@ -269,6 +282,13 @@ export default function App() {
             onTutorial={() => setScreen("tutorial")}
             onSaveChange={onSaveChange}
             onLogout={onLogout}
+          />
+        )}
+        {screen === "friendlyLobby" && (
+          <FriendlyLobbyScreen
+            save={save}
+            onOnlineMatched={enterOnlineBattle}
+            onBack={() => setScreen("menu")}
           />
         )}
         {screen === "onlineBattle" && onlineMatch && (
