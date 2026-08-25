@@ -1,0 +1,267 @@
+.friendly-room-shell {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(12, 18, 28, 0.86);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.friendly-room-intro,
+.friendly-room-lobby-head {
+  text-align: center;
+}
+
+.friendly-room-kicker {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  opacity: 0.58;
+}
+
+.friendly-room-intro h2,
+.friendly-room-lobby-head h2 {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 36px);
+}
+
+.friendly-room-intro p {
+  margin: 8px 0 0;
+  opacity: 0.7;
+}
+
+.friendly-room-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.friendly-room-entry-card {
+  min-height: 150px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  color: inherit;
+  text-align: left;
+}
+
+button.friendly-room-entry-card {
+  cursor: pointer;
+}
+
+button.friendly-room-entry-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.friendly-room-entry-card strong,
+.friendly-room-entry-card span,
+.friendly-room-entry-card em {
+  display: block;
+}
+
+.friendly-room-entry-card strong {
+  font-size: 20px;
+}
+
+.friendly-room-entry-card span {
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.friendly-room-entry-card em {
+  margin-top: 24px;
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.11em;
+  opacity: 0.8;
+}
+
+.friendly-room-code-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.friendly-room-code-form input {
+  min-width: 0;
+  flex: 1;
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.friendly-room-code-form input:focus {
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
+.friendly-room-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 110, 110, 0.28);
+  border-radius: 10px;
+  background: rgba(120, 15, 25, 0.2);
+  font-size: 13px;
+  text-align: center;
+}
+
+.friendly-room-lobby-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  text-align: left;
+}
+
+.friendly-room-code {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+
+.friendly-room-code span,
+.friendly-room-code small {
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  opacity: 0.55;
+}
+
+.friendly-room-code strong {
+  font-size: 24px;
+  letter-spacing: 0.16em;
+}
+
+.friendly-room-players {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.friendly-player-card {
+  display: grid;
+  align-content: center;
+  min-height: 125px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  text-align: center;
+}
+
+.friendly-player-card.is-ready {
+  border-color: rgba(123, 255, 164, 0.4);
+  box-shadow: inset 0 0 28px rgba(59, 180, 103, 0.08);
+}
+
+.friendly-player-card.is-empty {
+  opacity: 0.55;
+}
+
+.friendly-player-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  opacity: 0.58;
+}
+
+.friendly-player-card strong {
+  margin-top: 8px;
+  font-size: 20px;
+}
+
+.friendly-player-card em {
+  margin-top: 9px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  opacity: 0.72;
+}
+
+.friendly-player-card.is-ready em {
+  opacity: 1;
+}
+
+.friendly-room-versus {
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  font-size: 20px;
+  font-weight: 900;
+  opacity: 0.38;
+}
+
+.friendly-room-status {
+  min-height: 42px;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 13px;
+  text-align: center;
+  opacity: 0.78;
+}
+
+.friendly-room-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.friendly-start-button:disabled {
+  opacity: 0.4;
+}
+
+@media (max-width: 720px) {
+  .friendly-room-shell {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .friendly-room-entry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .friendly-room-lobby-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .friendly-room-code {
+    width: 100%;
+  }
+
+  .friendly-room-players {
+    grid-template-columns: 1fr;
+  }
+
+  .friendly-room-versus {
+    min-height: 24px;
+  }
+
+  .friendly-player-card {
+    min-height: 92px;
+  }
+}
