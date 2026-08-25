@@ -5,6 +5,9 @@ import "./opening-mulligan.css";
 
 let mulliganUid = 1;
 
+const ONLINE_SWAP_OUT_MS = 260;
+const ONLINE_SWAP_IN_MS = 480;
+
 function nextMulliganUid() {
   return `mulligan-${Date.now()}-${mulliganUid++}`;
 }
@@ -97,8 +100,10 @@ export default function OpeningMulligan({ game, onComplete }) {
   const [phase, setPhase] = useState("choose");
   const [error, setError] = useState("");
   const completeRef = useRef(false);
+  const onlineSwapRef = useRef(null);
 
   const hand = game?.players?.player?.hand || [];
+  const handSignature = hand.map((entry) => entry.uid).join("|");
   const first = game?.firstSide === "player";
   const selectedCount = selected.size;
   const choosing = phase === "choose";
@@ -135,19 +140,54 @@ export default function OpeningMulligan({ game, onComplete }) {
     if (!online || phase !== "waiting") return undefined;
 
     let stopped = false;
+
     const checkReady = () => {
       if (stopped) return;
+
       const bridge = getOnlineBattleBridge(game);
+      const swap = onlineSwapRef.current;
+      const currentHand = game?.players?.player?.hand || [];
+
+      if (swap?.selectedIndexes?.length) {
+        const replacementUids = swap.selectedIndexes.map((index) => {
+          const current = currentHand[index];
+          const previousUid = swap.originalUids[index];
+          return current?.uid && current.uid !== previousUid ? current.uid : null;
+        });
+
+        if (replacementUids.every(Boolean)) {
+          onlineSwapRef.current = null;
+          setSelected(new Set(replacementUids));
+          setPhase("incoming");
+          return;
+        }
+
+        // 교체 카드를 선택한 온라인 멀리건은 서버의 새 손패가 도착하기 전에는
+        // battle phase가 열려도 절대 완료하지 않는다.
+        return;
+      }
+
       if (bridge?.canAct?.()) finish();
     };
 
     checkReady();
-    const timer = window.setInterval(checkReady, 80);
+    const timer = window.setInterval(checkReady, 60);
     return () => {
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [game, online, phase]);
+  }, [game, online, phase, handSignature]);
+
+  useEffect(() => {
+    if (!online || phase !== "incoming") return undefined;
+
+    const timer = window.setTimeout(() => {
+      setSelected(new Set());
+      setPhase("waiting");
+    }, ONLINE_SWAP_IN_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [online, phase]);
 
   function toggle(uid) {
     if (!choosing) return;
@@ -167,21 +207,34 @@ export default function OpeningMulligan({ game, onComplete }) {
     }
 
     const cardUids = [...selected];
+    const selectedIndexes = hand
+      .map((entry, index) => (selected.has(entry.uid) ? index : null))
+      .filter((index) => index !== null);
+
+    onlineSwapRef.current = {
+      selectedIndexes,
+      originalUids: hand.map((entry) => entry.uid),
+    };
+
     setError("");
     setPhase(selectedCount > 0 ? "outgoing" : "waiting");
 
     if (selectedCount > 0) {
-      await new Promise((resolve) => window.setTimeout(resolve, 220));
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, ONLINE_SWAP_OUT_MS),
+      );
       setPhase("waiting");
     }
 
     try {
       const ok = await bridge.dispatch({ type: "mulligan", cardUids });
       if (!ok) {
+        onlineSwapRef.current = null;
         setPhase("choose");
         setError("시작 손패 확정에 실패했습니다. 다시 시도해주세요.");
       }
     } catch (err) {
+      onlineSwapRef.current = null;
       setPhase("choose");
       setError(err?.message || "시작 손패 확정에 실패했습니다.");
     }
@@ -231,7 +284,9 @@ export default function OpeningMulligan({ game, onComplete }) {
           <p className="opening-mulligan-help">
             {phase === "waiting"
               ? "내 선택 완료 · 상대의 시작 손패 선택을 기다리는 중입니다."
-              : "원하지 않는 카드를 선택하세요. 선택한 카드만 무작위로 교체됩니다."}
+              : phase === "incoming"
+                ? "교체된 새 카드를 확인하고 있습니다."
+                : "원하지 않는 카드를 선택하세요. 선택한 카드만 무작위로 교체됩니다."}
           </p>
           {error && <p className="online-error">{error}</p>}
         </div>
@@ -286,7 +341,7 @@ export default function OpeningMulligan({ game, onComplete }) {
         <div className="opening-mulligan-actions">
           <div className="opening-mulligan-selected-count" aria-live="polite">
             {phase === "outgoing"
-              ? "선택한 카드를 확정하는 중..."
+              ? "선택한 카드를 교체하는 중..."
               : phase === "incoming"
                 ? "새 카드가 들어왔습니다."
                 : phase === "waiting"
