@@ -1,4 +1,5 @@
 import * as rules from "./engine.rules.js";
+import { CARD_MAP } from "../data/cards.js";
 import {
   getOnlineBattleBridge,
   getOnlineBattleBridgeByMatchId,
@@ -47,6 +48,70 @@ function finishPendingDispatch(sent, callback) {
   return sent !== false;
 }
 
+function evolutionSource(game, side, card, target) {
+  if (!card || !game?.players?.[side]) return null;
+
+  const field = game.players[side].field || [];
+  const evolvesFrom =
+    card.kind === "pokemon" && card.evolvesFrom
+      ? card.evolvesFrom
+      : card.kind === "mega"
+        ? card.megaFor
+        : null;
+
+  if (!evolvesFrom) return null;
+
+  const unit = target?.uid
+    ? field.find((entry) => entry.uid === target.uid && entry.cardId === evolvesFrom)
+    : field.find((entry) => entry.cardId === evolvesFrom);
+
+  if (!unit) return null;
+  return {
+    uid: unit.uid,
+    cardId: unit.cardId,
+    name: unit.name || CARD_MAP[unit.cardId]?.name || unit.cardId,
+  };
+}
+
+function replaceLatestEvolutionLog(game, match, replacement) {
+  if (!Array.isArray(game?.log)) return;
+
+  for (let i = game.log.length - 1; i >= 0; i -= 1) {
+    if (!match(game.log[i])) continue;
+    game.log[i] = replacement;
+    return;
+  }
+}
+
+function enrichEvolutionLog(game, side, card, source, result) {
+  if (!result || !card || !source) return;
+
+  const player = game.players?.[side];
+  const evolved = player?.field?.find((unit) => unit.uid === source.uid);
+  if (!evolved) return;
+
+  const ownerName = player?.name || (side === "player" ? "플레이어" : "상대");
+
+  if (card.kind === "pokemon" && card.evolvesFrom && evolved.cardId === card.id) {
+    const oldLog = `${evolved.name}(으)로 진화했다!`;
+    replaceLatestEvolutionLog(
+      game,
+      (line) => line === oldLog,
+      `${ownerName}의 ${source.name}이(가) ${evolved.name}(으)로 진화했다!`,
+    );
+    return;
+  }
+
+  if (card.kind === "mega" && evolved.mega) {
+    const oldLog = `${evolved.name}(으)로 메가진화했다!!`;
+    replaceLatestEvolutionLog(
+      game,
+      (line) => line === oldLog,
+      `${ownerName}의 ${source.name}이(가) ${evolved.name}(으)로 메가진화했다!!`,
+    );
+  }
+}
+
 export function createGame(deck, trainer, deckShiny = {}) {
   if (trainer?.onlineBattle && trainer?.matchId) {
     const bridge = getOnlineBattleBridgeByMatchId(trainer.matchId);
@@ -71,7 +136,12 @@ export function canAttack(game, side, attackerUid) {
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
-    return rules.playCard(game, side, handIdx, target, fieldIndex);
+    const handCard = game.players?.[side]?.hand?.[handIdx];
+    const card = CARD_MAP[handCard?.cardId];
+    const source = evolutionSource(game, side, card, target);
+    const result = rules.playCard(game, side, handIdx, target, fieldIndex);
+    enrichEvolutionLog(game, side, card, source, result);
+    return result;
   }
 
   if (!bridge.canAct?.()) return false;
