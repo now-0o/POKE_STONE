@@ -13,6 +13,7 @@ import {
   RARITY_REFUND,
   MAX_COPIES,
 } from "../data/cards.js";
+import "../data/packExtensions.js";
 import { STARTER_DECK } from "../data/starterDeck.js";
 import { ensureShinyState, isShinyEligible, SHINY_DUPLICATE_CHANCE } from "./shiny.js";
 
@@ -226,19 +227,29 @@ export function openPack(save, packId = "basic") {
     ).map((card) => card.id);
   }
 
+  // 타입 전용팩은 모든 등급을 지정 타입 포켓몬/기술로 제한한다.
+  if (Array.isArray(pack.typePool) && pack.typePool.length > 0) {
+    const allowedTypes = new Set(pack.typePool);
+    packPool = CARDS.filter((card) => {
+      if (card.kind === "pokemon") return allowedTypes.has(card.type);
+      if (card.kind === "spell") return allowedTypes.has(card.moveType);
+      return false;
+    }).map((card) => card.id);
+  }
+
   const results = [];
   let refundTotal = 0;
   rarities.forEach((rarity) => {
     let pool = null;
 
-    // 세대팩은 모든 등급을 해당 세대로 제한
+    // 세대팩/타입팩은 모든 등급을 해당 풀로 제한
     if (packPool) {
       pool = packPool;
     }
 
-    // 기존 레전드 테마팩은
-    // L이 나왔을 때만 해당 레전드 풀 제한
-    else if (rarity === "L" && pack.legendPool) {
+    // 레전드 테마팩은 L이 나왔을 때 해당 레전드 풀 제한.
+    // 타입팩은 위의 타입 제한보다 더 좁은 전설 풀을 우선한다.
+    if (rarity === "L" && pack.legendPool) {
       pool = pack.legendPool;
     }
 
