@@ -13,16 +13,19 @@ import {
   fetchOnlineState,
   initializeOnlineMatch,
   leaveMatchmaking,
+  leaveMatchmakingKeepalive,
   sendOnlineCommand,
 } from "../state/api.js";
 import { playSfx } from "../audio.js";
 import "../styles/online-battle.css";
+import "../styles/online-battle-runtime.css";
 
 const POLL_MS = 45;
 const COMMAND_RETRY_MS = 30;
 const COMMAND_RETRY_ATTEMPTS = 8;
 const ACTIVE_CONFIRM_DELAY_MS = 12;
 const ACTIVE_CONFIRM_ATTEMPTS = 10;
+const TURN_LIMIT_MS = 60_000;
 const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
 const ONLINE_TRAINER_SPRITE = "ethan";
 
@@ -44,6 +47,17 @@ function syncGameObject(target, source) {
 
 function roomRevision(room) {
   return Number.isInteger(room?.revision) ? room.revision : -1;
+}
+
+function startOnlineTurnClock(game) {
+  const now = Date.now();
+  game._onlineTurnStartedAt = now;
+  game._onlineTurnDeadlineAt = now + TURN_LIMIT_MS;
+}
+
+function clearOnlineTurnClock(game) {
+  game._onlineTurnStartedAt = null;
+  game._onlineTurnDeadlineAt = null;
 }
 
 function remapSide(side) {
@@ -188,6 +202,7 @@ function createInitialOnlineGame(bootstrap) {
     id: bootstrap.matchId,
     seed: bootstrap.seed,
   };
+  clearOnlineTurnClock(game);
   return game;
 }
 
@@ -207,8 +222,6 @@ function applyMulligan(game, side, cardUids, seedText) {
   const returned = originalHand.filter((handCard) => chosen.has(handCard.uid));
   if (!returned.length) return true;
 
-  // 교체 대상만 먼저 빼고 새 카드를 뽑는다. 선택 기준은 끝까지 UID라서
-  // 상대/호스트 snapshot 타이밍과 무관하게 같은 실물 카드를 가리킨다.
   player.hand = originalHand.filter((handCard) => !chosen.has(handCard.uid));
   player.deck = shuffleWithSeed(player.deck || [], `${seedText}:replace`);
 
@@ -218,8 +231,6 @@ function applyMulligan(game, side, cardUids, seedText) {
   }
   const replacements = player.hand.splice(replacementStart, returned.length);
 
-  // 새 카드를 손패 뒤에 몰아넣지 않고, 교체를 선택했던 원래 슬롯에 끼운다.
-  // 멀리건 카드가 좌우로 당겨졌다가 다시 튀는 애니메이션/인덱스 혼선을 방지한다.
   let replacementIndex = 0;
   player.hand = originalHand
     .map((handCard) =>
@@ -359,7 +370,16 @@ function applyHostCommand(game, command, seed) {
     }
 
     if (payload.type === "end_turn") {
+      // 제한시간 만료 시 선택 오버레이가 남아 있어도 다음 턴으로 넘어갈 수 있게
+      // 미완료 선택 상태를 정리한 뒤 공통 턴 종료 로직을 한 번만 실행한다.
+      game.pendingBattlecry = null;
+      game.pendingChoose = null;
+      game.pendingWishmaker = null;
+      game.pendingDeoxysForm = null;
+      game.pendingShayminForm = null;
       battleRules.endTurn(game);
+      if (!game.winner) startOnlineTurnClock(game);
+      else clearOnlineTurnClock(game);
       return { ok: true };
     }
 
@@ -370,6 +390,7 @@ function applyHostCommand(game, command, seed) {
         type: "surrender",
         loserName,
       };
+      clearOnlineTurnClock(game);
       game.log.push(`${loserName}이(가) 항복했다.`);
       return { ok: true };
     }
@@ -387,6 +408,8 @@ export default function OnlineBattle({ match, onBack }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [pendingCommand, setPendingCommand] = useState(null);
+  const [sessionEnded, setSessionEnded] = useState("");
+  const [clockNow, setClockNow] = useState(() => Date.now());
 
   const initializedRef = useRef(false);
   const processingCommandRef = useRef(null);
@@ -395,17 +418,27 @@ export default function OnlineBattle({ match, onBack }) {
   const latestRef = useRef({ room: null });
   const issueRef = useRef(null);
   const busyRef = useRef(false);
+  const syncedRevisionRef = useRef(-1);
+  const timeoutDeadlineRef = useRef(null);
+  const sessionEndedRef = useRef(false);
 
   const displayGame = useMemo(
     () => localViewGame(room?.game, room?.mySide),
     [room?.game, room?.mySide],
   );
 
+  // 서버 state를 shared Battle 객체에 덮어쓰는 것은 revision이 실제로 바뀔 때만 한다.
+  // 같은 revision에서 busy/error 등의 UI state 때문에 OnlineBattle이 재렌더되면,
+  // Battle이 애니메이션 종료 후 로컬에서 제거한 HP 0 포켓몬을 과거 snapshot이
+  // 다시 되살릴 수 있었기 때문에 동일 revision 재복사는 금지한다.
   if (displayGame) {
+    const revision = roomRevision(room);
     if (!sharedGameRef.current) {
       sharedGameRef.current = cloneJson(displayGame);
-    } else {
+      syncedRevisionRef.current = revision;
+    } else if (revision > syncedRevisionRef.current) {
       syncGameObject(sharedGameRef.current, displayGame);
+      syncedRevisionRef.current = revision;
     }
   }
 
@@ -417,9 +450,6 @@ export default function OnlineBattle({ match, onBack }) {
     const nextRevision = roomRevision(next);
     const currentRevision = roomRevision(current);
 
-    // host polling은 pendingCommand가 생길 때 같은 revision의 새 객체를 준다.
-    // 그 객체를 Battle에 넣으면 같은 게임 state를 다시 덮어써서
-    // lastAction/HP/손패 애니메이션이 과거 -> 현재로 왕복한다.
     if (current && nextRevision <= currentRevision) return false;
 
     latestRef.current.room = next;
@@ -427,10 +457,43 @@ export default function OnlineBattle({ match, onBack }) {
     return true;
   }
 
+  function endDisconnectedSession(message = "상대가 웹을 닫았거나 전투방을 나갔습니다.") {
+    if (sessionEndedRef.current) return;
+    if (
+      sharedGameRef.current?.winner ||
+      latestRef.current.room?.phase === "finished"
+    ) {
+      return;
+    }
+
+    sessionEndedRef.current = true;
+    busyRef.current = false;
+    setBusy(false);
+    setPendingCommand(null);
+    setError("");
+    setSessionEnded(message);
+    unregisterOnlineBattleBridge(matchId);
+  }
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+    };
+  }, []);
+
+  // 실제 탭/브라우저 종료나 페이지 이탈에서는 React cleanup 완료를 기다릴 수 없다.
+  // keepalive 요청으로 서버의 현재 match를 즉시 제거해 상대 polling도 종료시킨다.
+  useEffect(() => {
+    const handlePageExit = () => {
+      leaveMatchmakingKeepalive();
+    };
+
+    window.addEventListener("pagehide", handlePageExit);
+    window.addEventListener("beforeunload", handlePageExit);
+    return () => {
+      window.removeEventListener("pagehide", handlePageExit);
+      window.removeEventListener("beforeunload", handlePageExit);
     };
   }, []);
 
@@ -457,7 +520,11 @@ export default function OnlineBattle({ match, onBack }) {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || "온라인 전투방에 입장하지 못했습니다.");
+          if (err?.code === "match_not_found") {
+            endDisconnectedSession("이전 온라인 배틀 연결이 종료되었습니다.");
+          } else {
+            setError(err.message || "온라인 전투방에 입장하지 못했습니다.");
+          }
         }
       }
     }
@@ -476,14 +543,25 @@ export default function OnlineBattle({ match, onBack }) {
 
     const game = cloneJson(snapshot.game);
 
-    // 직전 공격/기술은 애니메이션을 위해 HP 0 카드를 서버 state에 잠시 남긴다.
-    // 다음 명령을 적용하기 전에 한 번만 실제 제거해, 새 revision에서 시체가
-    // 다시 필드에 나타나는 현상을 막는다.
+    // 다음 revision을 만들기 전에 직전 연출에서 남은 실제 HP 0 유닛을 제거한다.
     withOnlineBattleBridgeBypass(() => battleRules.cleanupDeaths(game));
 
     const result = withOnlineBattleBridgeBypass(() =>
       applyHostCommand(game, command, seed),
     );
+
+    // 두 번째 멀리건 확정으로 battle phase가 시작되는 순간 첫 턴 60초를 기록한다.
+    if (
+      result.ok &&
+      command.payload?.type === "mulligan" &&
+      snapshot.phase === "mulligan"
+    ) {
+      const otherMulliganDone =
+        command.side === snapshot.mySide
+          ? !!snapshot.mulligan?.opponent
+          : !!snapshot.mulligan?.me;
+      if (otherMulliganDone) startOnlineTurnClock(game);
+    }
 
     try {
       const committed = await commitOnlineHostState(matchId, {
@@ -522,13 +600,21 @@ export default function OnlineBattle({ match, onBack }) {
       }
     } catch (err) {
       if (mountedRef.current) {
-        try {
-          const refreshed = await fetchOnlineHostState(matchId);
-          if (mountedRef.current) applyCommittedRoom(refreshed);
-        } catch {
-          // 다음 polling에서 다시 서버 권위 상태로 맞춘다.
+        if (err?.code === "match_not_found") {
+          endDisconnectedSession();
+        } else {
+          try {
+            const refreshed = await fetchOnlineHostState(matchId);
+            if (mountedRef.current) applyCommittedRoom(refreshed);
+          } catch (refreshErr) {
+            if (refreshErr?.code === "match_not_found") {
+              endDisconnectedSession();
+            }
+          }
+          if (!sessionEndedRef.current) {
+            setError(err.message || "전투 행동 동기화에 실패했습니다.");
+          }
         }
-        setError(err.message || "전투 행동 동기화에 실패했습니다.");
       }
     } finally {
       processingCommandRef.current = null;
@@ -536,7 +622,7 @@ export default function OnlineBattle({ match, onBack }) {
   }
 
   useEffect(() => {
-    if (!matchId || !bootstrap) return undefined;
+    if (!matchId || !bootstrap || sessionEnded) return undefined;
     let stopped = false;
     let running = false;
 
@@ -550,8 +636,6 @@ export default function OnlineBattle({ match, onBack }) {
           : await fetchOnlineState(matchId);
         if (stopped) return;
 
-        // 화면에는 revision이 실제로 증가했을 때만 적용한다.
-        // 동일 revision의 pendingCommand 변화는 host 처리용으로만 사용한다.
         applyCommittedRoom(next);
         setError("");
 
@@ -561,7 +645,7 @@ export default function OnlineBattle({ match, onBack }) {
       } catch (err) {
         if (!stopped) {
           if (err?.code === "match_not_found") {
-            setError("상대가 전투방을 나갔거나 세션이 종료되었습니다.");
+            endDisconnectedSession();
           } else {
             setError(err.message || "온라인 전투 상태를 동기화하지 못했습니다.");
           }
@@ -577,7 +661,7 @@ export default function OnlineBattle({ match, onBack }) {
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [matchId, bootstrap]);
+  }, [matchId, bootstrap, sessionEnded]);
 
   useEffect(() => {
     if (!pendingCommand || !room) return;
@@ -610,6 +694,17 @@ export default function OnlineBattle({ match, onBack }) {
     );
   }, [room?.revision, displayGame?.turn]);
 
+  const turnDeadline = Number(displayGame?._onlineTurnDeadlineAt) || 0;
+  const remainingMs = turnDeadline ? Math.max(0, turnDeadline - clockNow) : 0;
+  const turnSeconds = turnDeadline ? Math.max(0, Math.ceil(remainingMs / 1000)) : null;
+
+  useEffect(() => {
+    if (room?.phase !== "battle" || !turnDeadline || sessionEnded) return undefined;
+    setClockNow(Date.now());
+    const timer = window.setInterval(() => setClockNow(Date.now()), 200);
+    return () => window.clearInterval(timer);
+  }, [room?.phase, turnDeadline, sessionEnded]);
+
   async function sendWithRetry(command) {
     let lastError = null;
 
@@ -630,7 +725,7 @@ export default function OnlineBattle({ match, onBack }) {
 
   async function confirmOwnCommand(commandId, baseRevision) {
     for (let attempt = 0; attempt < ACTIVE_CONFIRM_ATTEMPTS; attempt += 1) {
-      if (!mountedRef.current || !busyRef.current) return;
+      if (!mountedRef.current || !busyRef.current || sessionEndedRef.current) return;
       await sleep(ACTIVE_CONFIRM_DELAY_MS);
 
       try {
@@ -647,7 +742,7 @@ export default function OnlineBattle({ match, onBack }) {
         }
       } catch (err) {
         if (mountedRef.current && err?.code === "match_not_found") {
-          setError("상대가 전투방을 나갔거나 세션이 종료되었습니다.");
+          endDisconnectedSession();
         }
         return;
       }
@@ -655,7 +750,7 @@ export default function OnlineBattle({ match, onBack }) {
   }
 
   async function issue(command) {
-    if (busyRef.current || !matchId) return false;
+    if (busyRef.current || !matchId || sessionEndedRef.current) return false;
 
     busyRef.current = true;
     setBusy(true);
@@ -694,15 +789,48 @@ export default function OnlineBattle({ match, onBack }) {
       busyRef.current = false;
       setBusy(false);
       setPendingCommand(null);
-      setError(err.message || "행동을 서버로 보내지 못했습니다.");
-      playSfx("buzzer");
+      if (err?.code === "match_not_found") {
+        endDisconnectedSession();
+      } else {
+        setError(err.message || "행동을 서버로 보내지 못했습니다.");
+        playSfx("buzzer");
+      }
       return false;
     }
   }
 
   issueRef.current = issue;
 
-  if (matchId && sharedGameRef.current) {
+  // 제한시간이 0이 되면 현재 턴 플레이어의 브라우저가 일반 end_turn 명령을 보낸다.
+  // deadline 자체는 host가 확정 state에 넣으므로 양쪽 화면이 같은 시간을 기준으로 한다.
+  useEffect(() => {
+    if (
+      sessionEnded ||
+      room?.phase !== "battle" ||
+      displayGame?.turn !== "player" ||
+      !turnDeadline ||
+      turnDeadline > clockNow ||
+      busyRef.current
+    ) {
+      return;
+    }
+
+    if (timeoutDeadlineRef.current === turnDeadline) return;
+    timeoutDeadlineRef.current = turnDeadline;
+
+    Promise.resolve(issueRef.current?.({ type: "end_turn" })).then((ok) => {
+      if (!ok && mountedRef.current && !sessionEndedRef.current) {
+        window.setTimeout(() => {
+          if (sharedGameRef.current?._onlineTurnDeadlineAt === turnDeadline) {
+            timeoutDeadlineRef.current = null;
+            setClockNow(Date.now());
+          }
+        }, 250);
+      }
+    });
+  }, [clockNow, turnDeadline, displayGame?.turn, room?.phase, sessionEnded]);
+
+  if (matchId && sharedGameRef.current && !sessionEnded) {
     registerOnlineBattleBridge(matchId, {
       getGame: () => sharedGameRef.current,
       canAct: () =>
@@ -744,8 +872,10 @@ export default function OnlineBattle({ match, onBack }) {
   if (!bootstrap || !room || !displayGame || !sharedGameRef.current) {
     return (
       <div className="online-battle-loading">
-        <strong>온라인 배틀 동기화 중</strong>
-        <span>{error || "전투 상태를 준비하고 있습니다."}</span>
+        <strong>{sessionEnded ? "온라인 연결 종료" : "온라인 배틀 동기화 중"}</strong>
+        <span>
+          {sessionEnded || error || "전투 상태를 준비하고 있습니다."}
+        </span>
         <button className="btn-secondary" onClick={leaveRoom}>
           메인 메뉴
         </button>
@@ -782,9 +912,32 @@ export default function OnlineBattle({ match, onBack }) {
         onFinish={handleBattleFinish}
       />
 
+      {room.phase === "battle" && turnSeconds !== null && !sessionEnded && (
+        <div
+          className={`online-turn-clock ${displayGame.turn === "player" ? "mine" : "theirs"} ${turnSeconds <= 10 ? "urgent" : ""}`}
+          aria-label={`턴 제한시간 ${turnSeconds}초`}
+        >
+          <span>{displayGame.turn === "player" ? "내 턴" : "상대 턴"}</span>
+          <strong>{turnSeconds}</strong>
+        </div>
+      )}
+
       <div className={`online-sync-state online-sync-overlay ${error ? "error" : ""}`}>
         {error || (busy ? "행동 동기화 중" : "ONLINE")}
       </div>
+
+      {sessionEnded && (
+        <div className="online-session-ended-overlay">
+          <div className="online-session-ended-box">
+            <span>ONLINE SESSION CLOSED</span>
+            <h2>연결 종료</h2>
+            <p>{sessionEnded}</p>
+            <button className="btn-primary" onClick={leaveRoom}>
+              메인 메뉴
+            </button>
+          </div>
+        </div>
+      )}
 
       {room.phase === "finished" && displayGame.winner && (
         <div className="online-result-overlay">
