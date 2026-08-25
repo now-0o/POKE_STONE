@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { deckIsValid } from "../state/save.js";
 import {
+  LEGENDARY_POKEMON_IDS,
+  MAX_LEGENDARY_POKEMON,
+} from "../data/cards.js";
+import {
   joinMatchmaking,
   fetchMatchmakingStatus,
   leaveMatchmaking,
@@ -10,6 +14,13 @@ import "../styles/online-matchmaking.css";
 
 const POLL_MS = 700;
 const MATCH_FOUND_DELAY_MS = 2000;
+
+function countLegendaryPokemon(deck = []) {
+  return deck.reduce(
+    (count, cardId) => count + (LEGENDARY_POKEMON_IDS.has(cardId) ? 1 : 0),
+    0,
+  );
+}
 
 export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) {
   const [status, setStatus] = useState({ status: "idle" });
@@ -75,17 +86,27 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
   );
 
   const deckReady = deckIsValid(save);
+  const legendaryCount = countLegendaryPokemon(save?.deck || []);
+  const legendaryReady = legendaryCount <= MAX_LEGENDARY_POKEMON;
+  const onlineDeckReady = deckReady && legendaryReady;
 
   async function startSearch() {
     if (busy) return;
     if (!isAdmin) {
       playSfx("buzzer");
-      setError("온라인 배틀은 현재 관리자 계정만 이용할 수 있습니다.");
+      setError("온라인 배틀 테스트 권한이 필요합니다. stonemaster 또는 imtester를 입력해주세요.");
       return;
     }
     if (!deckReady) {
       playSfx("buzzer");
       setError("온라인 배틀에는 완성된 30장 덱이 필요합니다.");
+      return;
+    }
+    if (!legendaryReady) {
+      playSfx("buzzer");
+      setError(
+        `온라인 배틀 덱에는 전설 포켓몬을 최대 ${MAX_LEGENDARY_POKEMON}장까지만 넣을 수 있습니다. 현재 ${legendaryCount}장입니다.`,
+      );
       return;
     }
 
@@ -141,7 +162,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
         <button className="btn-ghost small" onClick={backToMenu}>
           ◀ 메인 메뉴
         </button>
-        <div className="online-test-badge">ADMIN TEST</div>
+        <div className="online-test-badge">ONLINE TEST</div>
       </div>
 
       <div className="online-matchmaking-card">
@@ -156,7 +177,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
         {!isAdmin && (
           <div className="online-access-warning">
             <strong>안정성 테스트 중</strong>
-            <span>현재 stonemaster 관리자 계정만 입장할 수 있습니다.</span>
+            <span>stonemaster 또는 imtester 입력 시 온라인 테스트에 참가할 수 있습니다.</span>
           </div>
         )}
 
@@ -167,11 +188,22 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
           </div>
         )}
 
-        {isAdmin && deckReady && status.status === "idle" && (
+        {isAdmin && deckReady && !legendaryReady && (
+          <div className="online-access-warning">
+            <strong>전설 포켓몬 제한 초과</strong>
+            <span>
+              온라인 덱은 전설 포켓몬 최대 {MAX_LEGENDARY_POKEMON}장까지 가능합니다. 현재 {legendaryCount}장입니다.
+            </span>
+          </div>
+        )}
+
+        {isAdmin && onlineDeckReady && status.status === "idle" && (
           <div className="online-idle-panel">
             <span className="online-state-label">RANDOM MATCH</span>
             <strong>현재 덱으로 상대를 찾습니다.</strong>
-            <span>30장 덱 스냅샷은 매칭 참가 시 서버에 고정됩니다.</span>
+            <span>
+              30장 · 전설 최대 {MAX_LEGENDARY_POKEMON}장 조건을 확인한 뒤 덱 스냅샷을 서버에 고정합니다.
+            </span>
             <button className="btn-primary" disabled={busy} onClick={startSearch}>
               {busy ? "참가 중..." : "랜덤 매칭 시작"}
             </button>

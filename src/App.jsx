@@ -28,9 +28,22 @@ import {
   pushSave,
   unlockAdmin,
 } from "./state/api.js";
+import {
+  LEGENDARY_POKEMON_IDS,
+  MAX_LEGENDARY_POKEMON,
+} from "./data/cards.js";
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
 const ADMIN_CODE = "stonemaster";
+const ONLINE_TESTER_CODE = "imtester";
+const CODE_BUFFER_LENGTH = Math.max(ADMIN_CODE.length, ONLINE_TESTER_CODE.length);
+
+function countLegendaryPokemon(deck = []) {
+  return deck.reduce(
+    (count, cardId) => count + (LEGENDARY_POKEMON_IDS.has(cardId) ? 1 : 0),
+    0,
+  );
+}
 
 export default function App() {
   const saveRef = useRef(null);
@@ -145,33 +158,55 @@ export default function App() {
     setAuthStatus("anon");
   }
 
-  // 관리자 모드: stonemaster 입력 시 기존 로컬 치트와 서버 관리자 권한을 함께 활성화한다.
+  // stonemaster: 기존 로컬 관리자 모드 + 온라인 테스트 권한
+  // imtester: 로컬 관리자 모드는 건드리지 않고 온라인 테스트 권한만 활성화
   useEffect(() => {
     function onKeyDown(e) {
       if (authStatus !== "authed") return;
       if (e.target && ["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
       if (e.key.length !== 1) return;
+
       keyBuffer.current = (keyBuffer.current + e.key.toLowerCase()).slice(
-        -ADMIN_CODE.length,
+        -CODE_BUFFER_LENGTH,
       );
-      if (keyBuffer.current !== ADMIN_CODE) return;
 
-      keyBuffer.current = "";
-      activateAdminMode(saveRef.current);
-      onSaveChange(true);
+      if (keyBuffer.current.endsWith(ADMIN_CODE)) {
+        keyBuffer.current = "";
+        activateAdminMode(saveRef.current);
+        onSaveChange(true);
 
-      unlockAdmin(ADMIN_CODE)
-        .then(() => {
-          setIsAdmin(true);
-          setAdminToast(true);
-          setTimeout(() => setAdminToast(false), 1800);
-        })
-        .catch((err) => {
-          setIsAdmin(false);
-          showSyncToast(
-            `로컬 관리자 모드는 켜졌지만 서버 권한 등록에 실패했습니다: ${err?.message || "연결 오류"}`,
-          );
-        });
+        unlockAdmin(ADMIN_CODE)
+          .then(() => {
+            setIsAdmin(true);
+            setAdminToast(true);
+            setTimeout(() => setAdminToast(false), 1800);
+          })
+          .catch((err) => {
+            setIsAdmin(false);
+            showSyncToast(
+              `로컬 관리자 모드는 켜졌지만 서버 권한 등록에 실패했습니다: ${err?.message || "연결 오류"}`,
+            );
+          });
+        return;
+      }
+
+      if (keyBuffer.current.endsWith(ONLINE_TESTER_CODE)) {
+        keyBuffer.current = "";
+
+        // 서버의 기존 온라인 테스트 허용 플래그만 활성화한다.
+        // save.adminMode는 변경하지 않으므로 카드/지역/재화 관리자 기능은 열리지 않는다.
+        unlockAdmin(ADMIN_CODE)
+          .then(() => {
+            setIsAdmin(true);
+            showSyncToast("온라인 배틀 테스트 권한이 활성화되었습니다.");
+          })
+          .catch((err) => {
+            setIsAdmin(false);
+            showSyncToast(
+              `온라인 테스트 권한 등록에 실패했습니다: ${err?.message || "연결 오류"}`,
+            );
+          });
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -201,6 +236,18 @@ export default function App() {
     setTrainer(null);
     setScreen("menu");
     onSaveChange();
+  }
+
+  function enterOnlineLobby() {
+    const save = saveRef.current;
+    const legendaryCount = countLegendaryPokemon(save?.deck || []);
+    if (legendaryCount > MAX_LEGENDARY_POKEMON) {
+      showSyncToast(
+        `온라인 배틀 덱에는 전설 포켓몬을 최대 ${MAX_LEGENDARY_POKEMON}장까지만 넣을 수 있습니다. 현재 ${legendaryCount}장입니다.`,
+      );
+      return;
+    }
+    setScreen("online");
   }
 
   function enterOnlineBattle(match) {
@@ -269,7 +316,7 @@ export default function App() {
             save={save}
             username={username}
             onlineAdmin={isAdmin}
-            onOnline={() => setScreen("online")}
+            onOnline={enterOnlineLobby}
             onBattle={startBattle}
             onShop={() => setScreen("shop")}
             onDeck={() => setScreen("deck")}
