@@ -4,6 +4,7 @@ import {
   fetchFriendlyRoom,
   joinFriendlyRoom,
   leaveFriendlyRoom,
+  leaveFriendlyRoomKeepalive,
   setFriendlyReady,
   startFriendlyMatch,
 } from "../state/friendlyApi.js";
@@ -73,6 +74,21 @@ export default function OnlineFriendlyRoom({
   useEffect(() => {
     onActivityChange?.(!!room);
   }, [room, onActivityChange]);
+
+  useEffect(() => {
+    const handlePageExit = () => {
+      if (roomRef.current && !matchedRef.current) {
+        leaveFriendlyRoomKeepalive();
+      }
+    };
+
+    window.addEventListener("pagehide", handlePageExit);
+    window.addEventListener("beforeunload", handlePageExit);
+    return () => {
+      window.removeEventListener("pagehide", handlePageExit);
+      window.removeEventListener("beforeunload", handlePageExit);
+    };
+  }, []);
 
   useEffect(() => {
     if (!room || matchedRef.current) return undefined;
