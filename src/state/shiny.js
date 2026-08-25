@@ -1,4 +1,10 @@
-import { CARD_MAP, DEX, MAX_COPIES } from "../data/cards.js";
+import {
+  CARD_MAP,
+  DEX,
+  MAX_COPIES,
+  MAX_LEGENDARY_POKEMON,
+  isLegendaryPokemon,
+} from "../data/cards.js";
 
 export const SHINY_DUPLICATE_CHANCE = 0.02;
 
@@ -9,6 +15,13 @@ function clampInt(value, min, max) {
 
 function countDeck(deck, cardId) {
   return (deck || []).reduce((count, id) => count + (id === cardId ? 1 : 0), 0);
+}
+
+function countLegendaryPokemon(deck) {
+  return (deck || []).reduce(
+    (count, cardId) => count + (isLegendaryPokemon(CARD_MAP[cardId]) ? 1 : 0),
+    0,
+  );
 }
 
 export function isShinyEligible(card) {
@@ -94,6 +107,12 @@ export function canAddDeckVariant(save, cardId, shiny = false) {
   const owned = save.collection[cardId] || 0;
   const max = Math.min(MAX_COPIES[card.rarity] ?? 2, owned);
   if (save.deck.length >= 30 || total >= max) return false;
+  if (
+    isLegendaryPokemon(card) &&
+    countLegendaryPokemon(save.deck) >= MAX_LEGENDARY_POKEMON
+  ) {
+    return false;
+  }
   if (shiny && (save.deckShiny?.[cardId] || 0) >= (save.shinyCollection?.[cardId] || 0)) {
     return false;
   }
