@@ -127,7 +127,21 @@ export function createGame(deck, trainer, deckShiny = {}) {
     const sharedGame = bridge?.getGame?.();
     if (sharedGame) return sharedGame;
   }
-  return rules.createGame(deck, trainer, deckShiny);
+
+  // 온라인 배틀에서는 상대 덱이 trainer(enemy) 경로로 생성된다.
+  // player 쪽 퀘스트는 base 엔진이 이미 첫 손패에 강제하지만 enemy 쪽은
+  // trainer.startingCard를 통해서만 보장되므로 같은 규칙을 연결한다.
+  let resolvedTrainer = trainer;
+  if (
+    trainer?.onlineBattle &&
+    Array.isArray(trainer.deck) &&
+    trainer.deck.includes("letsgo_eevee") &&
+    !trainer.startingCard
+  ) {
+    resolvedTrainer = { ...trainer, startingCard: "letsgo_eevee" };
+  }
+
+  return rules.createGame(deck, resolvedTrainer, deckShiny);
 }
 
 export function canPlayCard(game, side, handIdx) {
