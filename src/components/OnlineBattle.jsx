@@ -201,22 +201,33 @@ function restoreShinyToDeck(player, card) {
 function applyMulligan(game, side, cardUids, seedText) {
   const player = game.players?.[side];
   if (!player) return false;
+
   const chosen = new Set(cardUids || []);
-  const kept = [];
-  const returned = [];
+  const originalHand = [...(player.hand || [])];
+  const returned = originalHand.filter((handCard) => chosen.has(handCard.uid));
+  if (!returned.length) return true;
 
-  for (const handCard of player.hand || []) {
-    if (chosen.has(handCard.uid)) returned.push(handCard);
-    else kept.push(handCard);
-  }
-
-  // 선택/교체는 배열 index가 아니라 카드 UID로 고정한다.
-  // 양쪽 멀리건이 가까운 시점에 확정돼도 기존 카드와 새 카드가 섞이지 않는다.
-  player.hand = kept;
+  // 교체 대상만 먼저 빼고 새 카드를 뽑는다. 선택 기준은 끝까지 UID라서
+  // 상대/호스트 snapshot 타이밍과 무관하게 같은 실물 카드를 가리킨다.
+  player.hand = originalHand.filter((handCard) => !chosen.has(handCard.uid));
   player.deck = shuffleWithSeed(player.deck || [], `${seedText}:replace`);
+
+  const replacementStart = player.hand.length;
   for (let i = 0; i < returned.length; i += 1) {
     battleRules.drawCard(game, side, true);
   }
+  const replacements = player.hand.splice(replacementStart, returned.length);
+
+  // 새 카드를 손패 뒤에 몰아넣지 않고, 교체를 선택했던 원래 슬롯에 끼운다.
+  // 멀리건 카드가 좌우로 당겨졌다가 다시 튀는 애니메이션/인덱스 혼선을 방지한다.
+  let replacementIndex = 0;
+  player.hand = originalHand
+    .map((handCard) =>
+      chosen.has(handCard.uid)
+        ? replacements[replacementIndex++] || null
+        : handCard,
+    )
+    .filter(Boolean);
 
   for (const handCard of returned) {
     player.deck.push(handCard.cardId);
