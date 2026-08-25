@@ -14,10 +14,13 @@ const API_BASE = (() => {
 const TOKEN_KEY = 'pkm_stone_token';
 const USERNAME_KEY = 'pkm_stone_username';
 const ADMIN_KEY = 'pkm_stone_server_admin';
+const ONLINE_BURST_ATTEMPTS = 3;
+const ONLINE_BURST_DELAY_MS = 20;
 
 let saveWriteQueue = Promise.resolve();
 let saveRevision = 0;
 let saveSyncEpoch = 0;
+const onlineStateCache = new Map();
 
 function setServerRevision(revision, invalidateQueuedWrites = false) {
   saveRevision = Number.isInteger(revision) && revision >= 0 ? revision : 0;
@@ -38,6 +41,45 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function onlineStateSignature(data, host) {
+  return [
+    Number.isInteger(data?.revision) ? data.revision : -1,
+    data?.phase || '',
+    data?.lastCommand?.id ?? '',
+    host ? (data?.pendingCommand?.id ?? '') : '',
+    data?.mulligan?.me ? 1 : 0,
+    data?.mulligan?.opponent ? 1 : 0,
+  ].join(':');
+}
+
+async function fetchOnlineSnapshot(matchId, host = false) {
+  const encodedId = encodeURIComponent(matchId);
+  const cacheKey = `${host ? 'host' : 'client'}:${matchId}`;
+  const previous = onlineStateCache.get(cacheKey) || null;
+  const path = host
+    ? `/online/match/${encodedId}/host`
+    : `/online/match/${encodedId}/state`;
+
+  for (let attempt = 0; attempt < ONLINE_BURST_ATTEMPTS; attempt += 1) {
+    const data = await req(path, { method: 'GET' });
+    const signature = onlineStateSignature(data, host);
+
+    if (!previous || signature !== previous.signature) {
+      onlineStateCache.set(cacheKey, { signature, data });
+      return data;
+    }
+
+    if (attempt < ONLINE_BURST_ATTEMPTS - 1) {
+      await sleep(ONLINE_BURST_DELAY_MS);
+    }
+  }
+
+  // revision/phase/command가 그대로라면 같은 객체를 그대로 반환한다.
+  // React가 불필요한 재렌더를 건너뛰므로 Battle이 애니메이션 종료 뒤
+  // 로컬에서 제거한 HP 0 포켓몬을 동일 서버 snapshot이 다시 되살리지 않는다.
+  return previous.data;
+}
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -54,6 +96,7 @@ export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(ADMIN_KEY);
+  onlineStateCache.clear();
   setServerRevision(0, true);
 }
 
@@ -163,6 +206,7 @@ export async function fetchMatchmakingStatus() {
 }
 
 export async function leaveMatchmaking() {
+  onlineStateCache.clear();
   return req('/matchmaking/leave', { method: 'POST', body: '{}' });
 }
 
@@ -188,18 +232,20 @@ export async function fetchOnlineBootstrap(matchId) {
 }
 
 export async function initializeOnlineMatch(matchId, game) {
-  return req(`/online/match/${encodeURIComponent(matchId)}/initialize`, {
+  const data = await req(`/online/match/${encodeURIComponent(matchId)}/initialize`, {
     method: 'POST',
     body: JSON.stringify({ game }),
   });
+  onlineStateCache.clear();
+  return data;
 }
 
 export async function fetchOnlineState(matchId) {
-  return req(`/online/match/${encodeURIComponent(matchId)}/state`, { method: 'GET' });
+  return fetchOnlineSnapshot(matchId, false);
 }
 
 export async function fetchOnlineHostState(matchId) {
-  return req(`/online/match/${encodeURIComponent(matchId)}/host`, { method: 'GET' });
+  return fetchOnlineSnapshot(matchId, true);
 }
 
 export async function sendOnlineCommand(matchId, command) {
@@ -221,7 +267,7 @@ export async function sendOnlineCommand(matchId, command) {
 
       // 양쪽이 멀리건 확정을 동시에 눌러도 단일 host command 슬롯 때문에
       // 사용자가 두 번 누르지 않도록 첫 요청을 자동 재시도한다.
-      await sleep(350);
+      await sleep(120);
     }
   }
 
