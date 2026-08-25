@@ -198,12 +198,7 @@ export default function OnlineMatchmaking({ save, isAdmin, onBack, onMatched }) 
         )}
 
         {isAdmin && onlineDeckReady && status.status === "idle" && (
-          <div className="online-idle-panel">
-            <span className="online-state-label">RANDOM MATCH</span>
-            <strong>현재 덱으로 상대를 찾습니다.</strong>
-            <span>
-              30장 · 전설 최대 {MAX_LEGENDARY_POKEMON}장 조건을 확인한 뒤 덱 스냅샷을 서버에 고정합니다.
-            </span>
+          <div className="online-idle-panel compact">
             <button className="btn-primary" disabled={busy} onClick={startSearch}>
               {busy ? "참가 중..." : "랜덤 매칭 시작"}
             </button>
