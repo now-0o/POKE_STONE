@@ -7,7 +7,6 @@ import CardDex from "./components/CardDex.jsx";
 import Tutorial from "./components/Tutorial.jsx";
 import Auth from "./components/Auth.jsx";
 import PatchNotes from "./components/PatchNotes.jsx";
-import OnlineMatchmaking from "./components/OnlineMatchmaking.jsx";
 import OnlineBattle from "./components/OnlineBattle.jsx";
 import {
   loadSave,
@@ -28,26 +27,15 @@ import {
   pushSave,
   unlockAdmin,
 } from "./state/api.js";
-import {
-  LEGENDARY_POKEMON_IDS,
-  MAX_LEGENDARY_POKEMON,
-} from "./data/cards.js";
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
 const ADMIN_CODE = "stonemaster";
 const ONLINE_TESTER_CODE = "imtester";
 const CODE_BUFFER_LENGTH = Math.max(ADMIN_CODE.length, ONLINE_TESTER_CODE.length);
 
-function countLegendaryPokemon(deck = []) {
-  return deck.reduce(
-    (count, cardId) => count + (LEGENDARY_POKEMON_IDS.has(cardId) ? 1 : 0),
-    0,
-  );
-}
-
 export default function App() {
   const saveRef = useRef(null);
-  const [screen, setScreen] = useState("menu"); // menu | battle | online | onlineBattle | shop | deck | dex | tutorial
+  const [screen, setScreen] = useState("menu"); // menu | battle | onlineBattle | shop | deck | dex | tutorial
   const [trainer, setTrainer] = useState(null);
   const [onlineMatch, setOnlineMatch] = useState(null);
   const [, forceRender] = useState(0);
@@ -133,7 +121,7 @@ export default function App() {
   }
 
   function setSelectedBattleStateAfterSync() {
-    if (["battle", "online", "onlineBattle"].includes(screen)) {
+    if (["battle", "onlineBattle"].includes(screen)) {
       setTrainer(null);
       setOnlineMatch(null);
       setScreen("menu");
@@ -238,18 +226,6 @@ export default function App() {
     onSaveChange();
   }
 
-  function enterOnlineLobby() {
-    const save = saveRef.current;
-    const legendaryCount = countLegendaryPokemon(save?.deck || []);
-    if (legendaryCount > MAX_LEGENDARY_POKEMON) {
-      showSyncToast(
-        `온라인 배틀 덱에는 전설 포켓몬을 최대 ${MAX_LEGENDARY_POKEMON}장까지만 넣을 수 있습니다. 현재 ${legendaryCount}장입니다.`,
-      );
-      return;
-    }
-    setScreen("online");
-  }
-
   function enterOnlineBattle(match) {
     setOnlineMatch(match);
     setScreen("onlineBattle");
@@ -316,7 +292,7 @@ export default function App() {
             save={save}
             username={username}
             onlineAdmin={isAdmin}
-            onOnline={enterOnlineLobby}
+            onOnlineMatched={enterOnlineBattle}
             onBattle={startBattle}
             onShop={() => setScreen("shop")}
             onDeck={() => setScreen("deck")}
@@ -324,14 +300,6 @@ export default function App() {
             onTutorial={() => setScreen("tutorial")}
             onSaveChange={onSaveChange}
             onLogout={onLogout}
-          />
-        )}
-        {screen === "online" && (
-          <OnlineMatchmaking
-            save={save}
-            isAdmin={isAdmin}
-            onMatched={enterOnlineBattle}
-            onBack={() => setScreen("menu")}
           />
         )}
         {screen === "onlineBattle" && onlineMatch && (
