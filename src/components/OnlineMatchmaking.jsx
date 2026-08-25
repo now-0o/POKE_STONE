@@ -11,6 +11,7 @@ import {
 } from "../state/api.js";
 import { playSfx } from "../audio.js";
 import "../styles/online-matchmaking.css";
+import "../styles/online-matchmaking-state-card.css";
 
 const POLL_MS = 700;
 const MATCH_FOUND_DELAY_MS = 2000;
@@ -181,6 +182,107 @@ export default function OnlineMatchmaking({
     onBack?.();
   }
 
+  let stateContent = null;
+
+  if (!isAdmin) {
+    stateContent = (
+      <div key="locked" className="online-matchmaking-state online-warning-state">
+        <div className="online-orb" aria-hidden="true">
+          <span />
+        </div>
+        <h2>온라인 배틀</h2>
+        <div className="online-access-warning">
+          <strong>안정성 테스트 중</strong>
+          <span>stonemaster 또는 imtester 입력 시 온라인 테스트에 참가할 수 있습니다.</span>
+        </div>
+      </div>
+    );
+  } else if (!deckReady) {
+    stateContent = (
+      <div key="deck-warning" className="online-matchmaking-state online-warning-state">
+        <div className="online-orb" aria-hidden="true">
+          <span />
+        </div>
+        <h2>온라인 배틀</h2>
+        <div className="online-access-warning">
+          <strong>덱 준비 필요</strong>
+          <span>컬렉션 · 덱에서 사용할 30장 덱을 완성해주세요.</span>
+        </div>
+      </div>
+    );
+  } else if (!legendaryReady) {
+    stateContent = (
+      <div key="legend-warning" className="online-matchmaking-state online-warning-state">
+        <div className="online-orb" aria-hidden="true">
+          <span />
+        </div>
+        <h2>온라인 배틀</h2>
+        <div className="online-access-warning">
+          <strong>전설 포켓몬 제한 초과</strong>
+          <span>
+            온라인 덱은 전설 포켓몬 최대 {MAX_LEGENDARY_POKEMON}장까지 가능합니다. 현재 {legendaryCount}장입니다.
+          </span>
+        </div>
+      </div>
+    );
+  } else if (onlineDeckReady && status.status === "idle") {
+    stateContent = (
+      <div key="idle" className="online-matchmaking-state online-ready-state">
+        <div className="online-orb" aria-hidden="true">
+          <span />
+        </div>
+        <h2>온라인 배틀</h2>
+        <p className="online-matchmaking-subtitle">
+          같은 테스트 서버에 접속한 상대와 랜덤으로 매칭합니다.
+        </p>
+        <button className="btn-primary" disabled={busy} onClick={startSearch}>
+          {busy ? "참가 중..." : "랜덤 매칭 시작"}
+        </button>
+      </div>
+    );
+  } else if (status.status === "searching") {
+    stateContent = (
+      <div key="searching" className="online-matchmaking-state online-searching-state">
+        <div className="online-search-pulse" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
+        <span className="online-state-label">SEARCHING</span>
+        <strong className="online-state-title">상대를 찾는 중...</strong>
+        <span className="online-state-detail">
+          대기 순서 {status.queuePosition || 1} · 서버 연결 유지 중
+        </span>
+        <button className="btn-secondary" disabled={busy} onClick={() => cancelSearch()}>
+          {busy ? "취소 중..." : "매칭 취소"}
+        </button>
+      </div>
+    );
+  } else if (status.status === "matched") {
+    stateContent = (
+      <div key="matched" className="online-matchmaking-state online-matched-state">
+        <span className="online-state-label">MATCH FOUND</span>
+        <div className="online-versus-row">
+          <div>
+            <small>YOU</small>
+            <strong>나</strong>
+          </div>
+          <b>VS</b>
+          <div>
+            <small>OPPONENT</small>
+            <strong>{status.opponent?.username || "상대"}</strong>
+          </div>
+        </div>
+        <div className="online-match-meta">
+          <span>{status.goesFirst ? "선공" : "후공"}</span>
+          <span>SEAT {status.seat || "-"}</span>
+          <span>#{String(status.matchId || "").slice(0, 8)}</span>
+        </div>
+        <p>매칭 완료! 잠시 후 배틀을 시작합니다.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`online-matchmaking-screen ${embedded ? "embedded" : ""}`}>
       {!embedded && (
@@ -192,88 +294,9 @@ export default function OnlineMatchmaking({
         </div>
       )}
 
-      <div className="online-matchmaking-card">
-        <div className="online-orb" aria-hidden="true">
-          <span />
-        </div>
-        <h2>온라인 배틀</h2>
-        <p className="online-matchmaking-subtitle">
-          같은 테스트 서버에 접속한 상대와 랜덤으로 매칭합니다.
-        </p>
-
-        {!isAdmin && (
-          <div className="online-access-warning">
-            <strong>안정성 테스트 중</strong>
-            <span>stonemaster 또는 imtester 입력 시 온라인 테스트에 참가할 수 있습니다.</span>
-          </div>
-        )}
-
-        {isAdmin && !deckReady && (
-          <div className="online-access-warning">
-            <strong>덱 준비 필요</strong>
-            <span>컬렉션 · 덱에서 사용할 30장 덱을 완성해주세요.</span>
-          </div>
-        )}
-
-        {isAdmin && deckReady && !legendaryReady && (
-          <div className="online-access-warning">
-            <strong>전설 포켓몬 제한 초과</strong>
-            <span>
-              온라인 덱은 전설 포켓몬 최대 {MAX_LEGENDARY_POKEMON}장까지 가능합니다. 현재 {legendaryCount}장입니다.
-            </span>
-          </div>
-        )}
-
-        {isAdmin && onlineDeckReady && status.status === "idle" && (
-          <div className="online-idle-panel compact">
-            <button className="btn-primary" disabled={busy} onClick={startSearch}>
-              {busy ? "참가 중..." : "랜덤 매칭 시작"}
-            </button>
-          </div>
-        )}
-
-        {status.status === "searching" && (
-          <div className="online-searching-panel">
-            <div className="online-search-pulse" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </div>
-            <span className="online-state-label">SEARCHING</span>
-            <strong>상대를 찾는 중...</strong>
-            <span>
-              대기 순서 {status.queuePosition || 1} · 서버 연결 유지 중
-            </span>
-            <button className="btn-secondary" disabled={busy} onClick={() => cancelSearch()}>
-              매칭 취소
-            </button>
-          </div>
-        )}
-
-        {status.status === "matched" && (
-          <div className="online-matched-panel">
-            <span className="online-state-label">MATCH FOUND</span>
-            <div className="online-versus-row">
-              <div>
-                <small>YOU</small>
-                <strong>나</strong>
-              </div>
-              <b>VS</b>
-              <div>
-                <small>OPPONENT</small>
-                <strong>{status.opponent?.username || "상대"}</strong>
-              </div>
-            </div>
-            <div className="online-match-meta">
-              <span>{status.goesFirst ? "선공" : "후공"}</span>
-              <span>SEAT {status.seat || "-"}</span>
-              <span>#{String(status.matchId || "").slice(0, 8)}</span>
-            </div>
-            <p>매칭 완료! 잠시 후 배틀을 시작합니다.</p>
-          </div>
-        )}
-
-        {error && <div className="online-error">{error}</div>}
+      <div className={`online-matchmaking-card state-${status.status}`}>
+        {stateContent}
+        {error && <div className="online-error online-state-error">{error}</div>}
       </div>
     </div>
   );

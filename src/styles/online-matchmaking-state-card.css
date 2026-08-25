@@ -1,0 +1,171 @@
+/* 온라인 매칭은 하나의 카드 안에서 idle/searching/matched 상태를 교체한다. */
+.online-matchmaking-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.online-matchmaking-state {
+  width: min(520px, 100%);
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: online-match-state-enter 0.34s cubic-bezier(0.2, 0.86, 0.24, 1) both;
+  transform-origin: 50% 50%;
+}
+
+.online-ready-state .online-orb,
+.online-warning-state .online-orb {
+  margin: 0 auto;
+}
+
+.online-ready-state h2,
+.online-warning-state h2 {
+  margin: 10px 0 4px;
+}
+
+.online-ready-state .online-matchmaking-subtitle {
+  margin: 0;
+}
+
+.online-ready-state > .btn-primary {
+  min-width: 190px;
+  margin-top: 20px;
+}
+
+.online-warning-state .online-access-warning {
+  margin-top: 14px;
+}
+
+.online-searching-state {
+  gap: 9px;
+}
+
+.online-searching-state .online-search-pulse {
+  margin-bottom: 3px;
+}
+
+.online-searching-state .online-state-title {
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.online-state-detail {
+  color: rgba(232, 241, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.online-searching-state > .btn-secondary {
+  min-width: 180px;
+  margin-top: 12px;
+}
+
+.online-matched-state {
+  gap: 9px;
+}
+
+.online-matched-state .online-versus-row {
+  width: 100%;
+  margin: 4px 0 2px;
+}
+
+.online-matched-state > p {
+  margin: 2px 0 0;
+  color: rgba(232, 241, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.online-state-error {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  z-index: 2;
+  width: min(520px, calc(100% - 28px));
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+/* 트레이너 목록 안에 들어간 카드의 세로 중심을 더 확실히 고정한다. */
+.online-matchmaking-screen.embedded .online-matchmaking-card {
+  min-height: 300px;
+  padding: 22px 28px;
+}
+
+.online-matchmaking-screen.embedded .online-matchmaking-state {
+  min-height: 250px;
+}
+
+/* 기존 검색 패널 박스 스타일 대신 외곽 카드 하나만 보이게 한다. */
+.online-matchmaking-screen.embedded .online-searching-state,
+.online-matchmaking-screen.embedded .online-matched-state {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+@keyframes online-match-state-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.965);
+    filter: blur(3px);
+  }
+  58% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.012);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  .online-matchmaking-screen.embedded .online-matchmaking-card {
+    min-height: 250px;
+    padding: 16px 14px;
+  }
+
+  .online-matchmaking-screen.embedded .online-matchmaking-state {
+    min-height: 218px;
+  }
+
+  .online-ready-state > .btn-primary,
+  .online-searching-state > .btn-secondary {
+    min-width: 170px;
+    margin-top: 14px;
+  }
+
+  .online-searching-state .online-state-title {
+    font-size: 17px;
+  }
+}
+
+@media (max-height: 560px) {
+  .online-matchmaking-screen.embedded .online-matchmaking-card {
+    min-height: 215px;
+    padding-block: 10px;
+  }
+
+  .online-matchmaking-screen.embedded .online-matchmaking-state {
+    min-height: 195px;
+  }
+
+  .online-ready-state > .btn-primary,
+  .online-searching-state > .btn-secondary {
+    margin-top: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .online-matchmaking-state {
+    animation: none !important;
+  }
+}
