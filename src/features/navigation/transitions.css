@@ -8,6 +8,14 @@
   transform-origin: 50% 50%;
 }
 
+/*
+ * fixed 오버레이가 실제 viewport가 아니라 .main-menu를 containing block으로
+ * 잡지 않도록 진입 애니메이션 종료 후 transform/filter를 남기지 않는다.
+ */
+.main-menu {
+  animation-fill-mode: none;
+}
+
 .online-matchmaking-screen {
   animation: game-online-enter 0.38s cubic-bezier(0.16, 0.86, 0.24, 1) both;
   transform-origin: 50% 30%;
