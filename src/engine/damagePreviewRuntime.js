@@ -58,16 +58,14 @@ function previewAttack(game, attackerUid, targetUid) {
   const cloned = cloneGame(game);
   if (!cloned) return null;
 
-  const attackerBefore = cloned.players?.player?.field?.find(
+  const attacker = cloned.players?.player?.field?.find(
     (unit) => unit.uid === attackerUid,
   );
-  const targetBefore = cloned.players?.enemy?.field?.find(
+  const target = cloned.players?.enemy?.field?.find(
     (unit) => unit.uid === targetUid,
   );
-  if (!attackerBefore || !targetBefore) return null;
+  if (!attacker || !target) return null;
 
-  const targetHp = Math.max(0, Number(targetBefore.hp) || 0);
-  const attackerHp = Math.max(0, Number(attackerBefore.hp) || 0);
   const ok = rules.attack(cloned, "player", attackerUid, { uid: targetUid });
   if (!ok) return null;
 
@@ -79,8 +77,6 @@ function previewAttack(game, attackerUid, targetUid) {
     kind: "attack",
     dealt,
     received,
-    lethal: targetHp > 0 && dealt >= targetHp,
-    selfLethal: attackerHp > 0 && received >= attackerHp,
   };
 }
 
@@ -98,12 +94,11 @@ function previewTechnique(game, handIdx, targetUid) {
 
   const cloned = cloneGame(game);
   if (!cloned) return null;
-  const targetBefore = cloned.players?.enemy?.field?.find(
+  const target = cloned.players?.enemy?.field?.find(
     (unit) => unit.uid === targetUid,
   );
-  if (!targetBefore) return null;
+  if (!target) return null;
 
-  const targetHp = Math.max(0, Number(targetBefore.hp) || 0);
   const ok = rules.playCard(cloned, "player", handIdx, { uid: targetUid });
   if (!ok) return null;
 
@@ -111,7 +106,6 @@ function previewTechnique(game, handIdx, targetUid) {
   return {
     kind: "technique",
     dealt,
-    lethal: targetHp > 0 && dealt >= targetHp,
   };
 }
 
@@ -170,16 +164,16 @@ function renderPreview(targetEl, preview) {
   if (preview.kind === "attack") {
     el.innerHTML = `
       <div class="damage-preview-row damage-preview-deal">
-        <span>주는 피해</span><strong>${preview.dealt}</strong>${preview.lethal ? '<em>처치</em>' : ""}
+        <span>주는 피해</span><strong>${preview.dealt}</strong>
       </div>
       <div class="damage-preview-row damage-preview-take">
-        <span>받는 피해</span><strong>${preview.received}</strong>${preview.selfLethal ? '<em>위험</em>' : ""}
+        <span>받는 피해</span><strong>${preview.received}</strong>
       </div>
     `;
   } else {
     el.innerHTML = `
       <div class="damage-preview-row damage-preview-deal">
-        <span>예상 피해</span><strong>${preview.dealt}</strong>${preview.lethal ? '<em>처치</em>' : ""}
+        <span>예상 피해</span><strong>${preview.dealt}</strong>
       </div>
     `;
   }
