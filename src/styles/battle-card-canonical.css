@@ -133,3 +133,9 @@
   height: 15px !important;
   border-width: 2px !important;
 }
+
+/* Legacy Kyurem Glaciate UI is superseded by kyuremSealRuntime. */
+.unova-glaciate-overlay,
+.unova-sealed-hand-hud {
+  display: none !important;
+}
