@@ -10,6 +10,73 @@ export * from "./engine.rules.js";
 
 const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
 
+const STATUS_TYPE_IMMUNITIES = {
+  poison: new Set(["독", "강철"]),
+  burn: new Set(["불꽃"]),
+  para: new Set(["전기"]),
+  ice: new Set(["얼음"]),
+};
+
+const STATUS_LABELS = {
+  poison: "독",
+  burn: "화상",
+  para: "마비",
+  ice: "얼음",
+};
+
+function normalizeStatusType(statusType) {
+  return statusType === "paralyze" ? "para" : statusType;
+}
+
+function isTypeStatusImmune(unit, statusType) {
+  if (!unit) return false;
+  const normalized = normalizeStatusType(statusType);
+  return STATUS_TYPE_IMMUNITIES[normalized]?.has(unit.type) || false;
+}
+
+function pushEngineLog(game, message) {
+  if (!Array.isArray(game?.log) || !message) return;
+  game.log.push(message);
+  if (game.log.length > 60) game.log.shift();
+}
+
+function normalizeTypeStatusImmunities(game) {
+  if (!game?.players) return false;
+  let changed = false;
+
+  for (const side of ["player", "enemy"]) {
+    for (const unit of game.players?.[side]?.field || []) {
+      let statusType = normalizeStatusType(unit.status);
+
+      // 구형 상태값 frozen도 얼음 타입 면역 규칙에 포함한다.
+      if (!statusType && (unit.frozen || 0) > 0) statusType = "ice";
+      if (!statusType || !isTypeStatusImmune(unit, statusType)) continue;
+
+      unit.status = null;
+      unit.statusTurns = 0;
+      unit.frozen = 0;
+      changed = true;
+
+      const label = STATUS_LABELS[statusType] || statusType;
+      pushEngineLog(
+        game,
+        `${unit.name}은(는) ${unit.type} 타입이라 ${label} 상태이상을 무효화했다!`,
+      );
+    }
+  }
+
+  return changed;
+}
+
+function runRulesAction(game, callback) {
+  // 구버전/온라인 동기화 상태에 잘못 남아 있는 상태이상도 행동 전에 제거한다.
+  normalizeTypeStatusImmunities(game);
+  const result = callback();
+  // 이번 행동에서 새로 걸린 타입 불가 상태이상도 즉시 제거한다.
+  normalizeTypeStatusImmunities(game);
+  return result;
+}
+
 function rememberPreviewGame(game) {
   registerDamagePreviewGame(game);
   return game;
@@ -83,48 +150,82 @@ function evolutionSource(game, side, card, target) {
 function promoteLatestEvolutionLog(game, match, replacement) {
   if (!Array.isArray(game?.log)) return;
 
+  // 기존 짧은 진화 문구나 이전 보정 문구가 있으면 모두 지우고,
+  // 실제 진화 성공을 기준으로 가장 마지막 로그에 한 줄만 남긴다.
   for (let i = game.log.length - 1; i >= 0; i -= 1) {
-    if (!match(game.log[i])) continue;
-
-    // 진화 직후 전투의 함성/특성 로그가 여러 줄 붙어도 좌측 전투 로그에서
-    // 진화 이벤트가 묻히지 않도록 기존 짧은 문구를 제거한 뒤 최신 항목으로 올린다.
-    game.log.splice(i, 1);
-    game.log.push(replacement);
-    if (game.log.length > 60) game.log.shift();
-    return;
+    if (match(game.log[i])) game.log.splice(i, 1);
   }
 
-  // 구형/특수 엔진 경로에서 짧은 진화 문구가 없더라도 진화 자체는 로그에 남긴다.
   game.log.push(replacement);
   if (game.log.length > 60) game.log.shift();
 }
 
 function enrichEvolutionLog(game, side, card, source, result) {
-  if (!result || !card || !source) return;
+  // 일부 확장 래퍼가 성공 시 undefined를 반환하더라도 lastAction/필드 변화로
+  // 진화를 확정할 수 있으므로 명시적인 false만 실패로 본다.
+  if (result === false || !card) return;
 
   const player = game.players?.[side];
-  const evolved = player?.field?.find((unit) => unit.uid === source.uid);
-  if (!evolved) return;
+  if (!player) return;
 
-  const ownerName = player?.name || (side === "player" ? "플레이어" : "상대");
+  const action = game.lastAction;
+  const actionMatches =
+    action?.kind === "play" && action?.cardId === card.id;
+  const evolvedUid = source?.uid || (actionMatches ? action?.uid : null);
+  const evolved = evolvedUid
+    ? player.field?.find((unit) => unit.uid === evolvedUid)
+    : null;
+  const ownerName = player.name || (side === "player" ? "플레이어" : "상대");
 
-  if (card.kind === "pokemon" && card.evolvesFrom && evolved.cardId === card.id) {
-    const oldLog = `${evolved.name}(으)로 진화했다!`;
+  if (
+    card.kind === "pokemon" &&
+    card.evolvesFrom &&
+    (action?.anim === "evolve" || evolved?.cardId === card.id)
+  ) {
+    const fromName =
+      source?.name || CARD_MAP[card.evolvesFrom]?.name || card.evolvesFrom;
+    const toName = evolved?.name || card.name || card.id;
+    const replacement = `[진화] ${ownerName}: ${fromName} → ${toName}`;
+
     promoteLatestEvolutionLog(
       game,
-      (line) => line === oldLog,
-      `[진화] ${ownerName}: ${source.name} → ${evolved.name}`,
+      (line) =>
+        typeof line === "string" &&
+        (line === `${toName}(으)로 진화했다!` ||
+          (line.startsWith("[진화]") &&
+            line.includes(fromName) &&
+            line.includes(toName))),
+      replacement,
     );
+
+    if (actionMatches) {
+      action.evolution = { kind: "evolve", from: fromName, to: toName };
+    }
     return;
   }
 
-  if (card.kind === "mega" && evolved.mega) {
-    const oldLog = `${evolved.name}(으)로 메가진화했다!!`;
+  if (
+    card.kind === "mega" &&
+    (action?.anim === "mega" || evolved?.mega)
+  ) {
+    const fromName = source?.name || CARD_MAP[card.megaFor]?.name || card.megaFor;
+    const toName = evolved?.name || `메가 ${fromName}`;
+    const replacement = `[메가진화] ${ownerName}: ${fromName} → ${toName}`;
+
     promoteLatestEvolutionLog(
       game,
-      (line) => line === oldLog,
-      `[메가진화] ${ownerName}: ${source.name} → ${evolved.name}`,
+      (line) =>
+        typeof line === "string" &&
+        (line === `${toName}(으)로 메가진화했다!!` ||
+          (line.startsWith("[메가진화]") &&
+            line.includes(fromName) &&
+            line.includes(toName))),
+      replacement,
     );
+
+    if (actionMatches) {
+      action.evolution = { kind: "mega", from: fromName, to: toName };
+    }
   }
 }
 
@@ -132,7 +233,10 @@ export function createGame(deck, trainer, deckShiny = {}) {
   if (trainer?.onlineBattle && trainer?.matchId) {
     const bridge = getOnlineBattleBridgeByMatchId(trainer.matchId);
     const sharedGame = bridge?.getGame?.();
-    if (sharedGame) return rememberPreviewGame(sharedGame);
+    if (sharedGame) {
+      normalizeTypeStatusImmunities(sharedGame);
+      return rememberPreviewGame(sharedGame);
+    }
   }
 
   // 온라인 배틀에서는 상대 덱이 trainer(enemy) 경로로 생성된다.
@@ -148,28 +252,44 @@ export function createGame(deck, trainer, deckShiny = {}) {
     resolvedTrainer = { ...trainer, startingCard: "letsgo_eevee" };
   }
 
-  return rememberPreviewGame(rules.createGame(deck, resolvedTrainer, deckShiny));
+  const game = rules.createGame(deck, resolvedTrainer, deckShiny);
+  normalizeTypeStatusImmunities(game);
+  return rememberPreviewGame(game);
 }
 
 export function canPlayCard(game, side, handIdx) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (bridge && bridge.canAct && !bridge.canAct()) return false;
   return rules.canPlayCard(game, side, handIdx);
 }
 
 export function canAttack(game, side, attackerUid) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (bridge && bridge.canAct && !bridge.canAct()) return false;
   return rules.canAttack(game, side, attackerUid);
 }
 
+export function applyStatus(game, unit, statusType, sourceUnit = null) {
+  const normalized = normalizeStatusType(statusType);
+  if (isTypeStatusImmune(unit, normalized)) return false;
+
+  return runRulesAction(game, () =>
+    rules.applyStatus(game, unit, normalized, sourceUnit),
+  );
+}
+
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
     const handCard = game.players?.[side]?.hand?.[handIdx];
     const card = CARD_MAP[handCard?.cardId];
     const source = evolutionSource(game, side, card, target);
-    const result = rules.playCard(game, side, handIdx, target, fieldIndex);
+    const result = runRulesAction(game, () =>
+      rules.playCard(game, side, handIdx, target, fieldIndex),
+    );
     enrichEvolutionLog(game, side, card, source, result);
     return result;
   }
@@ -188,9 +308,12 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 }
 
 export function attack(game, side, attackerUid, target) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
-    return rules.attack(game, side, attackerUid, target);
+    return runRulesAction(game, () =>
+      rules.attack(game, side, attackerUid, target),
+    );
   }
   if (!bridge.canAct?.() || !target?.uid || !rules.canAttack(game, side, attackerUid)) {
     return false;
@@ -204,9 +327,12 @@ export function attack(game, side, attackerUid, target) {
 }
 
 export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
-    return rules.attackFieldObstacle(game, side, attackerUid, obstacleId);
+    return runRulesAction(game, () =>
+      rules.attackFieldObstacle(game, side, attackerUid, obstacleId),
+    );
   }
   if (!bridge.canAct?.() || !rules.canAttack(game, side, attackerUid)) return false;
 
@@ -218,8 +344,11 @@ export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
 }
 
 export function endTurn(game) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
-  if (!bridge) return rules.endTurn(game);
+  if (!bridge) {
+    return runRulesAction(game, () => rules.endTurn(game));
+  }
   if (!bridge.canAct?.()) return false;
 
   // 날씨/턴 시작 효과까지 포함한 전체 endTurn은 호스트에서 단 한 번 실행한다.
@@ -227,8 +356,11 @@ export function endTurn(game) {
 }
 
 export function discardToDraw(game, side, handIdx) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
-  if (!bridge || side !== "player") return rules.discardToDraw(game, side, handIdx);
+  if (!bridge || side !== "player") {
+    return runRulesAction(game, () => rules.discardToDraw(game, side, handIdx));
+  }
   if (!bridge.canAct?.()) return false;
   const handCard = game.players?.player?.hand?.[handIdx];
   if (!handCard?.uid) return false;
@@ -243,6 +375,7 @@ export function discardToDraw(game, side, handIdx) {
 }
 
 function dispatchPending(game, side, targetUid) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") return null;
   if (!bridge.canAct?.()) return false;
@@ -252,46 +385,53 @@ function dispatchPending(game, side, targetUid) {
 export function resolveMoldbreaker(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => rules.resolveMoldbreaker(game, side, targetUid),
+    () => runRulesAction(game, () => rules.resolveMoldbreaker(game, side, targetUid)),
   );
 }
 
 export function resolveMew(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => rules.resolveMew(game, side, targetUid),
+    () => runRulesAction(game, () => rules.resolveMew(game, side, targetUid)),
   );
 }
 
 export function resolveSpacialRend(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => rules.resolveSpacialRend(game, side, targetUid),
+    () => runRulesAction(game, () => rules.resolveSpacialRend(game, side, targetUid)),
   );
 }
 
 export function resolveMagmaStorm(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => rules.resolveMagmaStorm(game, side, targetUid),
+    () => runRulesAction(game, () => rules.resolveMagmaStorm(game, side, targetUid)),
   );
 }
 
 export function resolvePhioneBraveCharge(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => rules.resolvePhioneBraveCharge(game, side, targetUid),
+    () =>
+      runRulesAction(game, () =>
+        rules.resolvePhioneBraveCharge(game, side, targetUid),
+      ),
   );
 }
 
 export function resolveManaphyBraveCharge(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => rules.resolveManaphyBraveCharge(game, side, targetUid),
+    () =>
+      runRulesAction(game, () =>
+        rules.resolveManaphyBraveCharge(game, side, targetUid),
+      ),
   );
 }
 
 function dispatchChoice(game, side, value) {
+  normalizeTypeStatusImmunities(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") return null;
   if (!bridge.canAct?.()) return false;
@@ -301,34 +441,34 @@ function dispatchChoice(game, side, value) {
 export function resolveHyperball(game, side, value) {
   return finishPendingDispatch(
     dispatchChoice(game, side, value),
-    () => rules.resolveHyperball(game, side, value),
+    () => runRulesAction(game, () => rules.resolveHyperball(game, side, value)),
   );
 }
 
 export function resolveUxie(game, side, value) {
   return finishPendingDispatch(
     dispatchChoice(game, side, value),
-    () => rules.resolveUxie(game, side, value),
+    () => runRulesAction(game, () => rules.resolveUxie(game, side, value)),
   );
 }
 
 export function resolveWishmaker(game, side, value) {
   return finishPendingDispatch(
     dispatchChoice(game, side, value),
-    () => rules.resolveWishmaker(game, side, value),
+    () => runRulesAction(game, () => rules.resolveWishmaker(game, side, value)),
   );
 }
 
 export function resolveDeoxysForm(game, side, value) {
   return finishPendingDispatch(
     dispatchChoice(game, side, value),
-    () => rules.resolveDeoxysForm(game, side, value),
+    () => runRulesAction(game, () => rules.resolveDeoxysForm(game, side, value)),
   );
 }
 
 export function resolveShayminForm(game, side, value) {
   return finishPendingDispatch(
     dispatchChoice(game, side, value),
-    () => rules.resolveShayminForm(game, side, value),
+    () => runRulesAction(game, () => rules.resolveShayminForm(game, side, value)),
   );
 }
