@@ -117,6 +117,55 @@ function balanceEnteredEnemyTurn(game, beforeSupportUids, logStart) {
   }
 }
 
+function restoreToxicSpikesTypeImmunity(
+  game,
+  side,
+  beforePlayerUids,
+  toxicSpikesBefore,
+  logStart,
+) {
+  if (
+    !cynthia.isCynthiaBattle(game) ||
+    side !== "player" ||
+    toxicSpikesBefore <= 0
+  ) {
+    return;
+  }
+
+  const unit = game.players.player.field.find(
+    (entry) => !beforePlayerUids.has(entry.uid),
+  );
+  if (
+    !unit ||
+    unit.status !== "poison" ||
+    (unit.type !== "독" && unit.type !== "강철")
+  ) {
+    return;
+  }
+
+  // 난천 독압정 구현은 기존에 status를 직접 대입해서 공통 applyStatus의
+  // 독/강철 타입 면역을 우회했다. 해당 상태와 소모된 독압정을 되돌린다.
+  unit.status = null;
+  unit.statusTurns = 0;
+  game._cynthiaToxicSpikes = toxicSpikesBefore;
+
+  game.log = [
+    ...game.log.slice(0, logStart),
+    ...game.log.slice(logStart).filter(
+      (message) =>
+        !(
+          typeof message === "string" &&
+          message.startsWith("독압정!") &&
+          message.includes(unit.name)
+        ),
+    ),
+  ];
+  game.log.push(
+    `독압정! ${unit.name}은(는) ${unit.type} 타입이라 독 상태이상을 받지 않는다!`,
+  );
+  if (game.log.length > 60) game.log.shift();
+}
+
 export function createGame(playerDeckIds, trainer) {
   const game = cynthia.createGame(playerDeckIds, trainer);
 
@@ -148,6 +197,14 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     handCard?.cardId === CYNTHIA_RECALL_CARD_ID;
 
   const animateRecall = isRecall && cynthia.canPlayCard(game, side, handIdx);
+  const beforePlayerUids = new Set(
+    (game.players.player?.field || []).map((unit) => unit.uid),
+  );
+  const toxicSpikesBefore = Math.max(
+    0,
+    Number(game._cynthiaToxicSpikes) || 0,
+  );
+  const logStart = game.log.length;
 
   // 교체가 실제로 성립하기 직전, 아직 기존 포켓몬이 DOM에 있을 때 회수 연출 좌표를 잡는다.
   if (animateRecall) {
@@ -158,6 +215,16 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
   if (animateRecall && !result) {
     dispatchCynthiaRecallCancel();
+  }
+
+  if (result) {
+    restoreToxicSpikesTypeImmunity(
+      game,
+      side,
+      beforePlayerUids,
+      toxicSpikesBefore,
+      logStart,
+    );
   }
 
   return result;
