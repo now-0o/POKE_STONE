@@ -4,12 +4,19 @@ import {
   getOnlineBattleBridge,
   getOnlineBattleBridgeByMatchId,
 } from "./onlineBattleBridge.js";
+import { registerDamagePreviewGame } from "./damagePreviewRuntime.js";
 
 export * from "./engine.rules.js";
 
 const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
 
+function rememberPreviewGame(game) {
+  registerDamagePreviewGame(game);
+  return game;
+}
+
 function bridgeFor(game) {
+  rememberPreviewGame(game);
   return getOnlineBattleBridge(game);
 }
 
@@ -125,7 +132,7 @@ export function createGame(deck, trainer, deckShiny = {}) {
   if (trainer?.onlineBattle && trainer?.matchId) {
     const bridge = getOnlineBattleBridgeByMatchId(trainer.matchId);
     const sharedGame = bridge?.getGame?.();
-    if (sharedGame) return sharedGame;
+    if (sharedGame) return rememberPreviewGame(sharedGame);
   }
 
   // 온라인 배틀에서는 상대 덱이 trainer(enemy) 경로로 생성된다.
@@ -141,7 +148,7 @@ export function createGame(deck, trainer, deckShiny = {}) {
     resolvedTrainer = { ...trainer, startingCard: "letsgo_eevee" };
   }
 
-  return rules.createGame(deck, resolvedTrainer, deckShiny);
+  return rememberPreviewGame(rules.createGame(deck, resolvedTrainer, deckShiny));
 }
 
 export function canPlayCard(game, side, handIdx) {
@@ -216,7 +223,6 @@ export function endTurn(game) {
   if (!bridge.canAct?.()) return false;
 
   // 날씨/턴 시작 효과까지 포함한 전체 endTurn은 호스트에서 단 한 번 실행한다.
-  // 로컬에서 turn만 먼저 뒤집어도 한 클라이언트만 턴 효과를 본 것처럼 보일 수 있다.
   return dispatch(game, { type: "end_turn" });
 }
 
