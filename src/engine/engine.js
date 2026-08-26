@@ -5,6 +5,7 @@ import {
   getOnlineBattleBridgeByMatchId,
 } from "./onlineBattleBridge.js";
 import { registerDamagePreviewGame } from "./damagePreviewRuntime.js";
+import { registerKyuremSealRuntime } from "./kyuremSealRuntime.js";
 
 export * from "./engine.rules.js";
 
@@ -40,6 +41,15 @@ function pushEngineLog(game, message) {
   if (game.log.length > 60) game.log.shift();
 }
 
+function otherSide(side) {
+  return side === "player" ? "enemy" : "player";
+}
+
+function hasUnitAbility(unit, ability) {
+  return !!unit &&
+    (unit.ability === ability || unit.secondaryAbility === ability);
+}
+
 function normalizeTypeStatusImmunities(game) {
   if (!game?.players) return false;
   let changed = false;
@@ -68,17 +78,148 @@ function normalizeTypeStatusImmunities(game) {
   return changed;
 }
 
+function isGlaciateSealActive(game, side, handCard) {
+  const sourceUid = handCard?._glaciateSealedByUid;
+  if (!sourceUid) return false;
+
+  const source = game.players?.[otherSide(side)]?.field?.find(
+    (unit) =>
+      unit.uid === sourceUid &&
+      unit.hp > 0 &&
+      hasUnitAbility(unit, "glaciate"),
+  );
+
+  if (source) return true;
+  delete handCard._glaciateSealedByUid;
+  return false;
+}
+
+function refreshGlaciateSeals(game) {
+  if (!game?.players) return;
+
+  for (const side of ["player", "enemy"]) {
+    for (const handCard of game.players?.[side]?.hand || []) {
+      isGlaciateSealActive(game, side, handCard);
+    }
+  }
+
+  const pending = game.pendingBattlecry;
+  if (pending?.ability !== "glaciate") return;
+
+  const source = game.players?.[pending.side]?.field?.find(
+    (unit) =>
+      unit.uid === pending.uid &&
+      unit.hp > 0 &&
+      hasUnitAbility(unit, "glaciate"),
+  );
+  if (!source) game.pendingBattlecry = null;
+}
+
+function setupKyuremSeal(game, side, unit) {
+  if (!unit || !hasUnitAbility(unit, "glaciate")) return;
+
+  const targetSide = otherSide(side);
+  const targetPlayer = game.players?.[targetSide];
+  if (!targetPlayer) return;
+
+  const candidates = (targetPlayer.hand || []).filter(
+    (handCard) => !isGlaciateSealActive(game, targetSide, handCard),
+  );
+  const count = Math.min(2, candidates.length);
+  if (count <= 0) return;
+
+  // 온라인전은 canonical side가 enemy인 플레이어도 직접 선택해야 한다.
+  // 오프라인 AI만 비용이 높은 카드부터 자동 봉인한다.
+  const needsHumanSelection = side === "player" || !!game?._onlineMatch?.id;
+
+  if (needsHumanSelection) {
+    game.pendingBattlecry = {
+      side,
+      uid: unit.uid,
+      ability: "glaciate",
+      targetSide,
+      count,
+      targets: candidates.map((handCard) => handCard.uid),
+      selected: [],
+    };
+    pushEngineLog(
+      game,
+      `큐레무의 얼어붙은세계! 상대 손패에서 ${count}장을 선택해 봉인하세요.`,
+    );
+    return;
+  }
+
+  const picks = [...candidates]
+    .sort(
+      (a, b) =>
+        (CARD_MAP[b.cardId]?.cost || 0) - (CARD_MAP[a.cardId]?.cost || 0),
+    )
+    .slice(0, count);
+
+  for (const handCard of picks) {
+    handCard._glaciateSealedByUid = unit.uid;
+  }
+  pushEngineLog(
+    game,
+    `큐레무의 얼어붙은세계! 상대 손패 ${count}장을 봉인했다!`,
+  );
+}
+
+function resolveGlaciateSeal(game, side, handUid) {
+  const pending = game?.pendingBattlecry;
+  if (
+    !pending ||
+    pending.ability !== "glaciate" ||
+    pending.side !== side ||
+    pending.selected?.includes(handUid) ||
+    !pending.targets?.includes(handUid)
+  ) {
+    return false;
+  }
+
+  const source = game.players?.[side]?.field?.find(
+    (unit) =>
+      unit.uid === pending.uid &&
+      unit.hp > 0 &&
+      hasUnitAbility(unit, "glaciate"),
+  );
+  const handCard = game.players?.[pending.targetSide]?.hand?.find(
+    (entry) => entry.uid === handUid,
+  );
+  if (!source || !handCard) return false;
+
+  handCard._glaciateSealedByUid = source.uid;
+  pending.selected = [...(pending.selected || []), handUid];
+  pushEngineLog(
+    game,
+    `큐레무의 얼어붙은세계! ${CARD_MAP[handCard.cardId]?.name || "카드"}을(를) 봉인했다!`,
+  );
+
+  if (pending.selected.length >= pending.count) {
+    game.pendingBattlecry = null;
+  }
+
+  refreshGlaciateSeals(game);
+  return true;
+}
+
 function runRulesAction(game, callback) {
   // 구버전/온라인 동기화 상태에 잘못 남아 있는 상태이상도 행동 전에 제거한다.
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const result = callback();
   // 이번 행동에서 새로 걸린 타입 불가 상태이상도 즉시 제거한다.
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   return result;
 }
 
 function rememberPreviewGame(game) {
+  refreshGlaciateSeals(game);
   registerDamagePreviewGame(game);
+  registerKyuremSealRuntime(game, (handUid) =>
+    resolveMoldbreaker(game, "player", handUid),
+  );
   return game;
 }
 
@@ -259,6 +400,11 @@ export function createGame(deck, trainer, deckShiny = {}) {
 
 export function canPlayCard(game, side, handIdx) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
+
+  const handCard = game.players?.[side]?.hand?.[handIdx];
+  if (isGlaciateSealActive(game, side, handCard)) return false;
+
   const bridge = bridgeFor(game);
   if (bridge && bridge.canAct && !bridge.canAct()) return false;
   return rules.canPlayCard(game, side, handIdx);
@@ -266,6 +412,7 @@ export function canPlayCard(game, side, handIdx) {
 
 export function canAttack(game, side, attackerUid) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (bridge && bridge.canAct && !bridge.canAct()) return false;
   return rules.canAttack(game, side, attackerUid);
@@ -282,15 +429,36 @@ export function applyStatus(game, unit, statusType, sourceUnit = null) {
 
 export function playCard(game, side, handIdx, target = null, fieldIndex = null) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
+
+  const currentHandCard = game.players?.[side]?.hand?.[handIdx];
+  if (isGlaciateSealActive(game, side, currentHandCard)) return false;
+
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
     const handCard = game.players?.[side]?.hand?.[handIdx];
     const card = CARD_MAP[handCard?.cardId];
     const source = evolutionSource(game, side, card, target);
+    const beforeFieldUids = new Set(
+      (game.players?.[side]?.field || []).map((unit) => unit.uid),
+    );
+
     const result = runRulesAction(game, () =>
       rules.playCard(game, side, handIdx, target, fieldIndex),
     );
     enrichEvolutionLog(game, side, card, source, result);
+
+    if (result !== false && card?.id === "kyurem") {
+      const unit = game.players?.[side]?.field?.find(
+        (entry) =>
+          entry.cardId === "kyurem" &&
+          !beforeFieldUids.has(entry.uid) &&
+          entry.hp > 0,
+      );
+      if (unit) setupKyuremSeal(game, side, unit);
+    }
+
+    rememberPreviewGame(game);
     return result;
   }
 
@@ -303,12 +471,13 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   if (fieldIndex != null) command.fieldIndex = fieldIndex;
 
   // 온라인에서는 로컬 state를 먼저 mutate하지 않는다.
-  // 45ms polling/active confirm 뒤 도착하는 확정 revision만 Battle에 먹인다.
+  // 확정 revision만 Battle에 반영한다.
   return dispatch(game, command);
 }
 
 export function attack(game, side, attackerUid, target) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
     return runRulesAction(game, () =>
@@ -328,6 +497,7 @@ export function attack(game, side, attackerUid, target) {
 
 export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
     return runRulesAction(game, () =>
@@ -345,6 +515,7 @@ export function attackFieldObstacle(game, side, attackerUid, obstacleId) {
 
 export function endTurn(game) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (!bridge) {
     return runRulesAction(game, () => rules.endTurn(game));
@@ -357,6 +528,7 @@ export function endTurn(game) {
 
 export function discardToDraw(game, side, handIdx) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") {
     return runRulesAction(game, () => rules.discardToDraw(game, side, handIdx));
@@ -366,7 +538,6 @@ export function discardToDraw(game, side, handIdx) {
   if (!handCard?.uid) return false;
 
   // 구버전 EC2도 이미 지원하는 play 명령에 sentinel을 실어 보낸다.
-  // 따라서 백엔드가 discard_redraw whitelist 반영 전이어도 동일하게 처리 가능하다.
   return dispatch(game, {
     type: "play",
     handUid: handCard.uid,
@@ -376,6 +547,7 @@ export function discardToDraw(game, side, handIdx) {
 
 function dispatchPending(game, side, targetUid) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") return null;
   if (!bridge.canAct?.()) return false;
@@ -385,7 +557,13 @@ function dispatchPending(game, side, targetUid) {
 export function resolveMoldbreaker(game, side, targetUid) {
   return finishPendingDispatch(
     dispatchPending(game, side, targetUid),
-    () => runRulesAction(game, () => rules.resolveMoldbreaker(game, side, targetUid)),
+    () =>
+      runRulesAction(game, () => {
+        if (game.pendingBattlecry?.ability === "glaciate") {
+          return resolveGlaciateSeal(game, side, targetUid);
+        }
+        return rules.resolveMoldbreaker(game, side, targetUid);
+      }),
   );
 }
 
@@ -432,6 +610,7 @@ export function resolveManaphyBraveCharge(game, side, targetUid) {
 
 function dispatchChoice(game, side, value) {
   normalizeTypeStatusImmunities(game);
+  refreshGlaciateSeals(game);
   const bridge = bridgeFor(game);
   if (!bridge || side !== "player") return null;
   if (!bridge.canAct?.()) return false;
