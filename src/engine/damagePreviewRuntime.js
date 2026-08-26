@@ -21,7 +21,66 @@ let overlay = null;
 let lastKey = "";
 let lastPreview = null;
 
+function ensureEvolutionActionLog(game) {
+  const action = game?.lastAction;
+  if (
+    !action ||
+    action.kind !== "play" ||
+    (action.anim !== "evolve" && action.anim !== "mega") ||
+    !Array.isArray(game.log)
+  ) {
+    return;
+  }
+
+  const actionKey = [
+    action.seq ?? "no-seq",
+    action.side || "none",
+    action.uid || "none",
+    action.cardId || "none",
+    action.anim,
+  ].join(":");
+
+  if (game._lastEvolutionLogActionKey === actionKey) return;
+
+  const card = CARD_MAP[action.cardId];
+  const isMega = action.anim === "mega";
+  const fromId = isMega ? card?.megaFor : card?.evolvesFrom;
+  const fromName =
+    action.evolution?.from || CARD_MAP[fromId]?.name || fromId || "포켓몬";
+  const toName =
+    action.evolution?.to || card?.name || action.cardId || "포켓몬";
+  const ownerName =
+    game.players?.[action.side]?.name ||
+    (action.side === "player" ? "플레이어" : "상대");
+  const label = isMega ? "메가진화" : "진화";
+  const canonical = `[${label}] ${ownerName}: ${fromName} → ${toName}`;
+
+  // 하위 엔진에서 먼저 남긴 짧은 진화 로그나 이전 보정 로그를 제거한 뒤,
+  // 모든 후처리가 끝난 시점에 진화 이벤트를 마지막 줄로 확정한다.
+  for (let i = game.log.length - 1; i >= 0; i -= 1) {
+    const line = game.log[i];
+    if (typeof line !== "string") continue;
+
+    const shortEvolution =
+      (!isMega && line === `${toName}(으)로 진화했다!`) ||
+      (isMega && line === `${toName}(으)로 메가진화했다!!`);
+    const normalizedEvolution =
+      line.startsWith(`[${label}]`) &&
+      line.includes(fromName) &&
+      line.includes(toName);
+
+    if (shortEvolution || normalizedEvolution) {
+      game.log.splice(i, 1);
+    }
+  }
+
+  game.log.push(canonical);
+  if (game.log.length > 60) game.log.shift();
+  game._lastEvolutionLogActionKey = actionKey;
+}
+
 export function registerDamagePreviewGame(game) {
+  ensureEvolutionActionLog(game);
   currentGame = game || null;
 }
 
