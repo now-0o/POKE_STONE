@@ -81,6 +81,8 @@ import './features/mobile/mobileBattleUxRuntime.js';
 // 대상 선택이 없는 기술은 클릭/터치 즉발을 막고 드롭으로만 사용한다.
 import './features/battle/dragOnlyTechniqueRuntime.js';
 import './features/battle/runtime.js';
+// 기존 전투 기록 레일에 진화/메가진화 이벤트를 스프라이트 로그로 보강한다.
+import './features/battle/battleHistoryEvolutionRuntime.js';
 import './features/battle/costColorRuntime.js';
 import './features/battle/fixedFieldPlacement.js';
 import './features/battle/cynthiaSpeech.js';
