@@ -1,6 +1,6 @@
 import { CARD_MAP } from "../data/cards.js";
 
-export const THREE_STAGE_FINAL_BUFF = Object.freeze({ atk: 1, hp: 1 });
+export const THREE_STAGE_FINAL_BUFF = Object.freeze({ atk: 2, hp: 2 });
 
 const FINAL_BUFF_MARK = "__pokestoneThreeStageFinalBuffV1";
 
