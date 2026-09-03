@@ -6,6 +6,10 @@ import {
 } from "./onlineBattleBridge.js";
 import { registerDamagePreviewGame } from "./damagePreviewRuntime.js";
 import { registerKyuremSealRuntime } from "./kyuremSealRuntime.js";
+import {
+  getEvolutionExchangeInfo,
+  performEvolutionExchange,
+} from "./evolutionExchange.js";
 
 export * from "./engine.rules.js";
 
@@ -529,15 +533,32 @@ export function endTurn(game) {
 export function discardToDraw(game, side, handIdx) {
   normalizeTypeStatusImmunities(game);
   refreshGlaciateSeals(game);
+
+  const info = getEvolutionExchangeInfo(game, side, handIdx);
   const bridge = bridgeFor(game);
+
   if (!bridge || side !== "player") {
-    return runRulesAction(game, () => rules.discardToDraw(game, side, handIdx));
+    if (!info.canExchange) return false;
+
+    const result = runRulesAction(game, () =>
+      performEvolutionExchange(
+        game,
+        side,
+        handIdx,
+        (nextGame, nextSide, silent) =>
+          rules.drawCard(nextGame, nextSide, silent),
+      ),
+    );
+    rememberPreviewGame(game);
+    return result;
   }
-  if (!bridge.canAct?.()) return false;
+
+  if (!bridge.canAct?.() || !info.canExchange) return false;
   const handCard = game.players?.player?.hand?.[handIdx];
   if (!handCard?.uid) return false;
 
-  // 구버전 EC2도 이미 지원하는 play 명령에 sentinel을 실어 보낸다.
+  // 기존 온라인 프로토콜과 호환되도록 play sentinel은 유지한다.
+  // 실제 교환 판정/비용/덱 복귀는 canonical host의 이 함수에서 처리한다.
   return dispatch(game, {
     type: "play",
     handUid: handCard.uid,
