@@ -106,6 +106,8 @@ import './components/battle/WakeBattleUi.jsx';
 import './components/battle/CynthiaBattleUi.jsx';
 import './components/battle/CynthiaToxicSpikesUi.jsx';
 import './features/region-carousel/index.js';
+// 메인 메뉴에 초기 덱 기반 악의 조직 로그라이크 엔드콘텐츠를 추가한다.
+import './features/roguelike/runtime.jsx';
 // 카드 외형 통일 규칙은 모든 화면/런타임 모듈보다 마지막에 로드해 최종 우선순위를 가진다.
 import './styles/battle-card-canonical.css';
 
