@@ -1,5 +1,6 @@
 import * as rules from "./engine.rules.js";
 import { CARD_MAP } from "../data/cards.js";
+import { getEvolutionExchangeInfo } from "./evolutionExchange.js";
 import "../styles/damage-preview.css";
 
 const TARGETED_DAMAGE_EFFECTS = new Set([
@@ -20,6 +21,7 @@ let currentGame = null;
 let overlay = null;
 let lastKey = "";
 let lastPreview = null;
+let exchangeUiFrame = null;
 
 function ensureEvolutionActionLog(game) {
   const action = game?.lastAction;
@@ -79,9 +81,62 @@ function ensureEvolutionActionLog(game) {
   game._lastEvolutionLogActionKey = actionKey;
 }
 
+function syncEvolutionExchangeButtons(game) {
+  if (typeof document === "undefined" || !game) return;
+
+  const hand = document.querySelector(".hand");
+  if (!hand) return;
+
+  const wrappers = Array.from(hand.children);
+  wrappers.forEach((wrapper, handIdx) => {
+    const button = wrapper.querySelector?.(".btn-discard-redraw");
+    if (!button) return;
+
+    const info = getEvolutionExchangeInfo(game, "player", handIdx);
+    if (!info.show) {
+      button.hidden = true;
+      button.style.display = "none";
+      return;
+    }
+
+    button.hidden = false;
+    button.style.display = "";
+    button.disabled = !info.canExchange;
+    button.dataset.exchangeCost = String(info.cost);
+    button.textContent = `↻ 교환 · ${info.cost}코스트`;
+    button.title = info.canExchange
+      ? `진화 라인이 끊긴 카드를 덱에 되돌리고 새 카드 1장을 뽑습니다. 이번 교환 비용: ${info.cost}코스트`
+      : info.reason || `교환에 ${info.cost}코스트가 필요합니다.`;
+    button.setAttribute(
+      "aria-label",
+      `교환 ${info.cost}코스트${info.canExchange ? "" : `, ${info.reason || "사용 불가"}`}`,
+    );
+  });
+}
+
+function scheduleEvolutionExchangeUi(game) {
+  if (typeof window === "undefined") return;
+
+  if (exchangeUiFrame != null && typeof cancelAnimationFrame === "function") {
+    cancelAnimationFrame(exchangeUiFrame);
+  }
+
+  const run = () => {
+    exchangeUiFrame = null;
+    syncEvolutionExchangeButtons(game);
+  };
+
+  if (typeof requestAnimationFrame === "function") {
+    exchangeUiFrame = requestAnimationFrame(run);
+  } else {
+    setTimeout(run, 0);
+  }
+}
+
 export function registerDamagePreviewGame(game) {
   ensureEvolutionActionLog(game);
   currentGame = game || null;
+  scheduleEvolutionExchangeUi(currentGame);
 }
 
 function cloneGame(game) {
