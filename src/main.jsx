@@ -70,6 +70,8 @@ import './styles/mobile-battle-controls-fix.css';
 import './styles/mobile-battle-targeting-v5.css';
 // V6는 실제 카드 드래그 중 손패를 숨겨 필드 판독성을 최종 확보한다.
 import './styles/mobile-battle-drag-visibility-v6.css';
+// V7은 세로 배틀의 필드/프로필 간격과 긴 손패 스크롤을 최종 보정한다.
+import './styles/mobile-battle-portrait-v7.css';
 // N 친밀도 숫자/사슬 전향 연출은 모바일 배틀 최종 레이아웃 위에 표시한다.
 import './features/battle/n-bond.css';
 // 풍란 공중날기는 카드 그림이 아니라 필드 카드 전체가 떠오르도록 최종 덮어쓴다.
