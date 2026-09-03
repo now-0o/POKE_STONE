@@ -1,0 +1,4 @@
+/* 로그라이크는 스토리 코인 보상을 사용하지 않는다. */
+.roguelike-active .result-overlay .result-reward {
+  display: none !important;
+}
