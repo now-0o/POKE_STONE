@@ -23,23 +23,18 @@ const FALLBACK_DECK_CARDS = [
   "rattata", "rattata", "pidgey", "pidgey", "quickattack", "potion", "pokeball",
 ];
 
-const CARD_REWARD_POOL = [
-  "pichu", "pikachu", "raichu",
-  "bulbasaur", "ivysaur", "venusaur",
-  "charmander", "charmeleon", "charizard",
-  "squirtle", "wartortle", "blastoise",
-  "eevee", "vaporeon", "jolteon", "flareon",
-  "growlithe", "arcanine", "lapras", "tauros",
-  "snivy", "servine", "serperior",
-  "tepig", "pignite", "emboar",
-  "oshawott", "dewott", "samurott",
-  "drilbur", "excadrill",
-  "deino", "zweilous", "hydreigon",
-  "litwick", "lampent", "chandelure",
+const SUPPORT_REWARD_POOL = [
   "quickattack", "thunderbolt", "flamethrower", "hydropump", "solarbeam",
   "scald", "voltswitch", "dragontail", "reflect", "lightscreen",
   "potion", "superball", "hyperball", "fullrestore", "lifeorb", "focussash",
 ].filter((id) => CARD_MAP[id]);
+
+const RARITY_META = Object.freeze({
+  C: { label: "커먼", className: "rarity-common" },
+  R: { label: "레어", className: "rarity-rare" },
+  E: { label: "에픽", className: "rarity-epic" },
+  L: { label: "레전드", className: "rarity-legend" },
+});
 
 function hasEvolutionPrerequisites(deckIds, cardId, visited = new Set()) {
   const card = CARD_MAP[cardId];
@@ -172,21 +167,24 @@ const ENCOUNTERS = [
 
 const UPGRADE_POOL = [
   {
-    id: "max_hp",
-    itemSprite: "/sprites/items/eviolite.png",
-    itemLabel: "진화의휘석",
-    name: "체력 단련",
-    desc: "최대 체력 +5. 현재 체력도 5 회복.",
-  },
-  {
     id: "heal",
+    rarity: "C",
     itemSprite: "/sprites/items/potion.png",
     itemLabel: "상처약",
     name: "응급 치료",
     desc: "현재 체력을 10 회복.",
   },
   {
+    id: "max_hp",
+    rarity: "R",
+    itemSprite: "/sprites/items/eviolite.png",
+    itemLabel: "진화의휘석",
+    name: "체력 단련",
+    desc: "최대 체력 +5. 현재 체력도 5 회복.",
+  },
+  {
     id: "opening_hand",
+    rarity: "E",
     itemSprite: "/sprites/items/adventure-rules.png",
     itemLabel: "모험의 규칙",
     name: "준비된 작전",
@@ -194,12 +192,18 @@ const UPGRADE_POOL = [
   },
   {
     id: "starting_mana",
+    rarity: "E",
     itemSprite: "/sprites/items/normal-gem.png",
     itemLabel: "노말주얼",
     name: "에너지 저장",
     desc: "이후 전투 시작 시 최대 코스트와 현재 코스트 +1.",
   },
 ];
+
+function randomItem(list) {
+  if (!list?.length) return null;
+  return list[Math.floor(Math.random() * list.length)] || null;
+}
 
 function randomItems(list, count) {
   const pool = [...list];
@@ -211,17 +215,206 @@ function randomItems(list, count) {
   return out;
 }
 
-function makeRewards() {
-  const cards = randomItems(CARD_REWARD_POOL, 2).map((cardId) => ({
-    kind: "card",
-    id: `card:${cardId}`,
+function rewardablePokemon() {
+  return Object.values(CARD_MAP).filter(
+    (card) =>
+      card?.kind === "pokemon" &&
+      !card.trainerOnly &&
+      !card.signature &&
+      card.stage === 0 &&
+      !card.evolvesFrom &&
+      card.rarity !== "L",
+  );
+}
+
+function evolutionChildren(cardId) {
+  return Object.values(CARD_MAP).filter(
+    (card) =>
+      card?.kind === "pokemon" &&
+      !card.trainerOnly &&
+      !card.signature &&
+      card.evolvesFrom === cardId,
+  );
+}
+
+function getEvolutionOptions(deckIds) {
+  const ownedIds = [...new Set(deckIds.filter((id) => CARD_MAP[id]?.kind === "pokemon"))];
+  const options = [];
+  for (const sourceId of ownedIds) {
+    for (const target of evolutionChildren(sourceId)) {
+      options.push({ sourceId, targetId: target.id });
+    }
+  }
+  return options;
+}
+
+function collectEvolutionPaths(cardId, path = []) {
+  const nextPath = [...path, cardId];
+  const children = evolutionChildren(cardId);
+  if (!children.length) return nextPath.length >= 2 ? [nextPath] : [];
+  return children.flatMap((child) => collectEvolutionPaths(child.id, nextPath));
+}
+
+function getEvolutionLines() {
+  const roots = rewardablePokemon().filter((card) => evolutionChildren(card.id).length > 0);
+  return roots.flatMap((root) => collectEvolutionPaths(root.id));
+}
+
+function rollRewardRarity(stage) {
+  const tables = [
+    { C: 55, R: 30, E: 12, L: 3 },
+    { C: 48, R: 32, E: 15, L: 5 },
+    { C: 40, R: 34, E: 19, L: 7 },
+    { C: 32, R: 35, E: 23, L: 10 },
+  ];
+  const table = tables[Math.max(0, Math.min(tables.length - 1, stage || 0))];
+  let roll = Math.random() * 100;
+  for (const rarity of ["C", "R", "E", "L"]) {
+    roll -= table[rarity];
+    if (roll < 0) return rarity;
+  }
+  return "C";
+}
+
+function makeBasicPokemonReward(rarity) {
+  let pool = rewardablePokemon();
+  if (rarity === "C") {
+    const common = pool.filter((card) => card.rarity === "C");
+    if (common.length) pool = common;
+  } else if (rarity === "R") {
+    const better = pool.filter((card) => card.rarity === "C" || card.rarity === "R");
+    if (better.length) pool = better;
+  }
+  const card = randomItem(pool);
+  if (!card) return null;
+  return {
+    id: `basic:${rarity}:${card.id}:${Math.random()}`,
+    kind: "basic_card",
+    rarity,
+    cardId: card.id,
+    name: "기본 포켓몬",
+    desc: `${card.name} 1장을 덱에 추가합니다.`,
+  };
+}
+
+function makeSupportReward(rarity) {
+  const cardId = randomItem(SUPPORT_REWARD_POOL);
+  if (!cardId) return null;
+  return {
+    id: `support:${rarity}:${cardId}:${Math.random()}`,
+    kind: "support_card",
+    rarity,
     cardId,
-  }));
-  const upgrade = randomItems(UPGRADE_POOL, 1).map((entry) => ({
-    kind: "upgrade",
-    ...entry,
-  }));
-  return randomItems([...cards, ...upgrade], 3);
+    name: "전술 보급",
+    desc: `${CARD_MAP[cardId]?.name || cardId} 1장을 덱에 추가합니다.`,
+  };
+}
+
+function makeRandomEvolutionReward(run, rarity = "R") {
+  const option = randomItem(getEvolutionOptions(run.deck));
+  if (!option) return null;
+  return {
+    id: `random-evo:${option.sourceId}:${option.targetId}:${Math.random()}`,
+    kind: "random_evolution",
+    rarity,
+    ...option,
+    name: "랜덤 진화",
+    desc: `보유 중인 ${CARD_MAP[option.sourceId]?.name}의 진화체 ${CARD_MAP[option.targetId]?.name}을 획득합니다.`,
+  };
+}
+
+function makeChooseEvolutionReward(run, rarity = "E") {
+  const options = getEvolutionOptions(run.deck);
+  if (!options.length) return null;
+  return {
+    id: `choose-evo:${Math.random()}`,
+    kind: "choose_evolution",
+    rarity,
+    options,
+    name: "선택 진화",
+    desc: "현재 덱의 진화 가능한 포켓몬을 직접 선택해 다음 진화체를 획득합니다.",
+  };
+}
+
+function makeEvolutionSetReward(rarity = "L") {
+  const lines = getEvolutionLines();
+  const threeStage = lines.filter((line) => line.length >= 3);
+  const lineIds = randomItem(threeStage.length && Math.random() < 0.8 ? threeStage : lines);
+  if (!lineIds) return null;
+  const names = lineIds.map((id) => CARD_MAP[id]?.name || id);
+  return {
+    id: `evo-set:${lineIds.join("-")}:${Math.random()}`,
+    kind: "evolution_set",
+    rarity,
+    lineIds,
+    name: "진화 라인 세트",
+    desc: `${names.join(" → ")}을(를) 한 장씩 모두 획득합니다.`,
+  };
+}
+
+function makeUpgradeReward(rarity) {
+  const candidates = UPGRADE_POOL.filter((entry) => entry.rarity === rarity);
+  const entry = randomItem(candidates);
+  return entry
+    ? { ...entry, kind: "upgrade", id: `upgrade:${entry.id}:${Math.random()}` }
+    : null;
+}
+
+function makeRewardByRarity(rarity, run) {
+  let factories;
+  if (rarity === "L") {
+    factories = [
+      () => makeEvolutionSetReward("L"),
+      () => makeEvolutionSetReward("L"),
+      () => makeChooseEvolutionReward(run, "L"),
+    ];
+  } else if (rarity === "E") {
+    factories = [
+      () => makeChooseEvolutionReward(run, "E"),
+      () => makeChooseEvolutionReward(run, "E"),
+      () => makeUpgradeReward("E"),
+    ];
+  } else if (rarity === "R") {
+    factories = [
+      () => makeRandomEvolutionReward(run, "R"),
+      () => makeRandomEvolutionReward(run, "R"),
+      () => makeUpgradeReward("R"),
+      () => makeBasicPokemonReward("R"),
+    ];
+  } else {
+    factories = [
+      () => makeBasicPokemonReward("C"),
+      () => makeBasicPokemonReward("C"),
+      () => makeSupportReward("C"),
+      () => makeUpgradeReward("C"),
+    ];
+  }
+
+  for (const factory of randomItems(factories, factories.length)) {
+    const reward = factory();
+    if (reward) return reward;
+  }
+  return makeBasicPokemonReward("C") || makeSupportReward("C");
+}
+
+function makeRewards(run) {
+  const rewards = [];
+  let guard = 0;
+  while (rewards.length < 3 && guard < 20) {
+    guard += 1;
+    const rarity = rollRewardRarity(run.stage);
+    const reward = makeRewardByRarity(rarity, run);
+    if (!reward) continue;
+    const key = `${reward.kind}:${reward.cardId || reward.targetId || reward.lineIds?.join("-") || reward.name}`;
+    if (rewards.some((entry) => entry._dedupeKey === key)) continue;
+    rewards.push({ ...reward, _dedupeKey: key });
+  }
+  while (rewards.length < 3) {
+    const fallback = makeBasicPokemonReward("C");
+    if (!fallback) break;
+    rewards.push(fallback);
+  }
+  return rewards;
 }
 
 function initialRun() {
@@ -255,10 +448,60 @@ function RunStatus({ run }) {
   );
 }
 
+function RewardSprites({ reward, run }) {
+  if (reward.kind === "basic_card" || reward.kind === "support_card") {
+    const card = CARD_MAP[reward.cardId];
+    return <Sprite cardId={reward.cardId} emoji={card?.emoji || "?"} size={82} />;
+  }
+
+  if (reward.kind === "random_evolution") {
+    const card = CARD_MAP[reward.targetId];
+    return <Sprite cardId={reward.targetId} emoji={card?.emoji || "?"} size={82} />;
+  }
+
+  if (reward.kind === "choose_evolution") {
+    const targets = randomItems(getEvolutionOptions(run.deck), 3);
+    return (
+      <div className="roguelike-reward-sprite-stack">
+        {targets.map((option) => (
+          <Sprite
+            key={`${option.sourceId}:${option.targetId}`}
+            cardId={option.targetId}
+            emoji={CARD_MAP[option.targetId]?.emoji || "?"}
+            size={62}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (reward.kind === "evolution_set") {
+    return (
+      <div className="roguelike-reward-sprite-stack is-line">
+        {reward.lineIds.slice(0, 3).map((cardId) => (
+          <Sprite key={cardId} cardId={cardId} emoji={CARD_MAP[cardId]?.emoji || "?"} size={58} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="roguelike-upgrade-item"
+      src={reward.itemSprite}
+      alt={reward.itemLabel || reward.name}
+      width={84}
+      height={84}
+      draggable={false}
+    />
+  );
+}
+
 export default function RoguelikeMode({ onExit }) {
   const [phase, setPhase] = useState("intro");
   const [run, setRun] = useState(() => initialRun());
   const [rewards, setRewards] = useState([]);
+  const [selectionReward, setSelectionReward] = useState(null);
   const [battleNonce, setBattleNonce] = useState(0);
   const [, setSetupPulse] = useState(0);
 
@@ -322,6 +565,7 @@ export default function RoguelikeMode({ onExit }) {
     playSfx("click");
     setRun(initialRun());
     setRewards([]);
+    setSelectionReward(null);
     setPhase("preview");
   }
 
@@ -350,12 +594,14 @@ export default function RoguelikeMode({ onExit }) {
       return;
     }
 
+    const rewardRun = { ...run, hp: remainingHp };
     setRun((current) => ({ ...current, hp: remainingHp }));
-    setRewards(makeRewards());
+    setRewards(makeRewards(rewardRun));
+    setSelectionReward(null);
     setPhase("reward");
   }
 
-  function chooseReward(reward) {
+  function finishReward(reward, chosenTargetId = null) {
     playSfx("click");
     setRun((current) => {
       const next = {
@@ -364,20 +610,29 @@ export default function RoguelikeMode({ onExit }) {
         rewardsTaken: [...current.rewardsTaken],
       };
 
-      if (reward.kind === "card") {
+      if (reward.kind === "basic_card" || reward.kind === "support_card") {
         next.deck.push(reward.cardId);
         next.rewardsTaken.push(CARD_MAP[reward.cardId]?.name || reward.cardId);
-      } else if (reward.id === "max_hp") {
+      } else if (reward.kind === "random_evolution") {
+        next.deck.push(reward.targetId);
+        next.rewardsTaken.push(`진화 · ${CARD_MAP[reward.targetId]?.name || reward.targetId}`);
+      } else if (reward.kind === "choose_evolution" && chosenTargetId) {
+        next.deck.push(chosenTargetId);
+        next.rewardsTaken.push(`선택 진화 · ${CARD_MAP[chosenTargetId]?.name || chosenTargetId}`);
+      } else if (reward.kind === "evolution_set") {
+        next.deck.push(...reward.lineIds);
+        next.rewardsTaken.push(`진화 세트 · ${reward.lineIds.map((id) => CARD_MAP[id]?.name || id).join("/")}`);
+      } else if (reward.kind === "upgrade" && reward.id.includes("max_hp")) {
         next.maxHp += 5;
         next.hp = Math.min(next.maxHp, next.hp + 5);
         next.rewardsTaken.push("체력 단련");
-      } else if (reward.id === "heal") {
+      } else if (reward.kind === "upgrade" && reward.id.includes("heal")) {
         next.hp = Math.min(next.maxHp, next.hp + 10);
         next.rewardsTaken.push("응급 치료");
-      } else if (reward.id === "opening_hand") {
+      } else if (reward.kind === "upgrade" && reward.id.includes("opening_hand")) {
         next.openingHandBonus += 1;
         next.rewardsTaken.push("준비된 작전");
-      } else if (reward.id === "starting_mana") {
+      } else if (reward.kind === "upgrade" && reward.id.includes("starting_mana")) {
         next.startingManaBonus += 1;
         next.rewardsTaken.push("에너지 저장");
       }
@@ -386,7 +641,17 @@ export default function RoguelikeMode({ onExit }) {
       return next;
     });
     setRewards([]);
+    setSelectionReward(null);
     setPhase("preview");
+  }
+
+  function chooseReward(reward) {
+    if (reward.kind === "choose_evolution") {
+      playSfx("click");
+      setSelectionReward(reward);
+      return;
+    }
+    finishReward(reward);
   }
 
   function exitMode() {
@@ -426,8 +691,8 @@ export default function RoguelikeMode({ onExit }) {
             <div className="roguelike-emblem">☠️</div>
             <h2>내 덱 없이 시작하는 로그라이크</h2>
             <p>
-              지급된 24장 임시 덱으로 악의 조직을 연속 격파하세요. 승리할 때마다 카드 또는 영구 강화를 하나 선택하고,
-              남은 체력은 다음 전투까지 이어집니다.
+              지급된 24장 임시 덱으로 악의 조직을 연속 격파하세요. 승리할 때마다 등급이 무작위인 보상 3개 중 하나를 고르고,
+              포켓몬을 모아 진화 라인을 완성하며 남은 체력은 다음 전투까지 이어집니다.
             </p>
             <div className="roguelike-route">
               {ENCOUNTERS.map((entry, index) => (
@@ -467,50 +732,69 @@ export default function RoguelikeMode({ onExit }) {
                 ))}
               </div>
               <div className="roguelike-upgrade-log">
-                <strong>획득 강화</strong>
+                <strong>획득 보상</strong>
                 <p>{run.rewardsTaken.length ? run.rewardsTaken.join(" · ") : "아직 없음"}</p>
               </div>
             </section>
           </div>
         )}
 
-        {phase === "reward" && (
+        {phase === "reward" && !selectionReward && (
           <section className="roguelike-panel roguelike-reward-panel">
             <div className="roguelike-stage-clear">STAGE CLEAR</div>
             <h2>보상 하나를 선택하세요</h2>
-            <p>카드를 덱에 추가하거나, 남은 런 전체에 적용되는 강화를 선택할 수 있습니다.</p>
+            <p>세 보상의 등급과 종류는 매번 무작위입니다. 높은 등급일수록 진화 선택권과 완성 세트가 등장합니다.</p>
             <div className="roguelike-rewards">
               {rewards.map((reward) => {
-                if (reward.kind === "card") {
-                  const card = CARD_MAP[reward.cardId];
-                  return (
-                    <button key={reward.id} className="roguelike-reward-card" onClick={() => chooseReward(reward)}>
-                      <span className="roguelike-reward-tag">CARD</span>
-                      <Sprite cardId={reward.cardId} emoji={card?.emoji || "?"} size={82} />
-                      <strong>{card?.name || reward.cardId}</strong>
-                      <small>{cardSummary(card)}</small>
-                      <span className="roguelike-reward-desc">덱에 1장 추가</span>
-                    </button>
-                  );
-                }
+                const rarity = RARITY_META[reward.rarity] || RARITY_META.C;
+                const detail = reward.kind === "random_evolution"
+                  ? `${CARD_MAP[reward.sourceId]?.name} → ${CARD_MAP[reward.targetId]?.name}`
+                  : reward.kind === "evolution_set"
+                    ? reward.lineIds.map((id) => CARD_MAP[id]?.name || id).join(" → ")
+                    : reward.kind === "upgrade"
+                      ? reward.itemLabel
+                      : cardSummary(CARD_MAP[reward.cardId]);
                 return (
-                  <button key={reward.id} className="roguelike-reward-card is-upgrade" onClick={() => chooseReward(reward)}>
-                    <span className="roguelike-reward-tag">UPGRADE</span>
-                    <img
-                      className="roguelike-upgrade-item"
-                      src={reward.itemSprite}
-                      alt={reward.itemLabel || reward.name}
-                      width={84}
-                      height={84}
-                      draggable={false}
-                    />
+                  <button
+                    key={reward.id}
+                    className={`roguelike-reward-card ${reward.kind === "upgrade" ? "is-upgrade" : ""} ${rarity.className}`}
+                    onClick={() => chooseReward(reward)}
+                  >
+                    <span className="roguelike-reward-tag">{rarity.label}</span>
+                    <RewardSprites reward={reward} run={run} />
                     <strong>{reward.name}</strong>
-                    <small className="roguelike-item-label">{reward.itemLabel}</small>
+                    <small>{detail}</small>
                     <span className="roguelike-reward-desc">{reward.desc}</span>
                   </button>
                 );
               })}
             </div>
+          </section>
+        )}
+
+        {phase === "reward" && selectionReward && (
+          <section className="roguelike-panel roguelike-reward-panel roguelike-evolution-picker">
+            <div className="roguelike-stage-clear">{RARITY_META[selectionReward.rarity]?.label || "에픽"} · 선택 진화</div>
+            <h2>진화시킬 포켓몬을 선택하세요</h2>
+            <p>현재 런 덱에 실제로 들어있는 포켓몬의 다음 진화체만 표시됩니다.</p>
+            <div className="roguelike-evolution-options">
+              {getEvolutionOptions(run.deck).map((option) => (
+                <button
+                  key={`${option.sourceId}:${option.targetId}`}
+                  className="roguelike-evolution-option"
+                  onClick={() => finishReward(selectionReward, option.targetId)}
+                >
+                  <div className="roguelike-evolution-pair">
+                    <Sprite cardId={option.sourceId} emoji={CARD_MAP[option.sourceId]?.emoji || "?"} size={56} />
+                    <span>→</span>
+                    <Sprite cardId={option.targetId} emoji={CARD_MAP[option.targetId]?.emoji || "?"} size={72} />
+                  </div>
+                  <strong>{CARD_MAP[option.sourceId]?.name} → {CARD_MAP[option.targetId]?.name}</strong>
+                  <small>{cardSummary(CARD_MAP[option.targetId])}</small>
+                </button>
+              ))}
+            </div>
+            <button className="btn-ghost small roguelike-picker-back" onClick={() => setSelectionReward(null)}>◀ 다른 보상 보기</button>
           </section>
         )}
 
