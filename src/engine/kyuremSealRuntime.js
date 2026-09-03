@@ -278,6 +278,8 @@ export function registerKyuremSealRuntime(game, resolver) {
   if (typeof resolver === "function") resolveSelection = resolver;
 
   if (typeof window !== "undefined") {
+    // 전투 기록/로그라이크 등 읽기 전용 런타임이 현재 Battle 상태를 공유한다.
+    window.__pokeBattleGame = currentGame;
     window.requestAnimationFrame(syncOverlay);
   }
 }
