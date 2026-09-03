@@ -176,10 +176,29 @@
   font-weight: 900;
 }
 
-.roguelike-villain-emoji {
-  margin: 18px 0 8px;
-  font-size: 86px;
-  filter: drop-shadow(0 12px 24px rgba(0,0,0,.5));
+.roguelike-villain-sprite {
+  display: grid;
+  place-items: end center;
+  width: 164px;
+  height: 156px;
+  margin: 14px 0 8px;
+  border-radius: 50% 50% 28px 28px;
+  background:
+    radial-gradient(circle at 50% 72%, rgba(205, 77, 102, .18), transparent 45%);
+  filter: drop-shadow(0 14px 22px rgba(0,0,0,.5));
+}
+
+.roguelike-villain-sprite .trainer-sprite {
+  width: auto;
+  height: auto;
+  max-width: 148px;
+  max-height: 148px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.roguelike-villain-sprite .trainer-emoji {
+  font-size: 70px !important;
 }
 
 .roguelike-faction {
@@ -330,9 +349,22 @@
   line-height: 1.5;
 }
 
-.roguelike-upgrade-icon {
-  margin-bottom: 8px;
-  font-size: 70px;
+.roguelike-upgrade-item {
+  width: 84px;
+  height: 84px;
+  margin: 5px 0 8px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 9px 15px rgba(0,0,0,.42));
+  transform: scale(1.08);
+}
+
+.roguelike-item-label {
+  margin-top: -5px;
+  color: #d6b97d !important;
+  font-size: 9px !important;
+  font-weight: 800;
+  letter-spacing: .04em;
 }
 
 .roguelike-end-panel .roguelike-status {
@@ -394,5 +426,20 @@
 
   .roguelike-reward-card {
     min-height: 190px;
+  }
+
+  .roguelike-villain-sprite {
+    width: 144px;
+    height: 136px;
+  }
+
+  .roguelike-villain-sprite .trainer-sprite {
+    max-width: 130px;
+    max-height: 130px;
+  }
+
+  .roguelike-upgrade-item {
+    width: 72px;
+    height: 72px;
   }
 }
