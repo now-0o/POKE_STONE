@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Battle from "../../components/Battle.jsx";
-import { Sprite } from "../../components/Card.jsx";
+import { Sprite, TrainerSprite } from "../../components/Card.jsx";
 import { CARD_MAP } from "../../data/cards.js";
 import { drawCard } from "../../engine/engine.js";
 import { playBgm, playSfx } from "../../audio.js";
@@ -52,7 +52,7 @@ const ENCOUNTERS = [
     faction: "로켓단",
     name: "로켓단 조무래기",
     title: "악의 조직 소탕 · 1구역",
-    emoji: "☠️",
+    sprite: "rocketgrunt",
     aiLevel: 2,
     hp: 32,
     reward: 0,
@@ -69,7 +69,7 @@ const ENCOUNTERS = [
     faction: "로켓단",
     name: "로켓단 간부 아테나",
     title: "악의 조직 소탕 · 간부전",
-    emoji: "♠️",
+    sprite: "ariana",
     aiLevel: 3,
     hp: 38,
     reward: 0,
@@ -87,7 +87,7 @@ const ENCOUNTERS = [
     faction: "로켓단",
     name: "로켓단 보스 비주기",
     title: "악의 조직 소탕 · 보스전",
-    emoji: "🐈",
+    sprite: "giovanni",
     aiLevel: 4,
     hp: 44,
     reward: 0,
@@ -105,7 +105,7 @@ const ENCOUNTERS = [
     faction: "갤럭시단",
     name: "갤럭시단 간부 마스",
     title: "악의 조직 소탕 · 4구역",
-    emoji: "🌌",
+    sprite: "mars",
     aiLevel: 4,
     hp: 46,
     reward: 0,
@@ -123,7 +123,7 @@ const ENCOUNTERS = [
     faction: "플라즈마단",
     name: "플라즈마단 게치스",
     title: "악의 조직 소탕 · 최종전",
-    emoji: "👑",
+    sprite: "ghetsis-gen5bw",
     aiLevel: 5,
     hp: 54,
     reward: 0,
@@ -142,25 +142,29 @@ const ENCOUNTERS = [
 const UPGRADE_POOL = [
   {
     id: "max_hp",
-    icon: "❤️",
+    itemSprite: "/sprites/items/eviolite.png",
+    itemLabel: "진화의휘석",
     name: "체력 단련",
     desc: "최대 체력 +5. 현재 체력도 5 회복.",
   },
   {
     id: "heal",
-    icon: "💚",
+    itemSprite: "/sprites/items/potion.png",
+    itemLabel: "상처약",
     name: "응급 치료",
     desc: "현재 체력을 10 회복.",
   },
   {
     id: "opening_hand",
-    icon: "🃏",
+    itemSprite: "/sprites/items/adventure-rules.png",
+    itemLabel: "모험의 규칙",
     name: "준비된 작전",
     desc: "이후 전투의 시작 손패 +1.",
   },
   {
     id: "starting_mana",
-    icon: "⚡",
+    itemSprite: "/sprites/items/normal-gem.png",
+    itemLabel: "노말주얼",
     name: "에너지 저장",
     desc: "이후 전투 시작 시 최대 코스트와 현재 코스트 +1.",
   },
@@ -403,7 +407,9 @@ export default function RoguelikeMode({ onExit }) {
           <div className="roguelike-columns">
             <section className="roguelike-panel roguelike-encounter">
               <div className="roguelike-stage">STAGE {run.stage + 1} / {ENCOUNTERS.length}</div>
-              <div className="roguelike-villain-emoji">{encounter.emoji}</div>
+              <div className="roguelike-villain-sprite">
+                <TrainerSprite spriteKey={encounter.sprite} emoji="?" size={132} />
+              </div>
               <div className="roguelike-faction">{encounter.faction}</div>
               <h2>{encounter.name}</h2>
               <p>{encounter.title}</p>
@@ -455,8 +461,16 @@ export default function RoguelikeMode({ onExit }) {
                 return (
                   <button key={reward.id} className="roguelike-reward-card is-upgrade" onClick={() => chooseReward(reward)}>
                     <span className="roguelike-reward-tag">UPGRADE</span>
-                    <span className="roguelike-upgrade-icon">{reward.icon}</span>
+                    <img
+                      className="roguelike-upgrade-item"
+                      src={reward.itemSprite}
+                      alt={reward.itemLabel || reward.name}
+                      width={84}
+                      height={84}
+                      draggable={false}
+                    />
                     <strong>{reward.name}</strong>
+                    <small className="roguelike-item-label">{reward.itemLabel}</small>
                     <span className="roguelike-reward-desc">{reward.desc}</span>
                   </button>
                 );
