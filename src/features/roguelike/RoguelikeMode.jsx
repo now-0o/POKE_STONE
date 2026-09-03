@@ -5,12 +5,15 @@ import { CARD_MAP } from "../../data/cards.js";
 import { drawCard } from "../../engine/engine.js";
 import { playBgm, playSfx } from "../../audio.js";
 
+// 첫 전투부터 3단 진화 라인을 여러 개 조립하게 하지 않는다.
+// 기본체/1회 진화/단독 포켓몬 비중을 높여 초반 전개가 안정적인 24장 덱으로 시작한다.
 const STARTER_DECK = [
-  "bulbasaur", "bulbasaur", "ivysaur", "venusaur",
-  "charmander", "charmander", "charmeleon", "charizard",
-  "squirtle", "squirtle", "wartortle", "blastoise",
   "pikachu", "pikachu", "raichu",
-  "eevee", "eevee",
+  "growlithe", "growlithe", "arcanine",
+  "rattata", "rattata", "raticate",
+  "eevee", "eevee", "vaporeon", "jolteon",
+  "lapras", "lapras",
+  "tauros", "tauros",
   "quickattack", "quickattack",
   "potion", "potion",
   "pokeball", "pokeball", "superball",
@@ -39,7 +42,9 @@ const CARD_REWARD_POOL = [
 
 function makeDeck(pool, size = 30) {
   const valid = pool.filter((id) => CARD_MAP[id]);
-  const source = valid.length ? valid : FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
+  const source = valid.length
+    ? valid
+    : FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
   const deck = [];
   if (!source.length) return deck;
   while (deck.length < size) deck.push(source[deck.length % source.length]);
@@ -197,7 +202,9 @@ function initialRun() {
   const deck = STARTER_DECK.filter((id) => CARD_MAP[id]);
   if (deck.length < 20) {
     const fallback = FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
-    while (deck.length < 24 && fallback.length) deck.push(fallback[deck.length % fallback.length]);
+    while (deck.length < 24 && fallback.length) {
+      deck.push(fallback[deck.length % fallback.length]);
+    }
   }
   return {
     stage: 0,
@@ -212,7 +219,9 @@ function initialRun() {
 
 function cardSummary(card) {
   if (!card) return "카드";
-  if (card.kind === "pokemon") return `${card.type} · ${card.cost}코 · ${card.atk}/${card.hp}`;
+  if (card.kind === "pokemon") {
+    return `${card.type} · ${card.cost}코 · ${card.atk}/${card.hp}`;
+  }
   return `${card.type || card.kind} · ${card.cost}코`;
 }
 
@@ -241,7 +250,11 @@ export default function RoguelikeMode({ onExit }) {
     return [...counts.entries()]
       .map(([id, count]) => ({ card: CARD_MAP[id], count }))
       .filter((entry) => entry.card)
-      .sort((a, b) => (a.card.cost || 0) - (b.card.cost || 0) || a.card.name.localeCompare(b.card.name));
+      .sort(
+        (a, b) =>
+          (a.card.cost || 0) - (b.card.cost || 0) ||
+          a.card.name.localeCompare(b.card.name),
+      );
   }, [run.deck]);
 
   useEffect(() => {
@@ -308,7 +321,10 @@ export default function RoguelikeMode({ onExit }) {
       return;
     }
 
-    const remainingHp = Math.max(1, Math.min(run.maxHp, game?.players?.player?.hp ?? run.hp));
+    const remainingHp = Math.max(
+      1,
+      Math.min(run.maxHp, game?.players?.player?.hp ?? run.hp),
+    );
     if (run.stage >= ENCOUNTERS.length - 1) {
       setRun((current) => ({ ...current, hp: remainingHp }));
       setPhase("victory");
