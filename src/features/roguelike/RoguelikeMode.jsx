@@ -4,24 +4,9 @@ import { Sprite, TrainerSprite } from "../../components/Card.jsx";
 import { CARD_MAP } from "../../data/cards.js";
 import { drawCard } from "../../engine/engine.js";
 import { playBgm, playSfx } from "../../audio.js";
-
-// 첫 전투부터 3단 진화 라인을 조립하게 하지 않는다.
-// 기본체/1회 진화/단독 포켓몬 중심의 24장 덱으로 시작한다.
-const STARTER_DECK = [
-  "drilbur", "drilbur", "excadrill",
-  "growlithe", "growlithe", "arcanine",
-  "rattata", "rattata", "raticate",
-  "eevee", "eevee", "vaporeon", "jolteon",
-  "lapras", "lapras",
-  "tauros", "tauros",
-  "quickattack", "quickattack",
-  "potion", "potion",
-  "pokeball", "pokeball", "superball",
-];
-
-const FALLBACK_DECK_CARDS = [
-  "rattata", "rattata", "pidgey", "pidgey", "quickattack", "potion", "pokeball",
-];
+import { ENCOUNTERS } from "./encounters.js";
+import { makeStarterChoices } from "./starterDraft.js";
+import "./starter-draft.css";
 
 const SUPPORT_REWARD_POOL = [
   "quickattack", "thunderbolt", "flamethrower", "hydropump", "solarbeam",
@@ -35,307 +20,6 @@ const RARITY_META = Object.freeze({
   E: { label: "에픽", className: "rarity-epic" },
   L: { label: "레전드", className: "rarity-legend" },
 });
-
-function hasEvolutionPrerequisites(deckIds, cardId, visited = new Set()) {
-  const card = CARD_MAP[cardId];
-  if (!card?.evolvesFrom) return true;
-  if (visited.has(cardId)) return false;
-
-  visited.add(cardId);
-  if (!deckIds.includes(card.evolvesFrom)) return false;
-  return hasEvolutionPrerequisites(deckIds, card.evolvesFrom, visited);
-}
-
-function buildStarterDeck() {
-  const available = STARTER_DECK.filter((id) => CARD_MAP[id]);
-  const deck = available.filter((id) => {
-    const card = CARD_MAP[id];
-    if (card?.kind !== "pokemon" || !card.evolvesFrom) return true;
-    return hasEvolutionPrerequisites(available, id);
-  });
-
-  const fallback = FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
-  while (deck.length < 24 && fallback.length) {
-    deck.push(fallback[deck.length % fallback.length]);
-  }
-  return deck.slice(0, 24);
-}
-
-function makeDeck(pool, size = 30) {
-  const valid = pool.filter((id) => CARD_MAP[id]);
-  const source = valid.length
-    ? valid
-    : FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
-  const deck = [];
-  if (!source.length) return deck;
-  while (deck.length < size) deck.push(source[deck.length % source.length]);
-  return deck;
-}
-
-// 5전 프로토타입을 15연전으로 확장한다.
-// 각 조직 안에서도 조무래기 → 간부 → 보스 순으로 덱 완성도와 체력을 올린다.
-const ENCOUNTERS = [
-  {
-    id: "rogue_rocket_grunt",
-    faction: "로켓단",
-    name: "로켓단 조무래기",
-    title: "로켓단 · 침투전",
-    sprite: "rocketgrunt",
-    aiLevel: 2,
-    hp: 30,
-    reward: 0,
-    introLines: ["여긴 로켓단의 구역이다! 가진 포켓몬을 전부 내놔!"],
-    winLines: ["흥! 역시 로켓단의 힘이지!"],
-    loseLines: ["뭐야, 이런 녀석에게 지다니...!"],
-    deck: makeDeck([
-      "rattata", "raticate", "zubat", "golbat", "ekans", "arbok", "grimer", "muk",
-      "quickattack", "toxic", "pokeball", "potion",
-    ]),
-  },
-  {
-    id: "rogue_rocket_proton",
-    faction: "로켓단",
-    name: "로켓단 간부 랜스",
-    title: "로켓단 · 발전소 습격",
-    sprite: "proton",
-    aiLevel: 3,
-    hp: 34,
-    reward: 0,
-    introLines: ["방해꾼이 하나 들어왔군. 빠르게 처리하지."],
-    winLines: ["이 정도 속도도 못 따라오나?"],
-    loseLines: ["칫... 생각보다 제법이군."],
-    deck: makeDeck([
-      "zubat", "golbat", "koffing", "weezing", "voltorb", "electrode",
-      "rattata", "raticate", "thunderbolt", "toxic", "quickattack", "superball", "potion",
-    ]),
-  },
-  {
-    id: "rogue_rocket_petrel",
-    faction: "로켓단",
-    name: "로켓단 간부 람다",
-    title: "로켓단 · 위장 작전",
-    sprite: "petrel",
-    aiLevel: 3,
-    hp: 38,
-    reward: 0,
-    introLines: ["진짜와 가짜를 구분할 수 있을까? 이미 늦었지만 말이야!"],
-    winLines: ["속임수도 실력이라고!"],
-    loseLines: ["이 얼굴까지 들켰다고...?"],
-    deck: makeDeck([
-      "koffing", "weezing", "grimer", "muk", "houndour", "houndoom",
-      "zubat", "golbat", "toxic", "darkpulse", "flamethrower", "superball", "potion",
-    ]),
-  },
-  {
-    id: "rogue_rocket_athena",
-    faction: "로켓단",
-    name: "로켓단 간부 아테나",
-    title: "로켓단 · 간부전",
-    sprite: "ariana",
-    aiLevel: 4,
-    hp: 42,
-    reward: 0,
-    introLines: ["조무래기들을 이겼다고 우쭐대지 마. 간부의 싸움은 다르니까."],
-    winLines: ["이게 로켓단 간부의 실력이야."],
-    loseLines: ["비주기 님께서 그냥 두지 않으실 거야...!"],
-    deck: makeDeck([
-      "arbok", "gloom", "vileplume", "murkrow", "honchkrow", "zubat", "golbat", "crobat",
-      "stunky", "skuntank", "darkpulse", "toxic", "superball", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_rocket_archer",
-    faction: "로켓단",
-    name: "로켓단 간부 아폴로",
-    title: "로켓단 · 최종 간부전",
-    sprite: "archer",
-    aiLevel: 4,
-    hp: 47,
-    reward: 0,
-    introLines: ["여기까지 온 건 인정하지. 하지만 비주기 님께 닿게 할 수는 없다."],
-    winLines: ["로켓단의 재건은 막을 수 없다."],
-    loseLines: ["비주기 님... 죄송합니다."],
-    deck: makeDeck([
-      "houndour", "houndoom", "koffing", "weezing", "golbat", "crobat",
-      "magmar", "raticate", "darkpulse", "flamethrower", "toxic", "focussash", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_giovanni",
-    faction: "로켓단",
-    name: "로켓단 보스 비주기",
-    title: "로켓단 · 조직 보스",
-    sprite: "giovanni",
-    aiLevel: 5,
-    hp: 54,
-    reward: 0,
-    introLines: ["조직을 무너뜨리겠다고? 힘이 무엇인지 직접 가르쳐 주지."],
-    winLines: ["결국 힘 앞에서는 모두 무릎을 꿇는다."],
-    loseLines: ["흥미롭군. 하지만 이것으로 끝이라고 생각하지 마라."],
-    deck: makeDeck([
-      "persian", "rhyhorn", "rhydon", "rhyperior", "nidorino", "nidoking",
-      "nidorina", "nidoqueen", "diglett", "dugtrio", "sandile", "krokorok", "krookodile",
-      "earthquake", "stoneedge", "sandstorm", "hyperball", "fullrestore", "focussash",
-    ]),
-  },
-  {
-    id: "rogue_galactic_grunt",
-    faction: "갤럭시단",
-    name: "갤럭시단 조무래기",
-    title: "갤럭시단 · 기지 침입",
-    sprite: "galacticgrunt",
-    aiLevel: 3,
-    hp: 40,
-    reward: 0,
-    introLines: ["우주의 새 질서를 방해하는 녀석은 전부 제거한다!"],
-    winLines: ["갤럭시단의 계획은 완벽하다!"],
-    loseLines: ["간부님들이 가만두지 않을 거야!"],
-    deck: makeDeck([
-      "zubat", "golbat", "glameow", "purugly", "stunky", "skuntank",
-      "bronzor", "quickattack", "toxic", "reflect", "superball", "potion",
-    ]),
-  },
-  {
-    id: "rogue_galactic_mars",
-    faction: "갤럭시단",
-    name: "갤럭시단 간부 마스",
-    title: "갤럭시단 · 마스",
-    sprite: "mars",
-    aiLevel: 4,
-    hp: 46,
-    reward: 0,
-    introLines: ["여기까지 들어오다니 배짱은 있네. 그럼 내가 직접 상대해 줄게!"],
-    winLines: ["갤럭시단의 계획은 멈추지 않아!"],
-    loseLines: ["말도 안 돼... 태홍 님께 보고해야 해!"],
-    deck: makeDeck([
-      "zubat", "golbat", "crobat", "glameow", "purugly", "stunky", "skuntank",
-      "bronzor", "bronzong", "darkpulse", "toxic", "reflect", "superball", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_galactic_jupiter",
-    faction: "갤럭시단",
-    name: "갤럭시단 간부 주피터",
-    title: "갤럭시단 · 주피터",
-    sprite: "jupiter",
-    aiLevel: 4,
-    hp: 50,
-    reward: 0,
-    introLines: ["마스를 이겼다고? 그럼 내가 조금 더 진지하게 상대해 주지."],
-    winLines: ["이 정도 차이도 모르는 건가?"],
-    loseLines: ["흥... 아직 새턴이 남아 있어."],
-    deck: makeDeck([
-      "stunky", "skuntank", "zubat", "golbat", "crobat", "bronzor", "bronzong",
-      "murkrow", "honchkrow", "toxic", "darkpulse", "lightscreen", "focussash", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_galactic_saturn",
-    faction: "갤럭시단",
-    name: "갤럭시단 간부 새턴",
-    title: "갤럭시단 · 새턴",
-    sprite: "saturn",
-    aiLevel: 5,
-    hp: 55,
-    reward: 0,
-    introLines: ["우리의 이상을 이해하지 못한다면 힘으로 비켜 세울 수밖에."],
-    winLines: ["태홍 님의 우주에는 불필요한 것이 없다."],
-    loseLines: ["이 힘이라면... 태홍 님께서 직접 나서실 수밖에 없겠군."],
-    deck: makeDeck([
-      "croagunk", "toxicroak", "golbat", "crobat", "bronzor", "bronzong",
-      "abra", "kadabra", "alakazam", "toxic", "psychic", "reflect", "lightscreen", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_galactic_cyrus",
-    faction: "갤럭시단",
-    name: "갤럭시단 보스 태홍",
-    title: "갤럭시단 · 새로운 우주",
-    sprite: "cyrus",
-    aiLevel: 5,
-    hp: 62,
-    reward: 0,
-    introLines: ["불완전한 마음이 존재하는 한 이 세계는 완성되지 않는다. 사라져라."],
-    winLines: ["감정에 매달리는 자는 결국 무너진다."],
-    loseLines: ["이 세계의 불완전함을... 네가 증명했다는 건가."],
-    deck: makeDeck([
-      "murkrow", "honchkrow", "zubat", "golbat", "crobat", "sneasel", "weavile",
-      "magikarp", "gyarados", "houndour", "houndoom", "darkpulse", "hydropump",
-      "reflect", "lightscreen", "focussash", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_plasma_grunt",
-    faction: "플라즈마단",
-    name: "플라즈마단 조무래기",
-    title: "플라즈마단 · 성 내부",
-    sprite: "plasmagrunt-gen5bw",
-    aiLevel: 4,
-    hp: 46,
-    reward: 0,
-    introLines: ["포켓몬을 해방하기 위해 너의 포켓몬부터 빼앗겠다!"],
-    winLines: ["이것이 포켓몬 해방을 위한 정의다!"],
-    loseLines: ["우리가 틀렸다는 건가...?"],
-    deck: makeDeck([
-      "patrat", "watchog", "purrloin", "liepard", "sandile", "krokorok",
-      "yamask", "cofagrigus", "vullaby", "mandibuzz", "darkpulse", "toxic", "superball", "potion",
-    ]),
-  },
-  {
-    id: "rogue_plasma_elite",
-    faction: "플라즈마단",
-    name: "플라즈마단 정예병",
-    title: "플라즈마단 · 친위대",
-    sprite: "plasmagruntf-gen5bw",
-    aiLevel: 5,
-    hp: 54,
-    reward: 0,
-    introLines: ["게치스 님께 가까이 갈 생각이라면 여기서 끝내 주지."],
-    winLines: ["플라즈마단의 힘은 이 정도가 아니다."],
-    loseLines: ["아크로마 님께서 네 힘을 분석하실 것이다."],
-    deck: makeDeck([
-      "lillipup", "herdier", "stoutland", "sandile", "krokorok", "krookodile",
-      "pawniard", "bisharp", "vullaby", "mandibuzz", "ferroseed", "ferrothorn",
-      "darkpulse", "reflect", "lightscreen", "focussash", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_colress",
-    faction: "플라즈마단",
-    name: "플라즈마단 아크로마",
-    title: "플라즈마단 · 포켓몬의 가능성",
-    sprite: "colress",
-    aiLevel: 5,
-    hp: 62,
-    reward: 0,
-    introLines: ["포켓몬의 힘을 최대한 끌어내는 조건... 네 전투로 검증해 보겠습니다."],
-    winLines: ["역시 데이터가 말해 주는군요."],
-    loseLines: ["훌륭합니다. 이런 결과는 예상 범위를 넘어섰군요."],
-    deck: makeDeck([
-      "magnemite", "magneton", "magnezone", "beldum", "metang", "metagross",
-      "porygon", "porygon2", "porygonz", "rotom", "ferroseed", "ferrothorn",
-      "thunderbolt", "reflect", "lightscreen", "focussash", "fullrestore",
-    ]),
-  },
-  {
-    id: "rogue_ghetsis",
-    faction: "플라즈마단",
-    name: "플라즈마단 게치스",
-    title: "악의 조직 소탕 · 최종전",
-    sprite: "ghetsis-gen5bw",
-    aiLevel: 5,
-    hp: 72,
-    reward: 0,
-    introLines: ["포켓몬을 다루는 자들 위에 서는 것은 오직 나다. 네 여정도 여기까지다!"],
-    winLines: ["모든 것은 나의 계획대로다!"],
-    loseLines: ["내가... 내가 이런 곳에서 패배한다고?!"],
-    deck: makeDeck([
-      "deino", "zweilous", "hydreigon", "yamask", "cofagrigus", "druddigon", "haxorus",
-      "vullaby", "mandibuzz", "sandile", "krokorok", "krookodile", "pawniard", "bisharp",
-      "dragontail", "darkpulse", "reflect", "lightscreen", "focussash", "fullrestore", "hyperball",
-    ]),
-  },
-];
 
 const UPGRADE_POOL = [
   {
@@ -591,10 +275,10 @@ function makeRewards(run) {
   return rewards;
 }
 
-function initialRun() {
+function initialRun(deck = []) {
   return {
     stage: 0,
-    deck: buildStarterDeck(),
+    deck: [...deck],
     hp: 40,
     maxHp: 40,
     openingHandBonus: 0,
@@ -671,9 +355,43 @@ function RewardSprites({ reward, run }) {
   );
 }
 
+function StarterChoiceCard({ choice, onChoose }) {
+  return (
+    <button className="roguelike-starter-card" onClick={() => onChoose(choice)}>
+      <span className="roguelike-starter-tag">RANDOM START</span>
+      <div className="roguelike-starter-sprites">
+        {choice.previewIds.map((cardId) => (
+          <Sprite
+            key={cardId}
+            cardId={cardId}
+            emoji={CARD_MAP[cardId]?.emoji || "?"}
+            size={62}
+          />
+        ))}
+      </div>
+      <strong>{choice.name}</strong>
+      <span className="roguelike-starter-subtitle">{choice.subtitle}</span>
+      <div className="roguelike-starter-lines">
+        {choice.lines.map((line) => (
+          <div key={`${line.sourceId}:${line.targetId}`} className="roguelike-starter-line">
+            <span>{CARD_MAP[line.sourceId]?.name || line.sourceId}</span>
+            <b>→</b>
+            <span>{CARD_MAP[line.targetId]?.name || line.targetId}</span>
+          </div>
+        ))}
+      </div>
+      <span className="roguelike-starter-breakdown">
+        24장 · 진화 라인 4개 · 단독 포켓몬 4장 · 기술/도구 8장
+      </span>
+      <span className="roguelike-starter-select">이 덱으로 15연전 시작 ▶</span>
+    </button>
+  );
+}
+
 export default function RoguelikeMode({ onExit }) {
   const [phase, setPhase] = useState("intro");
   const [run, setRun] = useState(() => initialRun());
+  const [starterChoices, setStarterChoices] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [selectionReward, setSelectionReward] = useState(null);
   const [battleNonce, setBattleNonce] = useState(0);
@@ -740,11 +458,22 @@ export default function RoguelikeMode({ onExit }) {
     setRun(initialRun());
     setRewards([]);
     setSelectionReward(null);
+    setStarterChoices(makeStarterChoices(3));
+    setPhase("starter");
+  }
+
+  function chooseStarter(choice) {
+    if (!choice?.deck?.length) return;
+    playSfx("click");
+    setRun(initialRun(choice.deck));
+    setStarterChoices([]);
+    setRewards([]);
+    setSelectionReward(null);
     setPhase("preview");
   }
 
   function beginBattle() {
-    if (!encounter) return;
+    if (!encounter || !run.deck.length) return;
     playSfx("click");
     setBattleNonce((value) => value + 1);
     setPhase("battle");
@@ -848,6 +577,8 @@ export default function RoguelikeMode({ onExit }) {
     );
   }
 
+  const showRunStatus = !["intro", "starter"].includes(phase);
+
   return (
     <div className="roguelike-root">
       <div className="roguelike-screen">
@@ -857,7 +588,7 @@ export default function RoguelikeMode({ onExit }) {
             <div className="roguelike-kicker">END CONTENT · 15 BATTLES</div>
             <h1>악의 조직 소탕전</h1>
           </div>
-          {phase !== "intro" ? <RunStatus run={run} /> : <span />}
+          {showRunStatus ? <RunStatus run={run} /> : <span />}
         </header>
 
         {phase === "intro" && (
@@ -865,15 +596,31 @@ export default function RoguelikeMode({ onExit }) {
             <div className="roguelike-emblem">☠️</div>
             <h2>15연전 악의 조직 로그라이크</h2>
             <p>
-              지급된 24장 임시 덱으로 로켓단, 갤럭시단, 플라즈마단을 연속 격파하세요. 승리할 때마다 등급이 무작위인 보상 3개 중 하나를 고르고,
-              포켓몬을 모아 진화 라인을 완성하며 남은 체력은 다음 전투까지 이어집니다.
+              고정 시작 덱은 없습니다. 매 런마다 무작위로 뽑힌 24장 시작 덱 3개 중 하나를 선택한 뒤
+              로켓단, 갤럭시단, 플라즈마단을 연속 격파하세요. 승리할 때마다 보상 3개 중 하나를 골라 덱을 성장시킵니다.
             </p>
             <div className="roguelike-route">
               {ENCOUNTERS.map((entry, index) => (
                 <span key={entry.id}>{index + 1}. {entry.name}</span>
               ))}
             </div>
-            <button className="btn-primary big" onClick={startRun}>15연전 시작</button>
+            <button className="btn-primary big" onClick={startRun}>시작 덱 뽑기</button>
+          </section>
+        )}
+
+        {phase === "starter" && (
+          <section className="roguelike-panel roguelike-starter-draft-panel">
+            <div className="roguelike-stage-clear">STARTER DRAFT</div>
+            <h2>이번 런의 시작 덱을 고르세요</h2>
+            <p>
+              세 후보는 매번 무작위입니다. 각 덱은 실제로 이어지는 진화 라인 4개를 보장하며,
+              선택한 24장만 가지고 1스테이지를 시작합니다.
+            </p>
+            <div className="roguelike-starter-choices">
+              {starterChoices.map((choice) => (
+                <StarterChoiceCard key={choice.id} choice={choice} onChoose={chooseStarter} />
+              ))}
+            </div>
           </section>
         )}
 
@@ -952,7 +699,7 @@ export default function RoguelikeMode({ onExit }) {
             <h2>진화시킬 포켓몬을 선택하세요</h2>
             <p>현재 런 덱에 실제로 들어있는 포켓몬의 다음 진화체만 표시됩니다.</p>
             <div className="roguelike-evolution-options">
-              {getEvolutionOptions(run.deck).map((option) => (
+              {(selectionReward.options || getEvolutionOptions(run.deck)).map((option) => (
                 <button
                   key={`${option.sourceId}:${option.targetId}`}
                   className="roguelike-evolution-option"
@@ -978,7 +725,7 @@ export default function RoguelikeMode({ onExit }) {
             <h2>소탕 작전 실패</h2>
             <p>{run.stage + 1}번째 전투에서 쓰러졌습니다. 이번 런의 덱과 강화는 초기화됩니다.</p>
             <div className="roguelike-end-actions">
-              <button className="btn-primary" onClick={startRun}>새 런 시작</button>
+              <button className="btn-primary" onClick={startRun}>새 시작 덱 뽑기</button>
               <button className="btn-secondary" onClick={exitMode}>메인 메뉴</button>
             </div>
           </section>
@@ -991,7 +738,7 @@ export default function RoguelikeMode({ onExit }) {
             <p>로켓단, 갤럭시단, 플라즈마단의 15연전을 모두 돌파했습니다.</p>
             <RunStatus run={run} />
             <div className="roguelike-end-actions">
-              <button className="btn-primary" onClick={startRun}>다시 도전</button>
+              <button className="btn-primary" onClick={startRun}>새 시작 덱으로 재도전</button>
               <button className="btn-secondary" onClick={exitMode}>메인 메뉴</button>
             </div>
           </section>
