@@ -15,6 +15,13 @@ function isMobileBattle() {
   );
 }
 
+function isPortrait() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(orientation: portrait)").matches
+  );
+}
+
 function getBoard(target) {
   return target instanceof Element ? target.closest(".battle-board") : null;
 }
@@ -211,9 +218,11 @@ function onPointerDown(event) {
       board,
       hand,
       cardWrap,
+      portrait: isPortrait(),
       startX: event.clientX,
       startY: event.clientY,
       moved: false,
+      scrolling: false,
       cardCount,
     };
     return;
@@ -241,13 +250,28 @@ function onPointerDown(event) {
 function onPointerMove(event) {
   if (!handGesture) return;
 
+  const dx = event.clientX - handGesture.startX;
+  const dy = event.clientY - handGesture.startY;
+  const distance = Math.hypot(dx, dy);
+
+  // Portrait expanded hands are a horizontal rail. Reserve horizontal-dominant
+  // movement for scrolling before the legacy grab state can turn it into a card drag.
   if (
-    !handGesture.moved &&
-    Math.hypot(
-      event.clientX - handGesture.startX,
-      event.clientY - handGesture.startY,
-    ) > 10
+    !handGesture.scrolling &&
+    handGesture.portrait &&
+    handGesture.board.classList.contains("mobile-hand-open") &&
+    distance > 8 &&
+    Math.abs(dx) >= Math.abs(dy) * 1.04
   ) {
+    handGesture.moved = true;
+    handGesture.scrolling = true;
+    clearGrabState(handGesture.board, handGesture.cardWrap);
+    return;
+  }
+
+  if (handGesture.scrolling) return;
+
+  if (!handGesture.moved && distance > 10) {
     handGesture.moved = true;
     setGrabState(handGesture.board, handGesture.cardWrap);
   }
