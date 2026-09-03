@@ -1,5 +1,5 @@
 /* 모바일 배틀 보정
- * - 진화체 '버리고 뽑기' 버튼을 카드 제스처 영역과 분리한다.
+ * - 진화체 '교환 · N코스트' 버튼을 카드 제스처 영역과 분리한다.
  * - 버튼 때문에 카드 래퍼 자체의 stacking order가 바뀌지 않게 한다.
  */
 
@@ -9,7 +9,7 @@
     bottom: auto !important;
     left: 50% !important;
     right: auto !important;
-    min-width: 72px !important;
+    min-width: 94px !important;
     min-height: 26px !important;
     padding: 5px 8px !important;
     border-radius: 999px !important;
@@ -23,7 +23,7 @@
   }
 
   /*
-   * 카드 겹침 순서는 버리고 뽑기 가능 여부와 무관하게 손패 인덱스를 따른다.
+   * 카드 겹침 순서는 교환 가능 여부와 무관하게 손패 인덱스를 따른다.
    * 왼쪽 A보다 오른쪽 B가 위에 와야 B가 A/C 사이에서 정상적으로 터치된다.
    * 버튼 자체만 해당 카드 내부에서 높은 z-index를 유지한다.
    */
@@ -58,7 +58,7 @@
   .battle-board > .hand .hand-card-wrap > .btn-discard-redraw {
     top: -36px !important;
     transform: translateX(-50%) scale(.9) !important;
-    min-width: 78px !important;
+    min-width: 98px !important;
   }
 
   .battle-board.mobile-hand-open > .hand .hand-card-wrap > .btn-discard-redraw,
