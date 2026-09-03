@@ -2,3 +2,17 @@
 .roguelike-active .result-overlay .result-reward {
   display: none !important;
 }
+
+/*
+ * 로그라이크는 별도 React 루트를 최상위 오버레이로 띄운다.
+ * 공용 전투 런타임의 날씨 FX/전투 기록 inspect는 document.body에 직접
+ * 붙기 때문에 기본 z-index(1800/2600)로는 로그라이크 루트 뒤에 가려진다.
+ * 로그라이크 실행 중에만 공용 전투 오버레이를 그보다 위로 올린다.
+ */
+body.roguelike-active > .weather-turn-fx {
+  z-index: 2147483000 !important;
+}
+
+body.roguelike-active > .battle-history-v2-overlay {
+  z-index: 2147483100 !important;
+}
