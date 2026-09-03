@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import RoguelikeMode from "./RoguelikeMode.jsx";
 import "./roguelike.css";
+import "./reward-rarity.css";
 import "./battle-overrides.css";
 
 const BUTTON_ID = "pokestone-roguelike-menu-card";
