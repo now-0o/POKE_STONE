@@ -96,6 +96,10 @@ export function getEvolutionExchangeInfo(game, side, handIdx) {
   let reason = null;
   if (!show) {
     reason = lineConnected ? "현재 손패와 필드로 진화 라인을 이어갈 수 있습니다." : "교환 대상이 아닙니다.";
+  } else if (side === "enemy" && used >= 1) {
+    // AI는 aiStep이 한 턴 동안 여러 번 호출된다. 예전 버리고 뽑기 플래그가
+    // 새 교환 시스템과 연결되지 않아 1→2→3코를 연속으로 소모하던 현상을 막는다.
+    reason = "상대는 한 턴에 진화 카드를 한 번만 교환합니다.";
   } else if (game?.turn !== side) {
     reason = "내 턴에만 교환할 수 있습니다.";
   } else if (game?.winner) {
