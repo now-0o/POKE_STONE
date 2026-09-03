@@ -1,0 +1,398 @@
+.region-card.region-roguelike {
+  background:
+    radial-gradient(circle at 84% 18%, rgba(216, 72, 91, .22), transparent 32%),
+    linear-gradient(145deg, rgba(78, 28, 48, .96), rgba(25, 20, 38, .98));
+  border-color: rgba(224, 102, 122, .42);
+}
+
+.region-card.region-roguelike:hover {
+  border-color: rgba(255, 151, 169, .9) !important;
+  box-shadow: 0 10px 28px rgba(170, 38, 70, .25) !important;
+}
+
+.roguelike-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147481200;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(126, 31, 60, .28), transparent 38%),
+    radial-gradient(circle at 82% 100%, rgba(60, 36, 115, .26), transparent 40%),
+    linear-gradient(180deg, #0c0d18 0%, #111421 52%, #090a11 100%);
+  color: #f4f1f6;
+}
+
+.roguelike-battle-root {
+  overflow: hidden;
+  background: #090b13;
+}
+
+.roguelike-screen {
+  width: min(1180px, calc(100% - 28px));
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 20px 0 34px;
+}
+
+.roguelike-header {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) auto minmax(260px, 1fr);
+  align-items: center;
+  gap: 18px;
+  min-height: 78px;
+  margin-bottom: 18px;
+  padding: 0 4px;
+}
+
+.roguelike-header > :last-child {
+  justify-self: end;
+}
+
+.roguelike-kicker,
+.roguelike-stage,
+.roguelike-stage-clear,
+.roguelike-reward-tag,
+.roguelike-faction {
+  font-family: var(--display-font);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.roguelike-kicker {
+  margin-bottom: 3px;
+  color: #dd8394;
+  font-size: 10px;
+}
+
+.roguelike-header h1 {
+  margin: 0;
+  color: #fff0f3;
+  font-family: var(--display-font);
+  font-size: clamp(24px, 3.4vw, 38px);
+  text-shadow: 0 4px 18px rgba(177, 43, 75, .28);
+}
+
+.roguelike-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.roguelike-status span {
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+  color: #eee9f1;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.roguelike-panel {
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 22px;
+  background:
+    linear-gradient(150deg, rgba(31, 31, 48, .97), rgba(17, 18, 30, .98));
+  box-shadow: 0 24px 70px rgba(0,0,0,.34);
+}
+
+.roguelike-intro,
+.roguelike-end-panel,
+.roguelike-reward-panel {
+  width: min(900px, 100%);
+  margin: 5vh auto 0;
+  padding: clamp(24px, 5vw, 48px);
+  text-align: center;
+}
+
+.roguelike-emblem {
+  margin-bottom: 10px;
+  font-size: 58px;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.45));
+}
+
+.roguelike-intro h2,
+.roguelike-end-panel h2,
+.roguelike-reward-panel h2,
+.roguelike-encounter h2 {
+  margin: 0;
+  font-family: var(--display-font);
+  color: #fff;
+}
+
+.roguelike-intro > p,
+.roguelike-end-panel > p,
+.roguelike-reward-panel > p,
+.roguelike-encounter > p {
+  color: #aaa9ba;
+  line-height: 1.65;
+}
+
+.roguelike-route {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 24px 0 28px;
+}
+
+.roguelike-route span {
+  display: grid;
+  min-height: 54px;
+  place-items: center;
+  padding: 8px;
+  border: 1px solid rgba(224, 102, 122, .2);
+  border-radius: 12px;
+  background: rgba(123, 39, 62, .1);
+  color: #ddd3d9;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.roguelike-columns {
+  display: grid;
+  grid-template-columns: minmax(300px, .9fr) minmax(360px, 1.1fr);
+  gap: 16px;
+}
+
+.roguelike-encounter,
+.roguelike-deck-panel {
+  min-height: 520px;
+  padding: clamp(20px, 3.5vw, 34px);
+}
+
+.roguelike-encounter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.roguelike-stage,
+.roguelike-stage-clear {
+  color: #df8193;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.roguelike-villain-emoji {
+  margin: 18px 0 8px;
+  font-size: 86px;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.5));
+}
+
+.roguelike-faction {
+  margin-bottom: 6px;
+  color: #d17a8c;
+  font-size: 10px;
+}
+
+.roguelike-encounter h2 {
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.roguelike-enemy-stats {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 28px;
+}
+
+.roguelike-enemy-stats span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.roguelike-deck-panel h3 {
+  margin: 0 0 14px;
+  color: #f7f0f4;
+  font-family: var(--display-font);
+}
+
+.roguelike-deck-list {
+  max-height: 390px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.roguelike-deck-row {
+  display: grid;
+  grid-template-columns: 1fr auto 34px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.roguelike-deck-row span {
+  font-weight: 850;
+}
+
+.roguelike-deck-row small {
+  color: #88899a;
+  font-size: 9px;
+}
+
+.roguelike-deck-row strong {
+  color: #e59aaa;
+  text-align: right;
+}
+
+.roguelike-upgrade-log {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 13px;
+  background: rgba(255,255,255,.045);
+}
+
+.roguelike-upgrade-log strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #d88b9b;
+  font-size: 11px;
+}
+
+.roguelike-upgrade-log p {
+  margin: 0;
+  color: #aaa8b6;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.roguelike-reward-panel {
+  width: min(980px, 100%);
+}
+
+.roguelike-stage-clear {
+  margin-bottom: 7px;
+}
+
+.roguelike-rewards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.roguelike-reward-card {
+  position: relative;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 22px 15px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(93, 125, 190, .17), transparent 34%),
+    rgba(255,255,255,.045);
+  color: #f7f3f6;
+  transition: transform .14s ease, border-color .14s ease, background .14s ease;
+}
+
+.roguelike-reward-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(235, 150, 167, .72);
+  background: rgba(160, 62, 88, .11);
+}
+
+.roguelike-reward-card.is-upgrade {
+  background:
+    radial-gradient(circle at 50% 25%, rgba(219, 142, 63, .18), transparent 34%),
+    rgba(255,255,255,.045);
+}
+
+.roguelike-reward-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: #bc93a0;
+  font-size: 8px;
+}
+
+.roguelike-reward-card strong {
+  font-family: var(--display-font);
+  font-size: 16px;
+}
+
+.roguelike-reward-card small {
+  color: #8f8d9d;
+}
+
+.roguelike-reward-desc {
+  color: #c4bcc4;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.roguelike-upgrade-icon {
+  margin-bottom: 8px;
+  font-size: 70px;
+}
+
+.roguelike-end-panel .roguelike-status {
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.roguelike-end-panel.is-victory {
+  border-color: rgba(239, 196, 88, .35);
+}
+
+.roguelike-end-panel.is-defeat {
+  border-color: rgba(206, 74, 94, .28);
+}
+
+.roguelike-end-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+@media (max-width: 820px) {
+  .roguelike-screen {
+    width: min(100% - 16px, 760px);
+    padding-top: 10px;
+  }
+
+  .roguelike-header {
+    grid-template-columns: auto 1fr;
+    gap: 8px 12px;
+  }
+
+  .roguelike-header > :last-child {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .roguelike-status {
+    justify-content: center;
+  }
+
+  .roguelike-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .roguelike-encounter,
+  .roguelike-deck-panel {
+    min-height: auto;
+  }
+
+  .roguelike-route {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .roguelike-rewards {
+    grid-template-columns: 1fr;
+  }
+
+  .roguelike-reward-card {
+    min-height: 190px;
+  }
+}
