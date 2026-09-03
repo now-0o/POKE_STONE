@@ -7,7 +7,8 @@
  * - While a tap-target card is active (or React is still rendering that state),
  *   field-unit pointerdown is stopped before attack/inspect gestures can start;
  *   the later click is left untouched so React's onUnitClick resolves the card.
- * - Portrait horizontal movement remains a pure hand scroll.
+ * - Portrait horizontal movement remains a pure hand scroll, including gestures
+ *   that start on an evolution-exchange control or the empty rail between cards.
  * - Landscape basic-Pokemon drags get a real DOM drop-assist over the visible
  *   player field so releasing near the centre resolves as my-field reliably.
  * - VisualViewport metrics keep landscape UI inside Safari's visible rectangle.
@@ -20,8 +21,8 @@
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
 const PORTRAIT_QUERY = "(orientation: portrait)";
 const LANDSCAPE_QUERY = "(orientation: landscape)";
-const MOVE_THRESHOLD = 9;
-const SCROLL_DIRECTION_BIAS = 1.08;
+const MOVE_THRESHOLD = 8;
+const SCROLL_DIRECTION_BIAS = 1.04;
 
 let handGesture = null;
 let basicDropAssist = null;
@@ -113,7 +114,9 @@ function queueTapTargetSync(board) {
 }
 
 function dispatchMobileHandTap(gesture) {
-  const { board, wrap } = gesture;
+  const { board, wrap, startedOnControl } = gesture;
+  if (startedOnControl) return;
+
   const handCard = wrap?.querySelector(":scope > .hand-card");
   if (!handCard || !isTapPlayableCard(handCard)) return;
 
@@ -131,18 +134,22 @@ function beginHandGesture(event) {
   const board = getBoard(event.target);
   if (!board || !board.classList.contains("mobile-hand-open")) return;
   if (board.querySelector(":scope > .hand .hand-card.selected")) return;
-  if (event.target.closest(".btn-discard-redraw")) return;
 
   const hand = event.target.closest(".hand");
   if (!hand || hand !== getDirectHand(board)) return;
 
   const wrap = event.target.closest(".hand-card-wrap");
-  if (!wrap) return;
+
+  // In portrait the whole expanded rail is a scroll surface. Previously a swipe
+  // starting on the exchange button (or a gap between cards) never created a
+  // gesture, which made long hands feel randomly locked.
+  if (!wrap && !isPortrait()) return;
 
   handGesture = {
     board,
     hand,
     wrap,
+    startedOnControl: Boolean(event.target.closest("button, a, input, select, textarea")),
     portrait: isPortrait(),
     startX: event.clientX,
     startY: event.clientY,
@@ -170,10 +177,11 @@ function moveHandGesture(event) {
 
     if (
       gesture.portrait &&
-      Math.abs(dx) > Math.abs(dy) * SCROLL_DIRECTION_BIAS
+      Math.abs(dx) >= Math.abs(dy) * SCROLL_DIRECTION_BIAS
     ) {
       gesture.scrolling = true;
       clearVisualGrab(gesture.board, gesture.wrap);
+      gesture.board.classList.add("mobile-hand-scrolling");
     } else {
       gesture.scrolling = false;
       setVisualGrab(gesture.board, gesture.wrap);
@@ -203,6 +211,8 @@ function endHandGesture() {
     scheduleDropAssistRemoval();
     return;
   }
+
+  gesture.board.classList.remove("mobile-hand-scrolling");
 
   if (!gesture.moved) {
     dispatchMobileHandTap(gesture);
