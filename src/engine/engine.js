@@ -14,6 +14,19 @@ import {
 export * from "./engine.rules.js";
 
 const DISCARD_REDRAW_SENTINEL = "__discard_redraw__";
+const LIGHT_SCREEN_REDUCTION = 2;
+const DAMAGE_TECHNIQUE_EFFECTS = new Set([
+  "execute",
+  "all_field_damage",
+  "aoe",
+  "aoe_status",
+  "multi_damage",
+  "piercing_damage",
+  "damage_bounce",
+  "damage_recall_friendly",
+  "damage_grant_rush",
+  "acrobatics",
+]);
 
 const STATUS_TYPE_IMMUNITIES = {
   poison: new Set(["독", "강철"]),
@@ -47,6 +60,99 @@ function pushEngineLog(game, message) {
 
 function otherSide(side) {
   return side === "player" ? "enemy" : "player";
+}
+
+function damageTechniqueHeroHitCount(card, target) {
+  if (
+    !card ||
+    card.kind !== "spell" ||
+    card.type !== "기술" ||
+    target?.uid !== "hero"
+  ) {
+    return 0;
+  }
+
+  const spell = card.spell || {};
+  const isDamageTechnique =
+    Number(spell.amount) > 0 || DAMAGE_TECHNIQUE_EFFECTS.has(spell.effect);
+
+  if (!isDamageTechnique || spell.target === "enemy-pokemon") return 0;
+  if (spell.effect === "multi_damage") {
+    return Math.max(1, Number(spell.hits) || 2);
+  }
+  return 1;
+}
+
+function correctLightScreenHeroDamage(
+  game,
+  side,
+  card,
+  target,
+  defenderHpBefore,
+  screenChargesBefore,
+  result,
+) {
+  if (result === false || screenChargesBefore <= 0) return;
+
+  const hitCount = damageTechniqueHeroHitCount(card, target);
+  if (hitCount <= 0) return;
+
+  const defenderSide = otherSide(side);
+  const defender = game.players?.[defenderSide];
+  if (!defender) return;
+
+  const rawDamage = Math.max(0, defenderHpBefore - defender.hp);
+  if (rawDamage <= 0) return;
+
+  const restored = Math.min(
+    rawDamage,
+    LIGHT_SCREEN_REDUCTION * hitCount,
+  );
+  defender.hp = Math.min(defender.maxHp ?? Number.POSITIVE_INFINITY, defender.hp + restored);
+
+  // base 엔진은 기술 직격을 트레이너 HP에서 직접 차감하므로
+  // lastAction의 피해 연출도 실제 감소 후 수치에 맞춰 보정한다.
+  let remainingRestore = restored;
+  if (Array.isArray(game.lastAction?.impacts)) {
+    for (const impact of game.lastAction.impacts) {
+      if (remainingRestore <= 0) break;
+      if (
+        impact?.type !== "damage" ||
+        impact.targetUid !== "hero" ||
+        impact.side !== defenderSide
+      ) {
+        continue;
+      }
+
+      const amount = Math.max(0, Number(impact.amount) || 0);
+      const reduction = Math.min(
+        LIGHT_SCREEN_REDUCTION,
+        amount,
+        remainingRestore,
+      );
+      impact.amount = amount - reduction;
+      remainingRestore -= reduction;
+    }
+
+    game.lastAction.impacts = game.lastAction.impacts.filter(
+      (impact) =>
+        !(
+          impact?.type === "damage" &&
+          impact.targetUid === "hero" &&
+          (Number(impact.amount) || 0) <= 0
+        ),
+    );
+  }
+
+  // 장막 적용 전 원피해로 승패가 먼저 확정됐던 경우 실제 체력이 남으면 복구한다.
+  if (game.winner === side && defender.hp > 0) {
+    game.winner = null;
+  }
+
+  pushEngineLog(
+    game,
+    `${defender.name}의 빛의장막! 트레이너가 받는 기술 피해가 ${restored} 줄었다!`,
+  );
 }
 
 function hasUnitAbility(unit, ability) {
@@ -442,6 +548,9 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
   if (!bridge || side !== "player") {
     const handCard = game.players?.[side]?.hand?.[handIdx];
     const card = CARD_MAP[handCard?.cardId];
+    const defender = game.players?.[otherSide(side)];
+    const defenderHpBefore = defender?.hp ?? 0;
+    const lightScreenChargesBefore = defender?._lightScreenCharges || 0;
     const source = evolutionSource(game, side, card, target);
     const beforeFieldUids = new Set(
       (game.players?.[side]?.field || []).map((unit) => unit.uid),
@@ -449,6 +558,16 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
     const result = runRulesAction(game, () =>
       rules.playCard(game, side, handIdx, target, fieldIndex),
+    );
+
+    correctLightScreenHeroDamage(
+      game,
+      side,
+      card,
+      target,
+      defenderHpBefore,
+      lightScreenChargesBefore,
+      result,
     );
     enrichEvolutionLog(game, side, card, source, result);
 
