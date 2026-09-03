@@ -5,10 +5,10 @@ import { CARD_MAP } from "../../data/cards.js";
 import { drawCard } from "../../engine/engine.js";
 import { playBgm, playSfx } from "../../audio.js";
 
-// 첫 전투부터 3단 진화 라인을 여러 개 조립하게 하지 않는다.
-// 기본체/1회 진화/단독 포켓몬 비중을 높여 초반 전개가 안정적인 24장 덱으로 시작한다.
+// 첫 전투부터 3단 진화 라인을 조립하게 하지 않는다.
+// 기본체/1회 진화/단독 포켓몬 중심의 24장 덱으로 시작한다.
 const STARTER_DECK = [
-  "pikachu", "pikachu", "raichu",
+  "drilbur", "drilbur", "excadrill",
   "growlithe", "growlithe", "arcanine",
   "rattata", "rattata", "raticate",
   "eevee", "eevee", "vaporeon", "jolteon",
@@ -24,10 +24,11 @@ const FALLBACK_DECK_CARDS = [
 ];
 
 const CARD_REWARD_POOL = [
+  "pichu", "pikachu", "raichu",
   "bulbasaur", "ivysaur", "venusaur",
   "charmander", "charmeleon", "charizard",
   "squirtle", "wartortle", "blastoise",
-  "pikachu", "raichu", "eevee", "vaporeon", "jolteon", "flareon",
+  "eevee", "vaporeon", "jolteon", "flareon",
   "growlithe", "arcanine", "lapras", "tauros",
   "snivy", "servine", "serperior",
   "tepig", "pignite", "emboar",
@@ -39,6 +40,31 @@ const CARD_REWARD_POOL = [
   "scald", "voltswitch", "dragontail", "reflect", "lightscreen",
   "potion", "superball", "hyperball", "fullrestore", "lifeorb", "focussash",
 ].filter((id) => CARD_MAP[id]);
+
+function hasEvolutionPrerequisites(deckIds, cardId, visited = new Set()) {
+  const card = CARD_MAP[cardId];
+  if (!card?.evolvesFrom) return true;
+  if (visited.has(cardId)) return false;
+
+  visited.add(cardId);
+  if (!deckIds.includes(card.evolvesFrom)) return false;
+  return hasEvolutionPrerequisites(deckIds, card.evolvesFrom, visited);
+}
+
+function buildStarterDeck() {
+  const available = STARTER_DECK.filter((id) => CARD_MAP[id]);
+  const deck = available.filter((id) => {
+    const card = CARD_MAP[id];
+    if (card?.kind !== "pokemon" || !card.evolvesFrom) return true;
+    return hasEvolutionPrerequisites(available, id);
+  });
+
+  const fallback = FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
+  while (deck.length < 24 && fallback.length) {
+    deck.push(fallback[deck.length % fallback.length]);
+  }
+  return deck.slice(0, 24);
+}
 
 function makeDeck(pool, size = 30) {
   const valid = pool.filter((id) => CARD_MAP[id]);
@@ -199,16 +225,9 @@ function makeRewards() {
 }
 
 function initialRun() {
-  const deck = STARTER_DECK.filter((id) => CARD_MAP[id]);
-  if (deck.length < 20) {
-    const fallback = FALLBACK_DECK_CARDS.filter((id) => CARD_MAP[id]);
-    while (deck.length < 24 && fallback.length) {
-      deck.push(fallback[deck.length % fallback.length]);
-    }
-  }
   return {
     stage: 0,
-    deck,
+    deck: buildStarterDeck(),
     hp: 40,
     maxHp: 40,
     openingHandBonus: 0,
