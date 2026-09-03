@@ -2,10 +2,19 @@ const REGION_NAMES = ["관동지방", "성도지방", "호연지방", "신오지
 
 let lastActiveIndex = 0;
 let currentContainer = null;
+let currentCardCount = 0;
 let cleanupCurrent = null;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function cardLabel(card, index) {
+  return (
+    card?.querySelector?.(".region-name")?.textContent?.trim() ||
+    REGION_NAMES[index] ||
+    `${index + 1}번째 항목`
+  );
 }
 
 function enhanceRegionCarousel(container) {
@@ -33,7 +42,7 @@ function enhanceRegionCarousel(container) {
   const dotButtons = cards.map((card, index) => {
     const dot = document.createElement("button");
     dot.type = "button";
-    dot.setAttribute("aria-label", `${REGION_NAMES[index] || index + 1} 보기`);
+    dot.setAttribute("aria-label", `${cardLabel(card, index)} 보기`);
     dot.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -48,7 +57,7 @@ function enhanceRegionCarousel(container) {
 
   const hint = document.createElement("div");
   hint.className = "region-coverflow-hint";
-  hint.textContent = "드래그해서 지방을 넘겨보세요";
+  hint.textContent = "드래그해서 넘겨보세요";
 
   container.appendChild(hint);
   container.appendChild(dots);
@@ -232,17 +241,41 @@ function enhanceRegionCarousel(container) {
     container.removeEventListener("click", onClickCapture, true);
     container.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("resize", onResize);
+
+    hint.remove();
+    dots.remove();
+    container.classList.remove("region-coverflow", "is-dragging");
+    delete container.dataset.coverflowReady;
+
+    cards.forEach((card) => {
+      card.style.removeProperty("--cf-x");
+      card.style.removeProperty("--cf-y");
+      card.style.removeProperty("--cf-z");
+      card.style.removeProperty("--cf-scale");
+      card.style.removeProperty("--cf-opacity");
+      card.style.removeProperty("--cf-brightness");
+      card.style.removeProperty("--cf-saturation");
+      card.style.removeProperty("--cf-z-index");
+      card.style.pointerEvents = "";
+      card.classList.remove("cf-active");
+      card.removeAttribute("aria-current");
+      card.removeAttribute("aria-hidden");
+    });
   };
 }
 
 function syncRegionCarousel() {
   const container = document.querySelector(".main-menu .region-select");
+  const cardCount = container
+    ? container.querySelectorAll(":scope > .region-card").length
+    : 0;
 
-  if (container === currentContainer) return;
+  if (container === currentContainer && cardCount === currentCardCount) return;
 
   cleanupCurrent?.();
   cleanupCurrent = null;
   currentContainer = container;
+  currentCardCount = cardCount;
 
   if (container) enhanceRegionCarousel(container);
 }
