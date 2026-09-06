@@ -48,7 +48,7 @@ void main() {
 
   const backgroundXml = '''<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="#070B10" />
+    <item android:drawable="@android:color/black" />
 </layer-list>
 ''';
 
