@@ -120,6 +120,21 @@ import './features/card-dex/headerRuntime.js';
 import './features/dev/moneyCheatRuntime.js';
 // 카드 외형 통일 규칙은 모든 화면/런타임 모듈보다 마지막에 로드해 최종 우선순위를 가진다.
 import './styles/battle-card-canonical.css';
+// 모바일에서도 전투 기록은 PC처럼 왼쪽 고정 레일을 최종 사용한다.
+import './styles/mobile-battle-history-rail-v8.css';
+// Android 앱 WebView에서는 문서 자체 스크롤을 잠그고 .app 내부만 스크롤한다.
+import './styles/native-app-shell.css';
+
+const appParam = new URLSearchParams(window.location.search).get('app');
+const userAgent = navigator.userAgent || '';
+const isAndroidWebView =
+  /Android/i.test(userAgent) &&
+  (/\bwv\b/i.test(userAgent) || /Version\/4\.0/i.test(userAgent));
+
+if (appParam === 'android' || isAndroidWebView) {
+  document.documentElement.classList.add('pokestone-native-app');
+  document.body.classList.add('pokestone-native-app');
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
