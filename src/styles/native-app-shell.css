@@ -1,0 +1,51 @@
+/* Android WebView 앱에서는 문서 자체가 위아래로 밀리지 않게 하고
+   실제 화면 콘텐츠(.app)만 내부 스크롤 컨테이너로 사용한다. */
+html.pokestone-native-app,
+html.pokestone-native-app body {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100dvh;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.pokestone-native-app body {
+  position: fixed;
+  inset: 0;
+}
+
+html.pokestone-native-app #root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden !important;
+}
+
+html.pokestone-native-app #root > .app {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 배틀은 원래 100dvh 고정 보드이므로 .app 스크롤도 끈다. */
+html.pokestone-native-app #root > .app:has(.battle-board),
+html.pokestone-native-app #root > .app:has(.battle-intro) {
+  overflow: hidden !important;
+}
+
+/* 내부 목록/패널의 스크롤이 바깥 컨테이너로 연쇄되지 않게 한다. */
+html.pokestone-native-app .battle-history-list,
+html.pokestone-native-app .deck-list,
+html.pokestone-native-app .collection-grid,
+html.pokestone-native-app .dex-grid,
+html.pokestone-native-app .shop-content,
+html.pokestone-native-app [class*="scroll"] {
+  overscroll-behavior: contain;
+}
