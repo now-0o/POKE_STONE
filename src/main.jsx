@@ -112,6 +112,10 @@ import './features/region-carousel/index.js';
 import './features/roguelike/runtime.jsx';
 // 도감의 상태/퀘스트/구매 UI는 작은 화면에서도 읽을 수 있도록 마지막에 확대한다.
 import './features/card-dex/readability-v5.css';
+// 도감 헤더 재화/중복 표시 정리와 상점·덱 헤더 위치를 같은 기준으로 맞춘다.
+import './features/card-dex/headerRuntime.js';
+// 개발용 givemoney 키 입력은 관리자 모드와 분리해 재화만 지급한다.
+import './features/dev/moneyCheatRuntime.js';
 // 카드 외형 통일 규칙은 모든 화면/런타임 모듈보다 마지막에 로드해 최종 우선순위를 가진다.
 import './styles/battle-card-canonical.css';
 
