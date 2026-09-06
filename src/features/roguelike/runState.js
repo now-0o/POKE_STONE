@@ -33,6 +33,9 @@ export function normalizeRoguelikeRun(raw) {
     phase: raw.phase || (raw.status === "dead" ? "defeat" : "preview"),
     stage,
     deck: Array.isArray(raw.deck) ? raw.deck.filter((id) => CARD_MAP[id]) : [],
+    storage: Array.isArray(raw.storage)
+      ? raw.storage.filter((id) => CARD_MAP[id])
+      : [],
     hp: Math.max(1, Number(raw.hp) || 40),
     maxHp: Math.max(1, Number(raw.maxHp) || 40),
     openingHandBonus: Math.max(0, Number(raw.openingHandBonus) || 0),
