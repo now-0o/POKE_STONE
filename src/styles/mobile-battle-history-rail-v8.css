@@ -1,0 +1,101 @@
+/* 모바일도 PC와 동일하게 전투 기록을 왼쪽 세로 레일로 항상 노출한다. */
+@media (pointer: coarse), (max-width: 760px) {
+  .battle-history-shell {
+    position: absolute !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 52 !important;
+    width: 56px !important;
+    height: 100% !important;
+    pointer-events: none !important;
+  }
+
+  .battle-history-toggle {
+    display: none !important;
+  }
+
+  .battle-history-panel,
+  .battle-history-shell.is-open .battle-history-panel {
+    --battle-history-safe-y: 10px;
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 5px !important;
+    flex-direction: column !important;
+    border: 0 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0 !important;
+    background: linear-gradient(
+      90deg,
+      rgba(10, 13, 22, 0.92),
+      rgba(10, 13, 22, 0.67) 72%,
+      rgba(10, 13, 22, 0)
+    ) !important;
+    box-shadow: 8px 0 20px rgba(0, 0, 0, 0.14) !important;
+    pointer-events: auto !important;
+  }
+
+  .battle-history-list {
+    display: flex !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: var(--battle-history-safe-y) 0 !important;
+    scroll-padding-block: var(--battle-history-safe-y);
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .battle-history-spacer {
+    display: block !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .battle-history-entry {
+    width: 42px !important;
+    height: 42px !important;
+    flex: 0 0 42px !important;
+  }
+
+  .battle-history-portrait {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .battle-history-portrait img {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+/* 아주 낮은 가로 화면에서는 레일 폭만 조금 줄여 필드를 더 확보한다. */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 430px) {
+  .battle-history-shell {
+    width: 50px !important;
+  }
+
+  .battle-history-panel {
+    padding-inline: 4px !important;
+  }
+
+  .battle-history-entry {
+    width: 38px !important;
+    height: 38px !important;
+    flex-basis: 38px !important;
+  }
+
+  .battle-history-portrait {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .battle-history-portrait img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
