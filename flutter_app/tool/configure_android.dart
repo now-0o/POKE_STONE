@@ -2,10 +2,11 @@ import 'dart:io';
 
 void main() {
   final manifest = File('android/app/src/main/AndroidManifest.xml');
+  final appGradle = File('android/app/build.gradle.kts');
   final launchBackground = File('android/app/src/main/res/drawable/launch_background.xml');
   final launchBackgroundV21 = File('android/app/src/main/res/drawable-v21/launch_background.xml');
 
-  if (!manifest.existsSync()) {
+  if (!manifest.existsSync() || !appGradle.existsSync()) {
     stderr.writeln('Android scaffold not found. Run: flutter create . --platforms=android --org com.pokestone --project-name pokestone_app');
     exitCode = 2;
     return;
@@ -37,6 +38,13 @@ void main() {
   }
 
   manifest.writeAsStringSync(xml);
+
+  var gradle = appGradle.readAsStringSync();
+  gradle = gradle.replaceFirst(
+    'minSdk = flutter.minSdkVersion',
+    'minSdk = 24',
+  );
+  appGradle.writeAsStringSync(gradle);
 
   const backgroundXml = '''<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
