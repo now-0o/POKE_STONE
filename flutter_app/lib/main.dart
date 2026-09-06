@@ -268,7 +268,9 @@ class _Splash extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: progress <= 0 ? null : progress.clamp(0, 1),
+                    value: progress <= 0
+                        ? null
+                        : progress.clamp(0.0, 1.0).toDouble(),
                     minHeight: 4,
                     backgroundColor: Colors.white12,
                     color: _accent,
