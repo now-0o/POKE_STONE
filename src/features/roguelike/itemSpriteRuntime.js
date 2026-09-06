@@ -14,7 +14,9 @@ const ITEM = Object.freeze({
 
 function replaceSprite(container, src, label) {
   if (!container) return;
-  const image = container.querySelector("img.card-sprite, img.trainer-sprite");
+  // Sprite 컴포넌트의 실제 img 클래스가 화면/카드 타입마다 달라질 수 있어서
+  // 로그라이크 UI 치환 대상 컨테이너 안의 첫 번째 이미지를 직접 잡는다.
+  const image = container.matches?.("img") ? container : container.querySelector("img");
   if (!image || image.dataset.rogueUiItem === src) return;
   image.src = src;
   image.alt = label || "";
