@@ -12,6 +12,7 @@ const ROOT_ID = "pokestone-roguelike-root";
 
 let roguelikeRoot = null;
 let host = null;
+let moneyAtOpen = null;
 
 function closeRoguelike() {
   roguelikeRoot?.unmount();
@@ -19,12 +20,25 @@ function closeRoguelike() {
   host?.remove();
   host = null;
   document.body.classList.remove("roguelike-active");
+
+  const currentMoney = Number(readRoguelikeSave().save?.money) || 0;
+  const accountMoneyChanged = moneyAtOpen != null && currentMoney !== moneyAtOpen;
+  moneyAtOpen = null;
+
+  // 로그라이크 사망 보상으로 계정 재화가 바뀐 경우 App이 들고 있던
+  // 이전 saveRef로 다시 덮어쓰지 않도록 최신 세이브를 한 번 다시 읽는다.
+  if (accountMoneyChanged) {
+    window.location.reload();
+    return;
+  }
+
   window.requestAnimationFrame(syncMenuButton);
 }
 
 function openRoguelike() {
   if (roguelikeRoot) return;
 
+  moneyAtOpen = Number(readRoguelikeSave().save?.money) || 0;
   host = document.createElement("div");
   host.id = ROOT_ID;
   document.body.appendChild(host);
