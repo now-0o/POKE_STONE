@@ -80,6 +80,8 @@ import './features/battle/n-bond.css';
 import './features/battle/skyla-airborne-card.css';
 
 import './features/mobile/battle-hand-runtime.js';
+// 모바일/앱은 별도 음소거 UI 없이 기기 볼륨으로 조절하므로 기본 소리를 켠다.
+import './features/mobile/mobileAudioDefaultRuntime.js';
 // 세로 확대 손패의 좌우 스크롤과 모바일 VisualViewport 보정을 담당한다.
 import './features/mobile/mobileBattleUxRuntime.js';
 // 대상 선택이 없는 기술은 클릭/터치 즉발을 막고 드롭으로만 사용한다.
