@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { CARDS, CARD_MAP, DEX, MAX_COPIES } from "../data/cards.js";
+import { CARDS, CARD_MAP, DEX, MAX_COPIES, UI_SPRITES } from "../data/cards.js";
 import { HandCard, Sprite } from "./Card.jsx";
 import { playSfx } from "../audio.js";
 import {
@@ -15,7 +15,6 @@ import {
   dexQuestState,
 } from "../features/card-dex/state.js";
 import {
-  DEX_FIRST_PURCHASE_PRICE,
   dexCardPurchasePrice,
   isDexPurchaseUnlocked,
   purchaseDexCard,
@@ -24,6 +23,8 @@ import "../features/card-dex/styles.css";
 import "../features/card-dex/scale-v2.css";
 import "../features/card-dex/virtual-scroll-v3.css";
 import "../features/card-dex/purchase-v4.css";
+import "../features/card-dex/quest-drawer-v7.css";
+import "../features/card-dex/effects-v7.css";
 
 const REGION_TABS = [
   { id: "all", name: "전체", min: 1, max: 649 },
@@ -67,8 +68,6 @@ function formatMoney(value) {
 
 function purchaseFailureText(result) {
   switch (result?.reason) {
-    case "locked":
-      return "N에게 승리한 뒤 확정 구매가 해금됩니다.";
     case "not_enough_money":
       return `돈이 ${formatMoney(result.shortage)} 부족합니다.`;
     case "max_copies":
@@ -98,9 +97,16 @@ function sameVirtualWindow(a, b) {
 
 export default function CardDex({ save, onSaveChange, onBack }) {
   const [region, setRegion] = useState("all");
+  const [questsOpen, setQuestsOpen] = useState(false);
   const [rewardNotice, setRewardNotice] = useState(null);
   const [purchaseConfirmId, setPurchaseConfirmId] = useState(null);
   const [purchaseNotice, setPurchaseNotice] = useState(null);
+  const [purchaseFx, setPurchaseFx] = useState(null);
+  const [questFx, setQuestFx] = useState(null);
+
+  const purchaseFxTimerRef = useRef(null);
+  const questFxTimerRef = useRef(null);
+
   const allCards = useMemo(() => buildDexCards(), []);
   const activeTab = REGION_TABS.find((tab) => tab.id === region) || REGION_TABS[0];
   const visibleCards = useMemo(
@@ -113,6 +119,14 @@ export default function CardDex({ save, onSaveChange, onBack }) {
   );
 
   const purchaseUnlocked = isDexPurchaseUnlocked(save);
+  const questStates = DEX_QUESTS.map((quest) => ({
+    quest,
+    state: dexQuestState(save, quest),
+  }));
+  const claimedQuestCount = questStates.filter(({ state }) => state.claimed).length;
+  const claimableQuestCount = questStates.filter(
+    ({ state }) => state.complete && !state.claimed,
+  ).length;
 
   const scrollPaneRef = useRef(null);
   const virtualSpaceRef = useRef(null);
@@ -125,9 +139,6 @@ export default function CardDex({ save, onSaveChange, onBack }) {
   );
 
   const discoveredCount = visibleCards.filter(
-    (card) => (save.collection?.[card.id] || 0) > 0,
-  ).length;
-  const allDiscoveredCount = allCards.filter(
     (card) => (save.collection?.[card.id] || 0) > 0,
   ).length;
 
@@ -246,6 +257,18 @@ export default function CardDex({ save, onSaveChange, onBack }) {
     };
   }, [visibleCards.length, measureVirtualGrid]);
 
+  useEffect(
+    () => () => {
+      clearTimeout(purchaseFxTimerRef.current);
+      clearTimeout(questFxTimerRef.current);
+    },
+    [],
+  );
+
+  function scheduleMeasure() {
+    requestAnimationFrame(() => requestAnimationFrame(measureVirtualGrid));
+  }
+
   function handleDexScroll() {
     if (scrollRafRef.current !== null) return;
 
@@ -263,26 +286,48 @@ export default function CardDex({ save, onSaveChange, onBack }) {
     setRegion(nextRegion);
   }
 
+  function toggleQuests() {
+    playSfx("click");
+    setQuestsOpen((open) => !open);
+    scheduleMeasure();
+  }
+
+  function showPurchaseFx(card) {
+    clearTimeout(purchaseFxTimerRef.current);
+    setPurchaseFx({ cardId: card.id, nonce: Date.now() });
+    purchaseFxTimerRef.current = setTimeout(() => setPurchaseFx(null), 1350);
+  }
+
+  function showQuestFx(quest, label, subtitle) {
+    clearTimeout(questFxTimerRef.current);
+    setQuestFx({
+      questId: quest.id,
+      title: quest.title,
+      label,
+      subtitle,
+      nonce: Date.now(),
+    });
+    questFxTimerRef.current = setTimeout(() => setQuestFx(null), 1550);
+  }
+
   function claimQuest(questId) {
+    const quest = DEX_QUESTS.find((item) => item.id === questId);
     const result = claimDexQuestReward(save, questId);
     if (!result.ok) {
       playSfx("buzzer");
       return;
     }
 
+    const label = rewardLabel(result.reward);
     playSfx("buy");
-    setRewardNotice({ questId, text: rewardLabel(result.reward) });
+    setRewardNotice({ questId, text: label });
+    if (quest) showQuestFx(quest, "보상 획득", label);
     onSaveChange?.();
   }
 
   function buyDexCard(card) {
     if (!purchaseUnlocked) {
       playSfx("buzzer");
-      setPurchaseNotice({
-        cardId: card.id,
-        tone: "error",
-        text: "N에게 승리한 뒤 확정 구매가 해금됩니다.",
-      });
       return;
     }
 
@@ -292,6 +337,12 @@ export default function CardDex({ save, onSaveChange, onBack }) {
       setPurchaseNotice(null);
       return;
     }
+
+    const completeBefore = new Set(
+      DEX_QUESTS.filter((quest) => dexQuestState(save, quest).complete).map(
+        (quest) => quest.id,
+      ),
+    );
 
     const result = purchaseDexCard(save, card.id);
     setPurchaseConfirmId(null);
@@ -312,8 +363,20 @@ export default function CardDex({ save, onSaveChange, onBack }) {
       tone: "success",
       text: `${card.name} ${result.firstDiscovery ? "첫 획득" : "추가 획득"} · ${formatMoney(result.price)}`,
     });
+    showPurchaseFx(card);
+
+    const newlyCompleted = DEX_QUESTS.find(
+      (quest) =>
+        !completeBefore.has(quest.id) && dexQuestState(save, quest).complete,
+    );
+
+    if (newlyCompleted) {
+      setQuestsOpen(true);
+      showQuestFx(newlyCompleted, "QUEST COMPLETE", "보상을 받을 수 있습니다.");
+    }
+
     onSaveChange?.();
-    requestAnimationFrame(measureVirtualGrid);
+    scheduleMeasure();
   }
 
   function renderDexCard(card) {
@@ -327,11 +390,12 @@ export default function CardDex({ save, onSaveChange, onBack }) {
     const confirming = purchaseConfirmId === card.id;
     const cannotAfford = canBuyMore && (save.money || 0) < price;
     const notice = purchaseNotice?.cardId === card.id ? purchaseNotice : null;
+    const purchaseAnimating = purchaseFx?.cardId === card.id;
 
     return (
       <article
         key={card.id}
-        className={`dex-entry ${owned ? "is-owned" : "is-locked"}`}
+        className={`dex-entry ${owned ? "is-owned" : "is-locked"} ${purchaseAnimating ? "is-purchase-fx" : ""}`}
       >
         <div className="dex-entry-topline">
           <span>#{String(dex).padStart(3, "0")}</span>
@@ -354,9 +418,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
         </div>
 
         <div className="dex-purchase-area">
-          {!purchaseUnlocked ? (
-            <span className="dex-purchase-note">N 승리 후 확정 구매 해금</span>
-          ) : canBuyMore ? (
+          {canBuyMore ? (
             <>
               <button
                 className={`dex-purchase-btn ${confirming ? "is-confirm" : ""}`}
@@ -385,6 +447,90 @@ export default function CardDex({ save, onSaveChange, onBack }) {
     );
   }
 
+  function renderQuestCard({ quest, state }) {
+    const status = state.claimed
+      ? "claimed"
+      : state.complete
+        ? "complete"
+        : "progress";
+    const animating = questFx?.questId === quest.id;
+    const validRequired = (quest.requiredCardIds || []).filter((id) => CARD_MAP[id]);
+
+    return (
+      <article
+        key={quest.id}
+        className={`dexq-card is-${status} ${animating ? "is-quest-fx" : ""}`}
+      >
+        <div className="dexq-card-head">
+          <span className="dexq-index">#{String(quest.order).padStart(2, "0")}</span>
+          <strong className="dexq-title">{quest.title}</strong>
+          <span className="dexq-status">
+            {state.claimed ? "수령 완료" : state.complete ? "완료" : "진행 중"}
+          </span>
+        </div>
+
+        <p className="dexq-desc">{quest.description}</p>
+
+        <div className="dexq-required">
+          {validRequired.map((id) => {
+            const owned = (save.collection?.[id] || 0) > 0;
+            return (
+              <div
+                key={id}
+                className={`dexq-mon ${owned ? "found" : "missing"}`}
+                title={CARD_MAP[id]?.name}
+              >
+                <Sprite
+                  cardId={id}
+                  emoji={CARD_MAP[id]?.emoji}
+                  size={39}
+                  shiny={false}
+                />
+                <span className="dexq-mon-mark">{owned ? "✓" : "?"}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="dexq-progress-row">
+          <strong>{state.found.length}/{state.required.length}</strong>
+          <div className="dexq-track" aria-hidden="true">
+            <i
+              style={{
+                width: `${state.required.length ? (state.found.length / state.required.length) * 100 : 0}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="dexq-bottom">
+          <div className="dexq-reward">
+            보상
+            <strong>{quest.rewardText}</strong>
+          </div>
+          {state.claimed ? (
+            <button type="button" className="dexq-action claimed" disabled>
+              완료
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`dexq-action ${state.complete ? "can-claim" : ""}`}
+              disabled={!state.complete}
+              onClick={() => claimQuest(quest.id)}
+            >
+              {state.complete ? "보상 받기" : "진행 중"}
+            </button>
+          )}
+        </div>
+
+        {rewardNotice?.questId === quest.id && (
+          <div className="dexq-notice">{rewardNotice.text} 획득!</div>
+        )}
+      </article>
+    );
+  }
+
   const virtualized = virtualWindow.totalHeight > 0;
   const renderedCards = visibleCards.slice(
     virtualWindow.start,
@@ -393,6 +539,24 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
   return (
     <div className="card-dex-screen">
+      {questFx ? (
+        <div key={questFx.nonce} className="dex-celebration is-quest" aria-live="polite">
+          <span className="dex-celebration-icon">★</span>
+          <span className="dex-celebration-copy">
+            <strong>{questFx.label} · {questFx.title}</strong>
+            <span>{questFx.subtitle}</span>
+          </span>
+        </div>
+      ) : purchaseFx ? (
+        <div key={purchaseFx.nonce} className="dex-celebration" aria-live="polite">
+          <span className="dex-celebration-icon">✦</span>
+          <span className="dex-celebration-copy">
+            <strong>{CARD_MAP[purchaseFx.cardId]?.name || "카드"} 획득!</strong>
+            <span>컬렉션에 추가되었습니다.</span>
+          </span>
+        </div>
+      ) : null}
+
       <div
         className="screen-header card-dex-header"
         style={{
@@ -418,7 +582,17 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
         <h2>카드 도감</h2>
 
-        <div className="dex-region-progress">발견 {allDiscoveredCount}/{allCards.length}</div>
+        <div className="money-display dex-header-money">
+          <img
+            className="res-icon"
+            src={UI_SPRITES.coin}
+            alt="돈"
+            width={20}
+            height={20}
+            draggable={false}
+          />
+          <span>{Math.max(0, Number(save.money) || 0).toLocaleString("ko-KR")}</span>
+        </div>
       </div>
 
       <div
@@ -443,117 +617,32 @@ export default function CardDex({ save, onSaveChange, onBack }) {
           </div>
         </div>
 
-        <section className={`dex-direct-shop ${purchaseUnlocked ? "is-unlocked" : "is-locked"}`}>
-          <div className="dex-direct-shop-copy">
-            <span className="dex-direct-shop-kicker">DIRECT ACQUISITION</span>
-            <strong>{purchaseUnlocked ? "도감 확정 구매" : "도감 확정 구매 · 잠김"}</strong>
-            <p>
-              {purchaseUnlocked
-                ? "원하는 포켓몬을 확정 획득합니다. 첫 획득은 비싸고, 추가 복사본은 첫 가격의 절반입니다."
-                : "하나지방 N에게 최초 승리하면 원하는 포켓몬을 돈으로 확정 구매할 수 있습니다."}
-            </p>
-          </div>
-          <div className="dex-direct-shop-side">
-            <strong className="dex-direct-shop-money">💰 {formatMoney(save.money)}</strong>
-            {purchaseUnlocked && (
-              <span className="dex-direct-shop-prices">
-                첫 획득 C {DEX_FIRST_PURCHASE_PRICE.C.toLocaleString()} · R {DEX_FIRST_PURCHASE_PRICE.R.toLocaleString()} · E {DEX_FIRST_PURCHASE_PRICE.E.toLocaleString()} · L {DEX_FIRST_PURCHASE_PRICE.L.toLocaleString()}
-              </span>
-            )}
-          </div>
-        </section>
+        <section
+          className={`dexq-drawer ${questsOpen ? "is-open" : ""} ${questFx ? "is-quest-fx" : ""}`}
+          aria-label="도감 수집 퀘스트"
+        >
+          <button
+            type="button"
+            className="dexq-toggle"
+            aria-expanded={questsOpen}
+            onClick={toggleQuests}
+          >
+            <span className="dexq-toggle-title">🎯 수집 퀘스트</span>
+            <span className="dexq-toggle-summary">
+              {claimedQuestCount}/{DEX_QUESTS.length} 수령 완료
+              {claimableQuestCount > 0 && (
+                <> · <strong>보상 대기 {claimableQuestCount}</strong></>
+              )}
+            </span>
+            <span className="dexq-toggle-arrow">⌄</span>
+          </button>
 
-        <section className="dex-quest-board" aria-label="도감 수집 퀘스트">
-          <div className="dex-quest-heading">
-            <div>
-              <span className="dex-quest-kicker">COLLECTION QUESTS</span>
-              <h3>수집 퀘스트</h3>
+          <div className="dexq-body" aria-hidden={!questsOpen}>
+            <div className="dexq-body-inner">
+              <div className="dexq-strip">
+                {questStates.map(renderQuestCard)}
+              </div>
             </div>
-            <p>퀘스트는 순서와 관계없이 조건을 채우는 즉시 보상을 받을 수 있습니다.</p>
-          </div>
-
-          <div className="dex-quest-list">
-            {DEX_QUESTS.map((quest) => {
-              const state = dexQuestState(save, quest);
-              const status = state.claimed
-                ? "claimed"
-                : state.complete
-                  ? "complete"
-                  : "progress";
-
-              return (
-                <article key={quest.id} className={`dex-quest-item is-${status}`}>
-                  <div className="dex-quest-index">#{String(quest.order).padStart(2, "0")}</div>
-
-                  <div className="dex-quest-copy">
-                    <span>{quest.category}</span>
-                    <h4>{quest.title}</h4>
-                    <p>{quest.description}</p>
-
-                    <div className="dex-quest-required">
-                      {quest.requiredCardIds.map((id) => {
-                        const owned = (save.collection?.[id] || 0) > 0;
-                        return (
-                          <div
-                            key={id}
-                            className={`dex-quest-pokemon ${owned ? "found" : "missing"}`}
-                            title={CARD_MAP[id]?.name}
-                          >
-                            <Sprite
-                              cardId={id}
-                              emoji={CARD_MAP[id]?.emoji}
-                              size={38}
-                              shiny={false}
-                            />
-                            <span>{CARD_MAP[id]?.name}</span>
-                            <b>{owned ? "✓" : "?"}</b>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="dex-quest-progress-box">
-                    <strong>{state.found.length} / {state.required.length}</strong>
-                    <span>발견</span>
-                    <div className="dex-quest-progress-track" aria-hidden="true">
-                      <i
-                        style={{
-                          width: `${state.required.length ? (state.found.length / state.required.length) * 100 : 0}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="dex-quest-reward">
-                    <span className="dex-quest-reward-label">보상</span>
-                    <strong>{quest.rewardText}</strong>
-                    <small>{quest.rewardSubtext}</small>
-                  </div>
-
-                  <div className="dex-quest-action">
-                    {state.claimed ? (
-                      <div className="dex-reward-claimed">
-                        <span>수령 완료</span>
-                        <strong>{rewardLabel(state.reward)}</strong>
-                      </div>
-                    ) : (
-                      <button
-                        className={state.complete ? "btn-primary" : "btn-secondary"}
-                        disabled={!state.complete}
-                        onClick={() => claimQuest(quest.id)}
-                      >
-                        {state.complete ? "보상 받기" : "진행 중"}
-                      </button>
-                    )}
-
-                    {rewardNotice?.questId === quest.id && (
-                      <div className="dex-reward-toast">{rewardNotice.text} 획득!</div>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
           </div>
         </section>
 
