@@ -5,9 +5,14 @@ import { ensureShinyState } from "../../state/shiny.js";
 export const KANTO_STARTER_IDS = ["bulbasaur", "charmander", "squirtle"];
 export const KANTO_STARTER_REWARD_KEY = "kantoStarters";
 
+const JOHTO_STARTER_IDS = ["chikorita", "cyndaquil", "totodile"];
+const HOENN_STARTER_IDS = ["treecko", "torchic", "mudkip"];
+const SINNOH_STARTER_IDS = ["turtwig", "chimchar", "piplup"];
+const UNOVA_STARTER_IDS = ["snivy", "tepig", "oshawott"];
+const PSEUDO_LEGENDARY_BASE_IDS = ["dratini", "larvitar", "bagon", "gible", "deino"];
+
 // 도감 퀘스트는 서로 선행 조건을 갖지 않는다.
-// 카드팩 획득 순서는 랜덤이므로 각 퀘스트는 자기 requiredCardIds만 보고
-// 독립적으로 완료/수령 가능 상태가 된다.
+// 카드팩/직접 구매 등 어떤 경로로 획득했든 collection에 등록되면 발견으로 인정한다.
 export const DEX_QUESTS = [
   {
     id: KANTO_STARTER_REWARD_KEY,
@@ -16,8 +21,64 @@ export const DEX_QUESTS = [
     title: "관동 스타팅",
     description: "이상해씨 · 파이리 · 꼬부기를 모두 발견하세요.",
     requiredCardIds: KANTO_STARTER_IDS,
+    reward: { type: "missing_shiny", fallbackMoney: 150 },
     rewardText: "미보유 관동 스타팅 이로치 1장",
     rewardSubtext: "세 이로치를 이미 모두 보유했다면 150원으로 대체",
+  },
+  {
+    id: "johtoStarters",
+    order: 2,
+    category: "세트 수집",
+    title: "성도 스타팅",
+    description: "치코리타 · 브케인 · 리아코를 모두 발견하세요.",
+    requiredCardIds: JOHTO_STARTER_IDS,
+    reward: { type: "missing_shiny", fallbackMoney: 200 },
+    rewardText: "미보유 성도 스타팅 이로치 1장",
+    rewardSubtext: "세 이로치를 이미 모두 보유했다면 200원으로 대체",
+  },
+  {
+    id: "hoennStarters",
+    order: 3,
+    category: "세트 수집",
+    title: "호연 스타팅",
+    description: "나무지기 · 아차모 · 물짱이를 모두 발견하세요.",
+    requiredCardIds: HOENN_STARTER_IDS,
+    reward: { type: "missing_shiny", fallbackMoney: 250 },
+    rewardText: "미보유 호연 스타팅 이로치 1장",
+    rewardSubtext: "세 이로치를 이미 모두 보유했다면 250원으로 대체",
+  },
+  {
+    id: "sinnohStarters",
+    order: 4,
+    category: "세트 수집",
+    title: "신오 스타팅",
+    description: "모부기 · 불꽃숭이 · 팽도리를 모두 발견하세요.",
+    requiredCardIds: SINNOH_STARTER_IDS,
+    reward: { type: "missing_shiny", fallbackMoney: 300 },
+    rewardText: "미보유 신오 스타팅 이로치 1장",
+    rewardSubtext: "세 이로치를 이미 모두 보유했다면 300원으로 대체",
+  },
+  {
+    id: "unovaStarters",
+    order: 5,
+    category: "세트 수집",
+    title: "하나 스타팅",
+    description: "주리비얀 · 뚜꾸리 · 수댕이를 모두 발견하세요.",
+    requiredCardIds: UNOVA_STARTER_IDS,
+    reward: { type: "missing_shiny", fallbackMoney: 350 },
+    rewardText: "미보유 하나 스타팅 이로치 1장",
+    rewardSubtext: "세 이로치를 이미 모두 보유했다면 350원으로 대체",
+  },
+  {
+    id: "pseudoLegendaryBases",
+    order: 6,
+    category: "세대 수집",
+    title: "600족의 계보",
+    description: "미뇽 · 애버라스 · 아공이 · 딥상어동 · 모노두를 모두 발견하세요.",
+    requiredCardIds: PSEUDO_LEGENDARY_BASE_IDS,
+    reward: { type: "money", amount: 1000 },
+    rewardText: "1,000원",
+    rewardSubtext: "5세대까지 이어지는 600족의 시작을 모두 수집한 보상",
   },
 ];
 
@@ -44,7 +105,7 @@ export function dexQuestState(save, questOrId) {
     };
   }
 
-  const required = quest.requiredCardIds || [];
+  const required = (quest.requiredCardIds || []).filter((id) => CARD_MAP[id]);
   const found = required.filter((id) => (save?.collection?.[id] || 0) > 0);
   const reward = save?.dexRewards?.[quest.id] || null;
 
@@ -61,8 +122,9 @@ export function kantoStarterRewardState(save) {
   return dexQuestState(save, KANTO_STARTER_REWARD_KEY);
 }
 
-function claimKantoStarterReward(save) {
-  const missingShiny = KANTO_STARTER_IDS.filter(
+function claimMissingShinyReward(save, quest) {
+  const eligibleIds = (quest.requiredCardIds || []).filter((id) => CARD_MAP[id]);
+  const missingShiny = eligibleIds.filter(
     (id) => (save.shinyCollection?.[id] || 0) <= 0,
   );
 
@@ -92,11 +154,23 @@ function claimKantoStarterReward(save) {
     };
   }
 
-  save.money = (save.money || 0) + 150;
+  const amount = Math.max(0, Number(quest.reward?.fallbackMoney) || 0);
+  save.money = (save.money || 0) + amount;
   return {
     claimed: true,
     rewardType: "money",
-    amount: 150,
+    amount,
+    claimedAt: Date.now(),
+  };
+}
+
+function claimMoneyReward(save, quest) {
+  const amount = Math.max(0, Number(quest.reward?.amount) || 0);
+  save.money = (save.money || 0) + amount;
+  return {
+    claimed: true,
+    rewardType: "money",
+    amount,
     claimedAt: Date.now(),
   };
 }
@@ -121,13 +195,12 @@ export function claimDexQuestReward(save, questId) {
   }
 
   let reward;
-
-  switch (quest.id) {
-    case KANTO_STARTER_REWARD_KEY:
-      reward = claimKantoStarterReward(save);
-      break;
-    default:
-      return { ok: false, reason: "unsupported-quest" };
+  if (quest.reward?.type === "missing_shiny") {
+    reward = claimMissingShinyReward(save, quest);
+  } else if (quest.reward?.type === "money") {
+    reward = claimMoneyReward(save, quest);
+  } else {
+    return { ok: false, reason: "unsupported-quest" };
   }
 
   rewards[quest.id] = reward;
