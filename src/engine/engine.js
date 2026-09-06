@@ -62,6 +62,47 @@ function otherSide(side) {
   return side === "player" ? "enemy" : "player";
 }
 
+function withRecalledEvolutionAsBasic(game, side, handIdx, callback) {
+  const handCard = game.players?.[side]?.hand?.[handIdx];
+  const card = CARD_MAP[handCard?.cardId];
+  if (!handCard?._fieldRecallEvolution || !card?.evolvesFrom) {
+    return callback();
+  }
+
+  const originalEvolvesFrom = card.evolvesFrom;
+  card.evolvesFrom = null;
+  try {
+    return callback();
+  } finally {
+    card.evolvesFrom = originalEvolvesFrom;
+  }
+}
+
+function markRecalledEvolution(game, side, card, beforeHandUids, result) {
+  if (
+    result === false ||
+    card?.kind !== "spell" ||
+    card.spell?.effect !== "damage_recall_friendly"
+  ) {
+    return;
+  }
+
+  const player = game.players?.[side];
+  if (!player) return;
+
+  for (const handCard of player.hand || []) {
+    if (beforeHandUids.has(handCard.uid)) continue;
+    const recalled = CARD_MAP[handCard.cardId];
+    if (recalled?.kind === "pokemon" && recalled.evolvesFrom) {
+      handCard._fieldRecallEvolution = true;
+      pushEngineLog(
+        game,
+        `${recalled.name}은(는) 필드에서 돌아온 진화체라 다시 바로 낼 수 있다.`,
+      );
+    }
+  }
+}
+
 function damageTechniqueHeroHitCount(card, target) {
   if (
     !card ||
@@ -110,8 +151,6 @@ function correctLightScreenHeroDamage(
   );
   defender.hp = Math.min(defender.maxHp ?? Number.POSITIVE_INFINITY, defender.hp + restored);
 
-  // base 엔진은 기술 직격을 트레이너 HP에서 직접 차감하므로
-  // lastAction의 피해 연출도 실제 감소 후 수치에 맞춰 보정한다.
   let remainingRestore = restored;
   if (Array.isArray(game.lastAction?.impacts)) {
     for (const impact of game.lastAction.impacts) {
@@ -144,7 +183,6 @@ function correctLightScreenHeroDamage(
     );
   }
 
-  // 장막 적용 전 원피해로 승패가 먼저 확정됐던 경우 실제 체력이 남으면 복구한다.
   if (game.winner === side && defender.hp > 0) {
     game.winner = null;
   }
@@ -168,7 +206,6 @@ function normalizeTypeStatusImmunities(game) {
     for (const unit of game.players?.[side]?.field || []) {
       let statusType = normalizeStatusType(unit.status);
 
-      // 구형 상태값 frozen도 얼음 타입 면역 규칙에 포함한다.
       if (!statusType && (unit.frozen || 0) > 0) statusType = "ice";
       if (!statusType || !isTypeStatusImmune(unit, statusType)) continue;
 
@@ -238,8 +275,6 @@ function setupKyuremSeal(game, side, unit) {
   const count = Math.min(2, candidates.length);
   if (count <= 0) return;
 
-  // 온라인전은 canonical side가 enemy인 플레이어도 직접 선택해야 한다.
-  // 오프라인 AI만 비용이 높은 카드부터 자동 봉인한다.
   const needsHumanSelection = side === "player" || !!game?._onlineMatch?.id;
 
   if (needsHumanSelection) {
@@ -314,11 +349,9 @@ function resolveGlaciateSeal(game, side, handUid) {
 }
 
 function runRulesAction(game, callback) {
-  // 구버전/온라인 동기화 상태에 잘못 남아 있는 상태이상도 행동 전에 제거한다.
   normalizeTypeStatusImmunities(game);
   refreshGlaciateSeals(game);
   const result = callback();
-  // 이번 행동에서 새로 걸린 타입 불가 상태이상도 즉시 제거한다.
   normalizeTypeStatusImmunities(game);
   refreshGlaciateSeals(game);
   return result;
@@ -364,12 +397,7 @@ function dispatch(game, command) {
 }
 
 function finishPendingDispatch(sent, callback) {
-  // 오프라인/AI는 기존처럼 즉시 엔진을 실행한다.
   if (sent === null) return callback();
-
-  // 온라인은 명령 전송만 하고, 실제 게임 상태/이펙트는 호스트가 확정한
-  // revision을 수신했을 때 한 번만 반영한다. 같은 행동을 로컬에서도 실행하면
-  // optimistic -> rollback -> commit 순서로 lastAction이 왕복하며 연출이 중복된다.
   return sent !== false;
 }
 
@@ -401,8 +429,6 @@ function evolutionSource(game, side, card, target) {
 function promoteLatestEvolutionLog(game, match, replacement) {
   if (!Array.isArray(game?.log)) return;
 
-  // 기존 짧은 진화 문구나 이전 보정 문구가 있으면 모두 지우고,
-  // 실제 진화 성공을 기준으로 가장 마지막 로그에 한 줄만 남긴다.
   for (let i = game.log.length - 1; i >= 0; i -= 1) {
     if (match(game.log[i])) game.log.splice(i, 1);
   }
@@ -412,8 +438,6 @@ function promoteLatestEvolutionLog(game, match, replacement) {
 }
 
 function enrichEvolutionLog(game, side, card, source, result) {
-  // 일부 확장 래퍼가 성공 시 undefined를 반환하더라도 lastAction/필드 변화로
-  // 진화를 확정할 수 있으므로 명시적인 false만 실패로 본다.
   if (result === false || !card) return;
 
   const player = game.players?.[side];
@@ -490,9 +514,6 @@ export function createGame(deck, trainer, deckShiny = {}) {
     }
   }
 
-  // 온라인 배틀에서는 상대 덱이 trainer(enemy) 경로로 생성된다.
-  // player 쪽 퀘스트는 base 엔진이 이미 첫 손패에 강제하지만 enemy 쪽은
-  // trainer.startingCard를 통해서만 보장되므로 같은 규칙을 연결한다.
   let resolvedTrainer = trainer;
   if (
     trainer?.onlineBattle &&
@@ -517,7 +538,9 @@ export function canPlayCard(game, side, handIdx) {
 
   const bridge = bridgeFor(game);
   if (bridge && bridge.canAct && !bridge.canAct()) return false;
-  return rules.canPlayCard(game, side, handIdx);
+  return withRecalledEvolutionAsBasic(game, side, handIdx, () =>
+    rules.canPlayCard(game, side, handIdx),
+  );
 }
 
 export function canAttack(game, side, attackerUid) {
@@ -555,11 +578,17 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
     const beforeFieldUids = new Set(
       (game.players?.[side]?.field || []).map((unit) => unit.uid),
     );
-
-    const result = runRulesAction(game, () =>
-      rules.playCard(game, side, handIdx, target, fieldIndex),
+    const beforeHandUids = new Set(
+      (game.players?.[side]?.hand || []).map((entry) => entry.uid),
     );
 
+    const result = runRulesAction(game, () =>
+      withRecalledEvolutionAsBasic(game, side, handIdx, () =>
+        rules.playCard(game, side, handIdx, target, fieldIndex),
+      ),
+    );
+
+    markRecalledEvolution(game, side, card, beforeHandUids, result);
     correctLightScreenHeroDamage(
       game,
       side,
@@ -587,14 +616,17 @@ export function playCard(game, side, handIdx, target = null, fieldIndex = null) 
 
   if (!bridge.canAct?.()) return false;
   const handCard = game.players?.player?.hand?.[handIdx];
-  if (!handCard?.uid || !rules.canPlayCard(game, side, handIdx)) return false;
+  if (
+    !handCard?.uid ||
+    !withRecalledEvolutionAsBasic(game, side, handIdx, () =>
+      rules.canPlayCard(game, side, handIdx),
+    )
+  ) return false;
 
   const command = { type: "play", handUid: handCard.uid };
   if (target?.uid) command.targetUid = target.uid;
   if (fieldIndex != null) command.fieldIndex = fieldIndex;
 
-  // 온라인에서는 로컬 state를 먼저 mutate하지 않는다.
-  // 확정 revision만 Battle에 반영한다.
   return dispatch(game, command);
 }
 
@@ -645,7 +677,6 @@ export function endTurn(game) {
   }
   if (!bridge.canAct?.()) return false;
 
-  // 날씨/턴 시작 효과까지 포함한 전체 endTurn은 호스트에서 단 한 번 실행한다.
   return dispatch(game, { type: "end_turn" });
 }
 
@@ -676,8 +707,6 @@ export function discardToDraw(game, side, handIdx) {
   const handCard = game.players?.player?.hand?.[handIdx];
   if (!handCard?.uid) return false;
 
-  // 기존 온라인 프로토콜과 호환되도록 play sentinel은 유지한다.
-  // 실제 교환 판정/비용/덱 복귀는 canonical host의 이 함수에서 처리한다.
   return dispatch(game, {
     type: "play",
     handUid: handCard.uid,
