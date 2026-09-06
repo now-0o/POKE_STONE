@@ -24,16 +24,24 @@ function replaceSprite(container, src, label) {
   image.classList.add("rogue-ui-item-sprite");
 }
 
-function replaceStatusRow(root, selector, icons) {
-  const rows = root.querySelectorAll(selector);
-  if (!rows.length) return;
+function ensureStatusLabel(item, label) {
+  const text = item?.querySelector("b");
+  if (!text || !label) return;
+  const current = (text.textContent || "").trim();
+  if (!current || current.startsWith(`${label} `) || current === label) return;
+  text.textContent = `${label} ${current}`;
+}
 
-  rows.forEach((row) => {
+function replaceStatusRows(root, selector, icons) {
+  const rows = root.querySelectorAll(selector);
+  for (const row of rows) {
     [...row.querySelectorAll(":scope > .rogue-status-item")].forEach((item, index) => {
       const meta = icons[index];
-      if (meta) replaceSprite(item, meta.src, meta.label);
+      if (!meta) return;
+      replaceSprite(item, meta.src, meta.label);
+      if (meta.textLabel) ensureStatusLabel(item, meta.textLabel);
     });
-  });
+  }
 }
 
 function replaceRewardUtilitySprites(root) {
@@ -47,14 +55,14 @@ function sync(root = document) {
   const screen = root.querySelector?.(".roguelike-infinite-root") || document.querySelector(".roguelike-infinite-root");
   if (!screen) return;
 
-  replaceStatusRow(screen, ".rogue-status-sprites", [
-    { src: ITEM.hp, label: "체력" },
+  replaceStatusRows(screen, ".rogue-status-sprites", [
+    { src: ITEM.hp, label: "체력", textLabel: "HP" },
     { src: ITEM.deck, label: "덱" },
     { src: ITEM.hand, label: "시작 손패" },
     { src: ITEM.mana, label: "시작 코스트" },
   ]);
 
-  replaceStatusRow(screen, ".rogue-stat-row", [
+  replaceStatusRows(screen, ".rogue-stat-row", [
     { src: ITEM.hp, label: "적 체력" },
     { src: ITEM.hand, label: "AI" },
     { src: ITEM.mana, label: "적 시작 코스트" },
