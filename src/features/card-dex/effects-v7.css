@@ -1,0 +1,169 @@
+/* Card Dex celebration effects v7 */
+
+.dex-entry.is-purchase-fx {
+  position: relative;
+  z-index: 2;
+  animation: dex-purchase-card-pop .72s cubic-bezier(.2, .9, .25, 1) both;
+}
+
+.dex-entry.is-purchase-fx::before,
+.dex-entry.is-purchase-fx::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 18px;
+}
+
+.dex-entry.is-purchase-fx::before {
+  inset: -5px;
+  border: 2px solid rgba(255, 224, 122, .88);
+  box-shadow:
+    0 0 0 1px rgba(245, 197, 66, .25),
+    0 0 22px rgba(245, 197, 66, .62),
+    inset 0 0 20px rgba(255, 226, 127, .12);
+  animation: dex-purchase-ring .95s ease-out both;
+}
+
+.dex-entry.is-purchase-fx::after {
+  inset: -16px;
+  background:
+    radial-gradient(circle at 16% 20%, rgba(255, 237, 157, .95) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 17%, rgba(255, 237, 157, .92) 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 68%, rgba(245, 197, 66, .9) 0 2px, transparent 3px),
+    radial-gradient(circle at 14% 78%, rgba(245, 197, 66, .86) 0 2px, transparent 3px),
+    radial-gradient(circle at 52% 4%, rgba(255, 247, 207, .92) 0 1.5px, transparent 2.5px);
+  animation: dex-purchase-sparkles 1s ease-out both;
+}
+
+.dexq-card.is-quest-fx {
+  animation: dex-quest-card-complete 1.1s cubic-bezier(.2, .85, .25, 1) both;
+}
+
+.dexq-drawer.is-quest-fx {
+  animation: dex-quest-drawer-glow 1.35s ease-out both;
+}
+
+.dex-celebration {
+  position: fixed;
+  left: 50%;
+  top: clamp(72px, 14vh, 128px);
+  z-index: 2147482500;
+  min-width: min(360px, calc(100vw - 28px));
+  max-width: calc(100vw - 28px);
+  padding: 11px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 197, 66, .5);
+  background: rgba(17, 24, 43, .96);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .42), 0 0 24px rgba(245, 197, 66, .16);
+  color: #fff1ba;
+  transform: translateX(-50%);
+  font-family: var(--display-font);
+  text-align: center;
+  animation: dex-celebration-in 1.35s cubic-bezier(.2, .85, .25, 1) both;
+}
+
+.dex-celebration.is-quest {
+  border-color: rgba(118, 224, 157, .5);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .42), 0 0 26px rgba(77, 201, 121, .2);
+  color: #caffdc;
+}
+
+.dex-celebration-icon {
+  font-size: 18px;
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+.dex-celebration-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dex-celebration-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.dex-celebration-copy span {
+  color: var(--text-dim);
+  font-family: var(--body-font);
+  font-size: 10px;
+}
+
+@keyframes dex-purchase-card-pop {
+  0% { transform: scale(1); }
+  30% { transform: translateY(-4px) scale(1.035); }
+  65% { transform: translateY(0) scale(.995); }
+  100% { transform: scale(1); }
+}
+
+@keyframes dex-purchase-ring {
+  0% { opacity: 0; transform: scale(.9); }
+  24% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+
+@keyframes dex-purchase-sparkles {
+  0% { opacity: 0; transform: scale(.82) rotate(-3deg); }
+  28% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.12) translateY(-6px) rotate(3deg); }
+}
+
+@keyframes dex-quest-card-complete {
+  0% { transform: scale(1); box-shadow: none; }
+  28% {
+    transform: translateY(-4px) scale(1.025);
+    box-shadow: 0 0 0 2px rgba(116, 222, 154, .44), 0 0 28px rgba(82, 194, 122, .34);
+  }
+  100% { transform: scale(1); box-shadow: none; }
+}
+
+@keyframes dex-quest-drawer-glow {
+  0% { box-shadow: 0 8px 24px rgba(0, 0, 0, .16); }
+  32% { box-shadow: 0 8px 30px rgba(0, 0, 0, .18), 0 0 0 2px rgba(103, 218, 144, .35), 0 0 34px rgba(71, 189, 112, .22); }
+  100% { box-shadow: 0 8px 24px rgba(0, 0, 0, .16); }
+}
+
+@keyframes dex-celebration-in {
+  0% { opacity: 0; transform: translate(-50%, -12px) scale(.9); }
+  18% { opacity: 1; transform: translate(-50%, 0) scale(1.03); }
+  72% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -7px) scale(.98); }
+}
+
+@media (max-width: 760px) {
+  .dex-celebration {
+    top: max(62px, calc(env(safe-area-inset-top, 0px) + 56px));
+    min-width: min(310px, calc(100vw - 20px));
+    max-width: calc(100vw - 20px);
+    padding: 9px 13px;
+  }
+
+  .dex-celebration-copy strong {
+    font-size: 11.5px;
+  }
+
+  .dex-celebration-copy span {
+    font-size: 9.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dex-entry.is-purchase-fx,
+  .dex-entry.is-purchase-fx::before,
+  .dex-entry.is-purchase-fx::after,
+  .dexq-card.is-quest-fx,
+  .dexq-drawer.is-quest-fx,
+  .dex-celebration {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
