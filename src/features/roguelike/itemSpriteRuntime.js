@@ -25,11 +25,14 @@ function replaceSprite(container, src, label) {
 }
 
 function replaceStatusRow(root, selector, icons) {
-  const row = root.querySelector(selector);
-  if (!row) return;
-  [...row.querySelectorAll(":scope > .rogue-status-item")].forEach((item, index) => {
-    const meta = icons[index];
-    if (meta) replaceSprite(item, meta.src, meta.label);
+  const rows = root.querySelectorAll(selector);
+  if (!rows.length) return;
+
+  rows.forEach((row) => {
+    [...row.querySelectorAll(":scope > .rogue-status-item")].forEach((item, index) => {
+      const meta = icons[index];
+      if (meta) replaceSprite(item, meta.src, meta.label);
+    });
   });
 }
 
