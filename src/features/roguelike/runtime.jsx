@@ -1,11 +1,14 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import RoguelikeInfiniteMode from "./RoguelikeInfiniteMode.jsx";
+import RoguelikeShell from "./RoguelikeShell.jsx";
 import { readRoguelikeSave, ROGUELIKE_SAVE_EVENT } from "./runState.js";
 import "./roguelike.css";
 import "./reward-rarity.css";
 import "./battle-overrides.css";
 import "./infinite-v2.css";
+import "./pc-box-v3.css";
+import "./item-sprites-v3.css";
+import "./itemSpriteRuntime.js";
 
 const BUTTON_ID = "pokestone-roguelike-menu-card";
 const ROOT_ID = "pokestone-roguelike-root";
@@ -32,7 +35,7 @@ function openRoguelike() {
   host.id = ROOT_ID;
   document.body.appendChild(host);
   roguelikeRoot = createRoot(host);
-  roguelikeRoot.render(<RoguelikeInfiniteMode onExit={closeRoguelike} />);
+  roguelikeRoot.render(<RoguelikeShell onExit={closeRoguelike} />);
 }
 
 function modeSelectionGrid() {
