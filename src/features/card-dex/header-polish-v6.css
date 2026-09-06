@@ -1,0 +1,74 @@
+/* Card Dex / Shop / Deck header alignment v6
+ * Match the comfortable CardDex vertical offset without changing card layouts.
+ */
+
+/* Desktop: App already contributes 12px. CardDex contributes another 12px. */
+.pack-shop {
+  padding-top: 12px;
+}
+
+.deck-editor {
+  margin-top: 0 !important;
+  padding-top: 12px;
+}
+
+/* CardDex header: category progress stays in the toolbar; header shows money instead. */
+.card-dex-header > .dex-region-progress {
+  display: none !important;
+}
+
+.card-dex-header .dex-header-money {
+  flex: 0 0 auto;
+  min-width: 92px;
+  justify-content: flex-end;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.card-dex-header .dex-header-money .res-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+  vertical-align: 0;
+}
+
+/* The Korean heading already explains the feature; remove redundant English label. */
+.dex-direct-shop-kicker {
+  display: none !important;
+}
+
+/* Balance is now shown in the header, so keep only the price table in this panel. */
+.dex-direct-shop-money {
+  display: none !important;
+}
+
+@media (pointer: coarse), (max-width: 1024px) {
+  /* CardDex uses a smaller extra top inset on compact layouts. */
+  .pack-shop {
+    padding-top: 4px !important;
+  }
+
+  .mobile-deck-landscape-shell .deck-editor,
+  .deck-editor {
+    margin-top: 0 !important;
+    padding-top: 4px !important;
+  }
+
+  .card-dex-header .dex-header-money {
+    min-width: 74px;
+    font-size: 12.5px;
+  }
+
+  .card-dex-header .dex-header-money .res-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 3px;
+  }
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  /* Portrait deck editor is fixed to the viewport, so add the offset explicitly. */
+  .mobile-deck-editor-v2 {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+  }
+}
