@@ -6,7 +6,9 @@
 const MOBILE_BATTLE_QUERY = "(pointer: coarse), (max-width: 1024px)";
 const suppressClickUntil = new WeakMap();
 const lastHandCount = new WeakMap();
+const handLayoutState = new WeakMap();
 let handGesture = null;
+let refreshHandsFrame = 0;
 
 function isMobileBattle() {
   return (
@@ -43,10 +45,17 @@ function syncMobileBattleViewport() {
   const height = Math.round(viewport?.height || window.innerHeight || 0);
 
   if (height > 0) {
-    document.documentElement.style.setProperty(
-      "--mobile-battle-vh",
-      `${height}px`,
-    );
+    const next = `${height}px`;
+    const root = document.documentElement;
+    if (root.style.getPropertyValue("--mobile-battle-vh") !== next) {
+      root.style.setProperty("--mobile-battle-vh", next);
+    }
+  }
+}
+
+function setStylePropertyIfChanged(element, name, value) {
+  if (element.style.getPropertyValue(name) !== value) {
+    element.style.setProperty(name, value);
   }
 }
 
@@ -55,22 +64,37 @@ function layoutHand(hand) {
 
   const wraps = [...hand.querySelectorAll(":scope > .hand-card-wrap")];
   const count = wraps.length;
-  if (!count) return;
+  if (!count) {
+    handLayoutState.delete(hand);
+    return;
+  }
 
   const board = hand.closest(".battle-board");
   const portrait = window.matchMedia("(orientation: portrait)").matches;
   const hasDiscardControls = wraps.some((wrap) =>
     wrap.querySelector(":scope > .btn-discard-redraw"),
   );
+  const viewportWidth = Math.round(window.innerWidth || 0);
 
   board?.classList.toggle("mobile-hand-has-discard", hasDiscardControls);
+
+  const previous = handLayoutState.get(hand);
+  const sameLayout =
+    previous?.count === count &&
+    previous?.portrait === portrait &&
+    previous?.hasDiscardControls === hasDiscardControls &&
+    previous?.viewportWidth === viewportWidth &&
+    previous?.wraps?.length === count &&
+    wraps.every((wrap, index) => previous.wraps[index] === wrap);
+
+  if (sameLayout) return;
 
   const expandedMargin = portrait ? 54 : 74;
   const expandedMax = portrait ? 380 : 560;
   const expandedStepMax = portrait ? 54 : 64;
   const expandedSpan = Math.max(
     0,
-    Math.min(window.innerWidth - expandedMargin, expandedMax),
+    Math.min(viewportWidth - expandedMargin, expandedMax),
   );
   const expandedStep =
     count > 1 ? Math.min(expandedStepMax, expandedSpan / (count - 1)) : 0;
@@ -91,7 +115,7 @@ function layoutHand(hand) {
       : 0.18;
   const collapsedSpan = Math.min(
     collapsedLimit,
-    Math.max(0, window.innerWidth * collapsedViewportRatio),
+    Math.max(0, viewportWidth * collapsedViewportRatio),
   );
   const collapsedStep = count > 1 ? collapsedSpan / (count - 1) : 0;
   const center = (count - 1) / 2;
@@ -103,16 +127,30 @@ function layoutHand(hand) {
       ? (index - (count - 1)) * collapsedStep
       : offset * collapsedStep;
 
-    wrap.style.setProperty(
+    setStylePropertyIfChanged(
+      wrap,
       "--mobile-expanded-x",
       `${offset * expandedStep}px`,
     );
-    wrap.style.setProperty(
+    setStylePropertyIfChanged(
+      wrap,
       "--mobile-collapsed-x",
       `${collapsedOffset}px`,
     );
-    wrap.style.setProperty("--mobile-hand-angle", `${angle}deg`);
-    wrap.style.setProperty("--mobile-hand-index", String(index + 1));
+    setStylePropertyIfChanged(wrap, "--mobile-hand-angle", `${angle}deg`);
+    setStylePropertyIfChanged(
+      wrap,
+      "--mobile-hand-index",
+      String(index + 1),
+    );
+  });
+
+  handLayoutState.set(hand, {
+    count,
+    portrait,
+    hasDiscardControls,
+    viewportWidth,
+    wraps,
   });
 }
 
@@ -378,9 +416,48 @@ function refreshHands() {
   });
 }
 
+function scheduleRefreshHands() {
+  if (refreshHandsFrame) return;
+  refreshHandsFrame = requestAnimationFrame(() => {
+    refreshHandsFrame = 0;
+    refreshHands();
+  });
+}
+
+function nodeContainsBattleHand(node) {
+  if (!(node instanceof Element)) return false;
+  return (
+    node.matches(".battle-board, .battle-board > .hand, .hand-card-wrap") ||
+    Boolean(
+      node.querySelector?.(
+        ".battle-board, .battle-board > .hand, .battle-board > .hand > .hand-card-wrap",
+      ),
+    )
+  );
+}
+
+function mutationTouchesBattleHand(mutation) {
+  const target = mutation.target;
+  if (
+    target instanceof Element &&
+    (target.matches(".battle-board > .hand") ||
+      Boolean(target.closest(".battle-board > .hand")))
+  ) {
+    return true;
+  }
+
+  for (const node of mutation.addedNodes) {
+    if (nodeContainsBattleHand(node)) return true;
+  }
+  for (const node of mutation.removedNodes) {
+    if (nodeContainsBattleHand(node)) return true;
+  }
+  return false;
+}
+
 function refreshMobileBattleLayout() {
   syncMobileBattleViewport();
-  requestAnimationFrame(refreshHands);
+  scheduleRefreshHands();
 }
 
 if (typeof document !== "undefined") {
@@ -395,22 +472,24 @@ if (typeof document !== "undefined") {
 
   window.addEventListener("pointermove", holdInspectOpenWhileMoving, true);
 
+  // Only hand mount/unmount and hand-card child changes need a relayout.
+  // Battle effects add/remove many unrelated DOM nodes, so reacting to every
+  // document-wide childList mutation creates a large amount of redundant work.
   const observer = new MutationObserver((mutations) => {
     if (!isMobileBattle()) return;
-
-    if (mutations.some((mutation) => mutation.type === "childList")) {
-      requestAnimationFrame(refreshHands);
+    if (mutations.some(mutationTouchesBattleHand)) {
+      scheduleRefreshHands();
     }
   });
 
-  observer.observe(document.documentElement, {
+  observer.observe(document.getElementById("root") || document.body, {
     childList: true,
     subtree: true,
   });
 
-  requestAnimationFrame(refreshHands);
-  window.setTimeout(refreshHands, 60);
-  window.setTimeout(refreshHands, 180);
+  scheduleRefreshHands();
+  window.setTimeout(scheduleRefreshHands, 60);
+  window.setTimeout(scheduleRefreshHands, 180);
 
   window.addEventListener("resize", refreshMobileBattleLayout, { passive: true });
   window.visualViewport?.addEventListener("resize", refreshMobileBattleLayout, {
