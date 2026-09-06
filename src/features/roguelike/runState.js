@@ -25,6 +25,27 @@ function cloneReward(reward) {
   return JSON.parse(JSON.stringify(reward));
 }
 
+function validRunCards(raw) {
+  return Array.isArray(raw) ? raw.filter((id) => CARD_MAP[id]) : [];
+}
+
+function removedCardBetween(previousDeck, nextDeck) {
+  if (!Array.isArray(previousDeck) || !Array.isArray(nextDeck)) return null;
+  if (previousDeck.length !== nextDeck.length + 1) return null;
+
+  const remaining = new Map();
+  nextDeck.forEach((id) => remaining.set(id, (remaining.get(id) || 0) + 1));
+  for (const id of previousDeck) {
+    const count = remaining.get(id) || 0;
+    if (count > 0) {
+      remaining.set(id, count - 1);
+    } else {
+      return CARD_MAP[id] ? id : null;
+    }
+  }
+  return null;
+}
+
 export function normalizeRoguelikeRun(raw) {
   if (!raw || typeof raw !== "object") return null;
   const stage = Math.max(0, Number(raw.stage) || 0);
@@ -32,10 +53,8 @@ export function normalizeRoguelikeRun(raw) {
     status: raw.status === "dead" ? "dead" : "active",
     phase: raw.phase || (raw.status === "dead" ? "defeat" : "preview"),
     stage,
-    deck: Array.isArray(raw.deck) ? raw.deck.filter((id) => CARD_MAP[id]) : [],
-    storage: Array.isArray(raw.storage)
-      ? raw.storage.filter((id) => CARD_MAP[id])
-      : [],
+    deck: validRunCards(raw.deck),
+    storage: validRunCards(raw.storage),
     hp: Math.max(1, Number(raw.hp) || 40),
     maxHp: Math.max(1, Number(raw.maxHp) || 40),
     openingHandBonus: Math.max(0, Number(raw.openingHandBonus) || 0),
@@ -68,6 +87,7 @@ export function readRoguelikeSave() {
 
 export function saveRoguelikeCheckpoint(run, phase = "preview", extra = {}) {
   const save = loadSave();
+  const previous = normalizeRoguelikeRun(save.roguelikeRun);
   const normalized = normalizeRoguelikeRun({
     ...run,
     ...extra,
@@ -75,9 +95,42 @@ export function saveRoguelikeCheckpoint(run, phase = "preview", extra = {}) {
     phase,
     lastSavedAt: Date.now(),
   });
+
+  // PC 박스 정리 보상은 기존 보상 UI가 런 덱에서 정확히 1장을 빼므로,
+  // 직전 체크포인트와 비교해서 그 카드를 실제 보관함으로 이동시킨다.
+  if (previous && previous.startedAt === normalized.startedAt) {
+    const removed = removedCardBetween(previous.deck, normalized.deck);
+    if (removed) {
+      normalized.storage = [...previous.storage, removed];
+    }
+  }
+
   save.roguelikeRun = normalized;
   syncSave(save);
   return normalized;
+}
+
+export function restoreRoguelikePcCard(cardId) {
+  const save = loadSave();
+  const run = normalizeRoguelikeRun(save.roguelikeRun);
+  if (!run || run.status !== "active") return { ok: false, reason: "no-active-run" };
+  if (run.phase !== "preview" || run.battleStarted) {
+    return { ok: false, reason: "not-at-checkpoint" };
+  }
+
+  const index = run.storage.indexOf(cardId);
+  if (index < 0 || !CARD_MAP[cardId]) return { ok: false, reason: "not-in-storage" };
+
+  run.storage.splice(index, 1);
+  run.deck.push(cardId);
+  run.rewardsTaken = [
+    ...run.rewardsTaken,
+    `PC 복귀 · ${CARD_MAP[cardId]?.name || cardId}`,
+  ];
+  run.lastSavedAt = Date.now();
+  save.roguelikeRun = run;
+  syncSave(save);
+  return { ok: true, run, cardId };
 }
 
 function randomItems(list, count) {
