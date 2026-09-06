@@ -1,0 +1,46 @@
+.roguelike-infinite-root .rogue-ui-item-sprite {
+  object-fit: contain !important;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 5px 10px rgba(0,0,0,.35));
+}
+
+.roguelike-infinite-root .rogue-status-item .rogue-ui-item-sprite {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.roguelike-infinite-root .rogue-pokemon-emblem .rogue-ui-item-sprite,
+.roguelike-infinite-root .rogue-resume-panel > .rogue-ui-item-sprite,
+.roguelike-infinite-root .rogue-death-settlement > .rogue-ui-item-sprite {
+  width: 92px !important;
+  height: 92px !important;
+}
+
+.roguelike-infinite-root .rogue-cycle-banner .rogue-ui-item-sprite {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.roguelike-infinite-root .rogue-account-reward-money .rogue-ui-item-sprite {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.roguelike-infinite-root .roguelike-reward-card .rogue-ui-item-sprite {
+  width: 76px !important;
+  height: 76px !important;
+}
+
+@media (max-width: 700px) {
+  .roguelike-infinite-root .rogue-status-item .rogue-ui-item-sprite {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .roguelike-infinite-root .rogue-pokemon-emblem .rogue-ui-item-sprite,
+  .roguelike-infinite-root .rogue-resume-panel > .rogue-ui-item-sprite,
+  .roguelike-infinite-root .rogue-death-settlement > .rogue-ui-item-sprite {
+    width: 72px !important;
+    height: 72px !important;
+  }
+}
