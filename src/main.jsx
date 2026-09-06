@@ -110,6 +110,8 @@ import './components/battle/CynthiaToxicSpikesUi.jsx';
 import './features/region-carousel/index.js';
 // 메인 메뉴에 초기 덱 기반 악의 조직 로그라이크 엔드콘텐츠를 추가한다.
 import './features/roguelike/runtime.jsx';
+// 도감의 상태/퀘스트/구매 UI는 작은 화면에서도 읽을 수 있도록 마지막에 확대한다.
+import './features/card-dex/readability-v5.css';
 // 카드 외형 통일 규칙은 모든 화면/런타임 모듈보다 마지막에 로드해 최종 우선순위를 가진다.
 import './styles/battle-card-canonical.css';
 
