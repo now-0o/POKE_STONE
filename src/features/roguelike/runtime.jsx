@@ -1,9 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import RoguelikeMode from "./RoguelikeMode.jsx";
+import RoguelikeInfiniteMode from "./RoguelikeInfiniteMode.jsx";
+import { readRoguelikeSave, ROGUELIKE_SAVE_EVENT } from "./runState.js";
 import "./roguelike.css";
 import "./reward-rarity.css";
 import "./battle-overrides.css";
+import "./infinite-v2.css";
 
 const BUTTON_ID = "pokestone-roguelike-menu-card";
 const ROOT_ID = "pokestone-roguelike-root";
@@ -27,7 +29,7 @@ function openRoguelike() {
   host.id = ROOT_ID;
   document.body.appendChild(host);
   roguelikeRoot = createRoot(host);
-  roguelikeRoot.render(<RoguelikeMode onExit={closeRoguelike} />);
+  roguelikeRoot.render(<RoguelikeInfiniteMode onExit={closeRoguelike} />);
 }
 
 function modeSelectionGrid() {
@@ -42,6 +44,28 @@ function modeSelectionGrid() {
   return grid;
 }
 
+function buttonCopy() {
+  const { run, stats } = readRoguelikeSave();
+  if (run?.status === "dead") {
+    return {
+      desc: `STAGE ${run.pendingDeathReward?.reachedStage || run.stage + 1} · 보상 정산 대기`,
+      action: "정산 ▶",
+    };
+  }
+  if (run) {
+    return {
+      desc: `진행 중 · STAGE ${run.stage + 1} · 최고 ${stats.bestStage || run.stage + 1}`,
+      action: "계속 ▶",
+    };
+  }
+  return {
+    desc: stats.bestStage > 0
+      ? `무한 악의 조직 소탕 · 최고 STAGE ${stats.bestStage}`
+      : "무한 악의 조직 소탕 · 진행 자동 저장",
+    action: "도전 ▶",
+  };
+}
+
 function syncMenuButton() {
   if (roguelikeRoot) return;
 
@@ -53,7 +77,14 @@ function syncMenuButton() {
     return;
   }
 
-  if (existing?.parentElement === grid) return;
+  const copy = buttonCopy();
+  if (existing?.parentElement === grid) {
+    const desc = existing.querySelector(".region-desc");
+    const go = existing.querySelector(".region-go");
+    if (desc) desc.textContent = copy.desc;
+    if (go) go.textContent = copy.action;
+    return;
+  }
   existing?.remove();
 
   const button = document.createElement("button");
@@ -63,11 +94,13 @@ function syncMenuButton() {
   button.innerHTML = `
     <span class="region-info">
       <span class="region-name">로그라이크</span>
-      <span class="region-sub">ROGUELIKE</span>
-      <span class="region-desc">초기 덱으로 시작 · 악의 조직 연속 소탕</span>
+      <span class="region-sub">INFINITE ROGUELIKE</span>
+      <span class="region-desc"></span>
     </span>
-    <span class="region-go">도전 ▶</span>
+    <span class="region-go"></span>
   `;
+  button.querySelector(".region-desc").textContent = copy.desc;
+  button.querySelector(".region-go").textContent = copy.action;
   button.addEventListener("click", openRoguelike);
   grid.appendChild(button);
 }
@@ -76,6 +109,7 @@ function start() {
   syncMenuButton();
   const observer = new MutationObserver(() => window.requestAnimationFrame(syncMenuButton));
   observer.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener(ROGUELIKE_SAVE_EVENT, syncMenuButton);
 }
 
 if (document.body) start();
