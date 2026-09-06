@@ -31,6 +31,7 @@ import {
 import { playBgm, toggleMute, isMuted, setVolume, getVolume } from "./audio.js";
 
 const ADMIN_CODE = "stonemaster";
+const EXTERNAL_SAVE_EVENT = "pokestone:save-updated";
 
 export default function App() {
   const saveRef = useRef(null);
@@ -98,6 +99,20 @@ export default function App() {
         setAuthStatus("anon");
       });
   }, []);
+
+  // 로그라이크는 메인 App과 별도 React 루트에서 체크포인트를 저장한다.
+  // 해당 저장 이벤트를 받으면 App이 들고 있는 saveRef도 즉시 최신 로컬 세이브로
+  // 교체해 이후 일반 화면 저장이 오래된 값으로 로그라이크 진행을 덮지 않게 한다.
+  useEffect(() => {
+    function onExternalSaveUpdated() {
+      if (authStatus !== "authed") return;
+      saveRef.current = ensureDeckPresets(loadSave());
+      rerender();
+    }
+
+    window.addEventListener(EXTERNAL_SAVE_EVENT, onExternalSaveUpdated);
+    return () => window.removeEventListener(EXTERNAL_SAVE_EVENT, onExternalSaveUpdated);
+  }, [authStatus]);
 
   function applyServerSave(serverSave) {
     const save = ensureDeckPresets(serverSave || newSave());
