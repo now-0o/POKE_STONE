@@ -60,6 +60,12 @@ function sync(root = document) {
   replaceSprite(screen.querySelector(".rogue-cycle-banner"), ITEM.cycle, "회차 돌파");
   replaceSprite(screen.querySelector(".rogue-account-reward-money"), ITEM.money, "보유 재화");
   replaceSprite(screen.querySelector(".rogue-death-settlement"), ITEM.recover, "런 종료");
+
+  const settled = screen.querySelector(".rogue-settled-panel");
+  if (settled && !settled.textContent?.includes("이로치 ")) {
+    replaceSprite(settled, ITEM.money, "로그라이크 보상");
+  }
+
   replaceRewardUtilitySprites(screen);
 }
 
