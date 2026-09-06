@@ -1,0 +1,400 @@
+/* Card Dex quest drawer v7
+ * Keep the Pokédex visible: quests are collapsed by default and expand into
+ * one horizontal strip instead of a tall vertical stack.
+ */
+
+.dexq-drawer {
+  width: min(1080px, 100%);
+  margin: 0 auto 14px;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(25, 33, 57, .91), rgba(12, 18, 34, .94));
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+}
+
+.dexq-toggle {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.dexq-toggle:hover {
+  background: rgba(255, 255, 255, .035);
+}
+
+.dexq-toggle-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--display-font);
+  font-size: 15px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.dexq-toggle-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.dexq-toggle-summary strong {
+  color: #ffe291;
+  font-weight: 700;
+}
+
+.dexq-toggle-arrow {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(245, 197, 66, .22);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 19px;
+  line-height: 1;
+  transition: transform .2s ease, background .2s ease;
+}
+
+.dexq-drawer.is-open .dexq-toggle-arrow {
+  transform: rotate(180deg);
+  background: rgba(245, 197, 66, .08);
+}
+
+.dexq-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows .24s cubic-bezier(.22, 1, .36, 1), opacity .18s ease;
+}
+
+.dexq-drawer.is-open .dexq-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.dexq-body-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dexq-strip {
+  display: flex;
+  gap: 10px;
+  padding: 2px 12px 13px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(238, 240, 246, .28) transparent;
+}
+
+.dexq-card {
+  flex: 0 0 292px;
+  min-width: 0;
+  padding: 11px 12px 12px;
+  scroll-snap-align: start;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.dexq-card.is-complete {
+  border-color: rgba(245, 197, 66, .5);
+  background: rgba(245, 197, 66, .075);
+}
+
+.dexq-card.is-claimed {
+  border-color: rgba(94, 211, 136, .25);
+  background: rgba(70, 171, 108, .055);
+  opacity: .78;
+}
+
+.dexq-card-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.dexq-index {
+  font-family: var(--display-font);
+  font-size: 10px;
+  color: rgba(255, 255, 255, .42);
+}
+
+.dexq-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--display-font);
+  font-size: 14px;
+}
+
+.dexq-status {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .055);
+  color: var(--text-dim);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+.dexq-card.is-complete .dexq-status {
+  background: rgba(245, 197, 66, .14);
+  color: #ffe291;
+}
+
+.dexq-card.is-claimed .dexq-status {
+  background: rgba(82, 194, 122, .12);
+  color: #92dfad;
+}
+
+.dexq-desc {
+  margin-top: 5px;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dexq-required {
+  margin-top: 8px;
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.dexq-required::-webkit-scrollbar {
+  display: none;
+}
+
+.dexq-mon {
+  flex: 0 0 auto;
+  width: 47px;
+  height: 47px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .14);
+}
+
+.dexq-mon .card-sprite,
+.dexq-mon .card-emoji {
+  width: 39px !important;
+  height: 39px !important;
+  object-fit: contain;
+}
+
+.dexq-mon.missing {
+  opacity: .42;
+  filter: grayscale(1);
+}
+
+.dexq-mon.found {
+  border-color: rgba(92, 209, 134, .34);
+  background: rgba(70, 171, 108, .07);
+}
+
+.dexq-mon-mark {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  font-size: 9px;
+  color: #8de0aa;
+  text-shadow: 0 1px 3px #000;
+}
+
+.dexq-progress-row {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.dexq-progress-row strong {
+  min-width: 31px;
+  font-family: var(--display-font);
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.dexq-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.dexq-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d5a221, #ffe07a);
+}
+
+.dexq-bottom {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.dexq-reward {
+  min-width: 0;
+  color: var(--text-dim);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.dexq-reward strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.dexq-action {
+  min-width: 84px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .045);
+  color: var(--text-dim);
+  font-family: var(--display-font);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.dexq-action.can-claim {
+  border-color: rgba(245, 197, 66, .48);
+  background: rgba(245, 197, 66, .12);
+  color: #ffe291;
+}
+
+.dexq-action.claimed {
+  border-color: rgba(82, 194, 122, .2);
+  color: #8fdcab;
+}
+
+.dexq-action:disabled {
+  opacity: .72;
+}
+
+.dexq-notice {
+  margin-top: 6px;
+  color: #ffe291;
+  font-size: 9.5px;
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .dexq-drawer {
+    margin-bottom: 10px;
+    border-radius: 12px;
+  }
+
+  .dexq-toggle {
+    min-height: 44px;
+    padding: 7px 9px;
+    gap: 7px;
+  }
+
+  .dexq-toggle-title {
+    font-size: 12.5px;
+  }
+
+  .dexq-toggle-summary {
+    font-size: 10.5px;
+  }
+
+  .dexq-toggle-arrow {
+    width: 27px;
+    height: 27px;
+    font-size: 17px;
+  }
+
+  .dexq-strip {
+    gap: 8px;
+    padding: 2px 8px 10px;
+  }
+
+  .dexq-card {
+    flex-basis: min(78vw, 270px);
+    padding: 9px 10px 10px;
+  }
+
+  .dexq-title {
+    font-size: 12.5px;
+  }
+
+  .dexq-desc {
+    font-size: 9.5px;
+  }
+
+  .dexq-mon {
+    width: 43px;
+    height: 43px;
+  }
+
+  .dexq-mon .card-sprite,
+  .dexq-mon .card-emoji {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
+  .dexq-bottom {
+    margin-top: 7px;
+  }
+
+  .dexq-action {
+    min-width: 76px;
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 9.5px;
+  }
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .dexq-toggle {
+    min-height: 38px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
+  .dexq-card {
+    flex-basis: 250px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dexq-body,
+  .dexq-toggle-arrow {
+    transition: none !important;
+  }
+}
