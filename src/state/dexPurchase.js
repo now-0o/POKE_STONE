@@ -1,8 +1,6 @@
 import { CARD_MAP, DEX, MAX_COPIES } from "../data/cards.js";
 import { persist } from "./save.js";
 
-export const DEX_PURCHASE_UNLOCK_TRAINER = "unova_n";
-
 export const DEX_FIRST_PURCHASE_PRICE = Object.freeze({
   C: 1200,
   R: 2400,
@@ -10,11 +8,10 @@ export const DEX_FIRST_PURCHASE_PRICE = Object.freeze({
   L: 9000,
 });
 
-export function isDexPurchaseUnlocked(save) {
-  return Boolean(
-    save?.adminMode ||
-    (save?.wins?.[DEX_PURCHASE_UNLOCK_TRAINER] || 0) > 0,
-  );
+// 도감 확정 구매는 진행도 제한 없이 항상 열려 있다.
+// 원하는 카드를 얻기 위해 돈을 모으는 것 자체가 해금 조건 역할을 한다.
+export function isDexPurchaseUnlocked() {
+  return true;
 }
 
 export function dexCardPurchasePrice(save, cardOrId) {
@@ -35,9 +32,6 @@ export function dexCardPurchasePrice(save, cardOrId) {
 
 export function purchaseDexCard(save, cardId) {
   if (!save) return { ok: false, reason: "save_missing" };
-  if (!isDexPurchaseUnlocked(save)) {
-    return { ok: false, reason: "locked" };
-  }
 
   const card = CARD_MAP[cardId];
   if (!card || card.kind !== "pokemon" || !Number.isInteger(DEX[card.id])) {
