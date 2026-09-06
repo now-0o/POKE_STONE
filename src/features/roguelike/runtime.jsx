@@ -68,7 +68,7 @@ function buttonCopy() {
   }
   if (run) {
     return {
-      desc: `진행 중 · STAGE ${run.stage + 1} · 최고 ${stats.bestStage || run.stage + 1}`,
+      desc: `진행 중 · STAGE ${run.stage + 1} · 최고 ${Math.max(stats.bestStage || 0, run.stage + 1)}`,
       action: "계속 ▶",
     };
   }
