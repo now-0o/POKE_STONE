@@ -32,13 +32,8 @@
   vertical-align: 0;
 }
 
-/* The Korean heading already explains the feature; remove redundant English label. */
-.dex-direct-shop-kicker {
-  display: none !important;
-}
-
-/* Balance is now shown in the header, so keep only the price table in this panel. */
-.dex-direct-shop-money {
+/* 구매 가격/설명은 카드별 구매 버튼만으로 충분하므로 안내 박스 전체를 노출하지 않는다. */
+.dex-direct-shop {
   display: none !important;
 }
 
