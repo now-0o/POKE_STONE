@@ -12,7 +12,17 @@ const ROOT_ID = "pokestone-roguelike-root";
 
 let roguelikeRoot = null;
 let host = null;
-let moneyAtOpen = null;
+let saveFingerprintAtOpen = null;
+
+function roguelikeSaveFingerprint() {
+  const { save } = readRoguelikeSave();
+  return JSON.stringify({
+    money: Number(save?.money) || 0,
+    shinyCollection: save?.shinyCollection || {},
+    roguelikeRun: save?.roguelikeRun || null,
+    roguelikeStats: save?.roguelikeStats || null,
+  });
+}
 
 function closeRoguelike() {
   roguelikeRoot?.unmount();
@@ -21,13 +31,15 @@ function closeRoguelike() {
   host = null;
   document.body.classList.remove("roguelike-active");
 
-  const currentMoney = Number(readRoguelikeSave().save?.money) || 0;
-  const accountMoneyChanged = moneyAtOpen != null && currentMoney !== moneyAtOpen;
-  moneyAtOpen = null;
+  const currentFingerprint = roguelikeSaveFingerprint();
+  const saveChanged =
+    saveFingerprintAtOpen != null && currentFingerprint !== saveFingerprintAtOpen;
+  saveFingerprintAtOpen = null;
 
-  // 로그라이크 사망 보상으로 계정 재화가 바뀐 경우 App이 들고 있던
-  // 이전 saveRef로 다시 덮어쓰지 않도록 최신 세이브를 한 번 다시 읽는다.
-  if (accountMoneyChanged) {
+  // 로그라이크는 메인 App과 별도 React 루트에서 세이브를 갱신한다.
+  // 진행/포기/정산 뒤 App이 오래된 saveRef로 서버 세이브를 덮어쓰지 않도록
+  // 변경이 있었다면 최신 세이브를 다시 읽고 시작한다.
+  if (saveChanged) {
     window.location.reload();
     return;
   }
@@ -38,7 +50,7 @@ function closeRoguelike() {
 function openRoguelike() {
   if (roguelikeRoot) return;
 
-  moneyAtOpen = Number(readRoguelikeSave().save?.money) || 0;
+  saveFingerprintAtOpen = roguelikeSaveFingerprint();
   host = document.createElement("div");
   host.id = ROOT_ID;
   document.body.appendChild(host);
