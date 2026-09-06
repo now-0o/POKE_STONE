@@ -19,6 +19,8 @@ import './data/cards/cynthia.js';
 import './data/trainers/cynthia.js';
 import './data/trainers/balance-overrides.js';
 import './data/cards/labels.js';
+// 로그라이크 전용 카드는 팩/일반 컬렉션 풀에는 넣지 않고 CARD_MAP에만 등록한다.
+import './data/cards/roguelike.js';
 import App from './App.jsx';
 
 import './styles.css';
@@ -108,7 +110,7 @@ import './components/battle/WakeBattleUi.jsx';
 import './components/battle/CynthiaBattleUi.jsx';
 import './components/battle/CynthiaToxicSpikesUi.jsx';
 import './features/region-carousel/index.js';
-// 메인 메뉴에 초기 덱 기반 악의 조직 로그라이크 엔드콘텐츠를 추가한다.
+// 메인 메뉴에 저장형 무한 악의 조직 로그라이크 엔드콘텐츠를 추가한다.
 import './features/roguelike/runtime.jsx';
 // 도감의 상태/퀘스트/구매 UI는 작은 화면에서도 읽을 수 있도록 마지막에 확대한다.
 import './features/card-dex/readability-v5.css';
