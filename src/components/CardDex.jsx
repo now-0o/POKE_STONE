@@ -14,9 +14,16 @@ import {
   claimDexQuestReward,
   dexQuestState,
 } from "../features/card-dex/state.js";
+import {
+  DEX_FIRST_PURCHASE_PRICE,
+  dexCardPurchasePrice,
+  isDexPurchaseUnlocked,
+  purchaseDexCard,
+} from "../state/dexPurchase.js";
 import "../features/card-dex/styles.css";
 import "../features/card-dex/scale-v2.css";
 import "../features/card-dex/virtual-scroll-v3.css";
+import "../features/card-dex/purchase-v4.css";
 
 const REGION_TABS = [
   { id: "all", name: "전체", min: 1, max: 649 },
@@ -54,6 +61,23 @@ function rewardLabel(reward) {
   return "보상 수령 완료";
 }
 
+function formatMoney(value) {
+  return `${Math.max(0, Number(value) || 0).toLocaleString("ko-KR")}원`;
+}
+
+function purchaseFailureText(result) {
+  switch (result?.reason) {
+    case "locked":
+      return "N에게 승리한 뒤 확정 구매가 해금됩니다.";
+    case "not_enough_money":
+      return `돈이 ${formatMoney(result.shortage)} 부족합니다.`;
+    case "max_copies":
+      return "이미 최대 보유 수량입니다.";
+    default:
+      return "지금은 이 카드를 구매할 수 없습니다.";
+  }
+}
+
 function initialVirtualWindow(cardCount) {
   return {
     start: 0,
@@ -75,6 +99,8 @@ function sameVirtualWindow(a, b) {
 export default function CardDex({ save, onSaveChange, onBack }) {
   const [region, setRegion] = useState("all");
   const [rewardNotice, setRewardNotice] = useState(null);
+  const [purchaseConfirmId, setPurchaseConfirmId] = useState(null);
+  const [purchaseNotice, setPurchaseNotice] = useState(null);
   const allCards = useMemo(() => buildDexCards(), []);
   const activeTab = REGION_TABS.find((tab) => tab.id === region) || REGION_TABS[0];
   const visibleCards = useMemo(
@@ -85,6 +111,8 @@ export default function CardDex({ save, onSaveChange, onBack }) {
       }),
     [allCards, activeTab.min, activeTab.max],
   );
+
+  const purchaseUnlocked = isDexPurchaseUnlocked(save);
 
   const scrollPaneRef = useRef(null);
   const virtualSpaceRef = useRef(null);
@@ -161,9 +189,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
       (child) => Math.abs(child.offsetTop - firstTop) > 1,
     );
 
-    if (columns <= 0) {
-      columns = Math.min(children.length, 5);
-    }
+    if (columns <= 0) columns = Math.min(children.length, 5);
 
     let rowStep = 0;
     if (children.length > columns) {
@@ -215,12 +241,8 @@ export default function CardDex({ save, onSaveChange, onBack }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
 
-      if (scrollRafRef.current !== null) {
-        cancelAnimationFrame(scrollRafRef.current);
-      }
-      if (resizeRafRef.current !== null) {
-        cancelAnimationFrame(resizeRafRef.current);
-      }
+      if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
+      if (resizeRafRef.current !== null) cancelAnimationFrame(resizeRafRef.current);
     };
   }, [visibleCards.length, measureVirtualGrid]);
 
@@ -236,6 +258,8 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
   function selectRegion(nextRegion) {
     playSfx("click");
+    setPurchaseConfirmId(null);
+    setPurchaseNotice(null);
     setRegion(nextRegion);
   }
 
@@ -251,11 +275,58 @@ export default function CardDex({ save, onSaveChange, onBack }) {
     onSaveChange?.();
   }
 
+  function buyDexCard(card) {
+    if (!purchaseUnlocked) {
+      playSfx("buzzer");
+      setPurchaseNotice({
+        cardId: card.id,
+        tone: "error",
+        text: "N에게 승리한 뒤 확정 구매가 해금됩니다.",
+      });
+      return;
+    }
+
+    if (purchaseConfirmId !== card.id) {
+      playSfx("click");
+      setPurchaseConfirmId(card.id);
+      setPurchaseNotice(null);
+      return;
+    }
+
+    const result = purchaseDexCard(save, card.id);
+    setPurchaseConfirmId(null);
+
+    if (!result.ok) {
+      playSfx("buzzer");
+      setPurchaseNotice({
+        cardId: card.id,
+        tone: "error",
+        text: purchaseFailureText(result),
+      });
+      return;
+    }
+
+    playSfx("buy");
+    setPurchaseNotice({
+      cardId: card.id,
+      tone: "success",
+      text: `${card.name} ${result.firstDiscovery ? "첫 획득" : "추가 획득"} · ${formatMoney(result.price)}`,
+    });
+    onSaveChange?.();
+    requestAnimationFrame(measureVirtualGrid);
+  }
+
   function renderDexCard(card) {
     const dex = DEX[card.id];
-    const owned = (save.collection?.[card.id] || 0) > 0;
+    const ownedCount = Math.max(0, Number(save.collection?.[card.id]) || 0);
+    const owned = ownedCount > 0;
     const shinyOwned = (save.shinyCollection?.[card.id] || 0) > 0;
     const maxCopies = MAX_COPIES[card.rarity] ?? 2;
+    const price = dexCardPurchasePrice(save, card);
+    const canBuyMore = price !== null && ownedCount < maxCopies;
+    const confirming = purchaseConfirmId === card.id;
+    const cannotAfford = canBuyMore && (save.money || 0) < price;
+    const notice = purchaseNotice?.cardId === card.id ? purchaseNotice : null;
 
     return (
       <article
@@ -274,13 +345,40 @@ export default function CardDex({ save, onSaveChange, onBack }) {
         <div className="dex-entry-footer">
           {owned ? (
             <>
-              <span>
-                보유 {Math.min(save.collection?.[card.id] || 0, maxCopies)} / {maxCopies}
-              </span>
+              <span>보유 {Math.min(ownedCount, maxCopies)} / {maxCopies}</span>
               {shinyOwned && <span className="dex-shiny-owned">이로치 보유</span>}
             </>
           ) : (
-            <span>카드팩에서 획득하면 정보가 공개됩니다.</span>
+            <span>미발견 카드 · 능력 정보는 획득 후 공개됩니다.</span>
+          )}
+        </div>
+
+        <div className="dex-purchase-area">
+          {!purchaseUnlocked ? (
+            <span className="dex-purchase-note">N 승리 후 확정 구매 해금</span>
+          ) : canBuyMore ? (
+            <>
+              <button
+                className={`dex-purchase-btn ${confirming ? "is-confirm" : ""}`}
+                disabled={cannotAfford}
+                onClick={() => buyDexCard(card)}
+              >
+                {confirming
+                  ? `구매 확정 · ${formatMoney(price)}`
+                  : `${owned ? "추가 구매" : "첫 획득"} · ${formatMoney(price)}`}
+              </button>
+              {cannotAfford && (
+                <span className="dex-purchase-note is-error">
+                  {formatMoney(price - (save.money || 0))} 부족
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="dex-purchase-maxed">최대 보유</span>
+          )}
+
+          {notice && (
+            <span className={`dex-purchase-note is-${notice.tone}`}>{notice.text}</span>
           )}
         </div>
       </article>
@@ -320,9 +418,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
         <h2>카드 도감</h2>
 
-        <div className="dex-region-progress">
-          발견 {allDiscoveredCount}/{allCards.length}
-        </div>
+        <div className="dex-region-progress">발견 {allDiscoveredCount}/{allCards.length}</div>
       </div>
 
       <div
@@ -347,6 +443,26 @@ export default function CardDex({ save, onSaveChange, onBack }) {
           </div>
         </div>
 
+        <section className={`dex-direct-shop ${purchaseUnlocked ? "is-unlocked" : "is-locked"}`}>
+          <div className="dex-direct-shop-copy">
+            <span className="dex-direct-shop-kicker">DIRECT ACQUISITION</span>
+            <strong>{purchaseUnlocked ? "도감 확정 구매" : "도감 확정 구매 · 잠김"}</strong>
+            <p>
+              {purchaseUnlocked
+                ? "원하는 포켓몬을 확정 획득합니다. 첫 획득은 비싸고, 추가 복사본은 첫 가격의 절반입니다."
+                : "하나지방 N에게 최초 승리하면 원하는 포켓몬을 돈으로 확정 구매할 수 있습니다."}
+            </p>
+          </div>
+          <div className="dex-direct-shop-side">
+            <strong className="dex-direct-shop-money">💰 {formatMoney(save.money)}</strong>
+            {purchaseUnlocked && (
+              <span className="dex-direct-shop-prices">
+                첫 획득 C {DEX_FIRST_PURCHASE_PRICE.C.toLocaleString()} · R {DEX_FIRST_PURCHASE_PRICE.R.toLocaleString()} · E {DEX_FIRST_PURCHASE_PRICE.E.toLocaleString()} · L {DEX_FIRST_PURCHASE_PRICE.L.toLocaleString()}
+              </span>
+            )}
+          </div>
+        </section>
+
         <section className="dex-quest-board" aria-label="도감 수집 퀘스트">
           <div className="dex-quest-heading">
             <div>
@@ -367,9 +483,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
 
               return (
                 <article key={quest.id} className={`dex-quest-item is-${status}`}>
-                  <div className="dex-quest-index">
-                    #{String(quest.order).padStart(2, "0")}
-                  </div>
+                  <div className="dex-quest-index">#{String(quest.order).padStart(2, "0")}</div>
 
                   <div className="dex-quest-copy">
                     <span>{quest.category}</span>
@@ -400,9 +514,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
                   </div>
 
                   <div className="dex-quest-progress-box">
-                    <strong>
-                      {state.found.length} / {state.required.length}
-                    </strong>
+                    <strong>{state.found.length} / {state.required.length}</strong>
                     <span>발견</span>
                     <div className="dex-quest-progress-track" aria-hidden="true">
                       <i
@@ -448,11 +560,7 @@ export default function CardDex({ save, onSaveChange, onBack }) {
         <div
           ref={virtualSpaceRef}
           className="dex-virtual-space"
-          style={
-            virtualized
-              ? { height: `${virtualWindow.totalHeight}px` }
-              : undefined
-          }
+          style={virtualized ? { height: `${virtualWindow.totalHeight}px` } : undefined}
         >
           <div
             ref={virtualGridRef}
