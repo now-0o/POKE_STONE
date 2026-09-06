@@ -26,6 +26,9 @@ const SCROLL_DIRECTION_BIAS = 1.04;
 
 let handGesture = null;
 let basicDropAssist = null;
+let viewportMetricsKey = "";
+let viewportRefreshFrame = 0;
+let dropAssistFrame = 0;
 const suppressTrustedHandClickUntil = new WeakMap();
 const suppressScrollClickUntil = new WeakMap();
 
@@ -78,6 +81,11 @@ function syncVisibleViewport() {
   const offsetLeft = Math.round(viewport?.offsetLeft || 0);
   const offsetTop = Math.round(viewport?.offsetTop || 0);
   const centerX = Math.round(offsetLeft + width / 2);
+  const nextMetricsKey = `${width}|${height}|${offsetLeft}|${offsetTop}|${centerX}`;
+
+  if (nextMetricsKey === viewportMetricsKey) return;
+  viewportMetricsKey = nextMetricsKey;
+
   const root = document.documentElement;
 
   if (width > 0) root.style.setProperty("--mobile-battle-vw", `${width}px`);
@@ -160,10 +168,18 @@ function beginHandGesture(event) {
   };
 }
 
+function scheduleBasicPokemonDropAssist() {
+  if (dropAssistFrame) return;
+  dropAssistFrame = requestAnimationFrame(() => {
+    dropAssistFrame = 0;
+    ensureBasicPokemonDropAssist();
+  });
+}
+
 function moveHandGesture(event) {
   const gesture = handGesture;
   if (!gesture || !document.contains(gesture.board)) {
-    ensureBasicPokemonDropAssist();
+    scheduleBasicPokemonDropAssist();
     return;
   }
 
@@ -185,13 +201,13 @@ function moveHandGesture(event) {
     } else {
       gesture.scrolling = false;
       setVisualGrab(gesture.board, gesture.wrap);
-      requestAnimationFrame(ensureBasicPokemonDropAssist);
+      scheduleBasicPokemonDropAssist();
     }
   }
 
   if (!gesture.scrolling) {
     gesture.lastX = event.clientX;
-    requestAnimationFrame(ensureBasicPokemonDropAssist);
+    scheduleBasicPokemonDropAssist();
     return;
   }
 
@@ -272,6 +288,10 @@ function getDraggedOriginCard(board) {
 }
 
 function removeBasicPokemonDropAssist() {
+  if (dropAssistFrame) {
+    cancelAnimationFrame(dropAssistFrame);
+    dropAssistFrame = 0;
+  }
   basicDropAssist?.remove();
   basicDropAssist = null;
 }
@@ -312,22 +332,26 @@ function ensureBasicPokemonDropAssist() {
   const padX = Math.min(54, Math.max(30, rect.width * 0.07));
   const padTop = Math.min(34, Math.max(20, rect.height * 0.28));
   const padBottom = Math.min(48, Math.max(28, rect.height * 0.4));
+  const nextLeft = `${rect.left - padX}px`;
+  const nextTop = `${rect.top - padTop}px`;
+  const nextWidth = `${rect.width + padX * 2}px`;
+  const nextHeight = `${rect.height + padTop + padBottom}px`;
+  const style = basicDropAssist.style;
 
-  Object.assign(basicDropAssist.style, {
-    position: "fixed",
-    left: `${rect.left - padX}px`,
-    top: `${rect.top - padTop}px`,
-    width: `${rect.width + padX * 2}px`,
-    height: `${rect.height + padTop + padBottom}px`,
-    background: "transparent",
-    pointerEvents: "auto",
-    zIndex: "1490",
-  });
+  if (style.position !== "fixed") style.position = "fixed";
+  if (style.left !== nextLeft) style.left = nextLeft;
+  if (style.top !== nextTop) style.top = nextTop;
+  if (style.width !== nextWidth) style.width = nextWidth;
+  if (style.height !== nextHeight) style.height = nextHeight;
+  if (style.background !== "transparent") style.background = "transparent";
+  if (style.pointerEvents !== "auto") style.pointerEvents = "auto";
+  if (style.zIndex !== "1490") style.zIndex = "1490";
 }
 
 function refreshViewportSoon() {
-  syncVisibleViewport();
-  requestAnimationFrame(() => {
+  if (viewportRefreshFrame) return;
+  viewportRefreshFrame = requestAnimationFrame(() => {
+    viewportRefreshFrame = 0;
     syncVisibleViewport();
     ensureBasicPokemonDropAssist();
   });
@@ -361,9 +385,16 @@ if (typeof document !== "undefined") {
   window.addEventListener(
     "orientationchange",
     () => {
+      viewportMetricsKey = "";
       refreshViewportSoon();
-      window.setTimeout(syncVisibleViewport, 120);
-      window.setTimeout(syncVisibleViewport, 360);
+      window.setTimeout(() => {
+        viewportMetricsKey = "";
+        syncVisibleViewport();
+      }, 120);
+      window.setTimeout(() => {
+        viewportMetricsKey = "";
+        syncVisibleViewport();
+      }, 360);
     },
     { passive: true },
   );
