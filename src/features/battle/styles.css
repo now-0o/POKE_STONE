@@ -124,3 +124,29 @@ body.battle-page-locked {
     min-height: 100dvh;
   }
 }
+
+
+/* 일반 공격 돌진 중에는 출발 필드/공격자를 다른 필드와 중앙 HUD보다 위에 둔다.
+   backdrop-filter가 필드별 stacking context를 만들기 때문에 공격자가 필드 아래로
+   잠기는 현상을 공통 전투 레이어에서 막는다. */
+.battle-board > .field.attack-source-field {
+  z-index: 320 !important;
+  overflow: visible !important;
+}
+
+.battle-board .field-fixed-slot.attack-lunging-slot {
+  position: relative !important;
+  z-index: 330 !important;
+  overflow: visible !important;
+}
+
+.battle-board .unit-pop.attack-lunging-wrap {
+  position: relative !important;
+  z-index: 340 !important;
+  overflow: visible !important;
+}
+
+.battle-board .field-unit.attack-lunging {
+  position: relative !important;
+  z-index: 350 !important;
+}
