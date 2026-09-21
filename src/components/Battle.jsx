@@ -1404,7 +1404,26 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
     // 강공격일수록 충돌 직후 아주 약하게 더 밀고 들어감.
     const smashBoost = damage >= 9 ? 1.035 : damage >= 6 ? 1.02 : 1;
 
-    attackerEl.animate(
+    const attackLayerNodes = [
+      attackerEl.closest(".field"),
+      attackerEl.closest(".field-fixed-slot"),
+      attackerEl.closest(".unit-pop"),
+      attackerEl,
+    ].filter(Boolean);
+
+    attackLayerNodes[0]?.classList.add("attack-source-field");
+    attackerEl.closest(".field-fixed-slot")?.classList.add("attack-lunging-slot");
+    attackerEl.closest(".unit-pop")?.classList.add("attack-lunging-wrap");
+    attackerEl.classList.add("attack-lunging");
+
+    const clearAttackLayer = () => {
+      attackerEl.closest(".field")?.classList.remove("attack-source-field");
+      attackerEl.closest(".field-fixed-slot")?.classList.remove("attack-lunging-slot");
+      attackerEl.closest(".unit-pop")?.classList.remove("attack-lunging-wrap");
+      attackerEl.classList.remove("attack-lunging");
+    };
+
+    const lungeAnimation = attackerEl.animate(
       [
         // 원위치
         {
@@ -1479,6 +1498,10 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
         easing: "cubic-bezier(.18,.72,.22,1)",
       },
     );
+
+    lungeAnimation.addEventListener("finish", clearAttackLayer, { once: true });
+    lungeAnimation.addEventListener("cancel", clearAttackLayer, { once: true });
+    window.setTimeout(clearAttackLayer, totalDuration + 120);
 
     return {
       impactDelay: Math.round(totalDuration * hitPoint),
