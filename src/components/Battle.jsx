@@ -43,6 +43,8 @@ import { resolveMew } from "../engine/engine.js";
 const AI_DELAY = 1100;
 const DRAG_THRESHOLD = 8;
 const INSPECT_DELAY = 200;
+const MOBILE_DROP_QUERY = "(pointer: coarse), (max-width: 1024px)";
+const MOBILE_HAND_RETURN_BAND_PX = 56;
 const PLAYER_SPRITE = "ethan"; // HGSS 주인공 (성도!)
 
 const MOVE_FX_PRESETS = {
@@ -1937,6 +1939,65 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
     window.addEventListener("pointercancel", onUp);
   }
 
+  function isMobileDropMode() {
+    return (
+      typeof window !== "undefined" &&
+      window.matchMedia?.(MOBILE_DROP_QUERY).matches
+    );
+  }
+
+  function mobileReturnZoneTop() {
+    const viewport = window.visualViewport;
+    const viewportBottom =
+      (viewport?.offsetTop || 0) +
+      (viewport?.height || window.innerHeight || 0);
+
+    return viewportBottom - MOBILE_HAND_RETURN_BAND_PX;
+  }
+
+  function mobilePointInMyFieldLane(x, y) {
+    if (!isMobileDropMode() || y >= mobileReturnZoneTop()) return false;
+
+    const field = myFieldRef.current;
+    if (!field) return false;
+
+    const rect = field.getBoundingClientRect();
+    return (
+      x >= rect.left - 36 &&
+      x <= rect.right + 36 &&
+      y >= rect.top - 36 &&
+      y < mobileReturnZoneTop()
+    );
+  }
+
+  function nearestMobileFriendlyUnit(x) {
+    const field = myFieldRef.current;
+    if (!field) return null;
+
+    const units = [
+      ...field.querySelectorAll(
+        '.field-unit[data-drop="unit-player"][data-uid]',
+      ),
+    ];
+    if (!units.length) return null;
+
+    let best = null;
+    let bestDistance = Infinity;
+
+    for (const unit of units) {
+      const rect = unit.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const distance = Math.abs(x - centerX);
+
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = unit;
+      }
+    }
+
+    return best;
+  }
+
   function resolveDrop(handIdx, x, y) {
     if (!myTurn) return;
     const h = me.hand[handIdx];
@@ -1953,12 +2014,20 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
 
     const el = document.elementFromPoint(x, y);
     const drop = el ? el.closest("[data-drop]") : null;
-    if (!drop) return;
-    const zone = drop.dataset.drop;
-    const uid = drop.dataset.uid;
+    const zone = drop?.dataset.drop || null;
+    const uid = drop?.dataset.uid || null;
+    const inMobileFieldLane = mobilePointInMyFieldLane(x, y);
+    const mobileFriendlyUnit = inMobileFieldLane
+      ? nearestMobileFriendlyUnit(x)
+      : null;
+    const mobileFriendlyUid = mobileFriendlyUnit?.dataset.uid || null;
 
     if (card.kind === "pokemon" && !card.evolvesFrom) {
-      if (zone === "my-field" || zone === "unit-player") {
+      if (
+        zone === "my-field" ||
+        zone === "unit-player" ||
+        inMobileFieldLane
+      ) {
         attemptPlay(null, calcInsertIndex(x));
       }
       return;
@@ -1966,12 +2035,16 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
     if (card.kind === "pokemon" && card.evolvesFrom) {
       if (zone === "unit-player" && uid) {
         attemptPlay({ uid });
+      } else if (mobileFriendlyUid) {
+        attemptPlay({ uid: mobileFriendlyUid });
       }
       return;
     }
     if (card.kind === "mega") {
       if (zone === "unit-player" && uid) {
         attemptPlay({ uid });
+      } else if (mobileFriendlyUid) {
+        attemptPlay({ uid: mobileFriendlyUid });
       }
       return;
     }
@@ -1988,7 +2061,11 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
       return;
     }
     if (need === "friendly") {
-      if (zone === "unit-player" && uid) attemptPlay({ uid });
+      if (zone === "unit-player" && uid) {
+        attemptPlay({ uid });
+      } else if (mobileFriendlyUid) {
+        attemptPlay({ uid: mobileFriendlyUid });
+      }
       return;
     }
     if (need === "friendly-or-hero") {
@@ -2000,6 +2077,9 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
         attemptPlay({ uid });
         return;
       }
+      if (mobileFriendlyUid) {
+        attemptPlay({ uid: mobileFriendlyUid });
+      }
       return;
     }
     if (
@@ -2007,7 +2087,8 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
       zone === "enemy-field" ||
       zone === "board" ||
       zone === "unit-player" ||
-      zone === "unit-enemy"
+      zone === "unit-enemy" ||
+      (inMobileFieldLane && isMobileDropMode())
     ) {
       attemptPlay(null);
     }
