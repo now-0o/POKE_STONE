@@ -1404,22 +1404,19 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
     // 강공격일수록 충돌 직후 아주 약하게 더 밀고 들어감.
     const smashBoost = damage >= 9 ? 1.035 : damage >= 6 ? 1.02 : 1;
 
-    const attackLayerNodes = [
-      attackerEl.closest(".field"),
-      attackerEl.closest(".field-fixed-slot"),
-      attackerEl.closest(".unit-pop"),
-      attackerEl,
-    ].filter(Boolean);
+    const attackField = attackerEl.closest(".field");
+    const attackSlot = attackerEl.closest(".field-fixed-slot");
+    const attackWrap = attackerEl.closest(".unit-pop");
 
-    attackLayerNodes[0]?.classList.add("attack-source-field");
-    attackerEl.closest(".field-fixed-slot")?.classList.add("attack-lunging-slot");
-    attackerEl.closest(".unit-pop")?.classList.add("attack-lunging-wrap");
+    attackField?.classList.add("attack-source-field");
+    attackSlot?.classList.add("attack-lunging-slot");
+    attackWrap?.classList.add("attack-lunging-wrap");
     attackerEl.classList.add("attack-lunging");
 
     const clearAttackLayer = () => {
-      attackerEl.closest(".field")?.classList.remove("attack-source-field");
-      attackerEl.closest(".field-fixed-slot")?.classList.remove("attack-lunging-slot");
-      attackerEl.closest(".unit-pop")?.classList.remove("attack-lunging-wrap");
+      attackField?.classList.remove("attack-source-field");
+      attackSlot?.classList.remove("attack-lunging-slot");
+      attackWrap?.classList.remove("attack-lunging-wrap");
       attackerEl.classList.remove("attack-lunging");
     };
 
