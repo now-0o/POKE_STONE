@@ -1942,7 +1942,7 @@ export default function Battle({ trainer, deck, deckShiny = {}, onFinish }) {
   function isMobileDropMode() {
     return (
       typeof window !== "undefined" &&
-      window.matchMedia?.(MOBILE_DROP_QUERY).matches
+      window.matchMedia?.(MOBILE_DROP_QUERY)?.matches
     );
   }
 
